@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-  Author(s):       Dr. S. Bora Lisesivdin <bora@gazi.edu.tr>,
-  Date:         Jan. 01, 2012
-  Description:  Sample input file for aestimo 
-
-"""
+# ----------------------------------------------------------------------
+# Input File Description:  Modulation doped AlGaAs/GaAs heterostructure.
+# ----------------------------------------------------------------------
 # ----------------
 # GENERAL SETTINGS
 # ----------------

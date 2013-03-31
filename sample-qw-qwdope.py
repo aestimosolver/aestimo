@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-  Author(s):    Dr. S. Bora Lisesivdin <bora@gazi.edu.tr>,
-  Program:      input.py
-  Description:  Sample input file for aestimo
-"""
+# ------------------------------------------------------------------------
+# Input File Description:  Quantum well doped AlGaAs/GaAs heterostructure.
+# ------------------------------------------------------------------------
 # ----------------
 # GENERAL SETTINGS
 # ----------------
