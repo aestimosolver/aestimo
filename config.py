@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-  Author(s):  Dr. S. Bora Lisesivdin <bora@gazi.edu.tr>,
   Program:    Aestimo 1D Schrodinger-Poisson Solver
-
   Description:  It is a simple config file, however there will
                 be multi-input file execution feature in the future.
   

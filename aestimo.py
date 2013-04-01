@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-  Author(s):  Dr. S. Bora Lisesivdin <bora@gazi.edu.tr>,
   Program:    Aestimo 1D Schrodinger-Poisson Solver
   Version:    v.0.6
 
