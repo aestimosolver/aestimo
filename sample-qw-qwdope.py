@@ -17,7 +17,7 @@ computation_scheme = 1
 
 # QUANTUM
 # Total subband number to be calculated for electrons
-subnumber_e = 1
+subnumber_e = 2
 
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
