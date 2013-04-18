@@ -7,6 +7,7 @@
   Description: This is the aestimo calculator.
   
 """
+#from scipy.optimize import fsolve
 from pylab import *
 import numpy as np
 import sys,config,database
@@ -63,13 +64,20 @@ N_stateresult = [0.0]*(inputfile.subnumber_e+1)
 wfetot = [0.0]*(inputfile.subnumber_e+1)
 
 #Defining constants and material parameters
-q = 1.602e-19
-kb = 1.38e-23
+q = 1.602176e-19 #C
+kb = 1.3806504e-23 #J/K
 nii = 0.0
 hbar = 1.054588757e-34
+m_e= 9.1093826E-31 #kg
+pi=np.pi
+eps0= 8.8541878176e-12 #F/m
+
+J2meV=1e3/q #Joules to meV
+meV2J=1e-3*q #meV to Joules
+
 manual_iterate = 3
 previousE0=0
-subband_n_ratio = [1.0]
+#subband_n_ratio = [0.8,0.2,0.0]
 #subband_n_ratio = [0.8, 0.2] # This must be automized
 
 
@@ -138,6 +146,68 @@ def wf(E,fis):
             psi[1]=psi[2]
     return float(N*dx)
 
+# FUNCTIONS for FERMI-DIRAC STATISTICS-----------------------------------------   
+def fd2(Ei,Ef,T):
+    #integral of Fermi Dirac Equation for energy independent density of states.
+    #Ei [meV], Ef [meV], T [K]"""
+    return kb*T*log(exp(meV2J*(Ef-Ei)/(kb*T))+1)
+
+def calc_meff_state(wfe,cb_meff):
+    #find subband effective mass
+    meff_state = [0.0]*alen(wfe)
+    for j in range(0,inputfile.subnumber_e,1):
+        total=0.0
+        for b,meff in zip(wfe[j],cb_meff):
+            total+=float(b)**2/meff
+        meff_state[j] = 1.0/total
+    return meff_state
+    
+def fermilevel_0K(Ntotal2d,E_state,meff_state):
+    Et,Ef=0.0,0.0
+    for i,(Ei,csb_meff) in enumerate(zip(E_state,meff_state)):
+        Et+=Ei
+        Efnew=(-Ntotal2d*hbar**2*pi/csb_meff*J2meV + Et)/(i+1)
+        if Efnew>Ei:
+            Ef=Efnew
+        else:
+            break #we have found Ef and so we should break out of the loop
+    else: #exception clause for 'for' loop.
+        print "Have processed all energy levels present and so can't be sure that Ef is below next higher energy level."
+    
+    N_state=[0.0]*len(E_state)
+    for i,(Ei,csb_meff) in enumerate(zip(E_state,meff_state)):
+        Ni=(Ef - Ei)*csb_meff/(hbar**2*pi)*meV2J    # populations of levels
+        Ni*=(Ni>0.0)
+        N_state[i]=Ni
+    return Ef,N_state
+    
+def fermilevel(Ntotal2d,T,E_state,meff_state):
+    #find the Fermi level
+    def func(Ef,E_state,meff_state,Ntotal2d,T):
+        #return Ntotal2d - sum( [csb_meff*fd2(Ei,Ef,T) for Ei,csb_meff in zip(E_state,meff_state)] )/(hbar**2*pi)
+        diff = -Ntotal2d
+        for Ei,csb_meff in zip(E_state,meff_state):
+            diff -= csb_meff*fd2(Ei,Ef,T)/(hbar**2*pi)
+        return diff
+    Ef_0K,N_states_0K = fermilevel_0K(Ntotal2d,E_state,meff_state)
+    #Ef=fsolve(func,Ef_0K,args=(E_state,meff_state,Ntotal2d,T))[0]
+    #return float(Ef)
+    #implement Newton-Raphson method
+    Ef = Ef_0K
+    d_E = 1e-9
+    while True:
+        y = func(Ef,E_state,meff_state,Ntotal2d,T)
+        dy = (func(Ef+d_E,E_state,meff_state,Ntotal2d,T)- func(Ef-d_E,E_state,meff_state,Ntotal2d,T))/(2.0*d_E)
+        Ef -= y/dy
+        if abs(y/dy) < 1e-12:
+            break
+    return Ef
+
+def calc_N_state(Ef,T,Ns,E_state,meff_state):
+    # Find the subband populations, taking advantage of step like d.o.s. and analytic integral of FD
+    N_state=[fd2(Ei,Ef,T)*csb_meff/(hbar**2*pi) for Ei,csb_meff in zip(E_state,meff_state)]
+    return N_state
+    
 # FUNCTIONS for SELF-CONSISTENT POISSON--------------------------------
 def calc_field():
     # F electric field as a function of z-
@@ -280,9 +350,9 @@ else:
     energyx = E_start
 
 # Populize subbands. Must be rewritten, it is manual now!
-for j in range(0,inputfile.subnumber_e,1):
-    N_state[j] = subband_n_ratio[j]*Ntotal
-        
+#for j in range(0,inputfile.subnumber_e,1):
+#    N_state[j] = subband_n_ratio[j]*Ntotal
+
 # STARTING SELF CONSISTENT LOOP
 iteration = 0
 while True:
@@ -339,20 +409,29 @@ while True:
             Ntrial = wf(E_state[j]*1e-3*q,fi)
         for i in range(0,n_max,1):
             wfe[j][i]=b[i]/(Ntrial/dx)**0.5 #Ntrial/dx?
+    
+    # Calculate the effective mass of each subband
+    meff_state = calc_meff_state(wfe,cb_meff)
+    
+    for i,meff in enumerate(meff_state):
+        print 'meff[',i,']= ',meff/m_e
 
-    # Self-consistent Poisson
-        
-    # Calculate sum of unnormalised subband populations
-    Nutotal=0.0
-    for j in range(0,inputfile.subnumber_e,1):
-        Nutotal += N_state[j]
-
-    #And hence normalize populations
-    for j in range(0,inputfile.subnumber_e,1):
-        N_state[j] = N_state[j]*Ntotal/Nutotal
-        N_stateresult[j] = N_state[j] #/(1e4*1e10) # m^-2->10^10cm^-2
-
-
+    ## Self-consistent Poisson
+    
+    # Calculate the Fermi energy and subband populations at 0K
+    E_F_0K,N_state_0K=fermilevel_0K(Ntotal2d,E_state,meff_state)
+    print 'Efermi (at 0K) = ',E_F_0K,' J'
+    #for i,Ni in enumerate(N_state_0K):
+    #    print 'N[',i,']= ',Ni
+    
+    # Calculate the Fermi energy at the temperature T (K)
+    E_F = fermilevel(Ntotal2d,T,E_state,meff_state)
+    # Calculate the subband populations at the temperature T (K)
+    N_state=calc_N_state(E_F,T,Ntotal2d,E_state,meff_state)
+    
+    for i,Ni in enumerate(N_state):
+        print 'N[',i,']= ',Ni
+    
     # Calculate `net' areal charge density and output to file
     sigma=calc_sigma() #one more instead of inputfile.subnumber_e
     # Calculate electric field and output to file
