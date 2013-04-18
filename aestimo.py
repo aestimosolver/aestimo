@@ -95,15 +95,17 @@ def vegard(first,second,mole):
 
 # FUNCTIONS for SHOOTING ------------------
 def psi_at_inf(E,fis,cb_meff):
-    # boundary conditions
     psi = []
     psi = [0.0]*3
-    psi[0]=0.0               
-    psi[1]=1.0
+    # boundary conditions
+    psi[0] = 0.0                 
+    psi[1] = 1.0
     if T_flag == True:
         for j in range(0,n_max,1):
             # Last potential not used
-            psi[2]=((2*(dx/hbar)**2*(fis[j]-E)+2/(cb_meff[j]+cb_meff[j+1])+2/(cb_meff[j]+cb_meff[j-1]))*psi[1]-2/(cb_meff[j]+cb_meff[j-1])*psi[0])*(cb_meff[j]+cb_meff[j+1])/2
+            c1=2.0/(cb_meff[j]+cb_meff[j-1])
+            c2=2.0/(cb_meff[j]+cb_meff[j+1])
+            psi[2]=((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi[1]-c1*psi[0])/c2
             psi[0]=psi[1]
             psi[1]=psi[2]
     else:
@@ -162,7 +164,9 @@ def wf(E,fis,cb_meff):
     if T_flag == True:
         for j in range(0,n_max-1,1):
             # Last potential not used
-            psi[2] = ((2*(dx/hbar)**2*(fis[j]-E)+2/(cb_meff[j]+cb_meff[j+1])+2/(cb_meff[j]+cb_meff[j-1]))*psi[1]-2/(cb_meff[j]+cb_meff[j-1])*psi[0])*(cb_meff[j]+cb_meff[j+1])/2
+            c1=2.0/(cb_meff[j]+cb_meff[j-1])
+            c2=2.0/(cb_meff[j]+cb_meff[j+1])
+            psi[2] = ((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi[1]-c1*psi[0])/c2
             b[j+1]=psi[2]
             N += (psi[2])**2
             psi[0]=psi[1]
