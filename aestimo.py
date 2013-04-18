@@ -81,6 +81,7 @@ manual_iterate = 3
 previousE0=0
 #subband_n_ratio = [0.8,0.2,0.0]
 #subband_n_ratio = [0.8, 0.2] # This must be automized
+damping = 0.4
 
 
 # DO NOT EDIT UNDER HERE FOR PARAMETERS
@@ -320,6 +321,7 @@ fi = []
 fis = []
 fitot = []
 eps =[]
+
 cb_meff = [0.0]*(n_max+1)
 Nc = [0.0]*(n_max+1)
 Nv = [0.0]*(n_max+1)
@@ -341,6 +343,9 @@ sigma = [0.0] * (n_max+1)
 
 F = []
 F = [0.0] * (n_max+1)
+
+V = []
+V = [0.0] * (n_max+1)
 
 b = []
 b = [0.0]*(n_max+1)
@@ -448,9 +453,12 @@ while True:
     # Calculate electric field and output to file
     F=calc_field(sigma,eps)
     # Calculate potential due to charge distribution and output to file	*/
-    V=calc_potn(F)   
+    Vnew=calc_potn(F)   
     # Combine band edge potential with potential due to charge distribution */
+    # To increase convergence, we calculate a moving average of electric potential 
+    #with previous iterations. By dampening the corrective term, we avoid oscillations.
     for i in range(0,n_max,1):
+        V[i] = V[i] + damping*(Vnew[i] - V[i])
         fitot[i] = fi[i] + V[i]
     
     if abs(E_state[0]-previousE0) < 1e-6:
