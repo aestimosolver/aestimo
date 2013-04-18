@@ -8,8 +8,9 @@
   
 """
 #from scipy.optimize import fsolve
-from pylab import *
+import matplotlib.pyplot as pl
 import numpy as np
+alen = np.alen
 import sys,config,database
 from math import *
 
@@ -451,6 +452,7 @@ while True:
     # Combine band edge potential with potential due to charge distribution */
     for i in range(0,n_max,1):
         fitot[i] = fi[i] + V[i]
+    
     if abs(E_state[0]-previousE0) < 1e-6:
         break
     else:
@@ -531,60 +533,60 @@ if P_out:
 
 # Resultviewer
 if Resultview:
-    figure(figsize=(10,8))
-    suptitle('Aestimo Results')
-    subplots_adjust(hspace=0.4,wspace=0.4)
+    pl.figure(figsize=(10,8))
+    pl.suptitle('Aestimo Results')
+    pl.subplots_adjust(hspace=0.4,wspace=0.4)
                           
     #Plotting Sigma
     #figure(0)
-    subplot(2,2,1)
-    plot(xaxis, drw_sigma)
-    xlabel('Position (m)')
-    ylabel('Sigma (e/m^2)')
-    title('Sigma')
-    grid(True)
+    pl.subplot(2,2,1)
+    pl.plot(xaxis, drw_sigma)
+    pl.xlabel('Position (m)')
+    pl.ylabel('Sigma (e/m^2)')
+    pl.title('Sigma')
+    pl.grid(True)
 
     #Plotting Efield
     #figure(1)
-    subplot(2,2,2)
-    plot(xaxis, drw_efield)
-    xlabel('Position (m)')
-    ylabel('Electric Field strength (V/m)')
-    title('Electric Field')
-    grid(True)
+    pl.subplot(2,2,2)
+    pl.plot(xaxis, drw_efield)
+    pl.xlabel('Position (m)')
+    pl.ylabel('Electric Field strength (V/m)')
+    pl.title('Electric Field')
+    pl.grid(True)
 
     #Plotting Potential
     #figure(2)
-    subplot(2,2,3)
-    plot(xaxis, drw_potn)
-    xlabel('Position (m)')
-    ylabel('[V_cb + V_p] (J)')
-    title('Potential')
-    grid(True)
+    pl.subplot(2,2,3)
+    pl.plot(xaxis, drw_potn)
+    pl.xlabel('Position (m)')
+    pl.ylabel('[V_cb + V_p] (J)')
+    pl.title('Potential')
+    pl.grid(True)
 
     #Plotting State(s)
     #figure(3)
-    subplot(2,2,4)
+    pl.subplot(2,2,4)
     for j,drw_state in enumerate(drw_states):
-        plot(xaxis, drw_state, label='state %d' %j)
-    xlabel('Position (m)')
-    ylabel('Psi')
-    title('First state')
-    grid(True)
+        pl.plot(xaxis, drw_state, label='state %d' %j)
+    pl.xlabel('Position (m)')
+    pl.ylabel('Psi')
+    pl.title('First state')
+    pl.grid(True)
     
     #QW representation
     #figure(5)
-    figure(figsize=(10,8))
-    suptitle('Aestimo Results')
-    subplot(1,1,1)
-    plot(xaxis,drw_potn_meV,'k')
+    pl.figure(figsize=(10,8))
+    pl.suptitle('Aestimo Results')
+    pl.subplot(1,1,1)
+    pl.plot(xaxis,drw_potn_meV,'k')
     for state,drw_state in zip(E_state,drw_states): 
-        axhline(state,0.1,0.9,color='g',ls='--')
-        plot(xaxis, np.array(drw_state)*200.0+state,'b')
-    xlabel('Position (m)')
-    ylabel('Energy (meV)')
-    grid(True)
-    show()
-
+        pl.axhline(state,0.1,0.9,color='g',ls='--')
+        pl.plot(xaxis, np.array(drw_state)*200.0+state,'b')
+    pl.xlabel('Position (m)')
+    pl.ylabel('Energy (meV)')
+    pl.grid(True)
+    pl.show()
+    
 print "Simulation is finished. All files are closed."
 print "Please control the related files."
