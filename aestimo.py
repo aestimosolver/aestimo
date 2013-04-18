@@ -112,6 +112,35 @@ def psi_at_inf(E,fis):
             psi[1]=psi[2]
     return psi[2]
 
+#nb. function was much slower when fi is a numpy array than a python list.
+def calc_E_state(numlevels,fi,cb_meff,energyx0): # delta_E,d_E
+    energyx=energyx0
+    E_state=[0.0]*(numlevels)
+    for i in range(0,numlevels,1):  
+        #increment energy-search for f(x)=0
+        y2=psi_at_inf(energyx,fi)
+        while True:
+            y1=y2
+            energyx += delta_E
+            y2=psi_at_inf(energyx,fi)
+            if y1*y2 < 0:
+                break
+        # improve estimate using midpoint rule
+        energyx -= abs(y2)/(abs(y1)+abs(y2))*delta_E
+        #implement Newton-Raphson method
+        while True:
+            y = psi_at_inf(energyx,fi)
+            dy = (psi_at_inf(energyx+d_E,fi)- psi_at_inf(energyx-d_E,fi))/(2.0*d_E)
+            energyx -= y/dy
+            if abs(y/dy) < 1e-12*q:
+                break
+        E_state[i]=energyx/(1e-3*q)
+        # clears x from solution
+        if not(config.messagesoff) :
+            print "E[",i,"]=",E_state[i],"meV" #can be written on file.
+        energyx += delta_E # finish for i-th state.
+    return E_state
+
 # FUNCTIONS for ENVELOPE FUNCTION WAVEFUNCTION--------------------------------
 def wf(E,fis):
     # This function returns the value of the wavefunction (psi)
@@ -367,33 +396,9 @@ while True:
                 energyx = fitot[i]
             else:
                 energyx = fi_min
-    for i in range(0,inputfile.subnumber_e,1):  
-        #increment energy-search for f(x)=0
-        y2=psi_at_inf(energyx,fitot)
-        while True:
-            y1=y2
-            energyx += delta_E
-            if iteration> 0:
-                y2=psi_at_inf(energyx,fitot)
-            else:
-                y2=psi_at_inf(energyx,fi)
-            if y1*y2 < 0:
-                break
-        # improve estimate using midpoint rule
-        energyx -= abs(y2)/(abs(y1)+abs(y2))*delta_E
-        #implement Newton-Raphson method
-        while True:
-            y = psi_at_inf(energyx,fitot)
-            dy = (psi_at_inf(energyx+d_E,fitot)- psi_at_inf(energyx-d_E,fitot))/(2.0*d_E)
-            energyx -= y/dy
-            if abs(y/dy) < 1e-12*q:
-                break
-        E_state[i]=energyx/(1e-3*q)
-        # clears x from solution
-        if not(config.messagesoff) :
-            print "E[",i,"]=",E_state[i],"meV" #can be written on file.
-        energyx += delta_E # finish for i-th state.
-
+    
+    E_state=calc_E_state(inputfile.subnumber_e,fitot,cb_meff,energyx)
+    
     # Envelope Function Wave Functions
     for j in range(0,inputfile.subnumber_e,1):
         if not(config.messagesoff) :
