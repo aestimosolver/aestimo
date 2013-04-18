@@ -278,7 +278,25 @@ def calc_sigma():
         sigma[i] = sigma[i] - dop[i]*dx # This may be one tab indented.
 
     return sigma
-
+    
+def dop0(dop):
+    posi = 0.0
+    for i in range(0, n_max, 1):
+        posi = i*dx
+        for j in range(0, totallayer,1):
+            if posi >= material[j][1] and posi <= material[j][2]:
+                k=j
+        if material[k][6] == 'n':
+            if material[k][5] == 0:
+                dop[i] = nii
+            else:
+                dop[i] = -material[k][5]*1e6
+        else:
+            if material[k][5] == 0:
+                dop[i] = nii
+            else:
+                dop[i] = material[k][5]*1e6
+    return dop
 # ----------------------------------------------------
 
 # Calculate the required number of grid points and renormalize dx
@@ -345,25 +363,14 @@ for i in range(0, n_max+1, 1):
     # Find fi-minimum
     if fi[i] < fi_min:
         fi_min= fi[i]
+
 # Setup the doping
-posi = 0.0
-for i in range(0, n_max, 1):
-    posi = i*dx
-    for j in range(0, totallayer,1):
-        if posi >= material[j][1] and posi <= material[j][2]:
-            k=j
-    if material[k][6] == 'n':
-        if material[k][5] == 0:
-            dop[i] = nii
-        else:
-            dop[i] = -material[k][5]*1e6
-    else:
-        if material[k][5] == 0:
-            dop[i] = nii
-        else:
-            dop[i] = material[k][5]*1e6
-    Ntotal += dop[i] # calculating total doping density m-3
-    Ntotal2d += dop[i]*dx
+
+dop = dop0(dop)
+Ntotal = sum(dop) # calculating total doping density m-3
+Ntotal2d = Ntotal*dx
+#print "Ntotal ",Ntotal,"m**-3"
+print "Ntotal2d ",Ntotal2d," m**-2"
 
 delta_acc = 1e-6
 
