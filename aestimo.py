@@ -15,6 +15,7 @@ from math import *
 
 # Import from config file
 inputfile = __import__(config.inputfilename)
+# Flags for different outputs
 E_out = config.electricfield_out
 V_out = config.potential_out
 S_out = config.sigma_out
@@ -93,7 +94,7 @@ def vegard(first,second,mole):
 # to the energy occurs for psi(+infinity)=0.
 
 # FUNCTIONS for SHOOTING ------------------
-def psi_at_inf(E,fis):
+def psi_at_inf(E,fis,cb_meff):
     # boundary conditions
     psi = []
     psi = [0.0]*3
@@ -118,19 +119,19 @@ def calc_E_state(numlevels,fi,cb_meff,energyx0): # delta_E,d_E
     E_state=[0.0]*(numlevels)
     for i in range(0,numlevels,1):  
         #increment energy-search for f(x)=0
-        y2=psi_at_inf(energyx,fi)
+        y2=psi_at_inf(energyx,fi,cb_meff)
         while True:
             y1=y2
             energyx += delta_E
-            y2=psi_at_inf(energyx,fi)
+            y2=psi_at_inf(energyx,fi,cb_meff)
             if y1*y2 < 0:
                 break
         # improve estimate using midpoint rule
         energyx -= abs(y2)/(abs(y1)+abs(y2))*delta_E
         #implement Newton-Raphson method
         while True:
-            y = psi_at_inf(energyx,fi)
-            dy = (psi_at_inf(energyx+d_E,fi)- psi_at_inf(energyx-d_E,fi))/(2.0*d_E)
+            y = psi_at_inf(energyx,fi,cb_meff)
+            dy = (psi_at_inf(energyx+d_E,fi,cb_meff)- psi_at_inf(energyx-d_E,fi,cb_meff))/(2.0*d_E)
             energyx -= y/dy
             if abs(y/dy) < 1e-12*q:
                 break
@@ -142,7 +143,7 @@ def calc_E_state(numlevels,fi,cb_meff,energyx0): # delta_E,d_E
     return E_state
 
 # FUNCTIONS for ENVELOPE FUNCTION WAVEFUNCTION--------------------------------
-def wf(E,fis):
+def wf(E,fis,cb_meff):
     # This function returns the value of the wavefunction (psi)
     # at +infinity for a given value of the energy.  The solution
     #	to the energy occurs for psi(+infinity)=0.
@@ -173,8 +174,8 @@ def wf(E,fis):
             N += (psi[2])**2
             psi[0]=psi[1]
             psi[1]=psi[2]
-    return float(N*dx)
-
+    return b,float(N*dx)
+    
 # FUNCTIONS for FERMI-DIRAC STATISTICS-----------------------------------------   
 def fd2(Ei,Ef,T):
     #integral of Fermi Dirac Equation for energy independent density of states.
@@ -238,7 +239,7 @@ def calc_N_state(Ef,T,Ns,E_state,meff_state):
     return N_state
     
 # FUNCTIONS for SELF-CONSISTENT POISSON--------------------------------
-def calc_field():
+def calc_field(sigma,eps):
     # F electric field as a function of z-
     # i index over z co-ordinates
     # j index over z' co-ordinates
@@ -252,7 +253,7 @@ def calc_field():
             F[i] = F[i] + q*sigma[j]*cmp(i,j)/(2*eps[j]) #CMP'deki i ve j yer değişebilir - de + olabilir
     return F
 
-def calc_potn():
+def calc_potn(F):
     # This function calculates the potential (energy actually)
     # V electric field as a function of z-
     # i	index over z co-ordinates
@@ -263,7 +264,7 @@ def calc_potn():
         V[i]=V[i-1]+q*F[i]*dx #+q -> electron -q->hole? 
     return V
 
-def calc_sigma():
+def calc_sigma(wfe,N_state,dop):
     # This function calculates `net' areal charge density
     # i index over z co-ordinates
     # is index over states
@@ -348,18 +349,17 @@ for i in range(0, n_max+1, 1):
             if posi >= material[j][1] and posi <= material[j][2]:
                 k=j
             if material[k][3] == material_property[m][1]:
-                cb_meff[i] = material_property[m][2]*9.11e-31
+                cb_meff[i] = material_property[m][2]*m_e
                 fi[i] = material_property[m][6]*material_property[m][5]*q #Joule
-                eps[i] = material_property[m][4]*8.85e-12
+                eps[i] = material_property[m][4]*eps0
         for m in range (0, totalalloy,1):
             if posi >= material[j][1] and posi <= material[j][2]:
                 k=j
             if material[k][3] == alloy_property[m][1]:
-                cb_meff[i] = (alloy_property[m][2]+alloy_property[m][3]*material[k][4])*9.11e-31
+                cb_meff[i] = (alloy_property[m][2]+alloy_property[m][3]*material[k][4])*m_e
                 fi[i] = alloy_property[m][6]*material[k][4]*q*alloy_property[m][7] # for electron. Joule
-                eps[i] = (alloy_property[m][4]+alloy_property[m][5]*material[k][4])*8.85e-12
-
-        
+                eps[i] = (alloy_property[m][4]+alloy_property[m][5]*material[k][4])*eps0
+    
     # Find fi-minimum
     if fi[i] < fi_min:
         fi_min= fi[i]
@@ -410,7 +410,7 @@ while True:
     for j in range(0,inputfile.subnumber_e,1):
         if not(config.messagesoff) :
             print "Working for subband no:",j+1
-        Ntrial = wf(E_state[j]*1e-3*q,fitot)
+        b,Ntrial = wf(E_state[j]*1e-3*q,fitot,cb_meff)
         for i in range(0,n_max,1):
             wfe[j][i]=b[i]/(Ntrial/dx)**0.5 #Ntrial/dx?
     
@@ -437,11 +437,13 @@ while True:
         print 'N[',i,']= ',Ni
     
     # Calculate `net' areal charge density and output to file
-    sigma=calc_sigma() #one more instead of inputfile.subnumber_e
+    sigma=calc_sigma(wfe,N_state,dop) #one more instead of inputfile.subnumber_e
+    print "total donor charge = ",sum(dop)*dx,"m**-2"
+    print "total system charge = ",sum(sigma),"m**-2"
     # Calculate electric field and output to file
-    F=calc_field()
+    F=calc_field(sigma,eps)
     # Calculate potential due to charge distribution and output to file	*/
-    V=calc_potn()
+    V=calc_potn(F)   
     # Combine band edge potential with potential due to charge distribution */
     for i in range(0,n_max,1):
         fitot[i] = fi[i] + V[i]
@@ -451,6 +453,7 @@ while True:
         iteration += 1
         previousE0 = E_state[0]
 
+# END OF SELF-CONSISTENT LOOP
 # Write the simulation results in files
 if S_out:
     out_sigma_file = open("outputs/sigma.dat", "w")
