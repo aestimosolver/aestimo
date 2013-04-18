@@ -242,7 +242,7 @@ def calc_sigma():
         sigma[i] = 0.0
     for i in range(0,n_max,1):
         for j in range(0,inputfile.subnumber_e,1):
-            sigma[i] = sigma[i] + N_state[j]*(float(wfe[j][i])**2)*dx
+            sigma[i] = sigma[i] - N_state[j]*(float(wfe[j][i])**2)
             # n-type dopants give -ve *(N+j) representing electrons, hence 
             # addition of +ve ionised donors requires -*(Nda+i), note Nda is still a
             # volume density, the delta_z converts it to an areal density
