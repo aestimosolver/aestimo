@@ -355,6 +355,8 @@ else:
 
 # STARTING SELF CONSISTENT LOOP
 iteration = 0
+fitot = list(fi) #For initial iteration just copy fi. list(seq) returns a copy of the original rather than just an alias.
+
 while True:
     if not(config.messagesoff) :
         print "Iteration:",iteration+1
@@ -367,10 +369,7 @@ while True:
                 energyx = fi_min
     for i in range(0,inputfile.subnumber_e,1):  
         #increment energy-search for f(x)=0
-        if iteration> 0:
-            y2=psi_at_inf(energyx,fitot)
-        else:
-            y2=psi_at_inf(energyx,fi)
+        y2=psi_at_inf(energyx,fitot)
         while True:
             y1=y2
             energyx += delta_E
@@ -384,12 +383,8 @@ while True:
         energyx -= abs(y2)/(abs(y1)+abs(y2))*delta_E
         #implement Newton-Raphson method
         while True:
-            if iteration> 0:
-                y = psi_at_inf(energyx,fitot)
-                dy = (psi_at_inf(energyx+d_E,fitot)- psi_at_inf(energyx-d_E,fitot))/(2.0*d_E)
-            else:
-                y = psi_at_inf(energyx,fi)
-                dy = (psi_at_inf(energyx+d_E,fi)- psi_at_inf(energyx-d_E,fi))/(2.0*d_E)
+            y = psi_at_inf(energyx,fitot)
+            dy = (psi_at_inf(energyx+d_E,fitot)- psi_at_inf(energyx-d_E,fitot))/(2.0*d_E)
             energyx -= y/dy
             if abs(y/dy) < 1e-12*q:
                 break
@@ -403,10 +398,7 @@ while True:
     for j in range(0,inputfile.subnumber_e,1):
         if not(config.messagesoff) :
             print "Working for subband no:",j+1
-        if iteration> 0:
-            Ntrial = wf(E_state[j]*1e-3*q,fitot)
-        else:
-            Ntrial = wf(E_state[j]*1e-3*q,fi)
+        Ntrial = wf(E_state[j]*1e-3*q,fitot)
         for i in range(0,n_max,1):
             wfe[j][i]=b[i]/(Ntrial/dx)**0.5 #Ntrial/dx?
     
@@ -440,10 +432,7 @@ while True:
     V=calc_potn()
     # Combine band edge potential with potential due to charge distribution */
     for i in range(0,n_max,1):
-        if iteration> 0:
-            fitot[i] = fi[i] + V[i]
-        else:
-            fitot[i] = fi[i] + V[i]
+        fitot[i] = fi[i] + V[i]
     if abs(E_state[0]-previousE0) < 1e-6:
         break
     else:
