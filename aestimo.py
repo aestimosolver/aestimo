@@ -478,8 +478,9 @@ xaxis = [0.0]*(n_max)
 drw_sigma = [0.0]*(n_max)
 drw_efield = [0.0]*(n_max)
 drw_potn = [0.0]*(n_max)
-drw_state1 = [0.0]*(n_max)
-drw_state2 = [0.0]*(n_max)
+drw_potn_meV = [0.0]*(n_max)
+drw_state = [0.0]*(n_max)
+drw_states = [list(drw_state) for i in range(inputfile.subnumber_e)] # need to create copies of original list rather than references
 drw_first = [0.0]*(n_max)
 
 for i in range(0,n_max,1):
@@ -500,12 +501,9 @@ for i in range(0,n_max,1):
     drw_sigma[i] = sigma[i]
     drw_efield[i] = F[i]
     drw_potn[i] = fitot[i]
-    drw_state1[i] = wfe[0][i]
-    # Draw second state' probability if available
-    if inputfile.subnumber_e == 1:
-        drw_state2[i] = wfe[0][i]
-    else:
-        drw_state2[i] = wfe[1][i]
+    drw_potn_meV[i] = fitot[i]*J2meV
+    for state,wf in zip(drw_states,wfe):
+        state[i] = wf[i]
     xx = xx+dx
 
 if St_out:
@@ -560,11 +558,24 @@ if Resultview:
     #Plotting State(s)
     #figure(3)
     subplot(2,2,4)
-    plot(xaxis, drw_state1, 'b-',label='First state')
-    plot(xaxis, drw_state2, 'r-',label='Second state')
+    for j,drw_state in enumerate(drw_states):
+        plot(xaxis, drw_state, label='state %d' %j)
     xlabel('Position (m)')
     ylabel('Psi')
     title('First state')
+    grid(True)
+    
+    #QW representation
+    #figure(5)
+    figure(figsize=(10,8))
+    suptitle('Aestimo Results')
+    subplot(1,1,1)
+    plot(xaxis,drw_potn_meV,'k')
+    for state,drw_state in zip(E_state,drw_states): 
+        axhline(state,0.1,0.9,color='g',ls='--')
+        plot(xaxis, np.array(drw_state)*200.0+state,'b')
+    xlabel('Position (m)')
+    ylabel('Energy (meV)')
     grid(True)
     show()
 
