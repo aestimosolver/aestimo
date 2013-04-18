@@ -274,7 +274,7 @@ def calc_sigma(wfe,N_state,dop):
     # This function calculates `net' areal charge density
     # i index over z co-ordinates
     # is index over states
-    for i in range(0,n_max,1):
+    for i in range(0,n_max+1,1):
         sigma[i] = 0.0
     for i in range(0,n_max,1):
         for j in range(0,inputfile.subnumber_e,1):
@@ -313,41 +313,41 @@ if n_max > max_val:
     exit()
 
 # Creating and Filling material arrays
-cb_meff = []
-Nc = []
-Nv = []
-ni = []
-fi = []
-fis = []
-fitot = []
-eps =[]
+cb_meff = []	#conduction band effective mass
+#Nc = []
+#Nv = []
+#ni = []
+fi = []			#Bandstructure potential
+#fis = []
+fitot = []		#Energy potential = Bandstructure + Coulombic potential
+eps =[]			#dielectric constant
 
 cb_meff = [0.0]*(n_max+1)
-Nc = [0.0]*(n_max+1)
-Nv = [0.0]*(n_max+1)
-ni = [0.0]*(n_max+1)
+#Nc = [0.0]*(n_max+1)
+#Nv = [0.0]*(n_max+1)
+#ni = [0.0]*(n_max+1)
 fi = [0.0]*(n_max+1)
-fis = [0.0]* (n_max+1)
+#fis = [0.0]* (n_max+1)
 fitot = [0.0]*(n_max+1)
 eps = [0.0]*(n_max+1)
 posi = 0.0
 fi_min= 0.0
 
-dop = []
+dop = []		#doping distribution
 dop = [0.0]*(n_max+1)
 
 Ntotal = 0.0
 Ntotal2d = 0.0
-sigma = []
+sigma = []		#charge distribution (donors + free charges)
 sigma = [0.0] * (n_max+1)
 
-F = []
+F = []			#Electric Field
 F = [0.0] * (n_max+1)
 
-V = []
+V = []			#Electric Potential
 V = [0.0] * (n_max+1)
 
-b = []
+b = []			#Temporary array for wavefunction calculation
 b = [0.0]*(n_max+1)
 # Subband wavefunction for electron list. 2-dimensional: [i][j] i:stateno, j:wavefunc
 wfe = np.zeros((inputfile.subnumber_e,n_max),dtype = float)
@@ -433,13 +433,14 @@ while True:
     ## Self-consistent Poisson
     
     # Calculate the Fermi energy and subband populations at 0K
-    E_F_0K,N_state_0K=fermilevel_0K(Ntotal2d,E_state,meff_state)
-    print 'Efermi (at 0K) = ',E_F_0K,' J'
+    #E_F_0K,N_state_0K=fermilevel_0K(Ntotal2d,E_state,meff_state)
+    #print 'Efermi (at 0K) = ',E_F_0K,' J'
     #for i,Ni in enumerate(N_state_0K):
     #    print 'N[',i,']= ',Ni
     
     # Calculate the Fermi energy at the temperature T (K)
     E_F = fermilevel(Ntotal2d,T,E_state,meff_state)
+    print 'Efermi (at %gK) = ' %T, E_F,' J'
     # Calculate the subband populations at the temperature T (K)
     N_state=calc_N_state(E_F,T,Ntotal2d,E_state,meff_state)
     
@@ -449,6 +450,7 @@ while True:
     # Calculate `net' areal charge density and output to file
     sigma=calc_sigma(wfe,N_state,dop) #one more instead of inputfile.subnumber_e
     print "total donor charge = ",sum(dop)*dx,"m**-2"
+    print "total level charge = ",sum(N_state),"m**-2"
     print "total system charge = ",sum(sigma),"m**-2"
     # Calculate electric field and output to file
     F=calc_field(sigma,eps)
@@ -462,6 +464,8 @@ while True:
         fitot[i] = fi[i] + V[i]
     
     if abs(E_state[0]-previousE0) < 1e-6:
+        break
+    elif iteration > 80:
         break
     else:
         iteration += 1
@@ -591,6 +595,7 @@ if Resultview:
     for state,drw_state in zip(E_state,drw_states): 
         pl.axhline(state,0.1,0.9,color='g',ls='--')
         pl.plot(xaxis, np.array(drw_state)*200.0+state,'b')
+    pl.axhline(E_F,0.1,0.9,color='r',ls='--')
     pl.xlabel('Position (m)')
     pl.ylabel('Energy (meV)')
     pl.grid(True)
