@@ -233,7 +233,7 @@ def calc_field(sigma,eps):
     for i in range(0,n_max,1):
         for j in range(0,n_max,1):
             # Note sigma is a number density per unit area, needs to be converted to Couloumb per unit area
-            F[i] = F[i] + q*sigma[j]*cmp(i,j)/(2*eps[j]) #CMP'deki i ve j yer değişebilir - de + olabilir
+            F[i] = F[i] + q*sigma[j]*cmp(i,j)/(2*eps[i]) #CMP'deki i ve j yer değişebilir - de + olabilir
     return F
 
 def calc_potn(F):
