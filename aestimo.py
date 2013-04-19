@@ -79,8 +79,6 @@ meV2J=1e-3*q #meV to Joules
 
 manual_iterate = 3
 previousE0=0
-#subband_n_ratio = [0.8,0.2,0.0]
-#subband_n_ratio = [0.8, 0.2] # This must be automized
 damping = 0.4
 
 
@@ -102,19 +100,13 @@ def psi_at_inf(E,fis,cb_meff):
     # boundary conditions
     psi[0] = 0.0                 
     psi[1] = 1.0
-    if T_flag == True:
-        for j in range(0,n_max,1):
-            # Last potential not used
-            c1=2.0/(cb_meff[j]+cb_meff[j-1])
-            c2=2.0/(cb_meff[j]+cb_meff[j+1])
-            psi[2]=((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi[1]-c1*psi[0])/c2
-            psi[0]=psi[1]
-            psi[1]=psi[2]
-    else:
-        for j in range(0,n_max,1): # Last potential not used
-            psi[2]=(2*cb_meff[j]*(fis[j]-E)*(dx/hbar)**2+2)*psi[1]-psi[0]
-            psi[0]=psi[1]
-            psi[1]=psi[2]
+    for j in range(0,n_max-1,1):
+        # Last potential not used
+        c1=2.0/(cb_meff[j]+cb_meff[j-1])
+        c2=2.0/(cb_meff[j]+cb_meff[j+1])
+        psi[2]=((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi[1]-c1*psi[0])/c2
+        psi[0]=psi[1]
+        psi[1]=psi[2]
     return psi[2]
 
 #nb. function was much slower when fi is a numpy array than a python list.
@@ -163,23 +155,15 @@ def wf(E,fis,cb_meff):
     b[1] = psi[1]
     N += (psi[0])**2
     N += (psi[1])**2
-    if T_flag == True:
-        for j in range(0,n_max-1,1):
-            # Last potential not used
-            c1=2.0/(cb_meff[j]+cb_meff[j-1])
-            c2=2.0/(cb_meff[j]+cb_meff[j+1])
-            psi[2] = ((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi[1]-c1*psi[0])/c2
-            b[j+1]=psi[2]
-            N += (psi[2])**2
-            psi[0]=psi[1]
-            psi[1]=psi[2]
-    else:
-        for j in range(0,n_max,1): # Last potential not used
-            psi[2] = (2*cb_meff[j]*(fis[j]-E)*(dx/hbar)**2+2)*psi[1]-psi[0]
-            b[j+1]=psi[2]
-            N += (psi[2])**2
-            psi[0]=psi[1]
-            psi[1]=psi[2]
+    for j in range(0,n_max-1,1):
+        # Last potential not used
+        c1=2.0/(cb_meff[j]+cb_meff[j-1])
+        c2=2.0/(cb_meff[j]+cb_meff[j+1])
+        psi[2] = ((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi[1]-c1*psi[0])/c2
+        b[j+1]=psi[2]
+        N += (psi[2])**2
+        psi[0]=psi[1]
+        psi[1]=psi[2]
     return b,float(N*dx)
     
 # FUNCTIONS for FERMI-DIRAC STATISTICS-----------------------------------------   
@@ -314,20 +298,14 @@ if n_max > max_val:
 
 # Creating and Filling material arrays
 cb_meff = []	#conduction band effective mass
-#Nc = []
-#Nv = []
-#ni = []
 fi = []			#Bandstructure potential
-#fis = []
 fitot = []		#Energy potential = Bandstructure + Coulombic potential
 eps =[]			#dielectric constant
 
 cb_meff = [0.0]*(n_max+1)
-#Nc = [0.0]*(n_max+1)
-#Nv = [0.0]*(n_max+1)
-#ni = [0.0]*(n_max+1)
+
 fi = [0.0]*(n_max+1)
-#fis = [0.0]* (n_max+1)
+
 fitot = [0.0]*(n_max+1)
 eps = [0.0]*(n_max+1)
 posi = 0.0
@@ -387,17 +365,12 @@ delta_acc = 1e-6
 # Shooting method for Schrödinger Equation solution
 delta_E = 1e-3*q #Initial delta_E is 1 meV. This can be included in config as a setting?
 E_start = 0.0 #This can be included in config as a setting?
-T_flag = True
 d_E = 1e-8*q
 
 if abs(E_start)<1e-6*q:
     energyx = fi_min
 else:
     energyx = E_start
-
-# Populize subbands. Must be rewritten, it is manual now!
-#for j in range(0,inputfile.subnumber_e,1):
-#    N_state[j] = subband_n_ratio[j]*Ntotal
 
 # STARTING SELF CONSISTENT LOOP
 iteration = 0
