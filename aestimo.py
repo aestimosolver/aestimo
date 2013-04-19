@@ -16,13 +16,6 @@ from math import *
 
 # Import from config file
 inputfile = __import__(config.inputfilename)
-# Flags for different outputs
-E_out = config.electricfield_out
-V_out = config.potential_out
-S_out = config.sigma_out
-P_out = config.probability_out
-St_out = config.states_out
-Resultview = config.resultviewer
 
 print "Aestimo is starting..."
 # Reading inputs and using local variables
@@ -326,9 +319,9 @@ V = []			#Electric Potential
 V = [0.0] * (n_max+1)
 
 b = []			#Temporary array for wavefunction calculation
-b = [0.0]*(n_max+1)
+b = [0.0] * (n_max+1)
 # Subband wavefunction for electron list. 2-dimensional: [i][j] i:stateno, j:wavefunc
-wfe = np.zeros((inputfile.subnumber_e,n_max),dtype = float)
+wfe = np.zeros((inputfile.subnumber_e,n_max+1),dtype = float)
 
 for i in range(0, n_max+1, 1):
     posi = i*dx
@@ -394,7 +387,7 @@ while True:
         if not(config.messagesoff) :
             print "Working for subband no:",j+1
         b,Ntrial = wf(E_state[j]*1e-3*q,fitot,cb_meff)
-        for i in range(0,n_max,1):
+        for i in range(0,n_max+1,1):
             wfe[j][i]=b[i]/(Ntrial/dx)**0.5 #Ntrial/dx?
     
     # Calculate the effective mass of each subband
@@ -445,79 +438,28 @@ while True:
         previousE0 = E_state[0]
 
 # END OF SELF-CONSISTENT LOOP
+
 # Write the simulation results in files
-if S_out:
-    out_sigma_file = open("outputs/sigma.dat", "w")
-if E_out:
-    out_efield_file = open("outputs/efield.dat", "w")
-if V_out:
-    out_potn_file = open("outputs/potn.dat", "w")
-if St_out:
-    out_states_file = open("outputs/states.dat", "w")
-if P_out:
-    out_first_file = open("outputs/firststate.dat", "w")
 
-xx = 0.0
-# Arrays for drawing, maybe not necessary. Will be deleted in future.
-xaxis = []
-drw_sigma = []
-drw_efield = []
-drw_potn = []
-drw_state1 = []
-drw_state2 = []
-drw_first = []
+xaxis = np.arange(0,n_max+1)*dx   #metres
 
-# Filling them with zeros
-xaxis = [0.0]*(n_max)
-drw_sigma = [0.0]*(n_max)
-drw_efield = [0.0]*(n_max)
-drw_potn = [0.0]*(n_max)
-drw_potn_meV = [0.0]*(n_max)
-drw_state = [0.0]*(n_max)
-drw_states = [list(drw_state) for i in range(inputfile.subnumber_e)] # need to create copies of original list rather than references
-drw_first = [0.0]*(n_max)
-
-for i in range(0,n_max,1):
-    # Sigma
-    if S_out:
-        out_sigma_file.write(repr(xx) + " " + repr(sigma[i]) + "\n")
-    # Electric Field
-    if E_out:
-        out_efield_file.write(repr(xx) + " " + repr(F[i]) + "\n")
-    # Potential
-    if V_out:
-        out_potn_file.write(repr(xx) + " " + repr(fitot[i]) + "\n")
-    # Probability of First state
-    if P_out:
-        out_first_file.write(repr(xx) + " " + repr(wfe[0][i]) + "\n")
-    # for plotting
-    xaxis[i] = xx
-    drw_sigma[i] = sigma[i]
-    drw_efield[i] = F[i]
-    drw_potn[i] = fitot[i]
-    drw_potn_meV[i] = fitot[i]*J2meV
-    for state,wf in zip(drw_states,wfe):
-        state[i] = wf[i]
-    xx = xx+dx
-
-if St_out:
-    for j in range(0,inputfile.subnumber_e,1):
-        out_states_file.write(repr(j) + " " + repr(N_state[j]) + " " + repr(E_state[j]) +"\n")
-
-# Closing EQ files
-if S_out:
-    out_sigma_file.close() 
-if E_out:
-    out_efield_file.close()
-if V_out:
-    out_potn_file.close()
-if St_out:
-    out_states_file.close()
-if P_out:
-    out_first_file.close()
+def saveoutput(fname,datatuple):
+    np.savetxt(fname,np.column_stack(datatuple),fmt='%.6e', delimiter=' ')
+    
+if config.sigma_out:
+    saveoutput("outputs/sigma.dat",(xaxis,sigma))
+if config.electricfield_out:
+    saveoutput("outputs/efield.dat",(xaxis,F))
+if config.potential_out:
+    saveoutput("outputs/potn.dat",(xaxis,fitot))
+if config.states_out:
+    saveoutput("outputs/states.dat",(range(inputfile.subnumber_e),N_state,E_state,meff_state) )
+if config.probability_out:
+    saveoutput("outputs/wavefunctions.dat",(xaxis,wfe.transpose()) )
 
 # Resultviewer
-if Resultview:
+    
+if config.resultviewer:
     pl.figure(figsize=(10,8))
     pl.suptitle('Aestimo Results')
     pl.subplots_adjust(hspace=0.4,wspace=0.4)
@@ -525,7 +467,7 @@ if Resultview:
     #Plotting Sigma
     #figure(0)
     pl.subplot(2,2,1)
-    pl.plot(xaxis, drw_sigma)
+    pl.plot(xaxis, sigma)
     pl.xlabel('Position (m)')
     pl.ylabel('Sigma (e/m^2)')
     pl.title('Sigma')
@@ -534,7 +476,7 @@ if Resultview:
     #Plotting Efield
     #figure(1)
     pl.subplot(2,2,2)
-    pl.plot(xaxis, drw_efield)
+    pl.plot(xaxis, F)
     pl.xlabel('Position (m)')
     pl.ylabel('Electric Field strength (V/m)')
     pl.title('Electric Field')
@@ -543,7 +485,7 @@ if Resultview:
     #Plotting Potential
     #figure(2)
     pl.subplot(2,2,3)
-    pl.plot(xaxis, drw_potn)
+    pl.plot(xaxis, fitot)
     pl.xlabel('Position (m)')
     pl.ylabel('[V_cb + V_p] (J)')
     pl.title('Potential')
@@ -552,8 +494,8 @@ if Resultview:
     #Plotting State(s)
     #figure(3)
     pl.subplot(2,2,4)
-    for j,drw_state in enumerate(drw_states):
-        pl.plot(xaxis, drw_state, label='state %d' %j)
+    for j,state in enumerate(wfe):
+        pl.plot(xaxis, state, label='state %d' %j)
     pl.xlabel('Position (m)')
     pl.ylabel('Psi')
     pl.title('First state')
@@ -564,10 +506,10 @@ if Resultview:
     pl.figure(figsize=(10,8))
     pl.suptitle('Aestimo Results')
     pl.subplot(1,1,1)
-    pl.plot(xaxis,drw_potn_meV,'k')
-    for state,drw_state in zip(E_state,drw_states): 
-        pl.axhline(state,0.1,0.9,color='g',ls='--')
-        pl.plot(xaxis, np.array(drw_state)*200.0+state,'b')
+    pl.plot(xaxis,np.array(fitot)*J2meV,'k')
+    for level,state in zip(E_state,wfe): 
+        pl.axhline(level,0.1,0.9,color='g',ls='--')
+        pl.plot(xaxis, np.array(state)*200.0+level,'b')
     pl.axhline(E_F,0.1,0.9,color='r',ls='--')
     pl.xlabel('Position (m)')
     pl.ylabel('Energy (meV)')
