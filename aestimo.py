@@ -21,6 +21,7 @@ print "Aestimo is starting..."
 # Reading inputs and using local variables
 max_val = inputfile.maxgridpoints
 T = inputfile.T
+subnumber_e = inputfile.subnumber_e
 comp_scheme = inputfile.computation_scheme
 dx = inputfile.gridfactor*1e-9 #grid in m
 x_max = (inputfile.z_coordinate_end - inputfile.z_coordinate_begin)*1e-9 # in m
@@ -53,10 +54,10 @@ E_state = []
 N_state = []
 E_stateresult = []
 wfetot = []
-E_state = [0.0]*(inputfile.subnumber_e+1)
-N_state = [0.0]*(inputfile.subnumber_e+1)
-N_stateresult = [0.0]*(inputfile.subnumber_e+1)
-wfetot = [0.0]*(inputfile.subnumber_e+1)
+E_state = [0.0]*subnumber_e
+N_state = [0.0]*subnumber_e
+N_stateresult = [0.0]*subnumber_e
+wfetot = [0.0]*subnumber_e
 
 #Defining constants and material parameters
 q = 1.602176e-19 #C
@@ -168,7 +169,7 @@ def fd2(Ei,Ef,T):
 def calc_meff_state(wfe,cb_meff):
     #find subband effective mass
     meff_state = [0.0]*alen(wfe)
-    for j in range(0,inputfile.subnumber_e,1):
+    for j in range(0,subnumber_e,1):
         total=0.0
         for b,meff in zip(wfe[j],cb_meff):
             total+=float(b)**2/meff
@@ -251,10 +252,10 @@ def calc_sigma(wfe,N_state,dop):
     # This function calculates `net' areal charge density
     # i index over z co-ordinates
     # is index over states
-    for i in range(0,n_max+1,1):
+    for i in range(0,n_max,1):
         sigma[i] = 0.0
     for i in range(0,n_max,1):
-        for j in range(0,inputfile.subnumber_e,1):
+        for j in range(0,subnumber_e,1):
             sigma[i] = sigma[i] - N_state[j]*(float(wfe[j][i])**2)
             # n-type dopants give -ve *(N+j) representing electrons, hence 
             # addition of +ve ionised donors requires -*(Nda+i), note Nda is still a
@@ -295,35 +296,35 @@ fi = []			#Bandstructure potential
 fitot = []		#Energy potential = Bandstructure + Coulombic potential
 eps =[]			#dielectric constant
 
-cb_meff = [0.0]*(n_max+1)
+cb_meff = [0.0]*n_max
 
-fi = [0.0]*(n_max+1)
+fi = [0.0]*n_max
 
-fitot = [0.0]*(n_max+1)
-eps = [0.0]*(n_max+1)
+fitot = [0.0]*n_max
+eps = [0.0]*n_max
 posi = 0.0
 fi_min= 0.0
 
 dop = []		#doping distribution
-dop = [0.0]*(n_max+1)
+dop = [0.0]*n_max
 
 Ntotal = 0.0
 Ntotal2d = 0.0
 sigma = []		#charge distribution (donors + free charges)
-sigma = [0.0] * (n_max+1)
+sigma = [0.0] * n_max
 
 F = []			#Electric Field
-F = [0.0] * (n_max+1)
+F = [0.0] * n_max
 
 V = []			#Electric Potential
-V = [0.0] * (n_max+1)
+V = [0.0] * n_max
 
 b = []			#Temporary array for wavefunction calculation
-b = [0.0] * (n_max+1)
+b = [0.0] * n_max
 # Subband wavefunction for electron list. 2-dimensional: [i][j] i:stateno, j:wavefunc
-wfe = np.zeros((inputfile.subnumber_e,n_max+1),dtype = float)
+wfe = np.zeros((subnumber_e,n_max),dtype = float)
 
-for i in range(0, n_max+1, 1):
+for i in range(0, n_max, 1):
     posi = i*dx
     for j in range(0, totallayer,1):
         for m in range (0, totalmaterial,1):
@@ -380,14 +381,14 @@ while True:
             else:
                 energyx = fi_min
     
-    E_state=calc_E_state(inputfile.subnumber_e,fitot,cb_meff,energyx)
+    E_state=calc_E_state(subnumber_e,fitot,cb_meff,energyx)
     
     # Envelope Function Wave Functions
-    for j in range(0,inputfile.subnumber_e,1):
+    for j in range(0,subnumber_e,1):
         if not(config.messagesoff) :
             print "Working for subband no:",j+1
         b,Ntrial = wf(E_state[j]*1e-3*q,fitot,cb_meff)
-        for i in range(0,n_max+1,1):
+        for i in range(0,n_max,1):
             wfe[j][i]=b[i]/(Ntrial/dx)**0.5 #Ntrial/dx?
     
     # Calculate the effective mass of each subband
@@ -414,7 +415,7 @@ while True:
         print 'N[',i,']= ',Ni
     
     # Calculate `net' areal charge density and output to file
-    sigma=calc_sigma(wfe,N_state,dop) #one more instead of inputfile.subnumber_e
+    sigma=calc_sigma(wfe,N_state,dop) #one more instead of subnumber_e
     print "total donor charge = ",sum(dop)*dx,"m**-2"
     print "total level charge = ",sum(N_state),"m**-2"
     print "total system charge = ",sum(sigma),"m**-2"
@@ -441,7 +442,7 @@ while True:
 
 # Write the simulation results in files
 
-xaxis = np.arange(0,n_max+1)*dx   #metres
+xaxis = np.arange(0,n_max)*dx   #metres
 
 def saveoutput(fname,datatuple):
     np.savetxt(fname,np.column_stack(datatuple),fmt='%.6e', delimiter=' ')
@@ -453,7 +454,7 @@ if config.electricfield_out:
 if config.potential_out:
     saveoutput("outputs/potn.dat",(xaxis,fitot))
 if config.states_out:
-    saveoutput("outputs/states.dat",(range(inputfile.subnumber_e),N_state,E_state,meff_state) )
+    saveoutput("outputs/states.dat",(range(subnumber_e),N_state,E_state,meff_state) )
 if config.probability_out:
     saveoutput("outputs/wavefunctions.dat",(xaxis,wfe.transpose()) )
 
