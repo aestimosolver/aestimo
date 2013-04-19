@@ -30,6 +30,7 @@ meV2J=1e-3*q #meV to Joules
 inputfile = __import__(config.inputfilename)
 
 print "Aestimo is starting..."
+
 # Reading inputs and using local variables
 max_val = inputfile.maxgridpoints
 T = inputfile.T
@@ -85,20 +86,19 @@ def vegard(first,second,mole):
 # to the energy occurs for psi(+infinity)=0.
 
 # FUNCTIONS for SHOOTING ------------------
-def psi_at_inf(E,fis,cb_meff):
-    psi = []
-    psi = [0.0]*3
+def psi_at_inf(E,fis,cb_meff,n_max,dx):
     # boundary conditions
-    psi[0] = 0.0                 
-    psi[1] = 1.0
+    psi0 = 0.0                 
+    psi1 = 1.0
+    psi2 = None
     for j in range(0,n_max-1,1):
         # Last potential not used
         c1=2.0/(cb_meff[j]+cb_meff[j-1])
         c2=2.0/(cb_meff[j]+cb_meff[j+1])
-        psi[2]=((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi[1]-c1*psi[0])/c2
-        psi[0]=psi[1]
-        psi[1]=psi[2]
-    return psi[2]
+        psi2=((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
+        psi0=psi1
+        psi1=psi2
+    return psi2
 
 #nb. function was much slower when fi is a numpy array than a python list.
 def calc_E_state(numlevels,fi,cb_meff,energyx0): # delta_E,d_E
@@ -108,19 +108,19 @@ def calc_E_state(numlevels,fi,cb_meff,energyx0): # delta_E,d_E
     #cb_meff - effective mass of electrons in conduction band (kg)
     for i in range(0,numlevels,1):  
         #increment energy-search for f(x)=0
-        y2=psi_at_inf(energyx,fi,cb_meff)
+        y2=psi_at_inf(energyx,fi,cb_meff,n_max,dx)
         while True:
             y1=y2
             energyx += delta_E
-            y2=psi_at_inf(energyx,fi,cb_meff)
+            y2=psi_at_inf(energyx,fi,cb_meff,n_max,dx)
             if y1*y2 < 0:
                 break
         # improve estimate using midpoint rule
         energyx -= abs(y2)/(abs(y1)+abs(y2))*delta_E
         #implement Newton-Raphson method
         while True:
-            y = psi_at_inf(energyx,fi,cb_meff)
-            dy = (psi_at_inf(energyx+d_E,fi,cb_meff)- psi_at_inf(energyx-d_E,fi,cb_meff))/(2.0*d_E)
+            y = psi_at_inf(energyx,fi,cb_meff,n_max,dx)
+            dy = (psi_at_inf(energyx+d_E,fi,cb_meff,n_max,dx)- psi_at_inf(energyx-d_E,fi,cb_meff,n_max,dx))/(2.0*d_E)
             energyx -= y/dy
             if abs(y/dy) < 1e-9*meV2J:
                 break
