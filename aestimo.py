@@ -14,51 +14,6 @@ alen = np.alen
 import sys,config,database
 from math import *
 
-# Import from config file
-inputfile = __import__(config.inputfilename)
-
-print "Aestimo is starting..."
-# Reading inputs and using local variables
-max_val = inputfile.maxgridpoints
-T = inputfile.T
-subnumber_e = inputfile.subnumber_e
-comp_scheme = inputfile.computation_scheme
-dx = inputfile.gridfactor*1e-9 #grid in m
-x_max = (inputfile.z_coordinate_end - inputfile.z_coordinate_begin)*1e-9 # in m
-
-#Making a seperate material list
-material = []
-for item in inputfile.material:
-    material.append(item)
-totallayer = alen(material)
-
-material_property = []
-for item in database.materialproperty:
-    material_property.append(item)
-totalmaterial = alen(material_property)
-
-alloy_property = []
-for item in database.alloyproperty:
-    alloy_property.append(item)
-totalalloy = alen(alloy_property)
-
-# Changing material position info to meter
-for j in range(0, totallayer,1):
-    material[j][1] = float(inputfile.material[j][1])*1e-9
-    material[j][2] = float(inputfile.material[j][2])*1e-9
-print "Total layer number: ",totallayer
-print "Total material number in database: ",totalmaterial
-
-# Preparing empty subband energy lists. We will not use E_state[0]
-E_state = []
-N_state = []
-E_stateresult = []
-wfetot = []
-E_state = [0.0]*subnumber_e
-N_state = [0.0]*subnumber_e
-N_stateresult = [0.0]*subnumber_e
-wfetot = [0.0]*subnumber_e
-
 #Defining constants and material parameters
 q = 1.602176e-19 #C
 kb = 1.3806504e-23 #J/K
@@ -71,9 +26,51 @@ eps0= 8.8541878176e-12 #F/m
 J2meV=1e3/q #Joules to meV
 meV2J=1e-3*q #meV to Joules
 
-manual_iterate = 3
-previousE0=0
-damping = 0.4
+# Import from config file
+inputfile = __import__(config.inputfilename)
+
+print "Aestimo is starting..."
+# Reading inputs and using local variables
+max_val = inputfile.maxgridpoints
+T = inputfile.T
+subnumber_e = inputfile.subnumber_e
+comp_scheme = inputfile.computation_scheme
+dx = inputfile.gridfactor*1e-9 #grid in m
+x_max = (inputfile.z_coordinate_end - inputfile.z_coordinate_begin)*1e-9 # in m
+
+# Calculate the required number of grid points and renormalize dx
+n_max = int(x_max/dx)
+if n_max > max_val:
+    print " Grid number is exceeding the max number of ", max_val
+    exit()
+
+# Shooting method parameters for Schrödinger Equation solution
+delta_E = 1.0*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. #This can be included in config as a setting?
+d_E = 1e-5*meV2J #Energy step (Joules) for Newton-Raphson method when improving the precision of the energy of a found level.
+E_start = 0.0    #Energy to start shooting method from #This can be included in config as a setting?
+damping = 0.4    #averaging factor between iterations to smooth convergence.
+max_iterations=80 #maximum number of iterations.
+convergence_test=1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
+
+# Loading material list
+material = inputfile.material
+totallayer = alen(material)
+
+# Changing material position info to meter
+for layer in material:
+    layer[1]*= 1e-9
+    layer[2]*= 1e-9
+
+print "Total layer number: ",totallayer
+
+# Loading materials database
+material_property = database.materialproperty
+totalmaterial = alen(material_property)
+
+alloy_property = database.alloyproperty
+totalalloy = alen(alloy_property)
+
+print "Total material number in database: ",totalmaterial  
 
 
 # DO NOT EDIT UNDER HERE FOR PARAMETERS
@@ -105,8 +102,10 @@ def psi_at_inf(E,fis,cb_meff):
 
 #nb. function was much slower when fi is a numpy array than a python list.
 def calc_E_state(numlevels,fi,cb_meff,energyx0): # delta_E,d_E
-    energyx=energyx0
-    E_state=[0.0]*(numlevels)
+    energyx=energyx0 #starting energy for subband search (Joules)
+    E_state=[0.0]*numlevels #Energies of subbands (meV)
+    #fi - Potential energy (J)
+    #cb_meff - effective mass of electrons in conduction band (kg)
     for i in range(0,numlevels,1):  
         #increment energy-search for f(x)=0
         y2=psi_at_inf(energyx,fi,cb_meff)
@@ -123,9 +122,9 @@ def calc_E_state(numlevels,fi,cb_meff,energyx0): # delta_E,d_E
             y = psi_at_inf(energyx,fi,cb_meff)
             dy = (psi_at_inf(energyx+d_E,fi,cb_meff)- psi_at_inf(energyx-d_E,fi,cb_meff))/(2.0*d_E)
             energyx -= y/dy
-            if abs(y/dy) < 1e-12*q:
+            if abs(y/dy) < 1e-9*meV2J:
                 break
-        E_state[i]=energyx/(1e-3*q)
+        E_state[i]=energyx*J2meV
         # clears x from solution
         if not(config.messagesoff) :
             print "E[",i,"]=",E_state[i],"meV" #can be written on file.
@@ -174,7 +173,7 @@ def calc_meff_state(wfe,cb_meff):
         for b,meff in zip(wfe[j],cb_meff):
             total+=float(b)**2/meff
         meff_state[j] = 1.0/total
-    return meff_state
+    return meff_state #kg
     
 def fermilevel_0K(Ntotal2d,E_state,meff_state):
     Et,Ef=0.0,0.0
@@ -193,10 +192,10 @@ def fermilevel_0K(Ntotal2d,E_state,meff_state):
         Ni=(Ef - Ei)*csb_meff/(hbar**2*pi)*meV2J    # populations of levels
         Ni*=(Ni>0.0)
         N_state[i]=Ni
-    return Ef,N_state
+    return Ef,N_state #Fermi levels at 0K (meV), number of electrons in each subband at 0K
     
 def fermilevel(Ntotal2d,T,E_state,meff_state):
-    #find the Fermi level
+    #find the Fermi level (meV)
     def func(Ef,E_state,meff_state,Ntotal2d,T):
         #return Ntotal2d - sum( [csb_meff*fd2(Ei,Ef,T) for Ei,csb_meff in zip(E_state,meff_state)] )/(hbar**2*pi)
         diff = -Ntotal2d
@@ -208,19 +207,19 @@ def fermilevel(Ntotal2d,T,E_state,meff_state):
     #return float(Ef)
     #implement Newton-Raphson method
     Ef = Ef_0K
-    d_E = 1e-9
+    d_E = 1e-9 #Energy step (meV)
     while True:
         y = func(Ef,E_state,meff_state,Ntotal2d,T)
         dy = (func(Ef+d_E,E_state,meff_state,Ntotal2d,T)- func(Ef-d_E,E_state,meff_state,Ntotal2d,T))/(2.0*d_E)
         Ef -= y/dy
         if abs(y/dy) < 1e-12:
             break
-    return Ef
+    return Ef #(meV)
 
 def calc_N_state(Ef,T,Ns,E_state,meff_state):
     # Find the subband populations, taking advantage of step like d.o.s. and analytic integral of FD
     N_state=[fd2(Ei,Ef,T)*csb_meff/(hbar**2*pi) for Ei,csb_meff in zip(E_state,meff_state)]
-    return N_state
+    return N_state # number of carriers in each subband
     
 # FUNCTIONS for SELF-CONSISTENT POISSON--------------------------------
 def calc_field(sigma,eps):
@@ -284,46 +283,37 @@ def dop0(dop):
     return dop
 # ----------------------------------------------------
 
-# Calculate the required number of grid points and renormalize dx
-n_max = int(x_max/dx)
-if n_max > max_val:
-    print " Grid number is exceeding the max number of ", max_val
-    exit()
+
+# Preparing empty subband energy lists.
+E_state = [0.0]*subnumber_e     # Energies of subbands/levels (meV)
+N_state = [0.0]*subnumber_e     # Number of carriers in subbands  
 
 # Creating and Filling material arrays
-cb_meff = []	#conduction band effective mass
-fi = []			#Bandstructure potential
-fitot = []		#Energy potential = Bandstructure + Coulombic potential
-eps =[]			#dielectric constant
+cb_meff = [0.0]*n_max	#conduction band effective mass
+fi = [0.0]*n_max	#Bandstructure potential
+fitot = [0.0]*n_max	#Energy potential = Bandstructure + Coulombic potential
+eps =[0.0]*n_max	#dielectric constant
+dop = [0.0]*n_max	#doping distribution
+sigma = [0.0]*n_max	#charge distribution (donors + free charges)
+F = [0.0]*n_max		#Electric Field
+V = [0.0]*n_max		#Electric Potential
 
-cb_meff = [0.0]*n_max
+b = [0.0]*n_max		#Temporary array for wavefunction calculation
 
-fi = [0.0]*n_max
-
-fitot = [0.0]*n_max
-eps = [0.0]*n_max
-posi = 0.0
-fi_min= 0.0
-
-dop = []		#doping distribution
-dop = [0.0]*n_max
-
-Ntotal = 0.0
-Ntotal2d = 0.0
-sigma = []		#charge distribution (donors + free charges)
-sigma = [0.0] * n_max
-
-F = []			#Electric Field
-F = [0.0] * n_max
-
-V = []			#Electric Potential
-V = [0.0] * n_max
-
-b = []			#Temporary array for wavefunction calculation
-b = [0.0] * n_max
 # Subband wavefunction for electron list. 2-dimensional: [i][j] i:stateno, j:wavefunc
 wfe = np.zeros((subnumber_e,n_max),dtype = float)
 
+# Setup the doping
+dop = dop0(dop)
+Ntotal = sum(dop) # calculating total doping density m-3
+Ntotal2d = Ntotal*dx
+#print "Ntotal ",Ntotal,"m**-3"
+print "Ntotal2d ",Ntotal2d," m**-2"
+
+fi_min= 0.0 #minimum potential energy of structure (for limiting the energy range when searching for states)
+
+# initialise arrays/lists for structure
+posi = 0.0
 for i in range(0, n_max, 1):
     posi = i*dx
     for j in range(0, totallayer,1):
@@ -346,28 +336,16 @@ for i in range(0, n_max, 1):
     if fi[i] < fi_min:
         fi_min= fi[i]
 
-# Setup the doping
+#delta_acc = 1e-6
 
-dop = dop0(dop)
-Ntotal = sum(dop) # calculating total doping density m-3
-Ntotal2d = Ntotal*dx
-#print "Ntotal ",Ntotal,"m**-3"
-print "Ntotal2d ",Ntotal2d," m**-2"
-
-delta_acc = 1e-6
-
-# Shooting method for Schrödinger Equation solution
-delta_E = 1e-3*q #Initial delta_E is 1 meV. This can be included in config as a setting?
-E_start = 0.0 #This can be included in config as a setting?
-d_E = 1e-8*q
-
-if abs(E_start)<1e-6*q:
+if abs(E_start)<1e-3*meV2J: #energyx is the minimum energy (meV) when starting the search for bound states.
     energyx = fi_min
 else:
     energyx = E_start
 
 # STARTING SELF CONSISTENT LOOP
-iteration = 0
+iteration = 0   #iteration counter
+previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
 fitot = list(fi) #For initial iteration just copy fi. list(seq) returns a copy of the original rather than just an alias.
 
 while True:
@@ -387,7 +365,7 @@ while True:
     for j in range(0,subnumber_e,1):
         if not(config.messagesoff) :
             print "Working for subband no:",j+1
-        b,Ntrial = wf(E_state[j]*1e-3*q,fitot,cb_meff)
+        b,Ntrial = wf(E_state[j]*meV2J,fitot,cb_meff)
         for i in range(0,n_max,1):
             wfe[j][i]=b[i]/(Ntrial/dx)**0.5 #Ntrial/dx?
     
@@ -430,14 +408,14 @@ while True:
         V[i] = V[i] + damping*(Vnew[i] - V[i])
         fitot[i] = fi[i] + V[i]
     
-    if abs(E_state[0]-previousE0) < 1e-6:
+    if abs(E_state[0]-previousE0) < convergence_test: #Convergence test
         break
-    elif iteration > 80:
+    elif iteration > max_iterations: #Iteration limit
         break
     else:
         iteration += 1
         previousE0 = E_state[0]
-
+        
 # END OF SELF-CONSISTENT LOOP
 
 # Write the simulation results in files
