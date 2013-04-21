@@ -222,7 +222,61 @@ def calc_N_state(Ef,T,Ns,E_state,meff_state):
     return N_state # number of carriers in each subband
     
 # FUNCTIONS for SELF-CONSISTENT POISSON--------------------------------
+def dop0(dop):
+    posi = 0.0
+    for i in range(0, n_max, 1):
+        posi = i*dx
+        for j in range(0, totallayer,1):
+            if posi >= material[j][1] and posi <= material[j][2]:
+                k=j
+        if material[k][6] == 'n':
+            if material[k][5] == 0:
+                dop[i] = nii
+            else:
+                dop[i] = -material[k][5]*1e6
+        else:
+            if material[k][5] == 0:
+                dop[i] = nii
+            else:
+                dop[i] = material[k][5]*1e6
+    return dop
+
+def calc_sigma(wfe,N_state,dop):
+    # This function calculates `net' areal charge density
+    # i index over z co-ordinates
+    # is index over states
+    for i in range(0,n_max,1):
+        sigma[i] = 0.0
+    for i in range(0,n_max,1):
+        for j in range(0,subnumber_e,1):
+            sigma[i] = sigma[i] - N_state[j]*(float(wfe[j][i])**2)
+            # n-type dopants give -ve *(N+j) representing electrons, hence 
+            # addition of +ve ionised donors requires -*(Nda+i), note Nda is still a
+            # volume density, the delta_z converts it to an areal density
+        sigma[i] = sigma[i] - dop[i]*dx # This may be one tab indented.
+
+    return sigma
+    
+##
 def calc_field(sigma,eps):
+    # F electric field as a function of z-
+    # i index over z co-ordinates
+    # j index over z' co-ordinates
+
+    # For wave function initialise F
+    for i in range(0,n_max,1):
+        F[i] = 0.0
+    # Do zeroth case explicitly
+    for j in range(1,n_max,1):
+        # Note sigma is a number density per unit area, needs to be converted to Couloumb per unit area
+        F[0] -= q*sigma[j]/(2*eps[0]) #CMP'deki i ve j yer değişebilir - de + olabilir
+    # Do running integral
+    for i in range(1,n_max,1):
+        # Note sigma is a number density per unit area, needs to be converted to Couloumb per unit area
+        F[i] = F[i-1]*(eps[i-1]/eps[i]) + q*(sigma[i-1]+sigma[i])/(2.0*eps[i]) #CMP'deki i ve j yer değişebilir - de + olabilir
+    return F
+
+def calc_field_old(sigma,eps):
     # F electric field as a function of z-
     # i index over z co-ordinates
     # j index over z' co-ordinates
@@ -247,40 +301,6 @@ def calc_potn(F):
         V[i]=V[i-1]+q*F[i]*dx #+q -> electron -q->hole? 
     return V
 
-def calc_sigma(wfe,N_state,dop):
-    # This function calculates `net' areal charge density
-    # i index over z co-ordinates
-    # is index over states
-    for i in range(0,n_max,1):
-        sigma[i] = 0.0
-    for i in range(0,n_max,1):
-        for j in range(0,subnumber_e,1):
-            sigma[i] = sigma[i] - N_state[j]*(float(wfe[j][i])**2)
-            # n-type dopants give -ve *(N+j) representing electrons, hence 
-            # addition of +ve ionised donors requires -*(Nda+i), note Nda is still a
-            # volume density, the delta_z converts it to an areal density
-        sigma[i] = sigma[i] - dop[i]*dx # This may be one tab indented.
-
-    return sigma
-    
-def dop0(dop):
-    posi = 0.0
-    for i in range(0, n_max, 1):
-        posi = i*dx
-        for j in range(0, totallayer,1):
-            if posi >= material[j][1] and posi <= material[j][2]:
-                k=j
-        if material[k][6] == 'n':
-            if material[k][5] == 0:
-                dop[i] = nii
-            else:
-                dop[i] = -material[k][5]*1e6
-        else:
-            if material[k][5] == 0:
-                dop[i] = nii
-            else:
-                dop[i] = material[k][5]*1e6
-    return dop
 # ----------------------------------------------------
 
 
@@ -392,16 +412,16 @@ while True:
     for i,Ni in enumerate(N_state):
         print 'N[',i,']= ',Ni
     
-    # Calculate `net' areal charge density and output to file
+    # Calculate `net' areal charge density
     sigma=calc_sigma(wfe,N_state,dop) #one more instead of subnumber_e
     print "total donor charge = ",sum(dop)*dx,"m**-2"
     print "total level charge = ",sum(N_state),"m**-2"
     print "total system charge = ",sum(sigma),"m**-2"
     # Calculate electric field and output to file
     F=calc_field(sigma,eps)
-    # Calculate potential due to charge distribution and output to file	*/
+    # Calculate potential due to charge distribution
     Vnew=calc_potn(F)   
-    # Combine band edge potential with potential due to charge distribution */
+    # Combine band edge potential with potential due to charge distribution
     # To increase convergence, we calculate a moving average of electric potential 
     #with previous iterations. By dampening the corrective term, we avoid oscillations.
     for i in range(0,n_max,1):
