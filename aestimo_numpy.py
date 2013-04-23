@@ -161,7 +161,9 @@ def wf(E,fis,cb_meff):
         N += (psi[2])**2
         psi[0]=psi[1]
         psi[1]=psi[2]
-    return b,float(N*dx)
+    b2 = np.array(b)
+    b2/= N**0.5
+    return b2
     
 # FUNCTIONS for FERMI-DIRAC STATISTICS-----------------------------------------   
 def fd2(Ei,Ef,T):
@@ -383,8 +385,7 @@ while True:
     for j in range(0,subnumber_e,1):
         if not(config.messagesoff) :
             print "Working for subband no:",j+1
-        b,Ntrial = wf(E_state[j]*meV2J,fitot,cb_meff)
-        wfe[j]=b/(Ntrial/dx)**0.5 #Ntrial/dx?
+        wfe[j] = wf(E_state[j]*meV2J,fitot,cb_meff)
     
     # Calculate the effective mass of each subband
     meff_state = calc_meff_state(wfe,cb_meff)
