@@ -127,8 +127,6 @@ def calc_E_state(numlevels,fi,cb_meff,energyx0): # delta_E,d_E
                 break
         E_state[i]=energyx*J2meV
         # clears x from solution
-        if not(config.messagesoff) :
-            print "E[",i,"]=",E_state[i],"meV" #can be written on file.
         energyx += delta_E # finish for i-th state.
     return E_state
 
@@ -270,8 +268,7 @@ def calc_field(sigma,eps):
     # Do zeroth case explicitly - in fact, normally we can assume that the total electric field is zero (?)
     for j in range(1,n_max,1):
         # Note sigma is a number density per unit area, needs to be converted to Couloumb per unit area
-        F[0] -= q*sigma[j]/(2*eps[0]) #CMP'deki i ve j yer değişebilir - de + olabilir
-    
+        F[0] -= q*sigma[j]/(2.0*eps[0]) #CMP'deki i ve j yer değişebilir - de + olabilir
     # Do running integral
     for i in range(1,n_max,1):
         # Note sigma is a number density per unit area, needs to be converted to Couloumb per unit area
@@ -299,12 +296,11 @@ def calc_potn(F):
     
     #Calculate the potential, defining the first point as zero
     V = [0.0] * n_max
-    for i in range(0,n_max,1):
+    for i in range(1,n_max,1):
         V[i]=V[i-1]+q*F[i]*dx #+q -> electron -q->hole? 
     return V
 
 # ----------------------------------------------------
-
 
 # Preparing empty subband energy lists.
 E_state = [0.0]*subnumber_e     # Energies of subbands/levels (meV)
@@ -402,31 +398,17 @@ while True:
     # Calculate the effective mass of each subband
     meff_state = calc_meff_state(wfe,cb_meff)
     
-    for i,meff in enumerate(meff_state):
-        print 'meff[',i,']= ',meff/m_e
-
     ## Self-consistent Poisson
     
     # Calculate the Fermi energy and subband populations at 0K
     #E_F_0K,N_state_0K=fermilevel_0K(Ntotal2d,E_state,meff_state)
-    #print 'Efermi (at 0K) = ',E_F_0K,' J'
-    #for i,Ni in enumerate(N_state_0K):
-    #    print 'N[',i,']= ',Ni
-    
     # Calculate the Fermi energy at the temperature T (K)
     E_F = fermilevel(Ntotal2d,T,E_state,meff_state)
-    print 'Efermi (at %gK) = ' %T, E_F,' J'
     # Calculate the subband populations at the temperature T (K)
     N_state=calc_N_state(E_F,T,Ntotal2d,E_state,meff_state)
-    
-    for i,Ni in enumerate(N_state):
-        print 'N[',i,']= ',Ni
     # Calculate `net' areal charge density
     sigma=calc_sigma(wfe,N_state,dop) #one more instead of subnumber_e
-    print "total donor charge = ",sum(dop)*dx,"m**-2"
-    print "total level charge = ",sum(N_state),"m**-2"
-    print "total system charge = ",sum(sigma),"m**-2"
-    # Calculate electric field and output to file
+    # Calculate electric field
     F=calc_field(sigma,eps)
     # Calculate potential due to charge distribution
     Vnew=calc_potn(F)   
@@ -436,10 +418,27 @@ while True:
     for i in range(0,n_max,1):
         V[i] = V[i] + damping*(Vnew[i] - V[i])
         fitot[i] = fi[i] + V[i] + Vapp[i]
+        
+    #status
+    if not(config.messagesoff):
+        for i,level in enumerate(E_state):
+            print "E[",i,"]=",level,"meV" #can be written on file.
+        for i,meff in enumerate(meff_state):
+            print 'meff[',i,']= ',meff/m_e
+        for i,Ni in enumerate(N_state):
+            print 'N[',i,']= ',Ni        
+        #print 'Efermi (at 0K) = ',E_F_0K,' meV'
+        #for i,Ni in enumerate(N_state_0K):
+        #    print 'N[',i,']= ',Ni
+        print 'Efermi (at %gK) = ' %T, E_F,' meV'
+        print "total donor charge = ",sum(dop)*dx,"m**-2"
+        print "total level charge = ",sum(N_state),"m**-2"
+        print "total system charge = ",sum(sigma),"m**-2"
     
     if abs(E_state[0]-previousE0) < convergence_test: #Convergence test
         break
     elif iteration > max_iterations: #Iteration limit
+        print "Have reached maximum number of iterations"
         break
     else:
         iteration += 1
