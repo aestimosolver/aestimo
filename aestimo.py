@@ -367,15 +367,14 @@ else:
     energyx = E_start
     
 # Applied Field
-z0=x_max/2.0 # Finding the middle point (z0) of z-axis for Fapp
+x0=x_max/2.0 # Finding the middle point (z0) of z-axis for Fapp
 for i in range(0,n_max,1):
-    Vapp[i] = q*Fapp*(i*dx-z0)
+    Vapp[i] = q*Fapp*(i*dx-x0)
 
 # STARTING SELF CONSISTENT LOOP
 iteration = 1   #iteration counter
 previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
 #fitot = list(fi) #For initial iteration just copy fi. list(seq) returns a copy of the original rather than just an alias.
-z0=x_max/2.0 # Finding the middle point (z0) of z-axis for Fapp
 for i in range(0,n_max,1):
     fitot[i] = fi[i] + Vapp[i]  # Adding field qF(z-z0)
 
