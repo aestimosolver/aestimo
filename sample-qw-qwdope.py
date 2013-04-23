@@ -19,6 +19,9 @@ computation_scheme = 1
 # Total subband number to be calculated for electrons
 subnumber_e = 2
 
+# APPLIED ELECTRIC FIELD
+Fapplied = 0.0 # (V/m)
+
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------

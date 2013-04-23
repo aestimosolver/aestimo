@@ -33,6 +33,7 @@ print "Aestimo is starting..."
 
 # Reading inputs and using local variables
 max_val = inputfile.maxgridpoints
+Fapp = inputfile.Fapplied
 T = inputfile.T
 subnumber_e = inputfile.subnumber_e
 comp_scheme = inputfile.computation_scheme
@@ -264,12 +265,13 @@ def calc_field(sigma,eps):
     # j index over z' co-ordinates
 
     # For wave function initialise F
-    for i in range(0,n_max,1):
-        F[i] = 0.0
-    # Do zeroth case explicitly
+    #for i in range(0,n_max,1): #It isn't really necessary to zero everything when using the running integral form.
+    #    F[i] = 0.0
+    # Do zeroth case explicitly - in fact, normally we can assume that the total electric field is zero (?)
     for j in range(1,n_max,1):
         # Note sigma is a number density per unit area, needs to be converted to Couloumb per unit area
         F[0] -= q*sigma[j]/(2*eps[0]) #CMP'deki i ve j yer değişebilir - de + olabilir
+    
     # Do running integral
     for i in range(1,n_max,1):
         # Note sigma is a number density per unit area, needs to be converted to Couloumb per unit area
@@ -294,7 +296,7 @@ def calc_potn(F):
     # This function calculates the potential (energy actually)
     # V electric field as a function of z-
     # i	index over z co-ordinates
-
+    
     #Calculate the potential, defining the first point as zero
     V = [0.0] * n_max
     for i in range(0,n_max,1):
@@ -317,6 +319,7 @@ dop = [0.0]*n_max	#doping distribution
 sigma = [0.0]*n_max	#charge distribution (donors + free charges)
 F = [0.0]*n_max		#Electric Field
 V = [0.0]*n_max		#Electric Potential
+Vapp = [0.0]*n_max	#Electric Potential
 
 b = [0.0]*n_max		#Temporary array for wavefunction calculation
 
@@ -362,16 +365,24 @@ if abs(E_start)<1e-3*meV2J: #energyx is the minimum energy (meV) when starting t
     energyx = fi_min
 else:
     energyx = E_start
+    
+# Applied Field
+z0=x_max/2.0 # Finding the middle point (z0) of z-axis for Fapp
+for i in range(0,n_max,1):
+    Vapp[i] = q*Fapp*(i*dx-z0)
 
 # STARTING SELF CONSISTENT LOOP
-iteration = 0   #iteration counter
+iteration = 1   #iteration counter
 previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
-fitot = list(fi) #For initial iteration just copy fi. list(seq) returns a copy of the original rather than just an alias.
+#fitot = list(fi) #For initial iteration just copy fi. list(seq) returns a copy of the original rather than just an alias.
+z0=x_max/2.0 # Finding the middle point (z0) of z-axis for Fapp
+for i in range(0,n_max,1):
+    fitot[i] = fi[i] + Vapp[i]  # Adding field qF(z-z0)
 
 while True:
     if not(config.messagesoff) :
-        print "Iteration:",iteration+1
-    if iteration> 0:
+        print "Iteration:",iteration
+    if iteration> 1:
         for i in range(0, n_max, 1):
             # Find fi-minimum --may got error.
             if fitot[i] < fi_min:
@@ -411,7 +422,6 @@ while True:
     
     for i,Ni in enumerate(N_state):
         print 'N[',i,']= ',Ni
-    
     # Calculate `net' areal charge density
     sigma=calc_sigma(wfe,N_state,dop) #one more instead of subnumber_e
     print "total donor charge = ",sum(dop)*dx,"m**-2"
@@ -426,7 +436,7 @@ while True:
     #with previous iterations. By dampening the corrective term, we avoid oscillations.
     for i in range(0,n_max,1):
         V[i] = V[i] + damping*(Vnew[i] - V[i])
-        fitot[i] = fi[i] + V[i]
+        fitot[i] = fi[i] + V[i] + Vapp[i]
     
     if abs(E_state[0]-previousE0) < convergence_test: #Convergence test
         break
