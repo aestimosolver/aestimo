@@ -92,7 +92,7 @@ def psi_at_inf(E,fis,cb_meff,n_max,dx):
     psi0 = 0.0                 
     psi1 = 1.0
     psi2 = None
-    for j in range(0,n_max-1,1):
+    for j in range(1,n_max-1,1):
         # Last potential not used
         c1=2.0/(cb_meff[j]+cb_meff[j-1])
         c2=2.0/(cb_meff[j]+cb_meff[j+1])
@@ -147,7 +147,7 @@ def wf(E,fis,cb_meff):
     b[1] = psi[1]
     N += (psi[0])**2
     N += (psi[1])**2
-    for j in range(0,n_max-1,1):
+    for j in range(1,n_max-1,1):
         # Last potential not used
         c1=2.0/(cb_meff[j]+cb_meff[j-1])
         c2=2.0/(cb_meff[j]+cb_meff[j+1])
