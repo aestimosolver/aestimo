@@ -158,7 +158,7 @@ def wf(E,fis,cb_meff):
         psi[1]=psi[2]
     for j in range(0,n_max,1):
         b[j]/=(N)**0.5
-    return b
+    return b # units of dx**0.5
     
 # FUNCTIONS for FERMI-DIRAC STATISTICS-----------------------------------------   
 def fd2(Ei,Ef,T):
@@ -393,7 +393,7 @@ while True:
     for j in range(0,subnumber_e,1):
         if not(config.messagesoff) :
             print "Working for subband no:",j+1
-        wfe[j] = wf(E_state[j]*meV2J,fitot,cb_meff)
+        wfe[j] = wf(E_state[j]*meV2J,fitot,cb_meff) #wavefunction units dx**0.5
     
     # Calculate the effective mass of each subband
     meff_state = calc_meff_state(wfe,cb_meff)
@@ -426,7 +426,7 @@ while True:
         for i,meff in enumerate(meff_state):
             print 'meff[',i,']= ',meff/m_e
         for i,Ni in enumerate(N_state):
-            print 'N[',i,']= ',Ni        
+            print 'N[',i,']= ',Ni,' m**-2'        
         #print 'Efermi (at 0K) = ',E_F_0K,' meV'
         #for i,Ni in enumerate(N_state_0K):
         #    print 'N[',i,']= ',Ni
@@ -517,6 +517,7 @@ if config.resultviewer:
     for level,state in zip(E_state,wfe): 
         pl.axhline(level,0.1,0.9,color='g',ls='--')
         pl.plot(xaxis, np.array(state)*200.0+level,'b')
+        #pl.plot(xaxis, np.array(state)**2*1e-9/dx*200.0+level,'b')
     pl.axhline(E_F,0.1,0.9,color='r',ls='--')
     pl.xlabel('Position (m)')
     pl.ylabel('Energy (meV)')
