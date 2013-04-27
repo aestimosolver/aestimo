@@ -143,6 +143,7 @@ def wf(E,fis,cb_meff):
     # boundary conditions
     psi[0] = 0.0                 
     psi[1] = 1.0
+    b = [0.0]*n_max
     b[0] = psi[0]
     b[1] = psi[1]
     N += (psi[0])**2
@@ -223,7 +224,8 @@ def calc_N_state(Ef,T,Ns,E_state,meff_state):
     return N_state # number of carriers in each subband
     
 # FUNCTIONS for SELF-CONSISTENT POISSON--------------------------------
-def dop0(dop):
+def dop0():
+    dop = [0.0]*n_max
     posi = 0.0
     for i in range(0, n_max, 1):
         posi = i*dx
@@ -246,8 +248,7 @@ def calc_sigma(wfe,N_state,dop):
     # This function calculates `net' areal charge density
     # i index over z co-ordinates
     # is index over states
-    for i in range(0,n_max,1):
-        sigma[i] = 0.0
+    sigma = [0.0]*n_max
     for i in range(0,n_max,1):
         for j in range(0,subnumber_e,1):
             sigma[i] = sigma[i] - N_state[j]*(float(wfe[j][i])**2)
@@ -267,6 +268,7 @@ def calc_field(sigma,eps):
     # For wave function initialise F
     #for i in range(0,n_max,1): #It isn't really necessary to zero everything when using the running integral form.
     #    F[i] = 0.0
+    F = [0.0]*n_max
     # Do zeroth case explicitly - in fact, normally we can assume that the total electric field is zero (?)
     for j in range(1,n_max,1):
         # Note sigma is a number density per unit area, needs to be converted to Couloumb per unit area
@@ -319,13 +321,11 @@ F = [0.0]*n_max		#Electric Field
 V = [0.0]*n_max		#Electric Potential
 Vapp = [0.0]*n_max	#Electric Potential
 
-b = [0.0]*n_max		#Temporary array for wavefunction calculation
-
 # Subband wavefunction for electron list. 2-dimensional: [i][j] i:stateno, j:wavefunc
 wfe = np.zeros((subnumber_e,n_max),dtype = float)
 
 # Setup the doping
-dop = dop0(dop)
+dop = dop0()
 Ntotal = sum(dop) # calculating total doping density m-3
 Ntotal2d = Ntotal*dx
 #print "Ntotal ",Ntotal,"m**-3"
