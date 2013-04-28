@@ -298,6 +298,31 @@ def calc_potn(F):
         V[i]=V[i-1]+q*F[i]*dx #+q -> electron -q->hole? 
     return V
 
+
+# --- FUNCTION TO SET UP CALCULATION (INITIALISING STRUCTURE ARRAYS (LISTS)
+
+def fill_structure_lists():
+    # initialise arrays/lists for structure
+    for layer in material:
+        startindex = int(layer[1]/dx)
+        finishindex = int(layer[2]/dx)
+        #
+        matType = layer[3]
+        
+        if matType in material_property:
+            matprops = material_property[matType]
+            for i in range(startindex,finishindex):
+                cb_meff[i] = matprops[0]*m_e
+                fi[i] = matprops[4]*matprops[3]*q #Joule
+                eps[i] = matprops[2]*eps0
+            
+        elif matType in alloy_property:
+            alloyprops = alloy_property[matType]
+            for i in range(startindex,finishindex):            
+                cb_meff[i] = (alloyprops[0]+alloyprops[1]*layer[4])*m_e
+                fi[i] = alloyprops[4]*layer[4]*q*alloyprops[5] # for electron. Joule
+                eps[i] = (alloyprops[2]+alloyprops[3]*layer[4])*eps0
+ 
 # ----------------------------------------------------
 
 # Preparing empty subband energy lists.
@@ -318,6 +343,9 @@ Vapp = [0.0]*n_max	#Electric Potential
 # Subband wavefunction for electron list. 2-dimensional: [i][j] i:stateno, j:wavefunc
 wfe = np.zeros((subnumber_e,n_max),dtype = float)
 
+# Initialise Arrays
+fill_structure_lists()
+
 # Setup the doping
 dop = dop0()
 Ntotal = sum(dop) # calculating total doping density m-3
@@ -326,27 +354,8 @@ Ntotal2d = Ntotal*dx
 print "Ntotal2d ",Ntotal2d," m**-2"
 
 fi_min= 0.0 #minimum potential energy of structure (for limiting the energy range when searching for states)
-
-# initialise arrays/lists for structure
-posi = 0.0
+ 
 for i in range(0, n_max, 1):
-    posi = i*dx
-    for j in range(0, totallayer,1):
-        for m in range (0, totalmaterial,1):
-            if posi >= material[j][1] and posi <= material[j][2]:
-                k=j
-            if material[k][3] == material_property[m][1]:
-                cb_meff[i] = material_property[m][2]*m_e
-                fi[i] = material_property[m][6]*material_property[m][5]*q #Joule
-                eps[i] = material_property[m][4]*eps0
-        for m in range (0, totalalloy,1):
-            if posi >= material[j][1] and posi <= material[j][2]:
-                k=j
-            if material[k][3] == alloy_property[m][1]:
-                cb_meff[i] = (alloy_property[m][2]+alloy_property[m][3]*material[k][4])*m_e
-                fi[i] = alloy_property[m][6]*material[k][4]*q*alloy_property[m][7] # for electron. Joule
-                eps[i] = (alloy_property[m][4]+alloy_property[m][5]*material[k][4])*eps0
-    
     # Find fi-minimum
     if fi[i] < fi_min:
         fi_min= fi[i]
