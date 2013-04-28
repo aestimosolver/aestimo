@@ -343,7 +343,7 @@ Vapp = [0.0]*n_max	#Electric Potential
 # Subband wavefunction for electron list. 2-dimensional: [i][j] i:stateno, j:wavefunc
 wfe = np.zeros((subnumber_e,n_max),dtype = float)
 
-# Initialise Arrays
+# Initialise arrays/lists
 fill_structure_lists()
 
 # Setup the doping
