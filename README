@@ -1,5 +1,5 @@
 AESTIMO 1-D SELF-CONSISTENT SCHRÖDINGER-POISSON SOLVER
-Version 0.6
+Version 0.7
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Overview
@@ -9,8 +9,6 @@ Aestimo 1-D Self-consistent Schrödinger-Poisson Solver (simply aestimo) is a sim
 
 Hope that it also works for you. Please do not hesitate to contact us in case of any bugs found.
 
-The documentation material on this wiki is copyrighted (c) 2013. Reuse of the material on this wiki is permitted under either the GNU Free Documentation License or the CC-BY-SA License.
-
 Current features
 ----------------
 
@@ -19,6 +17,7 @@ Current features
     Carrier concentrations for electrons,
     Electric field distribution,
     Electron wavefunctions.
+    External Electric Field
 
 Getting Started
 ---------------
@@ -28,7 +27,9 @@ See the examples subdirectory of the distribution. Also, detailed information ca
 License
 -------
 
-The software is released under the modified BSD license, which means that everyone is free to download, use, and modify the code without charge.
+Aestimo is Copyrighted by (C) 2013 Sefer Bora Lisesivdin and Aestimo group. This software is distributed under the terms of the GNU General Public License v3, see ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt . This means that everyone is free to use, change, share and share the changes.
+
+For the list of contributors, see ~/AUTHORS 
 
 Download and Installation
 -------------------------
@@ -51,7 +52,11 @@ config.py - A simple configuration file. You must enter the input filename into 
 database.py - A database for materials properties.
 aestimo.py - Main program.
 sample-hetero.py - A sample input file.
-readme.txt - A read me file as you noticed.
+README - A readme file as you noticed.
+COPYING - License of the software.
+AUTHORS - List of the contributors.
+/outputs - Output folder
+/outputs/README_OUTPUTS - Readme file for Output files
 
 First of all, user must prepare or use an input file. This file must specified in config.py file. There are other options in config.py file like necessary output files and on/off options for result viewer and in-run messages. After specifiying an input file in config.py, user can run the aestimo easily with executing the command
 
@@ -61,10 +66,4 @@ or
 
 ./main.py
 
-If the output file options are true in config.py file, results can be found in the outputs folder as:
-
-sigma.dat - Areal charge density
-efield.dat - Electric field
-potn.dat - Electric potential
-states.dat - Values of states in the related quantum region
-firststate.dat - Probability distribution of first quantum state 
+If the output file options are true in config.py file, results can be found in the outputs folder. For Output files, please read /outputs/README_OUTPUTS file.
