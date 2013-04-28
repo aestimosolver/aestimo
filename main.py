@@ -12,6 +12,6 @@ from math import *
 # DO NOT EDIT UNDER THIS POINT
 # ------------------------------------------------------------------------------
 import config
-import aestimo_numpy
+import aestimo
 
 
