@@ -92,7 +92,7 @@ def psi_at_inf(E,fis,cb_meff,n_max,dx):
     psi0 = 0.0                 
     psi1 = 1.0
     psi2 = None
-    for j in range(0,n_max-1,1):
+    for j in range(1,n_max-1,1):
         # Last potential not used
         c1=2.0/(cb_meff[j]+cb_meff[j-1])
         c2=2.0/(cb_meff[j]+cb_meff[j+1])
@@ -148,11 +148,12 @@ def wf(E,fis,cb_meff):
     # boundary conditions
     psi[0] = 0.0                 
     psi[1] = 1.0
+    b = [0.0]*n_max
     b[0] = psi[0]
     b[1] = psi[1]
     N += (psi[0])**2
     N += (psi[1])**2
-    for j in range(0,n_max-1,1):
+    for j in range(1,n_max-1,1):
         # Last potential not used
         c1=2.0/(cb_meff[j]+cb_meff[j-1])
         c2=2.0/(cb_meff[j]+cb_meff[j+1])
@@ -163,7 +164,8 @@ def wf(E,fis,cb_meff):
         psi[1]=psi[2]
     b2 = np.array(b)
     b2/= N**0.5
-    return b2
+    return b2 # units of dx**0.5
+
     
 # FUNCTIONS for FERMI-DIRAC STATISTICS-----------------------------------------   
 def fd2(Ei,Ef,T):
@@ -224,24 +226,19 @@ def calc_N_state(Ef,T,Ns,E_state,meff_state):
     return N_state # number of carriers in each subband
     
 # FUNCTIONS for SELF-CONSISTENT POISSON--------------------------------
-def dop0(dop):
-    posi = 0.0
-    for i in range(0, n_max, 1):
-        posi = i*dx
-        for j in range(0, totallayer,1):
-            if posi >= material[j][1] and posi <= material[j][2]:
-                k=j
-        if material[k][6] == 'n':
-            if material[k][5] == 0:
-                dop[i] = nii
-            else:
-                dop[i] = -material[k][5]*1e6
-        else:
-            if material[k][5] == 0:
-                dop[i] = nii
-            else:
-                dop[i] = material[k][5]*1e6
+def dop0():
+    dop = np.zeros(n_max)
+    for layer in material:
+        startindex = int(layer[1]/dx)
+        finishindex = int(layer[2]/dx)
+        if layer[6] == 'n':  
+            chargedensity = -layer[5]*1e6 #charge density in m**-3 (conversion from cm**-3)
+        elif layer[6] == 'p': 
+            chargedensity = layer[5]*1e6 #charge density in m**-3 (conversion from cm**-3)
+        
+        dop[startindex:finishindex] = chargedensity
     return dop
+
 
 def calc_sigma(wfe,N_state,dop):
     # This function calculates `net' areal charge density
@@ -300,6 +297,29 @@ def calc_potn(F):
     V = np.cumsum(tmp) #+q -> electron -q->hole? 
     return V
 
+
+# --- FUNCTION TO SET UP CALCULATION (INITIALISING STRUCTURE ARRAYS (LISTS)
+
+def fill_structure_lists():
+    # initialise arrays/lists for structure
+    for layer in material:
+        startindex = int(layer[1]/dx)
+        finishindex = int(layer[2]/dx)
+        #
+        matType = layer[3]
+        
+        if matType in material_property:
+            matprops = material_property[matType]
+            cb_meff[startindex:finishindex] = matprops[0]*m_e
+            fi[startindex:finishindex] = matprops[4]*matprops[3]*q #Joule
+            eps[startindex:finishindex] = matprops[2]*eps0
+            
+        elif matType in alloy_property:
+            alloyprops = alloy_property[matType]            
+            cb_meff[startindex:finishindex] = (alloyprops[0]+alloyprops[1]*layer[4])*m_e
+            fi[startindex:finishindex] = alloyprops[4]*layer[4]*q*alloyprops[5] # for electron. Joule
+            eps[startindex:finishindex] = (alloyprops[2]+alloyprops[3]*layer[4])*eps0
+ 
 # ----------------------------------------------------
 
 
@@ -319,40 +339,23 @@ F = np.zeros(n_max)		#Electric Field
 V = np.zeros(n_max)             #Electric Potential
 Vapp = np.zeros(n_max)			#Applied Electric Potential
 
-b = np.zeros(n_max)             #Temporary array for wavefunction calculation
 
 # Subband wavefunction for electron list. 2-dimensional: [i][j] i:stateno, j:wavefunc
 wfe = np.zeros((subnumber_e,n_max))
 
+# Initialise Arrays
+fill_structure_lists()
+
 # Setup the doping
-dop = dop0(dop)
+dop = dop0()
 Ntotal = sum(dop) # calculating total doping density m-3
 Ntotal2d = Ntotal*dx
 #print "Ntotal ",Ntotal,"m**-3"
 print "Ntotal2d ",Ntotal2d," m**-2"
 
 fi_min= 0.0 #minimum potential energy of structure (for limiting the energy range when searching for states)
-
-# initialise arrays/lists for structure
-posi = 0.0
+ 
 for i in range(0, n_max, 1):
-    posi = i*dx
-    for j in range(0, totallayer,1):
-        for m in range (0, totalmaterial,1):
-            if posi >= material[j][1] and posi <= material[j][2]:
-                k=j
-            if material[k][3] == material_property[m][1]:
-                cb_meff[i] = material_property[m][2]*m_e
-                fi[i] = material_property[m][6]*material_property[m][5]*q #Joule
-                eps[i] = material_property[m][4]*eps0
-        for m in range (0, totalalloy,1):
-            if posi >= material[j][1] and posi <= material[j][2]:
-                k=j
-            if material[k][3] == alloy_property[m][1]:
-                cb_meff[i] = (alloy_property[m][2]+alloy_property[m][3]*material[k][4])*m_e
-                fi[i] = alloy_property[m][6]*material[k][4]*q*alloy_property[m][7] # for electron. Joule
-                eps[i] = (alloy_property[m][4]+alloy_property[m][5]*material[k][4])*eps0
-    
     # Find fi-minimum
     if fi[i] < fi_min:
         fi_min= fi[i]
@@ -385,8 +388,8 @@ while True:
     for j in range(0,subnumber_e,1):
         if not(config.messagesoff) :
             print "Working for subband no:",j+1
-        wfe[j] = wf(E_state[j]*meV2J,fitot,cb_meff)
-    
+        wfe[j] = wf(E_state[j]*meV2J,fitot,cb_meff) #wavefunction units dx**0.5
+
     # Calculate the effective mass of each subband
     meff_state = calc_meff_state(wfe,cb_meff)
     
@@ -418,7 +421,7 @@ while True:
         for i,meff in enumerate(meff_state):
             print 'meff[',i,']= ',meff/m_e
         for i,Ni in enumerate(N_state):
-            print 'N[',i,']= ',Ni        
+            print 'N[',i,']= ',Ni,' m**-2'        
         #print 'Efermi (at 0K) = ',E_F_0K,' meV'
         #for i,Ni in enumerate(N_state_0K):
         #    print 'N[',i,']= ',Ni
@@ -509,6 +512,7 @@ if config.resultviewer:
     for level,state in zip(E_state,wfe): 
         pl.axhline(level,0.1,0.9,color='g',ls='--')
         pl.plot(xaxis, state*200.0+level,'b')
+        #pl.plot(xaxis, state**2*1e-9/dx*200.0+level,'b')
     pl.axhline(E_F,0.1,0.9,color='r',ls='--')
     pl.xlabel('Position (m)')
     pl.ylabel('Energy (meV)')
