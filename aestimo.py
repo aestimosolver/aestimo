@@ -226,23 +226,17 @@ def calc_N_state(Ef,T,Ns,E_state,meff_state):
 # FUNCTIONS for SELF-CONSISTENT POISSON--------------------------------
 def dop0():
     dop = [0.0]*n_max
-    posi = 0.0
-    for i in range(0, n_max, 1):
-        posi = i*dx
-        for j in range(0, totallayer,1):
-            if posi >= material[j][1] and posi <= material[j][2]:
-                k=j
-        if material[k][6] == 'n':
-            if material[k][5] == 0:
-                dop[i] = nii
-            else:
-                dop[i] = -material[k][5]*1e6
-        else:
-            if material[k][5] == 0:
-                dop[i] = nii
-            else:
-                dop[i] = material[k][5]*1e6
+    for layer in material:
+        startindex = int(layer[1]/dx)
+        finishindex = int(layer[2]/dx)
+        if layer[6] == 'n':  
+            chargedensity = -layer[5]*1e6 #charge density in m**-3 (conversion from cm**-3)
+        elif layer[6] == 'p': 
+            chargedensity = layer[5]*1e6 #charge density in m**-3 (conversion from cm**-3)
+        for j in range(startindex,finishindex):
+            dop[j] = chargedensity
     return dop
+
 
 def calc_sigma(wfe,N_state,dop):
     # This function calculates `net' areal charge density
