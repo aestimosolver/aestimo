@@ -1,8 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-  Program:    Aestimo 1D Schrodinger-Poisson Solver
-  Version:    v.0.6
+ Aestimo 1D Schrodinger-Poisson Solver
+ Version v.0.7
+ Copyright (C) 2013 Sefer Bora Lisesivdin and Aestimo group
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
+
+    For the list of contributors, see ~/AUTHORS
 
   Description: This is the aestimo calculator.
   
@@ -280,7 +296,7 @@ def calc_field_old(sigma,eps):
     # j index over z' co-ordinates
 
     # For wave function initialise F
-    F[:] = 0.0
+    F = np.zeros(n_max)
     for i in range(0,n_max,1):
         for j in range(0,n_max,1):
            # Note sigma is a number density per unit area, needs to be converted to Couloumb per unit area
@@ -343,7 +359,7 @@ Vapp = np.zeros(n_max)			#Applied Electric Potential
 # Subband wavefunction for electron list. 2-dimensional: [i][j] i:stateno, j:wavefunc
 wfe = np.zeros((subnumber_e,n_max))
 
-# Initialise Arrays
+# Initialise arrays
 fill_structure_lists()
 
 # Setup the doping

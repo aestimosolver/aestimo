@@ -294,8 +294,7 @@ def calc_field_old(sigma,eps):
     # j index over z' co-ordinates
 
     # For wave function initialise F
-    for i in range(0,n_max,1):
-        F[i] = 0.0
+    F[i] = [0.0]*n_max
     for i in range(0,n_max,1):
         for j in range(0,n_max,1):
             # Note sigma is a number density per unit area, needs to be converted to Couloumb per unit area
