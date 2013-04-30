@@ -122,6 +122,12 @@ def calc_E_state(numlevels,fi,cb_meff,energyx0): # delta_E,d_E
     E_state=[0.0]*numlevels #Energies of subbands (meV)
     #fi - Potential energy (J)
     #cb_meff - effective mass of electrons in conduction band (kg)
+    #print 'energyx', energyx,type(energyx)
+    #print 'cb_meff', cb_meff[0:10], type(cb_meff), type(cb_meff[0])
+    #print 'n_max', n_max, type(n_max)
+    #print 'fi', fi[0:10], type(fi), type(fi[0])
+    #print 'dx', dx, type(dx)
+    exit()
     for i in range(0,numlevels,1):  
         #increment energy-search for f(x)=0
         y2=psi_at_inf(energyx,fi,cb_meff,n_max,dx)
@@ -382,7 +388,7 @@ else:
     energyx = E_start
     
 # Applied Field
-x0=x_max/2.0 # Finding the middle point (z0) of z-axis for Fapp
+x0=dx*n_max/2.0 # Finding the middle point (z0) of z-axis for Fapp
 for i in range(0,n_max,1):
     Vapp[i] = q*Fapp*(i*dx-x0)
 
