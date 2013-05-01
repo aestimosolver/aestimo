@@ -562,20 +562,7 @@ def Poisson_Schrodinger(model):
     
     return results
 
-
-if __name__=="__main__":
-        
-    # Import from config file
-    inputfile = __import__(config.inputfilename)
-    
-    # Initialise structure class
-    model = StructureFrom(inputfile,database)
-         
-    # Perform the calculation
-    result = Poisson_Schrodinger(model)
-    
-    # Write the simulation results in files
-    
+def save_and_plot(result,model):
     xaxis = result.xaxis
         
     def saveoutput(fname,datatuple):
@@ -652,6 +639,21 @@ if __name__=="__main__":
         pl.ylabel('Energy (meV)')
         pl.grid(True)
         pl.show()
+
+
+if __name__=="__main__":
         
+    # Import from config file
+    inputfile = __import__(config.inputfilename)
+    
+    # Initialise structure class
+    model = StructureFrom(inputfile,database)
+         
+    # Perform the calculation
+    result = Poisson_Schrodinger(model)
+    
+    # Write the simulation results in files
+    save_and_plot(result,model)
+            
     print "Simulation is finished. All files are closed."
     print "Please control the related files."

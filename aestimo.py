@@ -127,7 +127,7 @@ def calc_E_state(numlevels,fi,cb_meff,energyx0): # delta_E,d_E
     #print 'n_max', n_max, type(n_max)
     #print 'fi', fi[0:10], type(fi), type(fi[0])
     #print 'dx', dx, type(dx)
-    exit()
+    #exit()
     for i in range(0,numlevels,1):  
         #increment energy-search for f(x)=0
         y2=psi_at_inf(energyx,fi,cb_meff,n_max,dx)

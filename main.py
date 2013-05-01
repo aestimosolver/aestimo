@@ -22,13 +22,31 @@
 
  Description:  This is the main file.
 """
-from pylab import *
-import sys 
-from math import *
+import matplotlib.pyplot as pl
+import numpy as np
+#import sys 
 
-# DO NOT EDIT UNDER THIS POINT
-# ------------------------------------------------------------------------------
 import config
-import aestimo
 
+if False:
+    import aestimo_numpy as aestimo
+    import database
+    
+    # Import from config file
+    inputfile = __import__(config.inputfilename)
+    
+    # Initialise structure class
+    model = aestimo.StructureFrom(inputfile,database)
+        
+    # Perform the calculation
+    result= aestimo.Poisson_Schrodinger(model)
+    
+    # Write the simulation results in files
+    aestimo.save_and_plot(result,model)
 
+else:
+    import aestimo
+
+    
+print "Simulation is finished. All files are closed."
+print "Please control the related files."
