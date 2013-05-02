@@ -46,14 +46,25 @@ inputfile = __import__(config.inputfilename)
 
 print "Aestimo is starting..."
 
-# Reading inputs and using local variables
+## Reading inputs and using local variables
+
+# Loading material list
+material = inputfile.material
+totallayer = alen(material)
+
+# Changing material thickness info to meter
+for layer in material:
+    layer[0]*= 1e-9
+
+print "Total layer number: ",totallayer
+
 max_val = inputfile.maxgridpoints
 Fapp = inputfile.Fapplied
 T = inputfile.T
 subnumber_e = inputfile.subnumber_e
 comp_scheme = inputfile.computation_scheme
 dx = inputfile.gridfactor*1e-9 #grid in m
-x_max = (inputfile.z_coordinate_end - inputfile.z_coordinate_begin)*1e-9 # in m
+x_max = sum([layer[0] for layer in material]) #total thickness (m)
 
 # Calculate the required number of grid points and renormalize dx
 n_max = int(x_max/dx)
@@ -68,17 +79,6 @@ E_start = 0.0    #Energy to start shooting method from #This can be included in 
 damping = 0.4    #averaging factor between iterations to smooth convergence.
 max_iterations=80 #maximum number of iterations.
 convergence_test=1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
-
-# Loading material list
-material = inputfile.material
-totallayer = alen(material)
-
-# Changing material position info to meter
-for layer in material:
-    layer[1]*= 1e-9
-    layer[2]*= 1e-9
-
-print "Total layer number: ",totallayer
 
 # Loading materials database
 material_property = database.materialproperty
@@ -246,14 +246,15 @@ def calc_N_state(Ef,T,Ns,E_state,meff_state):
     
 # FUNCTIONS for SELF-CONSISTENT POISSON--------------------------------
 def dop0():
-    dop = [0.0]*n_max
+    position = 0.0 # metres
     for layer in material:
-        startindex = int(layer[1]/dx)
-        finishindex = int(layer[2]/dx)
-        if layer[6] == 'n':  
-            chargedensity = -layer[5]*1e6 #charge density in m**-3 (conversion from cm**-3)
-        elif layer[6] == 'p': 
-            chargedensity = layer[5]*1e6 #charge density in m**-3 (conversion from cm**-3)
+        startindex = int(position/dx)
+        position += layer[0] # update position to end of the layer
+        finishindex = int(position/dx)
+        if layer[4] == 'n':  
+            chargedensity = -layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
+        elif layer[4] == 'p': 
+            chargedensity = layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
         for j in range(startindex,finishindex):
             dop[j] = chargedensity
     return dop
@@ -323,11 +324,13 @@ def calc_potn(F):
 
 def fill_structure_lists():
     # initialise arrays/lists for structure
+    position = 0.0 # metres
     for layer in material:
-        startindex = int(layer[1]/dx)
-        finishindex = int(layer[2]/dx)
+        startindex = int(position/dx)
+        position += layer[0] # update position to end of the layer
+        finishindex = int(position/dx)
         #
-        matType = layer[3]
+        matType = layer[1]
         
         if matType in material_property:
             matprops = material_property[matType]
@@ -339,9 +342,9 @@ def fill_structure_lists():
         elif matType in alloy_property:
             alloyprops = alloy_property[matType]
             for i in range(startindex,finishindex):            
-                cb_meff[i] = (alloyprops[0]+alloyprops[1]*layer[4])*m_e
-                fi[i] = alloyprops[4]*layer[4]*q*alloyprops[5] # for electron. Joule
-                eps[i] = (alloyprops[2]+alloyprops[3]*layer[4])*eps0
+                cb_meff[i] = (alloyprops[0]+alloyprops[1]*layer[2])*m_e
+                fi[i] = alloyprops[4]*layer[2]*q*alloyprops[5] # for electron. Joule
+                eps[i] = (alloyprops[2]+alloyprops[3]*layer[2])*eps0
  
 # ----------------------------------------------------
 

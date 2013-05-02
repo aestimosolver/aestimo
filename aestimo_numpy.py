@@ -81,8 +81,11 @@ class Structure():
         print "Total material number in database: ",totalmaterial + totalally
         
     def create_structure_arrays(self):
-        # initialise arrays/lists for structure
-        n_max = self.n_max
+        """ initialise arrays/lists for structure"""
+        # Calculate the required number of grid points
+        self.x_max = sum([layer[0] for layer in self.material])*1e-9 #total thickness (m)
+        n_max = int(self.x_max/self.dx)
+        self.n_max = n_max
         dx =self.dx
         material_property = self.material_property
         alloy_property = self.alloy_property
@@ -92,11 +95,13 @@ class Structure():
         eps =np.zeros(n_max)		#dielectric constant
         dop = np.zeros(n_max)
         
+        position = 0.0 # keeping in metres (to minimise errors)
         for layer in self.material:
-            startindex = int(layer[1]*1e-9/dx)
-            finishindex = int(layer[2]*1e-9/dx)
+            startindex = int(position*1e-9/dx)
+            position += layer[0] # update position to end of the layer
+            finishindex = int(position*1e-9/dx)
             #
-            matType = layer[3]
+            matType = layer[1]
             
             if matType in material_property:
                 matprops = material_property[matType]
@@ -106,15 +111,15 @@ class Structure():
                 
             elif matType in alloy_property:
                 alloyprops = alloy_property[matType]            
-                cb_meff[startindex:finishindex] = (alloyprops[0]+alloyprops[1]*layer[4])*m_e
-                fi[startindex:finishindex] = alloyprops[4]*layer[4]*q*alloyprops[5] # for electron. Joule
-                eps[startindex:finishindex] = (alloyprops[2]+alloyprops[3]*layer[4])*eps0
+                cb_meff[startindex:finishindex] = (alloyprops[0]+alloyprops[1]*layer[2])*m_e
+                fi[startindex:finishindex] = alloyprops[4]*layer[2]*q*alloyprops[5] # for electron. Joule
+                eps[startindex:finishindex] = (alloyprops[2]+alloyprops[3]*layer[2])*eps0
                 
             #doping
-            if layer[6] == 'n':  
-                chargedensity = -layer[5]*1e6 #charge density in m**-3 (conversion from cm**-3)
-            elif layer[6] == 'p': 
-                chargedensity = layer[5]*1e6 #charge density in m**-3 (conversion from cm**-3)
+            if layer[4] == 'n':  
+                chargedensity = -layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
+            elif layer[4] == 'p': 
+                chargedensity = layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
             else:
                 chargedensity = 0.0
             
@@ -136,21 +141,23 @@ class StructureFrom(Structure):
         self.subnumber_e = inputfile.subnumber_e
         self.comp_scheme = inputfile.computation_scheme
         self.dx = inputfile.gridfactor*1e-9 #grid in m
-        self.x_max = (inputfile.z_coordinate_end - inputfile.z_coordinate_begin)*1e-9 # in m
-        
-        max_val = inputfile.maxgridpoints
-        # Calculate the required number of grid points and renormalize dx
-        self.n_max = int(self.x_max/self.dx)
-        if self.n_max > max_val:
-            print " Grid number is exceeding the max number of ", max_val
-            exit()
         
         # Loading material list
         self.material = inputfile.material
         totallayer = alen(self.material)
         print "Total layer number: ",totallayer
+        
+        # Calculate the required number of grid points
+        self.x_max = sum([layer[0] for layer in self.material])*1e-9 #total thickness (m)
+        self.n_max = int(self.x_max/self.dx)
+        
+        # Check on n_max
+        max_val = inputfile.maxgridpoints
+        if self.n_max > max_val:
+            print " Grid number is exceeding the max number of ", max_val
+            exit()
                 
-        # Loading materials database
+        # Loading materials database #
         self.material_property = database.materialproperty
         totalmaterial = alen(self.material_property)
         
