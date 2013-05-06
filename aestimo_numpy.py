@@ -60,6 +60,7 @@ class Structure():
         n_max - number of grid points
         
         cb_meff #conduction band effective mass (kg) (array, len n_max)
+        cb_meff_alpha #non-parabolicity constant.
         fi #Bandstructure potential (J) (array, len n_max)
         eps #dielectric constant (including eps0) (array, len n_max)
         dop #doping distribution (m**-3) (array, len n_max)
@@ -91,9 +92,10 @@ class Structure():
         alloy_property = self.alloy_property
         
         cb_meff = np.zeros(n_max)	#conduction band effective mass
+        cb_meff_alpha = np.zeros(n_max) #non-parabolicity constant.
         fi = np.zeros(n_max)		#Bandstructure potential
         eps =np.zeros(n_max)		#dielectric constant
-        dop = np.zeros(n_max)
+        dop = np.zeros(n_max)           #doping
         
         position = 0.0 # keeping in metres (to minimise errors)
         for layer in self.material:
@@ -106,12 +108,15 @@ class Structure():
             if matType in material_property:
                 matprops = material_property[matType]
                 cb_meff[startindex:finishindex] = matprops[0]*m_e
+                cb_meff_alpha[startindex:finishindex] = matprops[5]
                 fi[startindex:finishindex] = matprops[4]*matprops[3]*q #Joule
                 eps[startindex:finishindex] = matprops[2]*eps0
                 
             elif matType in alloy_property:
-                alloyprops = alloy_property[matType]            
-                cb_meff[startindex:finishindex] = (alloyprops[0]+alloyprops[1]*layer[2])*m_e
+                alloyprops = alloy_property[matType] 
+                cb_meff_alloy = (alloyprops[0]+alloyprops[1]*layer[2])*m_e
+                cb_meff[startindex:finishindex] = cb_meff_alloy
+                cb_meff_alpha[startindex:finishindex] = alloyprops[6]*(alloyprops[0]/cb_meff_alloy)**2 #non-parabolicity constant for alloy.
                 fi[startindex:finishindex] = alloyprops[4]*layer[2]*q*alloyprops[5] # for electron. Joule
                 eps[startindex:finishindex] = (alloyprops[2]+alloyprops[3]*layer[2])*eps0
                 
@@ -128,6 +133,7 @@ class Structure():
         
         self.fi = fi
         self.cb_meff = cb_meff
+        self.cb_meff_alpha = cb_meff_alpha
         self.eps = eps
         self.dop = dop
         #return fi,cb_meff,eps,dop
@@ -197,7 +203,8 @@ def vegard(first,second,mole):
 # to the energy occurs for psi(+infinity)=0.
 
 # FUNCTIONS for SHOOTING ------------------
-def psi_at_inf(E,fis,cb_meff,n_max,dx):
+def psi_at_inf1(E,fis,cb_meff,cb_meff_alpha,n_max,dx): #inclusion of cb_meff_alpha means both versions have the same calling arguments
+    """Shooting method for heterostructure as given in Harrison's book"""
     # boundary conditions
     psi0 = 0.0                 
     psi1 = 1.0
@@ -210,7 +217,39 @@ def psi_at_inf(E,fis,cb_meff,n_max,dx):
         psi0=psi1
         psi1=psi2
     return psi2
+    
+def psi_at_inf2(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
+    """shooting method with non-parabolicity"""
+    # boundary conditions
+    psi0 = 0.0                 
+    psi1 = 1.0
+    psi2 = None
+    for j in range(1,n_max-1,1): # Last potential not used
+        c1 = 2.0 / (cb_meff[j]*(1.0 - cb_meff_alpha[j]*(E - fis[j])) +\
+                    cb_meff[j-1]*(1.0 - cb_meff_alpha[j-1]*(E - fis[j-1])) ) 
+        c2 = 2.0 / (cb_meff[j]*(1.0 - cb_meff_alpha[j]*(E - fis[j])) +\
+                    cb_meff[j+1]*(1.0 - cb_meff_alpha[j+1]*(E - fis[j+1])) )       
+        psi2=((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
+        psi0=psi1
+        psi1=psi2
+    return psi2
 
+"""
+def psi_at_inf2(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
+    ""shooting method with non-parabolicity""
+    cb_meff_E = lambda j : cb_meff[j]*(1.0 - cb_meff_alpha[j]*(E - fis[j])) # energy dependent mass
+    # boundary conditions
+    psi0 = 0.0                 
+    psi1 = 1.0
+    psi2 = None
+    for j in range(1,n_max-1,1): # Last potential not used     
+        c1=2.0/(cb_meff_E(j) +cb_meff_E(j-1))
+        c2=2.0/(cb_meff_E(j) +cb_meff_E(j+1))
+        psi2=((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
+        psi0=psi1
+        psi1=psi2
+    return psi2
+"""    
 #nb. function was much slower when fi is a numpy array than a python list.
 def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
     """Finds the Eigen-energies of any bound states of the chosen potential.
@@ -225,6 +264,8 @@ def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
     fi = fi.tolist() #lists are faster than numpy arrays for loops
     cb_meff = model.cb_meff # effective mass of electrons in conduction band (kg)
     cb_meff = cb_meff.tolist() #lists are faster than numpy arrays for loops
+    cb_meff_alpha = model.cb_meff_alpha # non-parabolicity constant for conduction band mass.
+    cb_meff_alpha = cb_meff_alpha.tolist() #lists are faster than numpy arrays for loops
     energyx = float(energyx0) #starting energy for subband search (Joules) + floats are faster than numpy.float64
     n_max = model.n_max
     dx = model.dx
@@ -234,21 +275,27 @@ def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
     #print 'fi', fi[0:10], type(fi), type(fi[0])
     #print 'dx', dx, type(dx)
     #exit()
+    #choose shooting function
+    if model.comp_scheme == 2: #non-parabolicity calculation
+        psi_at_inf = psi_at_inf2
+    else:
+        psi_at_inf = psi_at_inf1
+    
     for i in range(0,numlevels,1):  
         #increment energy-search for f(x)=0
-        y2=psi_at_inf(energyx,fi,cb_meff,n_max,dx)
+        y2=psi_at_inf(energyx,fi,cb_meff,cb_meff_alpha,n_max,dx)
         while True:
             y1=y2
             energyx += delta_E
-            y2=psi_at_inf(energyx,fi,cb_meff,n_max,dx)
+            y2=psi_at_inf(energyx,fi,cb_meff,cb_meff_alpha,n_max,dx)
             if y1*y2 < 0:
                 break
         # improve estimate using midpoint rule
         energyx -= abs(y2)/(abs(y1)+abs(y2))*delta_E
         #implement Newton-Raphson method
         while True:
-            y = psi_at_inf(energyx,fi,cb_meff,n_max,dx)
-            dy = (psi_at_inf(energyx+d_E,fi,cb_meff,n_max,dx)- psi_at_inf(energyx-d_E,fi,cb_meff,n_max,dx))/(2.0*d_E)
+            y = psi_at_inf(energyx,fi,cb_meff,cb_meff_alpha,n_max,dx)
+            dy = (psi_at_inf(energyx+d_E,fi,cb_meff,cb_meff_alpha,n_max,dx)- psi_at_inf(energyx-d_E,fi,cb_meff,cb_meff_alpha,n_max,dx))/(2.0*d_E)
             energyx -= y/dy
             if abs(y/dy) < 1e-9*meV2J:
                 break
@@ -273,8 +320,14 @@ def wf(E,fis,model):
         dx - step size (metres)"""
     fis = fis.tolist() #lists are faster than numpy arrays for loops
     cb_meff = model.cb_meff.tolist() #lists are faster than numpy arrays for loops
+    cb_meff_alpha = model.cb_meff_alpha.tolist() #
     n_max = model.n_max
     dx = model.dx
+    #choosing effective mass function
+    if model.comp_scheme == 2: #non-parabolicity calculation
+        cb_meff_E = lambda j : cb_meff[j]*(1.0 - cb_meff_alpha[j]*(E - fis[j])) # energy dependent mass
+    else:
+        cb_meff_E = lambda j : cb_meff[j]
     #
     N = 0.0 # Normalization integral
     psi = []
@@ -289,8 +342,8 @@ def wf(E,fis,model):
     N += (psi[1])**2
     for j in range(1,n_max-1,1):
         # Last potential not used
-        c1=2.0/(cb_meff[j]+cb_meff[j-1])
-        c2=2.0/(cb_meff[j]+cb_meff[j+1])
+        c1=2.0/(cb_meff_E(j)+cb_meff_E(j-1))
+        c2=2.0/(cb_meff_E(j)+cb_meff_E(j+1))
         psi[2] = ((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi[1]-c1*psi[0])/c2
         b[j+1]=psi[2]
         N += (psi[2])**2

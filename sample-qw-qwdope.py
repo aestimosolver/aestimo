@@ -13,6 +13,7 @@ T = 300.0 #Kelvin
 # COMPUTATIONAL SCHEME
 # For now, there is only one computational scheme
 # 1: Schrodinger-Poisson
+# 2: Schrodinger-Poisson with non-parabolicity
 computation_scheme = 1
 
 # QUANTUM

@@ -27,9 +27,9 @@
 
 # Input File(s)
 # -------------
-#inputfilename = "sample-qw-barrierdope"
+inputfilename = "sample-qw-barrierdope"
 #inputfilename = "sample-qw-qwdope"
-inputfilename = "sample-moddop"
+#inputfilename = "sample-moddop"
 
 # Output Files
 # ------------

@@ -13,7 +13,8 @@ T = 300.0 #Kelvin
 # COMPUTATIONAL SCHEME
 # For now, there is only one computational scheme
 # 1: Schrodinger-Poisson
-computation_scheme = 1
+# 2: Schrodinger-Poisson with non-parabolicity
+computation_scheme = 2
 
 # QUANTUM
 # Total subband number to be calculated for electrons

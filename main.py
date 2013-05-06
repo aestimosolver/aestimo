@@ -37,7 +37,7 @@ if False:
     
     # Initialise structure class
     model = aestimo.StructureFrom(inputfile,database)
-        
+    
     # Perform the calculation
     result= aestimo.Poisson_Schrodinger(model)
     
