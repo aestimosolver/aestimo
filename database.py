@@ -32,13 +32,13 @@
 # MATERIAL PROPERTIES
 # materialproperties| Material : cb_mass | vb_mass | epsilonStatic | Eg-bagil | V_CB | cb_mass_alpha
 materialproperty = {'Si':   [0.156, 0.537, 11.7, 0.0, 0.0, 0.0],
-                    'GaAs': [0.067, 0.500, 12.90, 0.0, 0.67, 0.0],
+                    'GaAs': [0.067, 0.500, 12.90, 0.0, 0.67, 5.3782e18],
                     'AlAs':  [0.15, 0.500, 10.06, 1.247, 0.67, 0.0]
                     }
 
 # ALLOY PROPERTIES
 # alloyproperties| Alloy : cb_mass_x=0 | cb_mass_b  | eps_x=0 | eps_b | Eg-bagil | V_CB | cb_mass_alpha
-alloyproperty = {'AlGaAs':  [0.067, 0.083, 12.90, -2.84, 1.247, 0.67, 0.0]
+alloyproperty = {'AlGaAs':  [0.067, 0.083, 12.90, -2.84, 1.247, 0.67, 5.3782e18]
                 }
 
 

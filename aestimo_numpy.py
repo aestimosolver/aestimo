@@ -114,8 +114,8 @@ class Structure():
                 
             elif matType in alloy_property:
                 alloyprops = alloy_property[matType] 
-                cb_meff_alloy = (alloyprops[0]+alloyprops[1]*layer[2])*m_e
-                cb_meff[startindex:finishindex] = cb_meff_alloy
+                cb_meff_alloy = (alloyprops[0]+alloyprops[1]*layer[2])
+                cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
                 cb_meff_alpha[startindex:finishindex] = alloyprops[6]*(alloyprops[0]/cb_meff_alloy)**2 #non-parabolicity constant for alloy.
                 fi[startindex:finishindex] = alloyprops[4]*layer[2]*q*alloyprops[5] # for electron. Joule
                 eps[startindex:finishindex] = (alloyprops[2]+alloyprops[3]*layer[2])*eps0
@@ -225,10 +225,10 @@ def psi_at_inf2(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
     psi1 = 1.0
     psi2 = None
     for j in range(1,n_max-1,1): # Last potential not used
-        c1 = 2.0 / (cb_meff[j]*(1.0 - cb_meff_alpha[j]*(E - fis[j])) +\
-                    cb_meff[j-1]*(1.0 - cb_meff_alpha[j-1]*(E - fis[j-1])) ) 
-        c2 = 2.0 / (cb_meff[j]*(1.0 - cb_meff_alpha[j]*(E - fis[j])) +\
-                    cb_meff[j+1]*(1.0 - cb_meff_alpha[j+1]*(E - fis[j+1])) )       
+        c1 = 2.0 / (cb_meff[j]*(1.0 + cb_meff_alpha[j]*(E - fis[j])) +\
+                    cb_meff[j-1]*(1.0 + cb_meff_alpha[j-1]*(E - fis[j-1])) ) 
+        c2 = 2.0 / (cb_meff[j]*(1.0 + cb_meff_alpha[j]*(E - fis[j])) +\
+                    cb_meff[j+1]*(1.0 + cb_meff_alpha[j+1]*(E - fis[j+1])) )       
         psi2=((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
         psi0=psi1
         psi1=psi2
@@ -276,7 +276,7 @@ def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
     #print 'dx', dx, type(dx)
     #exit()
     #choose shooting function
-    if model.comp_scheme == 2: #non-parabolicity calculation
+    if model.comp_scheme in (1,3): #then include non-parabolicity calculation
         psi_at_inf = psi_at_inf2
     else:
         psi_at_inf = psi_at_inf1
@@ -324,8 +324,8 @@ def wf(E,fis,model):
     n_max = model.n_max
     dx = model.dx
     #choosing effective mass function
-    if model.comp_scheme == 2: #non-parabolicity calculation
-        cb_meff_E = lambda j : cb_meff[j]*(1.0 - cb_meff_alpha[j]*(E - fis[j])) # energy dependent mass
+    if model.comp_scheme in (1,3): #non-parabolicity calculation
+        cb_meff_E = lambda j : cb_meff[j]*(1.0 + cb_meff_alpha[j]*(E - fis[j])) # energy dependent mass
     else:
         cb_meff_E = lambda j : cb_meff[j]
     #
@@ -356,13 +356,23 @@ def wf(E,fis,model):
     
 # FUNCTIONS for FERMI-DIRAC STATISTICS-----------------------------------------   
 def fd2(Ei,Ef,T):
-    #integral of Fermi Dirac Equation for energy independent density of states.
-    #Ei [meV], Ef [meV], T [K]"""
+    """integral of Fermi Dirac Equation for energy independent density of states.
+    Ei [meV], Ef [meV], T [K]"""
     return kb*T*log(exp(meV2J*(Ef-Ei)/(kb*T))+1)
 
 def calc_meff_state(wfe,cb_meff):
-    #find subband effective mass
+    """find subband effective masses"""
     tmp = 1.0/np.sum(wfe**2/cb_meff,axis=1)
+    meff_state = tmp.tolist()
+    return meff_state #kg
+    
+def calc_meff_state2(wfe,E_state,fi,model):
+    """find subband effective masses including non-parabolicity
+    (but stilling using a fixed effective mass for each subband dispersion)"""
+    cb_meff = model.cb_meff # effective mass of conduction band across structure
+    cb_meff_alpha = model.cb_meff_alpha # non-parabolicity constant across structure
+    cb_meff_states = np.array([cb_meff*(1.0 + cb_meff_alpha*(E*meV2J - fi)) for E in E_state])
+    tmp = 1.0/np.sum(wfe**2/cb_meff_states,axis=1)
     meff_state = tmp.tolist()
     return meff_state #kg
     
@@ -496,7 +506,7 @@ def Poisson_Schrodinger(model):
     dop = model.dop
     Fapp = model.Fapp
     T = model.T
-    #comp_scheme = model.comp_scheme
+    comp_scheme = model.comp_scheme
     subnumber_e = model.subnumber_e
     dx = model.dx
     n_max = model.n_max
@@ -553,7 +563,10 @@ def Poisson_Schrodinger(model):
             wfe[j] = wf(E_state[j]*meV2J,fitot,model) #wavefunction units dx**0.5
 
         # Calculate the effective mass of each subband
-        meff_state = calc_meff_state(wfe,cb_meff)
+        if model.comp_scheme in (1,3): #include non-parabolicity in calculation
+            meff_state = calc_meff_state2(wfe,E_state,fitot,model)
+        else:
+            meff_state = calc_meff_state(wfe,cb_meff)
         
         ## Self-consistent Poisson
         
@@ -569,13 +582,7 @@ def Poisson_Schrodinger(model):
         F=calc_field(sigma,eps)
         # Calculate potential due to charge distribution
         Vnew=calc_potn(F,dx)   
-        # Combine band edge potential with potential due to charge distribution
-        # To increase convergence, we calculate a moving average of electric potential 
-        #with previous iterations. By dampening the corrective term, we avoid oscillations.
-
-        V+= damping*(Vnew - V)
-        fitot = fi + V + Vapp
-        
+        #
         #status
         if not(config.messagesoff):
             for i,level in enumerate(E_state):
@@ -591,6 +598,16 @@ def Poisson_Schrodinger(model):
             print "total donor charge = ",np.sum(dop)*dx,"m**-2"
             print "total level charge = ",sum(N_state),"m**-2"
             print "total system charge = ",np.sum(sigma),"m**-2"
+        #
+        if comp_scheme in (0,1): 
+            #if we are not self-consistently including Poisson Effects then only do one loop
+            break
+        
+        # Combine band edge potential with potential due to charge distribution
+        # To increase convergence, we calculate a moving average of electric potential 
+        #with previous iterations. By dampening the corrective term, we avoid oscillations.
+        V+= damping*(Vnew - V)
+        fitot = fi + V + Vapp
         
         if abs(E_state[0]-previousE0) < convergence_test: #Convergence test
             break

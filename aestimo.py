@@ -58,11 +58,15 @@ for layer in material:
 
 print "Total layer number: ",totallayer
 
+comp_scheme = inputfile.computation_scheme
+if comp_scheme in (1,3):
+    print "aestimo doesn't yet include non-parabolicity calcualtions - try aestimo_numpy instead"
+    exit()
+    
 max_val = inputfile.maxgridpoints
 Fapp = inputfile.Fapplied
 T = inputfile.T
 subnumber_e = inputfile.subnumber_e
-comp_scheme = inputfile.computation_scheme
 dx = inputfile.gridfactor*1e-9 #grid in m
 x_max = sum([layer[0] for layer in material]) #total thickness (m)
 
@@ -437,14 +441,8 @@ while True:
     # Calculate electric field
     F=calc_field(sigma,eps)
     # Calculate potential due to charge distribution
-    Vnew=calc_potn(F)   
-    # Combine band edge potential with potential due to charge distribution
-    # To increase convergence, we calculate a moving average of electric potential 
-    #with previous iterations. By dampening the corrective term, we avoid oscillations.
-    for i in range(0,n_max,1):
-        V[i] = V[i] + damping*(Vnew[i] - V[i])
-        fitot[i] = fi[i] + V[i] + Vapp[i]
-        
+    Vnew=calc_potn(F)
+    #       
     #status
     if not(config.messagesoff):
         for i,level in enumerate(E_state):
@@ -460,7 +458,18 @@ while True:
         print "total donor charge = ",sum(dop)*dx,"m**-2"
         print "total level charge = ",sum(N_state),"m**-2"
         print "total system charge = ",sum(sigma),"m**-2"
-    
+    #
+    if comp_scheme in (0,1): 
+        #if we are not self-consistently including Poisson Effects then only do one loop
+        break 
+        
+    # Combine band edge potential with potential due to charge distribution
+    # To increase convergence, we calculate a moving average of electric potential 
+    #with previous iterations. By dampening the corrective term, we avoid oscillations.
+    for i in range(0,n_max,1):
+        V[i] = V[i] + damping*(Vnew[i] - V[i])
+        fitot[i] = fi[i] + V[i] + Vapp[i]
+        
     if abs(E_state[0]-previousE0) < convergence_test: #Convergence test
         break
     elif iteration > max_iterations: #Iteration limit
