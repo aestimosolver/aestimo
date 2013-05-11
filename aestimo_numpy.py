@@ -116,7 +116,7 @@ class Structure():
                 alloyprops = alloy_property[matType] 
                 cb_meff_alloy = (alloyprops[0]+alloyprops[1]*layer[2])
                 cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
-                cb_meff_alpha[startindex:finishindex] = alloyprops[6]*(alloyprops[0]/cb_meff_alloy)**2 #non-parabolicity constant for alloy.
+                cb_meff_alpha[startindex:finishindex] = alloyprops[6]*(alloyprops[0]/cb_meff_alloy) #non-parabolicity constant for alloy.
                 fi[startindex:finishindex] = alloyprops[4]*layer[2]*q*alloyprops[5] # for electron. Joule
                 eps[startindex:finishindex] = (alloyprops[2]+alloyprops[3]*layer[2])*eps0
                 
