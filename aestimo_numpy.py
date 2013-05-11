@@ -107,18 +107,19 @@ class Structure():
             
             if matType in material_property:
                 matprops = material_property[matType]
-                cb_meff[startindex:finishindex] = matprops[0]*m_e
-                cb_meff_alpha[startindex:finishindex] = matprops[5]
-                fi[startindex:finishindex] = matprops[4]*matprops[3]*q #Joule
-                eps[startindex:finishindex] = matprops[2]*eps0
+                cb_meff[startindex:finishindex] = matprops['cb_mass']*m_e
+                cb_meff_alpha[startindex:finishindex] = matprops['cb_mass_alpha']
+                fi[startindex:finishindex] = matprops['V_CB']*matprops['Eg-bagil']*q #Joule
+                eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
                 
             elif matType in alloy_property:
                 alloyprops = alloy_property[matType] 
-                cb_meff_alloy = (alloyprops[0]+alloyprops[1]*layer[2])
+                x = layer[2] #alloy ratio
+                cb_meff_alloy = (alloyprops['cb_mass_x=0']+alloyprops['cb_mass_b']*x)
                 cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
-                cb_meff_alpha[startindex:finishindex] = alloyprops[6]*(alloyprops[0]/cb_meff_alloy) #non-parabolicity constant for alloy.
-                fi[startindex:finishindex] = alloyprops[4]*layer[2]*q*alloyprops[5] # for electron. Joule
-                eps[startindex:finishindex] = (alloyprops[2]+alloyprops[3]*layer[2])*eps0
+                cb_meff_alpha[startindex:finishindex] = alloyprops['cb_mass_alpha']*(alloyprops['cb_mass_x=0']/cb_meff_alloy) #non-parabolicity constant for alloy.
+                fi[startindex:finishindex] = alloyprops['V_CB']*alloyprops['Eg-bagil']*x*q # for electron. Joule
+                eps[startindex:finishindex] = (alloyprops['eps_x=0']+alloyprops['eps_b']*x)*eps0
                 
             #doping
             if layer[4] == 'n':  

@@ -31,14 +31,14 @@
 
 # MATERIAL PROPERTIES
 # materialproperties| Material : cb_mass | vb_mass | epsilonStatic | Eg-bagil | V_CB | cb_mass_alpha
-materialproperty = {'Si':   [0.156, 0.537, 11.7, 0.0, 0.0, 0.0],
-                    'GaAs': [0.067, 0.500, 12.90, 0.0, 0.67, 5.3782e18],
-                    'AlAs':  [0.15, 0.500, 10.06, 1.247, 0.67, 0.0]
+materialproperty = {'Si':   {'cb_mass':0.156, 'vb_mass':0.537, 'epsilonStatic': 11.7, 'Eg-bagil':0.0, 'V_CB':0.0, 'cb_mass_alpha':0.0},
+                    'GaAs': {'cb_mass':0.067, 'vb_mass':0.500, 'epsilonStatic':12.90, 'Eg-bagil':0.0, 'V_CB':0.67,'cb_mass_alpha':5.3782e18},
+                    'AlAs': {'cb_mass':0.15,  'vb_mass':0.500, 'epsilonStatic':10.06, 'Eg-bagil':1.247,'V_CB':0.67,'cb_mass_alpha':0.0}
                     }
 
 # ALLOY PROPERTIES
 # alloyproperties| Alloy : cb_mass_x=0 | cb_mass_b  | eps_x=0 | eps_b | Eg-bagil | V_CB | cb_mass_alpha
-alloyproperty = {'AlGaAs':  [0.067, 0.083, 12.90, -2.84, 1.247, 0.67, 5.3782e18]
+alloyproperty = {'AlGaAs': {'cb_mass_x=0':0.067, 'cb_mass_b':0.083, 'eps_x=0':12.90, 'eps_b':-2.84, 'Eg-bagil':1.247, 'V_CB':0.67, 'cb_mass_alpha':5.3782e18}
                 }
 
 

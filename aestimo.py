@@ -326,6 +326,17 @@ def calc_potn(F):
 
 # --- FUNCTION TO SET UP CALCULATION (INITIALISING STRUCTURE ARRAYS (LISTS)
 
+materialproperty = {'Si':   {'cb_mass':0.156, 'vb_mass':0.537, 'epsilonStatic': 11.7, 'Eg-bagil':0.0, 'V_CB':0.0, 'cb_mass_alpha':0.0},
+                    'GaAs': {'cb_mass':0.067, 'vb_mass':0.500, 'epsilonStatic':12.90, 'Eg-bagil':0.0, 'V_CB':0.67,'cb_mass_alpha':5.3782e18},
+                    'AlAs': {'cb_mass':0.15,  'vb_mass':0.500, 'epsilonStatic':10.06, 'Eg-bagil':1.247,'V_CB':0.67,'cb_mass_alpha':0.0}
+                    }
+
+# ALLOY PROPERTIES
+# alloyproperties| Alloy : cb_mass_x=0 | cb_mass_b  | eps_x=0 | eps_b | Eg-bagil | V_CB | cb_mass_alpha
+alloyproperty = {'AlGaAs': {'cb_mass_x=0':0.067, 'cb_mass_b':0.083, 'eps_x=0':12.90, 'eps_b':-2.84, 'Eg-bagil':1.247, 'V_CB':0.67, 'cb_mass_alpha':5.3782e18}
+                }
+
+
 def fill_structure_lists():
     # initialise arrays/lists for structure
     position = 0.0 # metres
@@ -339,16 +350,17 @@ def fill_structure_lists():
         if matType in material_property:
             matprops = material_property[matType]
             for i in range(startindex,finishindex):
-                cb_meff[i] = matprops[0]*m_e
-                fi[i] = matprops[4]*matprops[3]*q #Joule
-                eps[i] = matprops[2]*eps0
+                cb_meff[i] = matprops['cb_mass']*m_e
+                fi[i] = matprops['V_CB']*matprops['Eg-bagil']*q #Joule
+                eps[i] = matprops['epsilonStatic']*eps0
             
         elif matType in alloy_property:
             alloyprops = alloy_property[matType]
-            for i in range(startindex,finishindex):            
-                cb_meff[i] = (alloyprops[0]+alloyprops[1]*layer[2])*m_e
-                fi[i] = alloyprops[4]*layer[2]*q*alloyprops[5] # for electron. Joule
-                eps[i] = (alloyprops[2]+alloyprops[3]*layer[2])*eps0
+            for i in range(startindex,finishindex):
+                x = layer[2] #alloy ratio
+                cb_meff[i] = (alloyprops['cb_mass_x=0']+alloyprops['cb_mass_b']*x)*m_e
+                fi[i] = alloyprops['V_CB']*alloyprops['Eg-bagil']*x*q # for electron. Joule
+                eps[i] = (alloyprops['eps_x=0']+alloyprops['eps_b']*x)*eps0
  
 # ----------------------------------------------------
 
