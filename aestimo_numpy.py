@@ -642,8 +642,11 @@ def Poisson_Schrodinger(model):
 def save_and_plot(result,model):
     xaxis = result.xaxis
         
-    def saveoutput(fname,datatuple):
-        np.savetxt(fname,np.column_stack(datatuple),fmt='%.6e', delimiter=' ')
+    def saveoutput(fname,datatuple,header=None):
+        fobj = file(fname,'wb')
+        if header: fobj.write(header+'\n')
+        np.savetxt(fobj,np.column_stack(datatuple),fmt='%.6e', delimiter=' ')
+        fobj.close()
         
     if config.sigma_out:
         saveoutput("outputs-numpy/sigma.dat",(xaxis,result.sigma))
@@ -652,8 +655,11 @@ def save_and_plot(result,model):
     if config.potential_out:
         saveoutput("outputs-numpy/potn.dat",(xaxis,result.fitot))
     if config.states_out:
-        N_state = result.N_state; E_state = result.E_state; meff_state = result.meff_state
-        saveoutput("outputs-numpy/states.dat",(range(model.subnumber_e),N_state,E_state,meff_state) )
+        rel_meff_state = [meff/m_e for meff in result.meff_state] #going to report relative effective mass.
+        columns = range(model.subnumber_e), result.E_state, result.N_state, rel_meff_state
+        #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
+        header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+        saveoutput("outputs-numpy/states.dat",columns, header = header )
     if config.probability_out:
         saveoutput("outputs-numpy/wavefunctions.dat",(xaxis,result.wfe.transpose()) )
     

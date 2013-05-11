@@ -485,8 +485,11 @@ while True:
 
 xaxis = np.arange(0,n_max)*dx   #metres
 
-def saveoutput(fname,datatuple):
-    np.savetxt(fname,np.column_stack(datatuple),fmt='%.6e', delimiter=' ')
+def saveoutput(fname,datatuple,header=None):
+    fobj = file(fname,'wb')
+    if header: fobj.write(header+'\n')
+    np.savetxt(fobj,np.column_stack(datatuple),fmt='%.6e', delimiter=' ')
+    fobj.close()
     
 if config.sigma_out:
     saveoutput("outputs/sigma.dat",(xaxis,sigma))
@@ -495,7 +498,9 @@ if config.electricfield_out:
 if config.potential_out:
     saveoutput("outputs/potn.dat",(xaxis,fitot))
 if config.states_out:
-    saveoutput("outputs/states.dat",(range(subnumber_e),N_state,E_state,meff_state) )
+    rel_meff_state = [meff/m_e for meff in meff_state] #going to report relative effective mass.
+    header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+    saveoutput("outputs/states.dat",(range(subnumber_e),E_state,N_state,rel_meff_state), header)
 if config.probability_out:
     saveoutput("outputs/wavefunctions.dat",(xaxis,wfe.transpose()) )
 
