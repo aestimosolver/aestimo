@@ -1,0 +1,15 @@
+# Compiled source #
+###################
+*.pyc
+
+# Files Backups #
+#################
+*.bak #winmerge
+
+# OS generated files #
+######################
+Thumbs.db
+
+# Other #
+#########
+*.profile
