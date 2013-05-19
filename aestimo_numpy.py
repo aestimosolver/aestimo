@@ -79,7 +79,7 @@ class Structure():
         self.alloy_property = database.alloyproperty
         totalalloy = alen(self.alloy_property)
         
-        print "Total material number in database: ",totalmaterial + totalally
+        print "Total material number in database: ",totalmaterial + totalalloy
         
     def create_structure_arrays(self):
         """ initialise arrays/lists for structure"""
@@ -123,9 +123,9 @@ class Structure():
                 
             #doping
             if layer[4] == 'n':  
-                chargedensity = -layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
-            elif layer[4] == 'p': 
                 chargedensity = layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
+            elif layer[4] == 'p': 
+                chargedensity = -layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
             else:
                 chargedensity = 0.0
             
@@ -187,7 +187,7 @@ class StructureFrom(Structure):
 delta_E = 1.0*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. #This can be included in config as a setting?
 d_E = 1e-5*meV2J #Energy step (Joules) for Newton-Raphson method when improving the precision of the energy of a found level.
 E_start = 0.0    #Energy to start shooting method from #This can be included in config as a setting?
-damping = 0.4    #averaging factor between iterations to smooth convergence.
+damping = 0.5    #averaging factor between iterations to smooth convergence.
 max_iterations=80 #maximum number of iterations.
 convergence_test=1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
 
@@ -204,7 +204,7 @@ def vegard(first,second,mole):
 # to the energy occurs for psi(+infinity)=0.
 
 # FUNCTIONS for SHOOTING ------------------
-def psi_at_inf1(E,fis,cb_meff,cb_meff_alpha,n_max,dx): #inclusion of cb_meff_alpha means both versions have the same calling arguments
+def psi_at_inf1(E,fis,cb_meff,cb_meff_alpha,n_max,dx): #inclusion of cb_meff_alpha only so both versions have the same calling arguments
     """Shooting method for heterostructure as given in Harrison's book"""
     # boundary conditions
     psi0 = 0.0                 
@@ -381,7 +381,7 @@ def fermilevel_0K(Ntotal2d,E_state,meff_state):
     Et,Ef=0.0,0.0
     for i,(Ei,csb_meff) in enumerate(zip(E_state,meff_state)):
         Et+=Ei
-        Efnew=(-Ntotal2d*hbar**2*pi/csb_meff*J2meV + Et)/(i+1)
+        Efnew=(Ntotal2d*hbar**2*pi/csb_meff*J2meV + Et)/(i+1)
         if Efnew>Ei:
             Ef=Efnew
         else:
@@ -400,7 +400,7 @@ def fermilevel(Ntotal2d,T,E_state,meff_state):
     #find the Fermi level (meV)
     def func(Ef,E_state,meff_state,Ntotal2d,T):
         #return Ntotal2d - sum( [csb_meff*fd2(Ei,Ef,T) for Ei,csb_meff in zip(E_state,meff_state)] )/(hbar**2*pi)
-        diff = -Ntotal2d
+        diff = Ntotal2d
         for Ei,csb_meff in zip(E_state,meff_state):
             diff -= csb_meff*fd2(Ei,Ef,T)/(hbar**2*pi)
         return diff
@@ -423,19 +423,17 @@ def calc_N_state(Ef,T,Ns,E_state,meff_state):
     N_state=[fd2(Ei,Ef,T)*csb_meff/(hbar**2*pi) for Ei,csb_meff in zip(E_state,meff_state)]
     return N_state # number of carriers in each subband
     
-# FUNCTIONS for SELF-CONSISTENT POISSON--------------------------------
+# FUNCTIONS for SELF-CONSISTENT POISSON----------------------------------------
 
 def calc_sigma(wfe,N_state,model):
     # This function calculates `net' areal charge density
-    # i index over z co-ordinates
-    # is index over states
-    sigma= -model.dop*model.dx # This may be one tab indented.
-    for j in range(0,model.subnumber_e,1):
+    # n-type dopants lead to -ve charge representing electrons, and additionally 
+    # +ve ionised donors. 
+    # note: model.dop is still a volume density, the delta_x converts it to an areal density
+    sigma= model.dop*model.dx # The charges due to the dopant ions
+    for j in range(0,model.subnumber_e,1): # The charges due to the electrons in the subbands
         sigma-= N_state[j]*(wfe[j])**2
-        # n-type dopants give -ve *(N+j) representing electrons, hence 
-        # addition of +ve ionised donors requires -*(Nda+i), note Nda is still a
-        # volume density, the delta_z converts it to an areal density
-    return sigma
+    return sigma #charge per m**2 (units of electronic charge)
     
 ##
 def calc_field(sigma,eps):
@@ -483,9 +481,30 @@ def calc_potn(F,dx):
     return V
 
 
-# --- FUNCTION TO SET UP CALCULATION (INITIALISING STRUCTURE ARRAYS (LISTS)
+# FUNCTIONS FOR EXCHANGE INTERACTION-------------------------------------------
 
-# ----------------------------------------------------
+def calc_Vxc(sigma,eps,cb_meff):
+    """An effective field describing the exchange-interactions between the electrons
+    derived from Kohn-Sham density functional theory. This formula is given in many
+    papers, for example see Gunnarsson and Lundquist (1976), Ando, Taniyama, Ohtani 
+    et al. (2003), or Ch.1 in the book 'Intersubband transitions in quantum wells' (edited
+    by Liu and Capasso) by M. Helm.
+    eps = dielectric constant array
+    cb_meff = effective mass array
+    sigma = charge carriers per m**2, however this includes the donor atoms and we are only
+            interested in the electron density."""
+    a_B = 4*pi*hbar**2/q**2 # Bohr radius.
+    nz= -(sigma - model.dop*model.dx) # electron density per m**2
+    nz_3 = nz**(1/3.) #cube root of charge density.
+    #a_B_eff = eps/cb_meff*a_B #effective Bohr radius
+    r_s = 1.0/((4*pi/3.0)**(1/3.)*nz_3*eps/cb_meff*a_B) #average distance between charges in units of effective Bohr radis.
+    #A = q**4/(32*pi**2*hbar**2)*(9*pi/4.0)**(1/3.)*2/pi*(4*pi/3.0)**(1/3.)*4*pi*hbar**2/q**2 #constant factor for expression.
+    A = q**2/(4*pi)*(3/pi)**(1/3.) #simplified constant factor for expression.
+    #
+    Vxc = -A*nz_3/eps * ( 1.0 + 0.0545 * r_s * np.log( 1.0 + 11.4/r_s) )
+    return Vxc
+
+# -----------------------------------------------------------------------------
 
 def Poisson_Schrodinger(model):
     """Performs a self-consistent Poisson-Schrodinger calculation of a 1d quantum well structure.
@@ -511,6 +530,14 @@ def Poisson_Schrodinger(model):
     subnumber_e = model.subnumber_e
     dx = model.dx
     n_max = model.n_max
+    
+    # Check
+    if comp_scheme ==6:
+        print """The calculation of Vxc depends upon m*, however when non-parabolicity is also 
+                 considered m* becomes energy dependent which would make Vxc energy dependent.
+                 Currently this effect is ignored and Vxc uses the effective masses from the 
+                 bottom of the conduction bands even when non-parabolicity is considered 
+                 elsewhere."""
     
     # Preparing empty subband energy lists.
     E_state = [0.0]*subnumber_e     # Energies of subbands/levels (meV)
@@ -579,10 +606,20 @@ def Poisson_Schrodinger(model):
         N_state=calc_N_state(E_F,T,Ntotal2d,E_state,meff_state)
         # Calculate `net' areal charge density
         sigma=calc_sigma(wfe,N_state,model) #one more instead of subnumber_e
-        # Calculate electric field
-        F=calc_field(sigma,eps)
-        # Calculate potential due to charge distribution
-        Vnew=calc_potn(F,dx)   
+        # Poisson/Hartree Effects
+        if comp_scheme != 4: #in (0,1,2,3,5,6):
+            # Calculate electric field
+            F=calc_field(sigma,eps)
+            # Calculate potential due to charge distribution
+            Vnew=calc_potn(F,dx)
+        else:
+            F=np.zeros(n_max)
+            Vnew=0
+        # Exchange interaction    
+        if comp_scheme in (4,5,6):
+            # Exchange Potential
+            Vnew += calc_Vxc(sigma,eps,cb_meff)
+            
         #
         #status
         if not(config.messagesoff):
@@ -612,7 +649,7 @@ def Poisson_Schrodinger(model):
         
         if abs(E_state[0]-previousE0) < convergence_test: #Convergence test
             break
-        elif iteration > max_iterations: #Iteration limit
+        elif iteration >= max_iterations: #Iteration limit
             print "Have reached maximum number of iterations"
             break
         else:
@@ -724,6 +761,22 @@ def save_and_plot(result,model):
         pl.grid(True)
         pl.show()
 
+def QWplot(result,figno=None):
+    #QW representation
+    xaxis = result.xaxis
+    pl.figure(figno,figsize=(10,8))
+    pl.suptitle('Aestimo Results')
+    pl.subplot(1,1,1)
+    pl.plot(xaxis, result.fitot*J2meV,'k')
+    for level,state in zip(result.E_state,result.wfe): 
+        pl.axhline(level,0.1,0.9,color='g',ls='--')
+        pl.plot(xaxis, state*200.0+level,'b')
+        #pl.plot(xaxis, state**2*1e-9/dx*200.0+level,'b')
+    pl.axhline(result.E_F,0.1,0.9,color='r',ls='--')
+    pl.xlabel('Position (m)')
+    pl.ylabel('Energy (meV)')
+    pl.grid(True)
+    pl.show()
 
 if __name__=="__main__":
         

@@ -15,7 +15,10 @@ T = 300.0 #Kelvin
 # 1: Schrodinger + nonparabolicity
 # 2: Schrodinger-Poisson
 # 3: Schrodinger-Poisson with nonparabolicity
-computation_scheme = 1
+# 4: Schrodinger-Exchange interaction
+# 5: Schrodinger-Poisson + Exchange interaction
+# 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
+computation_scheme = 2
 
 # QUANTUM
 # Total subband number to be calculated for electrons

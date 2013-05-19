@@ -15,6 +15,9 @@ T = 300.0 #Kelvin
 # 1: Schrodinger + nonparabolicity
 # 2: Schrodinger-Poisson
 # 3: Schrodinger-Poisson with nonparabolicity
+# 4: Schrodinger-Exchange interaction
+# 5: Schrodinger-Poisson + Exchange interaction
+# 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 computation_scheme = 2
 
 # QUANTUM

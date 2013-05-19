@@ -15,14 +15,17 @@ T = 300.0 #Kelvin
 # 1: Schrodinger + nonparabolicity
 # 2: Schrodinger-Poisson
 # 3: Schrodinger-Poisson with nonparabolicity
-computation_scheme = 3
+# 4: Schrodinger-Exchange interaction
+# 5: Schrodinger-Poisson + Exchange interaction
+# 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
+computation_scheme = 6
 
 # QUANTUM
 # Total subband number to be calculated for electrons
 subnumber_e = 3
 
 # APPLIED ELECTRIC FIELD
-Fapplied = 0.1/50e-9 # (V/m)
+Fapplied = 0.00/50e-9 # (V/m)
 
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION

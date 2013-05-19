@@ -60,7 +60,10 @@ print "Total layer number: ",totallayer
 
 comp_scheme = inputfile.computation_scheme
 if comp_scheme in (1,3):
-    print "aestimo doesn't yet include non-parabolicity calcualtions - try aestimo_numpy instead"
+    print "aestimo doesn't yet include non-parabolicity calculations - try aestimo_numpy instead"
+    exit()
+if comp_scheme in (4,5,6):
+    print "aestimo doesn't yet include the exchange interaction calculations - try aestimo_numpy instead"
     exit()
     
 max_val = inputfile.maxgridpoints
