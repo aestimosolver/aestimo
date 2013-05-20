@@ -86,6 +86,12 @@ class Structure():
         # Calculate the required number of grid points
         self.x_max = sum([layer[0] for layer in self.material])*1e-9 #total thickness (m)
         n_max = int(self.x_max/self.dx)
+        # Check on n_max
+        maxgridpoints = self.maxgridpoints
+        if n_max > maxgridpoints:
+            print " Grid number is exceeding the max number of ", maxgridpoints
+            exit()
+        #
         self.n_max = n_max
         dx =self.dx
         material_property = self.material_property
@@ -139,15 +145,23 @@ class Structure():
         self.dop = dop
         #return fi,cb_meff,eps,dop
 
+class AttrDict(dict):
+    """turns a dictionary into an object with attribute style lookups"""
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
 
 class StructureFrom(Structure):
     def __init__(self,inputfile,database):
+        if type(inputfile)==dict:
+            inputfile=AttrDict(inputfile)            
         # Parameters for simulation
         self.Fapp = inputfile.Fapplied
         self.T = inputfile.T
         self.subnumber_e = inputfile.subnumber_e
         self.comp_scheme = inputfile.computation_scheme
         self.dx = inputfile.gridfactor*1e-9 #grid in m
+        self.maxgridpoints = inputfile.maxgridpoints
         
         # Loading material list
         self.material = inputfile.material
