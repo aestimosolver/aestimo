@@ -28,6 +28,16 @@ import numpy as np
 alen = np.alen
 import sys,config,database
 from math import *
+# --------------------------------------
+import logging
+logger = logging.getLogger('aestimo')
+hdlr = logging.FileHandler(config.logfile)
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
+hdlr.setFormatter(formatter)
+logger.addHandler(hdlr)
+# LOG level can be INFO, WARNING, ERROR
+logger.setLevel(logging.INFO)
+# --------------------------------------
 
 #Defining constants and material parameters
 q = 1.602176e-19 #C
@@ -41,10 +51,12 @@ eps0= 8.8541878176e-12 #F/m
 J2meV=1e3/q #Joules to meV
 meV2J=1e-3*q #meV to Joules
 
+print "Aestimo is starting..."
+logger.info("Aestimo is starting...")
+
 # Import from config file
 inputfile = __import__(config.inputfilename)
-
-print "Aestimo is starting..."
+logger.info("inputfile is %s" %config.inputfilename)
 
 ## Reading inputs and using local variables
 
@@ -57,13 +69,16 @@ for layer in material:
     layer[0]*= 1e-9
 
 print "Total layer number: ",totallayer
+logger.info("Total layer number: %s" %totallayer)
 
 comp_scheme = inputfile.computation_scheme
 if comp_scheme in (1,3):
     print "aestimo doesn't yet include non-parabolicity calculations - try aestimo_numpy instead"
+    logger.error("aestimo doesn't yet include non-parabolicity calculations - try aestimo_numpy instead")
     exit()
 if comp_scheme in (4,5,6):
     print "aestimo doesn't yet include the exchange interaction calculations - try aestimo_numpy instead"
+    logger.error("aestimo doesn't yet include the exchange interaction calculations - try aestimo_numpy instead")
     exit()
     
 max_val = inputfile.maxgridpoints
@@ -76,7 +91,8 @@ x_max = sum([layer[0] for layer in material]) #total thickness (m)
 # Calculate the required number of grid points and renormalize dx
 n_max = int(x_max/dx)
 if n_max > max_val:
-    print " Grid number is exceeding the max number of ", max_val
+    print "Grid number is exceeding the max number of ", max_val
+    logger.error("Grid number is exceeding the max number of %d" %max_val)
     exit()
 
 # Shooting method parameters for Schrödinger Equation solution
@@ -94,10 +110,9 @@ totalmaterial = alen(material_property)
 alloy_property = database.alloyproperty
 totalalloy = alen(alloy_property)
 
-print "Total material number in database: ",totalmaterial  
+print "Total number of materials in database: ",totalmaterial+totalalloy
+logger.info("Total number of materials in database: %d" %(totalmaterial+totalalloy))
 
-
-# DO NOT EDIT UNDER HERE FOR PARAMETERS
 # --------------------------------------
 
 #Vegard's law for alloys
@@ -216,7 +231,7 @@ def fermilevel_0K(Ntotal2d,E_state,meff_state):
             break #we have found Ef and so we should break out of the loop
     else: #exception clause for 'for' loop.
         print "Have processed all energy levels present and so can't be sure that Ef is below next higher energy level."
-    
+        logger.warning("Have processed all energy levels present and so can't be sure that Ef is below next higher energy level.")
     N_state=[0.0]*len(E_state)
     for i,(Ei,csb_meff) in enumerate(zip(E_state,meff_state)):
         Ni=(Ef - Ei)*csb_meff/(hbar**2*pi)*meV2J    # populations of levels
@@ -329,17 +344,6 @@ def calc_potn(F):
 
 # --- FUNCTION TO SET UP CALCULATION (INITIALISING STRUCTURE ARRAYS (LISTS)
 
-materialproperty = {'Si':   {'cb_mass':0.156, 'vb_mass':0.537, 'epsilonStatic': 11.7, 'Eg-bagil':0.0, 'V_CB':0.0, 'cb_mass_alpha':0.0},
-                    'GaAs': {'cb_mass':0.067, 'vb_mass':0.500, 'epsilonStatic':12.90, 'Eg-bagil':0.0, 'V_CB':0.67,'cb_mass_alpha':5.3782e18},
-                    'AlAs': {'cb_mass':0.15,  'vb_mass':0.500, 'epsilonStatic':10.06, 'Eg-bagil':1.247,'V_CB':0.67,'cb_mass_alpha':0.0}
-                    }
-
-# ALLOY PROPERTIES
-# alloyproperties| Alloy : cb_mass_x=0 | cb_mass_b  | eps_x=0 | eps_b | Eg-bagil | V_CB | cb_mass_alpha
-alloyproperty = {'AlGaAs': {'cb_mass_x=0':0.067, 'cb_mass_b':0.083, 'eps_x=0':12.90, 'eps_b':-2.84, 'Eg-bagil':1.247, 'V_CB':0.67, 'cb_mass_alpha':5.3782e18}
-                }
-
-
 def fill_structure_lists():
     # initialise arrays/lists for structure
     position = 0.0 # metres
@@ -394,6 +398,7 @@ Ntotal = sum(dop) # calculating total doping density m-3
 Ntotal2d = Ntotal*dx
 #print "Ntotal ",Ntotal,"m**-3"
 print "Ntotal2d ",Ntotal2d," m**-2"
+logger.info("Ntotal2d %g m**-2" %Ntotal2d)
 
 fi_min= 0.0 #minimum potential energy of structure (for limiting the energy range when searching for states)
  
@@ -424,6 +429,7 @@ for i in range(0,n_max,1):
 while True:
     if not(config.messagesoff) :
         print "Iteration:",iteration
+        logger.info("Iteration: %d" %iteration)
     if iteration> 1:
         for i in range(0, n_max, 1):
             # Find fi-minimum --may got error.
@@ -438,6 +444,7 @@ while True:
     for j in range(0,subnumber_e,1):
         if not(config.messagesoff) :
             print "Working for subband no:",j+1
+            logger.info("Working for subband no: %d"%(j+1))
         wfe[j] = wf(E_state[j]*meV2J,fitot,cb_meff) #wavefunction units dx**0.5
     
     # Calculate the effective mass of each subband
@@ -462,10 +469,13 @@ while True:
     if not(config.messagesoff):
         for i,level in enumerate(E_state):
             print "E[",i,"]=",level,"meV" #can be written on file.
+            logger.info("E[%d]= %f meV"%(i,level))
         for i,meff in enumerate(meff_state):
             print 'meff[',i,']= ',meff/m_e
+            logger.info("meff[%d]= %f"%(i,meff/m_e))
         for i,Ni in enumerate(N_state):
-            print 'N[',i,']= ',Ni,' m**-2'        
+            print 'N[',i,']= ',Ni,' m**-2'
+            logger.info("N[%d]= %f m**-2"%(i,Ni))            
         #print 'Efermi (at 0K) = ',E_F_0K,' meV'
         #for i,Ni in enumerate(N_state_0K):
         #    print 'N[',i,']= ',Ni
@@ -473,6 +483,10 @@ while True:
         print "total donor charge = ",sum(dop)*dx,"m**-2"
         print "total level charge = ",sum(N_state),"m**-2"
         print "total system charge = ",sum(sigma),"m**-2"
+        logger.info('Efermi (at %gK) = %g meV' %(T, E_F))
+        logger.info("total donor charge = %g m**-2" %(sum(dop)*dx))
+        logger.info("total level charge = %g m**-2" %(sum(N_state)))
+        logger.info("total system charge = %g m**-2" %(sum(sigma)))
     #
     if comp_scheme in (0,1): 
         #if we are not self-consistently including Poisson Effects then only do one loop
@@ -489,6 +503,7 @@ while True:
         break
     elif iteration > max_iterations: #Iteration limit
         print "Have reached maximum number of iterations"
+        logger.warning("Have reached maximum number of iterations")
         break
     else:
         iteration += 1
@@ -581,3 +596,5 @@ if config.resultviewer:
     
 print "Simulation is finished. All files are closed."
 print "Please control the related files."
+logger.info("""Simulation is finished. All files are closed.Please control the related files.
+        -----------------------------------------------------------------""")
