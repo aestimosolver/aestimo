@@ -29,6 +29,7 @@ time0 = time.time() # timing audit
 import matplotlib.pyplot as pl
 import numpy as np
 alen = np.alen
+import os
 import config,database
 from math import log,exp
 # --------------------------------------
@@ -731,27 +732,33 @@ def Poisson_Schrodinger(model):
 
 def save_and_plot(result,model):
     xaxis = result.xaxis
+    
+    output_directory = config.output_directory+"-numpy"
+    
+    if not os.path.isdir(output_directory):
+        os.makedirs(output_directory)
         
     def saveoutput(fname,datatuple,header=None):
-        fobj = file(fname,'wb')
+        fname2 = os.path.join(output_directory,fname)
+        fobj = file(fname2,'wb')
         if header: fobj.write(header+'\n')
         np.savetxt(fobj,np.column_stack(datatuple),fmt='%.6e', delimiter=' ')
         fobj.close()
         
     if config.sigma_out:
-        saveoutput("outputs-numpy/sigma.dat",(xaxis,result.sigma))
+        saveoutput("sigma.dat",(xaxis,result.sigma))
     if config.electricfield_out:
-        saveoutput("outputs-numpy/efield.dat",(xaxis,result.F))
+        saveoutput("efield.dat",(xaxis,result.F))
     if config.potential_out:
-        saveoutput("outputs-numpy/potn.dat",(xaxis,result.fitot))
+        saveoutput("potn.dat",(xaxis,result.fitot))
     if config.states_out:
         rel_meff_state = [meff/m_e for meff in result.meff_state] #going to report relative effective mass.
         columns = range(model.subnumber_e), result.E_state, result.N_state, rel_meff_state
         #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
         header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
-        saveoutput("outputs-numpy/states.dat",columns, header = header )
+        saveoutput("states.dat",columns, header = header )
     if config.probability_out:
-        saveoutput("outputs-numpy/wavefunctions.dat",(xaxis,result.wfe.transpose()) )
+        saveoutput("wavefunctions.dat",(xaxis,result.wfe.transpose()) )
     
     # Resultviewer
         

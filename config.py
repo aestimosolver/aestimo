@@ -40,6 +40,8 @@ sigma_out = True
 probability_out = True
 states_out = True
 
+output_directory = "outputs"
+
 # Result Viewer
 # -------------
 resultviewer = True

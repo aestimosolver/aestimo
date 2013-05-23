@@ -28,7 +28,8 @@ time0 = time.time() # timing audit
 import matplotlib.pyplot as pl
 import numpy as np
 alen = np.alen
-import sys,config,database
+import os
+import config,database
 from math import *
 # --------------------------------------
 import logging
@@ -524,24 +525,28 @@ logger.info("calculation time  %g s" %(time3 - time2))
 
 xaxis = np.arange(0,n_max)*dx   #metres
 
+if not os.path.isdir(config.output_directory):
+    os.makedirs(config.output_directory)
+
 def saveoutput(fname,datatuple,header=None):
-    fobj = file(fname,'wb')
+    fname2 = os.path.join(config.output_directory,fname)
+    fobj = file(fname2,'wb')
     if header: fobj.write(header+'\n')
     np.savetxt(fobj,np.column_stack(datatuple),fmt='%.6e', delimiter=' ')
     fobj.close()
     
 if config.sigma_out:
-    saveoutput("outputs/sigma.dat",(xaxis,sigma))
+    saveoutput("sigma.dat",(xaxis,sigma))
 if config.electricfield_out:
-    saveoutput("outputs/efield.dat",(xaxis,F))
+    saveoutput("efield.dat",(xaxis,F))
 if config.potential_out:
-    saveoutput("outputs/potn.dat",(xaxis,fitot))
+    saveoutput("potn.dat",(xaxis,fitot))
 if config.states_out:
     rel_meff_state = [meff/m_e for meff in meff_state] #going to report relative effective mass.
     header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
-    saveoutput("outputs/states.dat",(range(subnumber_e),E_state,N_state,rel_meff_state), header)
+    saveoutput("states.dat",(range(subnumber_e),E_state,N_state,rel_meff_state), header)
 if config.probability_out:
-    saveoutput("outputs/wavefunctions.dat",(xaxis,wfe.transpose()) )
+    saveoutput("wavefunctions.dat",(xaxis,wfe.transpose()) )
 
 # Resultviewer
     
