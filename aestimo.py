@@ -23,6 +23,8 @@
  Description: This is the aestimo calculator. 
 """
 #from scipy.optimize import fsolve
+import time
+time0 = time.time() # timing audit
 import matplotlib.pyplot as pl
 import numpy as np
 alen = np.alen
@@ -51,6 +53,7 @@ eps0= 8.8541878176e-12 #F/m
 J2meV=1e3/q #Joules to meV
 meV2J=1e-3*q #meV to Joules
 
+time1 = time.time() # timing audit
 print "Aestimo is starting..."
 logger.info("Aestimo is starting...")
 
@@ -420,6 +423,7 @@ for i in range(0,n_max,1):
     Vapp[i] = q*Fapp*(i*dx-x0)
 
 # STARTING SELF CONSISTENT LOOP
+time2 = time.time() # timing audit
 iteration = 1   #iteration counter
 previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
 #fitot = list(fi) #For initial iteration just copy fi. list(seq) returns a copy of the original rather than just an alias.
@@ -510,6 +514,11 @@ while True:
         previousE0 = E_state[0]
         
 # END OF SELF-CONSISTENT LOOP
+time3 = time.time() # timing audit
+
+logger.info("total running time (inc. loading libraries) %g s" %(time3 - time0))
+logger.info("total running time (exc. loading libraries) %g s" %(time3 - time1))
+logger.info("calculation time  %g s" %(time3 - time2))
 
 # Write the simulation results in files
 

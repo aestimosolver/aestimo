@@ -23,6 +23,8 @@
   Description: This is the aestimo calculator.
   
 """
+import time
+time0 = time.time() # timing audit
 #from scipy.optimize import fsolve
 import matplotlib.pyplot as pl
 import numpy as np
@@ -52,6 +54,7 @@ eps0= 8.8541878176e-12 #F/m
 J2meV=1e3/q #Joules to meV
 meV2J=1e-3*q #meV to Joules
 
+time1 = time.time() # timing audit
 print "Aestimo_numpy is starting..."
 logger.info("Aestimo_numpy is starting...")
 
@@ -607,6 +610,7 @@ def Poisson_Schrodinger(model):
     Vapp = q*Fapp*(xaxis-x0)
 
     # STARTING SELF CONSISTENT LOOP
+    time2 = time.time() # timing audit
     iteration = 1   #iteration counter
     previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
     fitot = fi + Vapp #For initial iteration sum bandstructure and applied field
@@ -702,6 +706,9 @@ def Poisson_Schrodinger(model):
             previousE0 = E_state[0]
             
     # END OF SELF-CONSISTENT LOOP
+    time3 = time.time() # timing audit
+    logger.info("calculation time  %g s" %(time3 - time2))
+    
     class Results(): pass
     results = Results()
     
@@ -835,9 +842,14 @@ if __name__=="__main__":
     # Perform the calculation
     result = Poisson_Schrodinger(model)
     
+    time4 = time.time() #timing audit
+    logger.info("total running time (inc. loading libraries) %g s" %(time4 - time0))
+    logger.info("total running time (exc. loading libraries) %g s" %(time4 - time1))
+
+    
     # Write the simulation results in files
     save_and_plot(result,model)
-            
+    
     print "Simulation is finished. All files are closed."
     print "Please control the related files."
     logger.info("""Simulation is finished. All files are closed.Please control the related files.
