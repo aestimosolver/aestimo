@@ -68,10 +68,6 @@ logger.info("inputfile is %s" %config.inputfilename)
 material = inputfile.material
 totallayer = alen(material)
 
-# Changing material thickness info to meter
-for layer in material:
-    layer[0]*= 1e-9
-
 print "Total layer number: ",totallayer
 logger.info("Total layer number: %s" %totallayer)
 
@@ -90,10 +86,17 @@ Fapp = inputfile.Fapplied
 T = inputfile.T
 subnumber_e = inputfile.subnumber_e
 dx = inputfile.gridfactor*1e-9 #grid in m
-x_max = sum([layer[0] for layer in material]) #total thickness (m)
+x_max = sum([layer[0] for layer in material])*1e-9 #total thickness (m)
+
+def round2int(x):
+    """int is sensitive to floating point numerical errors near whole numbers,
+    this moves the discontinuity to the half interval. It is also equivalent
+    to the normal rules for rounding positive numbers."""
+    # int(x + (x>0) -0.5) # round2int for positive and negative numbers
+    return int(x+0.5)
 
 # Calculate the required number of grid points and renormalize dx
-n_max = int(x_max/dx)
+n_max = round2int(x_max/dx)
 if n_max > max_val:
     print "Grid number is exceeding the max number of ", max_val
     logger.error("Grid number is exceeding the max number of %d" %max_val)
@@ -274,9 +277,9 @@ def calc_N_state(Ef,T,Ns,E_state,meff_state):
 def dop0():
     position = 0.0 # metres
     for layer in material:
-        startindex = int(position/dx)
-        position += layer[0] # update position to end of the layer
-        finishindex = int(position/dx)
+        startindex = round2int(position/dx)
+        position += layer[0]*1e-9 # update position to end of the layer
+        finishindex = round2int(position/dx)
         if layer[4] == 'n':  
             chargedensity = -layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
         elif layer[4] == 'p': 
@@ -352,9 +355,9 @@ def fill_structure_lists():
     # initialise arrays/lists for structure
     position = 0.0 # metres
     for layer in material:
-        startindex = int(position/dx)
-        position += layer[0] # update position to end of the layer
-        finishindex = int(position/dx)
+        startindex = round2int(position/dx)
+        position += layer[0]*1e-9 # update position to end of the layer
+        finishindex = round2int(position/dx)
         #
         matType = layer[1]
         

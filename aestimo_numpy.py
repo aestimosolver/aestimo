@@ -62,6 +62,13 @@ logger.info("Aestimo_numpy is starting...")
 # Input Class
 # -------------------------------------
 
+def round2int(x):
+    """int is sensitive to floating point numerical errors near whole numbers,
+    this moves the discontinuity to the half interval. It is also equivalent
+    to the normal rules for rounding positive numbers."""
+    # int(x + (x>0) -0.5) # round2int for positive and negative numbers
+    return int(x+0.5)
+
 class Structure():
     def __init__(self,database,**kwargs):
         """This class holds details on the structure to be simulated.
@@ -101,7 +108,7 @@ class Structure():
         """ initialise arrays/lists for structure"""
         # Calculate the required number of grid points
         self.x_max = sum([layer[0] for layer in self.material])*1e-9 #total thickness (m)
-        n_max = int(self.x_max/self.dx)
+        n_max = round2int(self.x_max/self.dx)
         # Check on n_max
         maxgridpoints = self.maxgridpoints
         if n_max > maxgridpoints:
@@ -120,11 +127,11 @@ class Structure():
         eps =np.zeros(n_max)		#dielectric constant
         dop = np.zeros(n_max)           #doping
         
-        position = 0.0 # keeping in metres (to minimise errors)
+        position = 0.0 # keeping in nanometres (to minimise errors)
         for layer in self.material:
-            startindex = int(position*1e-9/dx)
+            startindex = round2int(position*1e-9/dx)
             position += layer[0] # update position to end of the layer
-            finishindex = int(position*1e-9/dx)
+            finishindex = round2int(position*1e-9/dx)
             #
             matType = layer[1]
             
