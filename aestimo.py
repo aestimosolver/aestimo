@@ -364,17 +364,17 @@ def fill_structure_lists():
         if matType in material_property:
             matprops = material_property[matType]
             for i in range(startindex,finishindex):
-                cb_meff[i] = matprops['cb_mass']*m_e
-                fi[i] = matprops['V_CB']*matprops['Eg-bagil']*q #Joule
+                cb_meff[i] = matprops['m_e']*m_e
+                fi[i] = matprops['Band_offset']*matprops['Eg']*q #Joule
                 eps[i] = matprops['epsilonStatic']*eps0
             
         elif matType in alloy_property:
             alloyprops = alloy_property[matType]
             for i in range(startindex,finishindex):
                 x = layer[2] #alloy ratio
-                cb_meff[i] = (alloyprops['cb_mass_x=0']+alloyprops['cb_mass_b']*x)*m_e
-                fi[i] = alloyprops['V_CB']*alloyprops['Eg-bagil']*x*q # for electron. Joule
-                eps[i] = (alloyprops['eps_x=0']+alloyprops['eps_b']*x)*eps0
+                cb_meff[i] = x*material_property[alloyprops['Material1']]['m_e'] + (1-x)* material_property[alloyprops['Material2']]['m_e']
+                fi[i] = alloyprops['Band_offset']*(x*material_property[alloyprops['Material1']]['Eg'] + (1-x)* material_property[alloyprops['Material2']]['Eg']-alloyprops['Bowing_param']*x*(1-x))*q # for electron. Joule
+                eps[i] = (x*material_property[alloyprops['Material1']]['epsilonStatic'] + (1-x)* material_property[alloyprops['Material2']]['epsilonStatic'] )*eps0
  
 # ----------------------------------------------------
 
@@ -581,7 +581,7 @@ if config.resultviewer:
     pl.subplot(2,2,3)
     pl.plot(xaxis, fitot)
     pl.xlabel('Position (m)')
-    pl.ylabel('[V_cb + V_p] (J)')
+    pl.ylabel('E_c (J)')
     pl.title('Potential')
     pl.grid(True)
 

@@ -24,22 +24,107 @@
                 Quick and dirty solution for the code.
  References:
   - GaAs,AlAs parameters:
-    Vurgaftman et al., J. Appl. Phys. 89 (11), 5815 (2001)
-  - Si parameters:
+    Properties of Semiconductor Alloys: Group-IV, III–V and II–VI Semiconductors Sadao Adachi?2009 John Wiley & Sons, Ltd.
   
 """
 
 # MATERIAL PROPERTIES
-# materialproperties| Material : cb_mass | vb_mass | epsilonStatic | Eg-bagil | V_CB | cb_mass_alpha
-materialproperty = {'Si':   {'cb_mass':0.156, 'vb_mass':0.537, 'epsilonStatic': 11.7, 'Eg-bagil':0.0, 'V_CB':0.0, 'cb_mass_alpha':0.0},
-                    'GaAs': {'cb_mass':0.067, 'vb_mass':0.500, 'epsilonStatic':12.90, 'Eg-bagil':0.0, 'V_CB':0.67,'cb_mass_alpha':5.3782e18},
-                    'AlAs': {'cb_mass':0.15,  'vb_mass':0.500, 'epsilonStatic':10.06, 'Eg-bagil':1.247,'V_CB':0.67,'cb_mass_alpha':0.0}
-                    }
+# materialproperties| Material : m_e | m_hh | epsilonStatic | Eg | Bowing_param | m_e_alpha
+materialproperty = {
+'GaAs':{
+'m_e':0.067,
+'m_hh':0.45,
+'m_lh':0.087,
+'epsilonStatic':12.90,
+'Eg':1.42,
+'Bowing_param':0.0,
+'Band_offset':0.65,
+'m_e_alpha':5.3782e18
+},
+'AlAs':{
+'m_e':0.1,
+'m_hh':0.51,
+'m_lh':0.18,
+'epsilonStatic':10.06,
+'Eg':2.163,
+'Bowing_param':0.0,
+'Band_offset':0.53,
+'m_e_alpha':0.0
+},
+'InAs':{
+'m_e':0.4,
+'m_hh':0.26,
+'m_lh':0.027,
+'epsilonStatic':15.15,
+'Eg':0.4,
+'Bowing_param':0.0,
+'Band_offset':0.63,
+'m_e_alpha':0.0
+},
+'InP':{
+'m_e':0.073,
+'m_hh':0.46,
+'m_lh':0.12,
+'epsilonStatic':12.50,
+'Eg':1.35,
+'Bowing_param':0.0,
+'Band_offset':0.38,
+'m_e_alpha':0.0
+},
+'GaP':{
+'m_e':0.82,
+'m_hh':0.6,
+'m_lh':0.6,
+'epsilonStatic':11.1,
+'Eg':2.261,
+'Bowing_param':0.0,
+'Band_offset':0.55,
+'m_e_alpha':0.0
+},
+'AlP':{
+'m_e':0.22,
+'m_hh':0.63,
+'m_lh':0.2,
+'epsilonStatic':10.464,
+'Eg':2.48,
+'Bowing_param':0.0,
+'Band_offset':0.55,
+'m_e_alpha':0.0
+}
+}
 
 # ALLOY PROPERTIES
-# alloyproperties| Alloy : cb_mass_x=0 | cb_mass_b  | eps_x=0 | eps_b | Eg-bagil | V_CB | cb_mass_alpha
-alloyproperty = {'AlGaAs': {'cb_mass_x=0':0.067, 'cb_mass_b':0.083, 'eps_x=0':12.90, 'eps_b':-2.84, 'Eg-bagil':1.247, 'V_CB':0.67, 'cb_mass_alpha':5.3782e18}
-                }
+# alloyproperties| Alloy : m_e_x=0 | m_e_b  | eps_x=0 | eps_b | Eg | Bowing_param | m_e_alpha
+alloyproperty = {
+'AlGaAs':{
+'Bowing_param':0.055,
+'Band_offset':0.85,
+'m_e_alpha':5.3782e18,
+'Material1':'AlAs',
+'Material2':'GaAs'
+},
+'InGaAs':{
+'Bowing_param':0.58,
+'Band_offset':0.63,
+'m_e_alpha':0.0,
+'Material1':'InAs',
+'Material2':'GaAs'
+},
+'InGaP':{
+'Bowing_param':0.65,
+'Band_offset':0.33,
+'m_e_alpha':0.0,
+'Material1':'InP',
+'Material2':'GaP'
+},
+'AlInP':{
+'Bowing_param':0.13,
+'Band_offset':0.52,
+'m_e_alpha':0.0,
+'Material1':'AlP',
+'Material2':'InP'
+}
+}
 
 
 

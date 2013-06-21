@@ -137,19 +137,19 @@ class Structure():
             
             if matType in material_property:
                 matprops = material_property[matType]
-                cb_meff[startindex:finishindex] = matprops['cb_mass']*m_e
-                cb_meff_alpha[startindex:finishindex] = matprops['cb_mass_alpha']
-                fi[startindex:finishindex] = matprops['V_CB']*matprops['Eg-bagil']*q #Joule
+                cb_meff[startindex:finishindex] = matprops['m_e']*m_e
+                cb_meff_alpha[startindex:finishindex] = matprops['m_e_alpha']
+                fi[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
                 eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
                 
             elif matType in alloy_property:
                 alloyprops = alloy_property[matType] 
                 x = layer[2] #alloy ratio
-                cb_meff_alloy = (alloyprops['cb_mass_x=0']+alloyprops['cb_mass_b']*x)
+                cb_meff_alloy = x*material_property[alloyprops['Material1']]['m_e'] + (1-x)* material_property[alloyprops['Material2']]['m_e']
                 cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
-                cb_meff_alpha[startindex:finishindex] = alloyprops['cb_mass_alpha']*(alloyprops['cb_mass_x=0']/cb_meff_alloy) #non-parabolicity constant for alloy.
-                fi[startindex:finishindex] = alloyprops['V_CB']*alloyprops['Eg-bagil']*x*q # for electron. Joule
-                eps[startindex:finishindex] = (alloyprops['eps_x=0']+alloyprops['eps_b']*x)*eps0
+                cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(material_property[alloyprops['Material2']]['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
+                fi[startindex:finishindex] = alloyprops['Band_offset']*(x*material_property[alloyprops['Material1']]['Eg'] + (1-x)* material_property[alloyprops['Material2']]['Eg']-alloyprops['Bowing_param']*x*(1-x))*q # for electron. Joule
+                eps[startindex:finishindex] = (x*material_property[alloyprops['Material1']]['epsilonStatic'] + (1-x)* material_property[alloyprops['Material2']]['epsilonStatic'] )*eps0
                 
             #doping
             if layer[4] == 'n':  
@@ -797,7 +797,7 @@ def save_and_plot(result,model):
         pl.subplot(2,2,3)
         pl.plot(xaxis, result.fitot)
         pl.xlabel('Position (m)')
-        pl.ylabel('[V_cb + V_p] (J)')
+        pl.ylabel('E_c (J)')
         pl.title('Potential')
         pl.grid(True)
     
