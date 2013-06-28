@@ -1,16 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-we consider the upper 3 × 3 Hamiltonian for a (001)-oriented
-zinc blende (ZB) crystal see ref [1], after block diagonalization 
-the KP-FDM (k.P theory + Finite Difference Method ) method is explained in ref [2] 
-to ensure the Hermitian property of Hamiltonian you have to apply the we have to write all
-operators of the form presented in ref [3],to understand Hermiticity property see ref [2].
-page 110,same code in fortran language presented in the index of ref [1]. 
-Dirichlet boundary conditions were applied [1].
-[1]:D.Ahn & S-H.Park 'ENGINEERING QUANTUM MECHANICS' P 238
-[2]:P.Harrison 'QUANTUM WELLS, WIRES AND DOTS' P 357-362
-[3]: S-L.CHUANG 'physics of Optoelectronic Devices' P 183
+ Aestimo 1D Schrodinger-Poisson Solver
+ Copyright (C) 2013 Sefer Bora Lisesivdin and Aestimo group
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
+
+    For the list of contributors, see ~/AUTHORS
+
+ Description:   We consider the upper 3 × 3 Hamiltonian for a (001)-oriented
+                zinc blende (ZB) crystal see ref [1], after block diagonalization 
+                the KP-FDM (k.P theory + Finite Difference Method ) method is explained
+                in ref [2] to ensure the Hermitian property of Hamiltonian you have to
+                apply the we have to write all operators of the form presented in ref [3],
+                to understand Hermiticity property see ref [2]. page 110,same code in fortran
+                language presented in the index of ref [1]. Dirichlet boundary conditions
+                were applied [1].
+                [1]:D.Ahn & S-H.Park 'ENGINEERING QUANTUM MECHANICS' P 238
+                [2]:P.Harrison 'QUANTUM WELLS, WIRES AND DOTS' P 357-362
+                [3]: S-L.CHUANG 'physics of Optoelectronic Devices' P 183
 
 """
 #from scipy.optimize import fsolve
