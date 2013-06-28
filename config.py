@@ -27,10 +27,11 @@
 
 # Input File(s)
 # -------------
-inputfilename = "sample-qw-barrierdope"
+#inputfilename = "sample-qw-barrierdope"
 #inputfilename = "sample-qw-qwdope"
 #inputfilename = "sample-moddop"
 #inputfilename = "sample-qw-HarrisonCh3_3"
+inputfilename = "sample-qw-barrierdope-p"
 
 # Output Files
 # ------------
