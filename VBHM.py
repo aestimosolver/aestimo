@@ -73,7 +73,7 @@ def qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,AC1,n_max,delta):
 #
 #define VB Hamiltonian
 
-def VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT):
+def VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT,WB,BW):
     AVH1= np.zeros(n_max+2)
     AVH2= np.zeros(n_max+2)
     BVH1= np.zeros(n_max+2)
@@ -104,7 +104,7 @@ def VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT
             FVH2[I]=sqrt(2.0)*AP2[I]
             #boundary condition between barrier and well 
     for I in range (0,n_max,1):
-            if I== 30 or I == 70 :
+            if I== BW+1 or I == WB+1 :
                 AVH2[I]=(AVH2[I-1]+AVH2[I+1])/2.0
                 BVH2[I]=(BVH2[I-1]+BVH2[I+1])/2.0
                 GVH2[I]=(GVH2[I-1]+GVH2[I+1])/2.0

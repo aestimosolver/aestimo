@@ -25,10 +25,10 @@
  References:
   - GaAs,AlAs parameters:
     Properties of Semiconductor Alloys: Group-IV, IIIV and IIVI Semiconductors Sadao AdAchi?2009 John Wiley & Sons, Ltd.
-    Basic Semiconductor Physics Second Edition,Prof. Chihiro Hamaguchi 2010 Springer 
+    Basic Semiconductor Physics Second Edition,Prof. Chihiro Hamaguchi 2010 Springer
+    Physics of Optoelectronic Devices ,S-L.CHUANG ,1995 by John Wiley & Sons. Inc
   
 """
-
 # MATERIAL PROPERTIES
 # materialproperties| Material : m_e | m_hh | epsilonStatic | Eg | Bowing_param | m_e_alpha |  Luttinger Parameters γ1,2 & 3 |Elastic constants C11,12|Lattice constant a0| Deformation potentials ac,av & b| delta splitt off|
 materialproperty = {
@@ -81,16 +81,16 @@ materialproperty = {
 'Bowing_param':0.0,
 'Band_offset':0.63,
 'm_e_alpha':0.0,
-'GA1':0.0,
-'GA2':0.0,
-'GA3':0.0, 
-'C11':0.0,
-'C12':0.0,
-'a0':0.0,
-'Ac':0.0,
-'Av':0.0,
-'B':0.0,
-'delta':0.0
+'GA1':20.4,
+'GA2':8.3,
+'GA3':9.1,
+'C11':8.329,
+'C12':4.526,
+'a0':6.0584,
+'Ac'-5.08,
+'Av':1.0,
+'B':-1.8,
+'delta':0.38
 },
 'InP':{
 'm_e':0.073,
@@ -101,16 +101,16 @@ materialproperty = {
 'Bowing_param':0.0,
 'Band_offset':0.38,
 'm_e_alpha':0.0,
-'GA1':0.0,
-'GA2':0.0,
-'GA3':0.0, 
-'C11':0.0,
-'C12':0.0,
-'a0':0.0,
-'Ac':0.0,
-'Av':0.0,
-'B':0.0,
-'delta':0.0
+'GA1':5.33,
+'GA2':1.57,
+'GA3':2.11,
+'C11':8.329,
+'C12':4.526,
+'a0':5.8688,
+'Ac':-5.04,
+'Av':1.27,
+'B':-1.7,
+'delta':0.11
 },
 'GaP':{
 'm_e':0.82,
@@ -121,16 +121,16 @@ materialproperty = {
 'Bowing_param':0.0,
 'Band_offset':0.55,
 'm_e_alpha':0.0,
-'GA1':0.0,
-'GA2':0.0,
-'GA3':0.0, 
-'C11':0.0,
-'C12':0.0,
-'a0':0.0,
-'Ac':0.0,
-'Av':0.0,
-'B':0.0,
-'delta':0.0
+'GA1':4.04,
+'GA2':0.53,
+'GA3':1.26,
+'C11':14.05,
+'C12':6.203,
+'a0':5.4505,
+'Ac':-7.14,
+'Av':1.70,
+'B':-1.8,
+'delta':0.08
 },
 'AlP':{
 'm_e':0.22,
@@ -141,16 +141,16 @@ materialproperty = {
 'Bowing_param':0.0,
 'Band_offset':0.55,
 'm_e_alpha':0.0,
-'GA1':0.0,
-'GA2':0.0,
-'GA3':0.0, 
-'C11':0.0,
-'C12':0.0,
-'a0':0.0,
-'Ac':0.0,
-'Av':0.0,
-'B':0.0,
-'delta':0.0
+'GA1':3.47,
+'GA2':0.06,
+'GA3':1.15,
+'C11':15.0,
+'C12':6.42,
+'a0':5.4635,
+'Ac':−5.54,
+'Av':3.15,
+'B':−1.5,
+'delta':0.04
 }
 }
 

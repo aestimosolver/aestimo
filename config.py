@@ -46,7 +46,7 @@ output_directory = "outputs"
 # Result Viewer
 # -------------
 resultviewer = True
-
+strain = False
 # Messages
 # --------
 messagesoff = False

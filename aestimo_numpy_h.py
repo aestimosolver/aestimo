@@ -167,7 +167,8 @@ class Structure():
                 cb_meff[startindex:finishindex] = matprops['m_e']*m_e
                 cb_meff_alpha[startindex:finishindex] = matprops['m_e_alpha']
                 fi[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
-                
+                BW=startindex
+                WB=finishindex
                 C11[startindex:finishindex] = matprops['C11'] 
                 C12[startindex:finishindex] = matprops['C12']
                 GA1[startindex:finishindex] = matprops['GA1']
@@ -242,6 +243,8 @@ class Structure():
         self.eps = eps
         self.m_hh = m_hh
         self.m_lh = m_lh
+        self.WB = WB
+        self.BW = BW
 class AttrDict(dict):
     """turns a dictionary into an object with attribute style lookups"""
     def __init__(self, *args, **kwargs):
@@ -326,7 +329,7 @@ def calc_meff_state(wfh,model):
     vb_meff= np.zeros((model.subnumber_h,n_max))
     for j in range(0,n_max):
      for i in range(0,model.subnumber_h,1):
-        if i==1 :
+        if i==1 or i==4 :
            vb_meff[i,j]=m_lh[j]
         else :
            vb_meff[i,j]=m_hh[j]
@@ -510,8 +513,8 @@ def Poisson_Schrodinger(model):
     a0 = model.a0
     delta = model.delta
     fi_h = model.fi_h
-    #m_hh = model.m_hh
-    #m_lh = model.m_lh
+    BW = model.BW
+    WB = model.WB
     HUPMAT1=np.zeros((n_max*3, n_max*3))
     #HUPMAT2=np.zeros((n_max*3, n_max*3))
     UNIM = np.identity(n_max)
@@ -519,19 +522,20 @@ def Poisson_Schrodinger(model):
     EZZ  = np.zeros(n_max)
     ZETA= np.zeros(n_max)
     #CNIT= np.zeros(n_max)
-    VNIT= np.zeros(n_max) 
-    EXX= (min(a0)-a0)/a0
-    EZZ= -2.0*C12/C11*EXX
-    ZETA= -B/2.0*(EXX+EXX-2.0*EZZ)
-    #CNIT= Ac*(EXX+EXX+EZZ)	
-    VNIT= -Av*(EXX+EXX+EZZ)
+    VNIT= np.zeros(n_max)
+    if config.strain :
+        EXX= (min(a0)-a0)/a0
+        EZZ= -2.0*C12/C11*EXX
+        ZETA= -B/2.0*(EXX+EXX-2.0*EZZ)
+        #CNIT= Ac*(EXX+EXX+EZZ)
+        VNIT= -Av*(EXX+EXX+EZZ)
     x_max=dx*n_max
     RATIO=m_e/hbar**2*(x_max)**2
     AC1=(n_max+1)**2    
     AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM=qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,AC1,n_max,delta)
     KP=0.0
     KPINT=0.01
-    HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT)
+    HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT,WB,BW)
     def calc_E_state(HUPMAT1,subnumber_h,fi_h):
         #print fi_h ,len(fi_h)       
         HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)        
