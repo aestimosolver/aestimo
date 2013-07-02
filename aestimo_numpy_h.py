@@ -635,15 +635,8 @@ def Poisson_Schrodinger(model):
         # Calculate electric field
         F=calc_field(sigma,eps)
         # Calculate potential due to charge distribution
-        Vnew=calc_potn(F,model) 
-         
-        # Combine band edge potential with potential due to charge distribution
-        # To increase convergence, we calculate a moving average of electric potential 
-        #with previous iterations. By dampening the corrective term, we avoid oscillations.
-        #fi_h=np.resize(fi_h,n_max)
-        V+= damping*(Vnew - V)
-        fitot = fi_h + V + Vapp
-        #
+        Vnew=calc_potn(F,model)
+        
         #status
         if not(config.messagesoff):
             for i,level in enumerate(E_state):
@@ -674,6 +667,7 @@ def Poisson_Schrodinger(model):
         # Combine band edge potential with potential due to charge distribution
         # To increase convergence, we calculate a moving average of electric potential 
         #with previous iterations. By dampening the corrective term, we avoid oscillations.
+        #fi_h=np.resize(fi_h,n_max)
         V+= damping*(Vnew - V)
         fitot = fi_h + V + Vapp
         
