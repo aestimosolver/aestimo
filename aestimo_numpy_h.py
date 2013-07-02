@@ -314,10 +314,8 @@ def vegard(first,second,mole):
 # FUNCTIONS for FERMI-DIRAC STATISTICS-----------------------------------------   
 def fd2(Ei,Ef,model):#use
     """integral of Fermi Dirac Equation for energy independent density of states.
-    #Ei [meV], Ef [meV], T [K]"""
-    T= 300.0 #model.T    
-    #print 'Ei-Ef=',Ei-Ef
-    #stop
+    Ei [meV], Ef [meV], T [K]"""
+    T= model.T 
     return kb*T*log(exp(meV2J*(Ei-Ef)/(kb*T))+1)
 
 #vb_meff= np.zeros((model.subnumber_h,n_max)
