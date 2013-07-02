@@ -160,7 +160,6 @@ class Structure():
                 chargedensity = 0.0
             
             dop[startindex:finishindex] = chargedensity
-
         
         self.fi = fi
         self.cb_meff = cb_meff
@@ -466,9 +465,9 @@ def calc_N_state(Ef,T,Ns,E_state,meff_state):
 # FUNCTIONS for SELF-CONSISTENT POISSON----------------------------------------
 
 def calc_sigma(wfe,N_state,model):
-    # This function calculates `net' areal charge density
-    # n-type dopants lead to -ve charge representing electrons, and additionally 
-    # +ve ionised donors. 
+    """This function calculates `net' areal charge density
+    n-type dopants lead to -ve charge representing electrons, and additionally 
+    +ve ionised donors."""
     # note: model.dop is still a volume density, the delta_x converts it to an areal density
     sigma= model.dop*model.dx # The charges due to the dopant ions
     for j in range(0,model.subnumber_e,1): # The charges due to the electrons in the subbands
@@ -599,6 +598,7 @@ def Poisson_Schrodinger(model):
     # Subband wavefunction for electron list. 2-dimensional: [i][j] i:stateno, j:wavefunc
     wfe = np.zeros((subnumber_e,n_max))
     
+    # Setup the doping
     Ntotal = sum(dop) # calculating total doping density m-3
     Ntotal2d = Ntotal*dx
     if not(config.messagesoff):
@@ -622,7 +622,6 @@ def Poisson_Schrodinger(model):
     iteration = 1   #iteration counter
     previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
     fitot = fi + Vapp #For initial iteration sum bandstructure and applied field
-
     while True:
         if not(config.messagesoff) :
             print "Iteration:",iteration
@@ -655,7 +654,7 @@ def Poisson_Schrodinger(model):
         N_state=calc_N_state(E_F,T,Ntotal2d,E_state,meff_state)
         # Calculate `net' areal charge density
         sigma=calc_sigma(wfe,N_state,model) #one more instead of subnumber_e
-        # Poisson/Hartree Effects
+        # Calculate electric field (Poisson/Hartree Effects)
         if comp_scheme != 4: #in (0,1,2,3,5,6):
             # Calculate electric field
             F=calc_field(sigma,eps)

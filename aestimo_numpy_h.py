@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
  Aestimo 1D Schrodinger-Poisson Solver
  Version v.0.7
  Copyright (C) 2013 Sefer Bora Lisesivdin and Aestimo group
@@ -25,9 +22,7 @@
 
   Description: This is the aestimo calculator.
   
-
 """
-#from scipy.optimize import fsolve
 import time
 time0 = time.time() # timing audit
 #from scipy.optimize import fsolve
@@ -39,7 +34,7 @@ from math import * #log,exp,sqrt
 import VBHM
 from scipy import linalg
 from VBHM import qsv,VBMAT1,VBMAT_V
-import sys,config,database
+import config,database
 # --------------------------------------
 import logging
 logger = logging.getLogger('aestimo_numpy')
@@ -128,7 +123,9 @@ class Structure():
         dx =self.dx
         material_property = self.material_property
         alloy_property = self.alloy_property
-        cb_meff = np.zeros(n_max)
+        
+        cb_meff = np.zeros(n_max)	#conduction band effective mass
+        cb_meff_alpha = np.zeros(n_max) #non-parabolicity constant.
         m_hh = np.zeros(n_max)
         m_lh = np.zeros(n_max)
         # Elastic constants C11,C12
@@ -147,9 +144,7 @@ class Structure():
         fi_h = np.zeros(n_max) #
         delta = np.zeros(n_max) #delta splitt off
         # Strain related
-       
-        cb_meff = np.zeros(n_max)	#conduction band effective mass
-        cb_meff_alpha = np.zeros(n_max) #non-parabolicity constant.
+        
         fi = np.zeros(n_max)		#Bandstructure potential
         eps =np.zeros(n_max)		#dielectric constant
         dop = np.zeros(n_max)           #doping
@@ -223,7 +218,7 @@ class Structure():
                 chargedensity = 0.0
             
             dop[startindex:finishindex] = chargedensity
-       
+        
         self.fi = fi
         self.cb_meff = cb_meff
         self.cb_meff_alpha = cb_meff_alpha
@@ -245,6 +240,7 @@ class Structure():
         self.m_lh = m_lh
         self.WB = WB
         self.BW = BW
+
 class AttrDict(dict):
     """turns a dictionary into an object with attribute style lookups"""
     def __init__(self, *args, **kwargs):
@@ -298,7 +294,7 @@ class StructureFrom(Structure):
         self.create_structure_arrays()
 
 
-# No Shooting method parameters for Schrödinger Equation solution but We use a 3x3 KP solver
+# No Shooting method parameters for Schrödinger Equation solution since we use a 3x3 KP solver
 #delta_E = 1.0*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. #This can be included in config as a setting?
 #d_E = 1e-5*meV2J #Energy step (Joules) for Newton-Raphson method when improving the precision of the energy of a found level.
 damping = 0.4    #averaging factor between iterations to smooth convergence.
@@ -311,6 +307,7 @@ convergence_test=1e-6 #convergence is reached when the ground state energy (meV)
 #Vegard's law for alloys
 def vegard(first,second,mole):
     return first*mole+second*(1-mole)
+
 # FUNCTIONS for FERMI-DIRAC STATISTICS-----------------------------------------   
 def fd2(Ei,Ef,model):#use
     """integral of Fermi Dirac Equation for energy independent density of states.
@@ -318,22 +315,21 @@ def fd2(Ei,Ef,model):#use
     T= model.T 
     return kb*T*log(exp(meV2J*(Ei-Ef)/(kb*T))+1)
 
-#vb_meff= np.zeros((model.subnumber_h,n_max)
-
 def calc_meff_state(wfh,model):
     m_hh=model.m_hh
     m_lh=model.m_lh
     n_max=len(m_hh)
     vb_meff= np.zeros((model.subnumber_h,n_max))
     for j in range(0,n_max):
-     for i in range(0,model.subnumber_h,1):
-        if i==1 or i==4 :
-           vb_meff[i,j]=m_lh[j]
-        else :
-           vb_meff[i,j]=m_hh[j]
+        for i in range(model.subnumber_h):
+            if i==1 or i==4:
+                vb_meff[i,j]=m_lh[j]
+            else:
+                vb_meff[i,j]=m_hh[j]
     tmp = 1.0/np.sum(wfh**2/vb_meff,axis=1)
     meff_state = tmp.tolist()
     return meff_state #kg
+
 def fermilevel_0K(Ntotal2d,E_state,meff_state,model):#use
     Et,Ef=0.0,0.0
     E_state=np.array(E_state)
@@ -355,7 +351,7 @@ def fermilevel_0K(Ntotal2d,E_state,meff_state,model):#use
     #print 'Ef1=',Ef1 
     N_state=[0.0]*len(E_state)
     for i,(Ei,vsb_meff) in enumerate(zip(E_state,meff_state)):
-        Ni=(Ei- Ef )*vsb_meff/(hbar**2*pi)*meV2J    # populations of levels
+        Ni=(Ei - Ef)*vsb_meff/(hbar**2*pi)*meV2J    # populations of levels
         Ni*=(Ni>0.0)
         N_state[i]=Ni
     return Ef,N_state #Fermi levels at 0K (meV), number of electrons in each subband at 0K
@@ -392,18 +388,17 @@ def calc_N_state(Ef,model,Ns,E_state,meff_state):#use
     
 # FUNCTIONS for SELF-CONSISTENT POISSON--------------------------------
 
-def calc_sigma (wfh,N_state,model): #use
-    # This function calculates `net' areal charge density
-    # i index over z co-ordinates
-    # is index over states
-    sigma= model.dop*model.dx # This may be one tab indented.
-    for j in range(0,model.subnumber_h,1):
+def calc_sigma(wfh,N_state,model): #use
+    """This function calculates `net' areal charge density
+    n-type dopants lead to -ve charge representing electrons, and additionally 
+    +ve ionised donors."""
+    # note: model.dop is still a volume density, the delta_x converts it to an areal density
+    sigma= model.dop*model.dx # The charges due to the dopant ions
+    for j in range(0,model.subnumber_h,1): # The charges due to the electrons in the subbands
         sigma+= N_state[j]*(wfh[j])**2
-        # n-type dopants give -ve *(N+j) representing electrons, hence 
-        # addition of +ve ionised donors requires -*(Nda+i), note Nda is still a
-        # volume density, the delta_z converts it to an areal density
-    return sigma
+    return sigma #charge per m**2 (units of electronic charge)
     
+##
 def calc_field(sigma,eps):
     # F electric field as a function of z-
     # i index over z co-ordinates
@@ -429,10 +424,9 @@ def calc_field_old(sigma,eps):#use
     # F electric field as a function of z-
     # i index over z co-ordinates
     # j index over z' co-ordinates
-    n_max=len(sigma)
-    F = np.zeros(n_max)
+    n_max = len(sigma)
     # For wave function initialise F
-    F[:] = 0.0
+    F = np.zeros(n_max)
     for i in range(0,n_max,1):
         for j in range(0,n_max,1):
            # Note sigma is a number density per unit area, needs to be converted to Couloumb per unit area
@@ -449,6 +443,8 @@ def calc_potn(F,model):#use
     V = np.cumsum(tmp) #+q -> electron -q->hole? 
     return V
 
+
+# FUNCTIONS FOR EXCHANGE INTERACTION-------------------------------------------
 
 def calc_Vxc(sigma,eps,cb_meff):
     """An effective field describing the exchange-interactions between the electrons
@@ -496,10 +492,10 @@ def Poisson_Schrodinger(model):
     Fapp = model.Fapp
     T = model.T
     comp_scheme = model.comp_scheme
+    subnumber_h = model.subnumber_h 
     dx = model.dx
     n_max = model.n_max
-
-    subnumber_h = model.subnumber_h    
+    
     C11 = model.C11
     C12 = model.C12
     GA1 = model.GA1
@@ -568,25 +564,24 @@ def Poisson_Schrodinger(model):
 
     # Creating and Filling material arrays
     xaxis = np.arange(0,n_max)*dx   #metres
-
-    fitot = np.zeros(n_max)		#Energy potential = Bandstructure + Coulombic potential
-    #eps =np.zeros(n_max+2)		#dielectric constant
-    #dop = np.zeros(n_max+2)		#doping distribution
-    #sigma = np.zeros(n_max+2)         #charge distribution (donors + free charges)
-    #F = np.zeros(n_max+2)		#Electric Field
+    fitot = np.zeros(n_max)         #Energy potential = Bandstructure + Coulombic potential
+    #eps = np.zeros(n_max+2)	    #dielectric constant
+    #dop = np.zeros(n_max+2)	    #doping distribution
+    #sigma = np.zeros(n_max+2)      #charge distribution (donors + free charges)
+    #F = np.zeros(n_max+2)          #Electric Field
+    #Vapp = np.zeros(n_max+2)       #Applied Electric Potential
     V = np.zeros(n_max)             #Electric Potential
-    #Vapp = np.zeros(n_max+2)			#Applied Electric Potential
-    #
 
     # Subband wavefunction for holes list. 2-dimensional: [i][j] i:stateno, j:wavefunc
     wfh = np.zeros((subnumber_h,n_max))
+    
     # Setup the doping
     Ntotal = sum(dop) # calculating total doping density m-3
     Ntotal2d = Ntotal*dx
-
-    #print "Ntotal ",Ntotal,"m**-3"
-    print "Ntotal2d ",Ntotal2d," m**-2"
-    #
+    if not(config.messagesoff):
+        #print "Ntotal ",Ntotal,"m**-3"
+        print "Ntotal2d ",Ntotal2d," m**-2"
+        logger.info("Ntotal2d %g m**-2" %Ntotal2d)
 
     #Applied Field
     x0 = dx*n_max/2.0
@@ -600,7 +595,8 @@ def Poisson_Schrodinger(model):
     while True:
         if not(config.messagesoff) :
             print "Iteration:",iteration
-            #HUPMAT2=np.zeros((n_max*3, n_max*3))
+            logger.info("Iteration: %d" %iteration)
+        #HUPMAT2=np.zeros((n_max*3, n_max*3))
             
         E_state,wvmat=calc_E_state(HUPMAT1,subnumber_h,fitot)
         #print E_state
@@ -612,15 +608,17 @@ def Poisson_Schrodinger(model):
         for j in range(0,model.subnumber_h,1):
             if not(config.messagesoff) :
                 print "Working for subband no:",j+1
-                if j==1 or j==4 :
-                   wfh[j] = -wvmat[n_max:2*n_max,j]                        
-                else :
-                   wfh[j] = wvmat[0:n_max,j]
+                logger.info("Working for subband no: %d"%(j+1))
+            if j==1 or j==4 :
+                wfh[j] = -wvmat[n_max:2*n_max,j]                        
+            else:
+                wfh[j] = wvmat[0:n_max,j]
+        
         # Calculate the effective mass of each subband
         meff_state = calc_meff_state(wfh,model)
         
         ## Self-consistent Poisson
-            
+        
         # Calculate the Fermi energy and subband populations at 0K
         #E_F_0K,N_state_0K=fermilevel_0K(Ntotal2d,E_state,meff_state)
         # Calculate the Fermi energy at the temperature T (K)
@@ -630,7 +628,7 @@ def Poisson_Schrodinger(model):
         N_state=calc_N_state(E_F,model,Ntotal2d,E_state,meff_state)
         # Calculate `net' areal charge density
         sigma=calc_sigma(wfh,N_state,model) #one more instead of subnumber_h
-        # Calculate electric field
+        # Calculate electric field (Poisson/Hartree Effects)
         F=calc_field(sigma,eps)
         # Calculate potential due to charge distribution
         Vnew=calc_potn(F,model)
@@ -682,6 +680,7 @@ def Poisson_Schrodinger(model):
     # END OF SELF-CONSISTENT LOOP
     time3 = time.time() # timing audit
     logger.info("calculation time  %g s" %(time3 - time2))
+    
     class Results(): pass
     results = Results()
     
@@ -702,15 +701,10 @@ def Poisson_Schrodinger(model):
     
     return results
 
-# END OF SELF-CONSISTENT LOOP
-# Write the simulation results in files
-
-#xaxis = np.arange(0,n_max)*dx   #metres
-
 def save_and_plot(result,model):
     xaxis = result.xaxis
     
-    output_directory = config.output_directory+"-numpy"
+    output_directory = config.output_directory+"-numpy-h"
     
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)

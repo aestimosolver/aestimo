@@ -14,7 +14,7 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should hAve received a copy of the GNU General Public License
+    You should have received a copy of the GNU General Public License
     along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
 
     For the list of contributors, see ~/AUTHORS
@@ -24,11 +24,12 @@
                 Quick and dirty solution for the code.
  References:
   - GaAs,AlAs parameters:
-    Properties of Semiconductor Alloys: Group-IV, IIIV and IIVI Semiconductors Sadao AdAchi?2009 John Wiley & Sons, Ltd.
+    Properties of Semiconductor Alloys: Group-IV, III-V and II-VI Semiconductors Sadao AdAchi?2009 John Wiley & Sons, Ltd.
     Basic Semiconductor Physics Second Edition,Prof. Chihiro Hamaguchi 2010 Springer
     Physics of Optoelectronic Devices ,S-L.CHUANG ,1995 by John Wiley & Sons. Inc
   
 """
+
 # MATERIAL PROPERTIES
 # materialproperties| Material : m_e | m_hh | epsilonStatic | Eg | Bowing_param | m_e_alpha |  Luttinger Parameters γ1,2 & 3 |Elastic constants C11,12|Lattice constant a0| Deformation potentials ac,av & b| delta splitt off|
 materialproperty = {
