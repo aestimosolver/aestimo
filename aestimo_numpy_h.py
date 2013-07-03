@@ -30,7 +30,7 @@ import matplotlib.pyplot as pl
 import numpy as np
 alen = np.alen
 import os
-from math import * #log,exp,sqrt
+from math import log,exp,sqrt
 import VBHM
 from scipy import linalg
 from VBHM import qsv,VBMAT1,VBMAT_V
@@ -320,12 +320,11 @@ def calc_meff_state(wfh,model):
     m_lh=model.m_lh
     n_max=len(m_hh)
     vb_meff= np.zeros((model.subnumber_h,n_max))
-    for j in range(0,n_max):
-        for i in range(model.subnumber_h):
-            if i==1 or i==4:
-                vb_meff[i,j]=m_lh[j]
-            else:
-                vb_meff[i,j]=m_hh[j]
+    for i in range(model.subnumber_h):
+        if i==1 or i==4:
+            vb_meff[i]=m_lh
+        else:
+            vb_meff[i]=m_hh
     tmp = 1.0/np.sum(wfh**2/vb_meff,axis=1)
     meff_state = tmp.tolist()
     return meff_state #kg
@@ -355,7 +354,7 @@ def fermilevel_0K(Ntotal2d,E_state,meff_state,model):#use
         Ni*=(Ni>0.0)
         N_state[i]=Ni
     return Ef,N_state #Fermi levels at 0K (meV), number of electrons in each subband at 0K
-    
+ 
 def fermilevel(Ntotal2d,model,E_state,meff_state):#use
     #find the Fermi level (meV)
     def func(Ef,E_state,meff_state,Ntotal2d,model):
@@ -496,6 +495,19 @@ def Poisson_Schrodinger(model):
     dx = model.dx
     n_max = model.n_max
     
+    if comp_scheme in (4,5,6):
+        print """aestimo_numpy_h doesn't currently include exchange interactions
+        in its valence band calculations."""
+        logger.error("""aestimo_numpy_h doesn't currently include exchange interactions
+        in its valence band calculations.""")
+        exit()
+    if comp_scheme in (1,3,6):
+        print """aestimo_numpy_h doesn't currently include nonparabolicity effects in 
+        its valence band calculations."""
+        logger.error("""aestimo_numpy_h doesn't currently include nonparabolicity effects in 
+        its valence band calculations.""")
+        exit()
+    
     C11 = model.C11
     C12 = model.C12
     GA1 = model.GA1
@@ -530,7 +542,8 @@ def Poisson_Schrodinger(model):
     KP=0.0
     KPINT=0.01
     HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT,WB,BW)
-    def calc_E_state(HUPMAT1,subnumber_h,fi_h):
+    
+    def calc_E_state(HUPMAT1,subnumber_h,fitot):
         #print fi_h ,len(fi_h)       
         HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)        
         #print [HUPMAT3[i][i]*1e-3 for i in range(len(HUPMAT3))] #[0:3,0:3],len(HUPMAT3) #/RATIO*J2meV
@@ -556,7 +569,6 @@ def Poisson_Schrodinger(model):
                  Currently this effect is ignored and Vxc uses the effective masses from the 
                  bottom of the conduction bands even when non-parabolicity is considered 
                  elsewhere.""")
-    
     
     # Preparing empty subband energy lists.
     E_state = [0.0]*subnumber_h     # Energies of subbands/levels (meV)
