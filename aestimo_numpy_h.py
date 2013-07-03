@@ -543,7 +543,7 @@ def Poisson_Schrodinger(model):
     KP=0.0
     KPINT=0.01
     HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT,WB,BW)
-    def calc_E_state(HUPMAT1,subnumber_h,fi_h):
+    def calc_E_state(HUPMAT1,subnumber_h,fitot):
         #print fi_h ,len(fi_h)       
         HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)        
         #print [HUPMAT3[i][i]*1e-3 for i in range(len(HUPMAT3))] #[0:3,0:3],len(HUPMAT3) #/RATIO*J2meV
