@@ -320,12 +320,11 @@ def calc_meff_state(wfh,model):
     m_lh=model.m_lh
     n_max=len(m_hh)
     vb_meff= np.zeros((model.subnumber_h,n_max))
-    for j in range(0,n_max):
-        for i in range(model.subnumber_h):
-            if i==1 or i==4:
-                vb_meff[i,j]=m_lh[j]
-            else:
-                vb_meff[i,j]=m_hh[j]
+    for i in range(model.subnumber_h):
+        if i==1 or i==4:
+            vb_meff[i]=m_lh
+        else:
+            vb_meff[i]=m_hh
     tmp = 1.0/np.sum(wfh**2/vb_meff,axis=1)
     meff_state = tmp.tolist()
     return meff_state #kg
@@ -355,7 +354,7 @@ def fermilevel_0K(Ntotal2d,E_state,meff_state,model):#use
         Ni*=(Ni>0.0)
         N_state[i]=Ni
     return Ef,N_state #Fermi levels at 0K (meV), number of electrons in each subband at 0K
-    
+ 
 def fermilevel(Ntotal2d,model,E_state,meff_state):#use
     #find the Fermi level (meV)
     def func(Ef,E_state,meff_state,Ntotal2d,model):
@@ -543,6 +542,7 @@ def Poisson_Schrodinger(model):
     KP=0.0
     KPINT=0.01
     HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT,WB,BW)
+    
     def calc_E_state(HUPMAT1,subnumber_h,fitot):
         #print fi_h ,len(fi_h)       
         HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)        
