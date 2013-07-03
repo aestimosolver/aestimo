@@ -30,7 +30,7 @@ import matplotlib.pyplot as pl
 import numpy as np
 alen = np.alen
 import os
-from math import * #log,exp,sqrt
+from math import log,exp,sqrt
 import VBHM
 from scipy import linalg
 from VBHM import qsv,VBMAT1,VBMAT_V
@@ -496,6 +496,19 @@ def Poisson_Schrodinger(model):
     dx = model.dx
     n_max = model.n_max
     
+    if comp_scheme in (4,5,6):
+        print """aestimo_numpy_h doesn't currently include exchange interactions
+        in its valence band calculations."""
+        logger.error("""aestimo_numpy_h doesn't currently include exchange interactions
+        in its valence band calculations.""")
+        exit()
+    if comp_scheme in (1,3,6):
+        print """aestimo_numpy_h doesn't currently include nonparabolicity effects in 
+        its valence band calculations."""
+        logger.error("""aestimo_numpy_h doesn't currently include nonparabolicity effects in 
+        its valence band calculations.""")
+        exit()
+    
     C11 = model.C11
     C12 = model.C12
     GA1 = model.GA1
@@ -556,7 +569,6 @@ def Poisson_Schrodinger(model):
                  Currently this effect is ignored and Vxc uses the effective masses from the 
                  bottom of the conduction bands even when non-parabolicity is considered 
                  elsewhere.""")
-    
     
     # Preparing empty subband energy lists.
     E_state = [0.0]*subnumber_h     # Energies of subbands/levels (meV)
