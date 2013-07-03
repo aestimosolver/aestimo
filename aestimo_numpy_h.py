@@ -240,6 +240,7 @@ class Structure():
         self.m_lh = m_lh
         self.WB = WB
         self.BW = BW
+
 class AttrDict(dict):
     """turns a dictionary into an object with attribute style lookups"""
     def __init__(self, *args, **kwargs):
@@ -321,7 +322,7 @@ def calc_meff_state(wfh,model):
     vb_meff= np.zeros((model.subnumber_h,n_max))
     for j in range(0,n_max):
         for i in range(model.subnumber_h):
-            if i==1:
+            if i==1 or i==4:
                 vb_meff[i,j]=m_lh[j]
             else:
                 vb_meff[i,j]=m_hh[j]
@@ -703,7 +704,7 @@ def Poisson_Schrodinger(model):
 def save_and_plot(result,model):
     xaxis = result.xaxis
     
-    output_directory = config.output_directory+"-numpy"
+    output_directory = config.output_directory+"-numpy-h"
     
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)
