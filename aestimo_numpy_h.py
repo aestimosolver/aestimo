@@ -123,11 +123,11 @@ class Structure():
         dx =self.dx
         material_property = self.material_property
         alloy_property = self.alloy_property
-        
         cb_meff = np.zeros(n_max)	#conduction band effective mass
         cb_meff_alpha = np.zeros(n_max) #non-parabolicity constant.
         m_hh = np.zeros(n_max)
         m_lh = np.zeros(n_max)
+        m_so = np.zeros(n_max)
         # Elastic constants C11,C12
         C12 = np.zeros(n_max)		
         C11 = np.zeros(n_max)
@@ -176,10 +176,6 @@ class Structure():
                 fi_h[startindex:finishindex] =0.0  #-0.8*q-(1-matprops['Band_offset'])*matprops['Eg']*q #Joule
                 eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
                 a0[startindex:finishindex] = matprops['a0']*1e-10
-                m_hh[startindex:finishindex] =m_e/(GA1[startindex:finishindex] -2*GA2[startindex:finishindex] ) #m_hh_alloy*m_e
-                m_lh[startindex:finishindex] =m_e/(GA1[startindex:finishindex] +2*GA2[startindex:finishindex] ) #m_lh_alloy*m_e                
-                #m_hh[startindex:finishindex] = matprops['m_hh']*m_e
-                #m_lh[startindex:finishindex] = matprops['m_lh']*m_e
             elif matType in alloy_property:
                 alloyprops = alloy_property[matType] 
                 x = layer[2] #alloy ratio
@@ -201,12 +197,6 @@ class Structure():
                 fi_h[startindex:finishindex] = -(1-alloyprops['Band_offset'])*( x* (material_property[alloyprops['Material1']]['Eg']-material_property[alloyprops['Material2']]['Eg'])-alloyprops['Bowing_param']*x*(1-x))*q # -(-1.33*(1-x)-0.8*x)for electron. Joule-1.97793434e-20 #
                 eps[startindex:finishindex] = (x*material_property[alloyprops['Material1']]['epsilonStatic'] + (1-x)* material_property[alloyprops['Material2']]['epsilonStatic'] )*eps0
                 a0[startindex:finishindex] = ((1-x)*material_property[alloyprops['Material1']]['a0'] + x* material_property[alloyprops['Material2']]['a0'] )*1e-10
-                #m_hh_alloy = x*material_property[alloyprops['Material1']]['m_hh'] + (1-x)* material_property[alloyprops['Material2']]['m_hh']
-                m_hh[startindex:finishindex] =m_e/(GA1[startindex:finishindex] -2*GA2[startindex:finishindex] ) #m_hh_alloy*m_e
-                #m_lh_alloy = x*material_property[alloyprops['Material1']]['m_lh'] + (1-x)* material_property[alloyprops['Material2']]['m_lh']
-                m_lh[startindex:finishindex] =m_e/(GA1[startindex:finishindex] +2*GA2[startindex:finishindex] ) #m_lh_alloy*m_e
-                
-                # Valence band reference level               
                 cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(material_property[alloyprops['Material2']]['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
                 fi[startindex:finishindex] = alloyprops['Band_offset']*(x*material_property[alloyprops['Material1']]['Eg'] + (1-x)* material_property[alloyprops['Material2']]['Eg']-alloyprops['Bowing_param']*x*(1-x))*q # for electron. Joule                
             #doping
@@ -236,8 +226,6 @@ class Structure():
         self.delta = delta
         self.fi_h = fi_h
         self.eps = eps
-        self.m_hh = m_hh
-        self.m_lh = m_lh
         self.WB = WB
         self.BW = BW
 
@@ -315,16 +303,17 @@ def fd2(Ei,Ef,model):#use
     T= model.T 
     return kb*T*log(exp(meV2J*(Ei-Ef)/(kb*T))+1)
 
-def calc_meff_state(wfh,model):
-    m_hh=model.m_hh
-    m_lh=model.m_lh
+def calc_meff_state(wfh,model,list,m_hh,m_lh,m_so):
     n_max=len(m_hh)
     vb_meff= np.zeros((model.subnumber_h,n_max))
-    for i in range(model.subnumber_h):
-        if i==1 or i==4:
-            vb_meff[i]=m_lh
+    for j in range(0,n_max):
+     for i in range(0,model.subnumber_h,1):
+        if list[i]=='hh' :
+           vb_meff[i,j]=m_hh[j]
+        elif list[i] =='lh' :
+           vb_meff[i,j]=m_lh[j]
         else:
-            vb_meff[i]=m_hh
+           vb_meff[i,j]=m_so[j]
     tmp = 1.0/np.sum(wfh**2/vb_meff,axis=1)
     meff_state = tmp.tolist()
     return meff_state #kg
@@ -529,12 +518,29 @@ def Poisson_Schrodinger(model):
     ZETA= np.zeros(n_max)
     #CNIT= np.zeros(n_max)
     VNIT= np.zeros(n_max)
+    S= np.zeros(n_max)
+    k1= np.zeros(n_max)
+    k2= np.zeros(n_max)
+    k3= np.zeros(n_max)
+    fp= np.ones(n_max)
+    fm= np.ones(n_max)
     if config.strain :
         EXX= (min(a0)-a0)/a0
         EZZ= -2.0*C12/C11*EXX
         ZETA= -B/2.0*(EXX+EXX-2.0*EZZ)
         #CNIT= Ac*(EXX+EXX+EZZ)
         VNIT= -Av*(EXX+EXX+EZZ)
+        for i in range(0,n_max,1):
+            if i < BW-1 or i > WB+1 :
+                S[i]=ZETA[i]/delta[i]
+                k1[i]=sqrt(1+2*S[i]+9*S[i]**2)
+                k2[i]=S[i]-1+k1[i]
+                k3[i]=S[i]-1-k1[i]
+                fp[i]=(2*S[i]*(1+1.5*k2[i])+6*S[i]**2)/(0.75*k2[i]**2+k2[i]-3*S[i]**2)
+                fm[i]=(2*S[i]*(1+1.5*k3[i])+6*S[i]**2)/(0.75*k3[i]**2+k3[i]-3*S[i]**2)
+    m_hh = m_e/(GA1 -2*GA2 )
+    m_lh = m_e/(GA1 +2*fp*GA2 )
+    m_so = m_e/(GA1 +2*fm*GA2 )
     x_max=dx*n_max
     RATIO=m_e/hbar**2*(x_max)**2
     AC1=(n_max+1)**2    
@@ -617,17 +623,21 @@ def Poisson_Schrodinger(model):
         #pl.show()
         #stop
         # Envelope Function Wave Functions
-        for j in range(0,model.subnumber_h,1):
-            if not(config.messagesoff) :
-                print "Working for subband no:",j+1
-                logger.info("Working for subband no: %d"%(j+1))
-            if j==1 or j==4 :
-                wfh[j] = -wvmat[n_max:2*n_max,j]                        
+        list = ['','','','','']
+        for i in range(0,subnumber_h,1):
+            k= np.argmax(abs(wvmat[:,i]))
+            if k < n_max :
+                wfh[i] = wvmat[0:n_max,i]
+                list[i]='hh'
+            elif k <= 2*n_max and k >= n_max :
+                wfh[i] = -wvmat[n_max:2*n_max,i]
+                list[i]='lh'
             else:
-                wfh[j] = wvmat[0:n_max,j]
-        
+                wfh[i] = wvmat[2*n_max:3*n_max,i]
+                list[i]='so'
+
         # Calculate the effective mass of each subband
-        meff_state = calc_meff_state(wfh,model)
+        meff_state = calc_meff_state(wfh,model,list,m_hh,m_lh,m_so)
         
         ## Self-consistent Poisson
         
