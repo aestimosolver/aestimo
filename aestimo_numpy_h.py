@@ -306,14 +306,14 @@ def fd2(Ei,Ef,model):#use
 def calc_meff_state(wfh,model,list,m_hh,m_lh,m_so):
     n_max=len(m_hh)
     vb_meff= np.zeros((model.subnumber_h,n_max))
-    for j in range(0,n_max):
-     for i in range(0,model.subnumber_h,1):
+    #
+    for i in range(0,model.subnumber_h,1):
         if list[i]=='hh' :
-           vb_meff[i,j]=m_hh[j]
+           vb_meff[i]=m_hh
         elif list[i] =='lh' :
-           vb_meff[i,j]=m_lh[j]
+           vb_meff[i]=m_lh
         else:
-           vb_meff[i,j]=m_so[j]
+           vb_meff[i]=m_so
     tmp = 1.0/np.sum(wfh**2/vb_meff,axis=1)
     meff_state = tmp.tolist()
     return meff_state #kg
@@ -623,7 +623,7 @@ def Poisson_Schrodinger(model):
         #pl.show()
         #stop
         # Envelope Function Wave Functions
-        list = ['','','','','']
+        list = ['']*subnumber_h
         for i in range(0,subnumber_h,1):
             k= np.argmax(abs(wvmat[:,i]))
             if k < n_max :
