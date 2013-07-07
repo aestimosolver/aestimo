@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
  Aestimo 1D Schrodinger-Poisson Solver
- Version v.0.7
+ Version v.0.8
  Copyright (C) 2013 Sefer Bora Lisesivdin and Aestimo group
 
     This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,8 @@
 
     For the list of contributors, see ~/AUTHORS
 
-  Description: This is the aestimo calculator.
+  Description: This is the 3x3 k.p aestimo calculator for valence band calculations 
+              (Numpy version, there is no classic version for valence band calculations).
   
 """
 import time
