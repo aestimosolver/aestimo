@@ -372,7 +372,7 @@ def fill_structure_lists():
             alloyprops = alloy_property[matType]
             for i in range(startindex,finishindex):
                 x = layer[2] #alloy ratio
-                cb_meff[i] = x*material_property[alloyprops['Material1']]['m_e'] + (1-x)* material_property[alloyprops['Material2']]['m_e']
+                cb_meff[i] = (x*material_property[alloyprops['Material1']]['m_e'] + (1-x)* material_property[alloyprops['Material2']]['m_e'])*m_e
                 fi[i] = alloyprops['Band_offset']*(x*material_property[alloyprops['Material1']]['Eg'] + (1-x)* material_property[alloyprops['Material2']]['Eg']-alloyprops['Bowing_param']*x*(1-x))*q # for electron. Joule
                 eps[i] = (x*material_property[alloyprops['Material1']]['epsilonStatic'] + (1-x)* material_property[alloyprops['Material2']]['epsilonStatic'] )*eps0
  
