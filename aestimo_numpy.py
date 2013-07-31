@@ -245,6 +245,7 @@ def vegard(first,second,mole):
 # FUNCTIONS for SHOOTING ------------------
 def psi_at_inf1(E,fis,cb_meff,cb_meff_alpha,n_max,dx): #inclusion of cb_meff_alpha only so both versions have the same calling arguments
     """Shooting method for heterostructure as given in Harrison's book"""
+    c0 = 2*(dx/hbar)**2
     # boundary conditions
     psi0 = 0.0                 
     psi1 = 1.0
@@ -253,13 +254,14 @@ def psi_at_inf1(E,fis,cb_meff,cb_meff_alpha,n_max,dx): #inclusion of cb_meff_alp
         # Last potential not used
         c1=2.0/(cb_meff[j]+cb_meff[j-1])
         c2=2.0/(cb_meff[j]+cb_meff[j+1])
-        psi2=((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
+        psi2=((c0*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
         psi0=psi1
         psi1=psi2
     return psi2
     
 def psi_at_inf2(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
     """shooting method with non-parabolicity"""
+    c0 = 2*(dx/hbar)**2
     # boundary conditions
     psi0 = 0.0                 
     psi1 = 1.0
@@ -269,27 +271,29 @@ def psi_at_inf2(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
                     cb_meff[j-1]*(1.0 + cb_meff_alpha[j-1]*(E - fis[j-1])) ) 
         c2 = 2.0 / (cb_meff[j]*(1.0 + cb_meff_alpha[j]*(E - fis[j])) +\
                     cb_meff[j+1]*(1.0 + cb_meff_alpha[j+1]*(E - fis[j+1])) )       
-        psi2=((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
+        psi2=((c0*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
         psi0=psi1
         psi1=psi2
     return psi2
 
-"""
+
 def psi_at_inf2(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
-    ""shooting method with non-parabolicity""
-    cb_meff_E = lambda j : cb_meff[j]*(1.0 - cb_meff_alpha[j]*(E - fis[j])) # energy dependent mass
+    """shooting method with non-parabolicity"""
+    cb_meff_E = np.array(cb_meff)*(1.0 + np.array(cb_meff_alpha)*(E-np.array(fis))) # energy dependent mass
+    cb_meff_E = cb_meff_E.tolist()
+    c0 = 2*(dx/hbar)**2
     # boundary conditions
     psi0 = 0.0                 
     psi1 = 1.0
     psi2 = None
     for j in range(1,n_max-1,1): # Last potential not used     
-        c1=2.0/(cb_meff_E(j) +cb_meff_E(j-1))
-        c2=2.0/(cb_meff_E(j) +cb_meff_E(j+1))
-        psi2=((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
+        c1=2.0/(cb_meff_E[j] +cb_meff_E[j-1])
+        c2=2.0/(cb_meff_E[j] +cb_meff_E[j+1])
+        psi2=((c0*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
         psi0=psi1
         psi1=psi2
     return psi2
-"""    
+   
 #nb. function was much slower when fi is a numpy array than a python list.
 def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
     """Finds the Eigen-energies of any bound states of the chosen potential.

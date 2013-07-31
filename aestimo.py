@@ -106,7 +106,7 @@ if n_max > max_val:
 delta_E = 1.0*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. #This can be included in config as a setting?
 d_E = 1e-5*meV2J #Energy step (Joules) for Newton-Raphson method when improving the precision of the energy of a found level.
 E_start = 0.0    #Energy to start shooting method from #This can be included in config as a setting?
-damping = 0.4    #averaging factor between iterations to smooth convergence.
+damping = 0.5    #averaging factor between iterations to smooth convergence.
 max_iterations=80 #maximum number of iterations.
 convergence_test=1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
 
@@ -132,6 +132,7 @@ def vegard(first,second,mole):
 
 # FUNCTIONS for SHOOTING ------------------
 def psi_at_inf(E,fis,cb_meff,n_max,dx):
+    c0 = 2*(dx/hbar)**2
     # boundary conditions
     psi0 = 0.0                 
     psi1 = 1.0
@@ -140,7 +141,7 @@ def psi_at_inf(E,fis,cb_meff,n_max,dx):
         # Last potential not used
         c1=2.0/(cb_meff[j]+cb_meff[j-1])
         c2=2.0/(cb_meff[j]+cb_meff[j+1])
-        psi2=((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
+        psi2=((c0*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
         psi0=psi1
         psi1=psi2
     return psi2
@@ -407,13 +408,7 @@ Ntotal2d = Ntotal*dx
 print "Ntotal2d ",Ntotal2d," m**-2"
 logger.info("Ntotal2d %g m**-2" %Ntotal2d)
 
-fi_min= 0.0 #minimum potential energy of structure (for limiting the energy range when searching for states)
- 
-for i in range(0, n_max, 1):
-    # Find fi-minimum
-    if fi[i] < fi_min:
-        fi_min= fi[i]
-
+fi_min= min(fi) #minimum potential energy of structure (for limiting the energy range when searching for states)
 #delta_acc = 1e-6
 
 if abs(E_start)<1e-3*meV2J: #energyx is the minimum energy (meV) when starting the search for bound states.
