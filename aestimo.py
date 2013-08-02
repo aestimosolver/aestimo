@@ -132,13 +132,13 @@ def vegard(first,second,mole):
 
 # FUNCTIONS for SHOOTING ------------------
 def psi_at_inf(E,fis,cb_meff,n_max,dx):
+    """Shooting method for heterostructure as given in Harrison's book"""
     c0 = 2*(dx/hbar)**2
     # boundary conditions
     psi0 = 0.0                 
     psi1 = 1.0
     psi2 = None
-    for j in range(1,n_max-1,1):
-        # Last potential not used
+    for j in xrange(1,n_max-1,1): # Last potential not used
         c1=2.0/(cb_meff[j]+cb_meff[j-1])
         c2=2.0/(cb_meff[j]+cb_meff[j+1])
         psi2=((c0*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
@@ -148,6 +148,14 @@ def psi_at_inf(E,fis,cb_meff,n_max,dx):
 
 #nb. function was much slower when fi is a numpy array than a python list.
 def calc_E_state(numlevels,fi,cb_meff,energyx0): # delta_E,d_E
+    """Finds the Eigen-energies of any bound states of the chosen potential.
+    numlevels - number of levels to find
+    fi - Potential energy (Joules)
+    model - any object with attributes: 
+        cb_meff - array of effective mass (len n_max)
+        n_max - length of arrays
+        dx - step size (metres)
+    energyx0 - minimum energy for starting subband search (Joules)"""
     energyx=energyx0 #starting energy for subband search (Joules)
     E_state=[0.0]*numlevels #Energies of subbands (meV)
     #fi - Potential energy (J)
@@ -183,11 +191,18 @@ def calc_E_state(numlevels,fi,cb_meff,energyx0): # delta_E,d_E
 
 # FUNCTIONS for ENVELOPE FUNCTION WAVEFUNCTION--------------------------------
 def wf(E,fis,cb_meff):
-    # This function returns the value of the wavefunction (psi)
-    # at +infinity for a given value of the energy.  The solution
-    #	to the energy occurs for psi(+infinity)=0.
-    # psi[3] wavefunction at z-delta_z, z and z+delta_z 
-    # i index
+    """This function returns the value of the wavefunction (psi)
+    at +infinity for a given value of the energy.  The solution
+    to the energy occurs for psi(+infinity)=0.
+    psi[3] wavefunction at z-delta_z, z and z+delta_z 
+    i index
+    
+    E - eigen-energy of state (Joules)
+    fis - Potential energy of system (Joules)
+    model - an object with atributes:
+        cb_meff - array of effective mass (len n_max)
+        n_max - length of arrays
+        dx - step size (metres)"""
     N = 0.0 # Normalization integral
     psi = []
     psi = [0.0]*3
@@ -409,6 +424,7 @@ print "Ntotal2d ",Ntotal2d," m**-2"
 logger.info("Ntotal2d %g m**-2" %Ntotal2d)
 
 fi_min= min(fi) #minimum potential energy of structure (for limiting the energy range when searching for states)
+
 #delta_acc = 1e-6
 
 if abs(E_start)<1e-3*meV2J: #energyx is the minimum energy (meV) when starting the search for bound states.
@@ -438,8 +454,8 @@ while True:
             # Find fi-minimum --may got error.
             if fitot[i] < fi_min:
                 energyx = fitot[i]
-            else:
-                energyx = fi_min
+        else:
+            energyx = fi_min
     
     E_state=calc_E_state(subnumber_e,fitot,cb_meff,energyx)
     
