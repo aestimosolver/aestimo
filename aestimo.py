@@ -450,12 +450,11 @@ while True:
         print "Iteration:",iteration
         logger.info("Iteration: %d" %iteration)
     if iteration> 1:
+        energyx = fi_min
         for i in range(0, n_max, 1):
             # Find fi-minimum --may got error.
-            if fitot[i] < fi_min:
+            if fitot[i] < energyx:
                 energyx = fitot[i]
-        else:
-            energyx = fi_min
     
     E_state=calc_E_state(subnumber_e,fitot,cb_meff,energyx)
     
