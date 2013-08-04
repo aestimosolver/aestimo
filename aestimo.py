@@ -131,20 +131,28 @@ def vegard(first,second,mole):
 # to the energy occurs for psi(+infinity)=0.
 
 # FUNCTIONS for SHOOTING ------------------
-def psi_at_inf(E,fis,cb_meff,n_max,dx):
-    """Shooting method for heterostructure as given in Harrison's book"""
-    c0 = 2*(dx/hbar)**2
-    # boundary conditions
-    psi0 = 0.0                 
-    psi1 = 1.0
-    psi2 = None
-    for j in xrange(1,n_max-1,1): # Last potential not used
-        c1=2.0/(cb_meff[j]+cb_meff[j-1])
-        c2=2.0/(cb_meff[j]+cb_meff[j+1])
-        psi2=((c0*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
-        psi0=psi1
-        psi1=psi2
-    return psi2
+if config.use_cython:
+    #uses a cython accelerate version of the shooting method function below.
+    from psi_at_inf_cython import psi_at_inf
+
+else:
+    
+    def psi_at_inf(E,fis,cb_meff,n_max,dx):
+        """Shooting method for heterostructure as given in Harrison's book"""
+        c0 = 2*(dx/hbar)**2
+        # boundary conditions
+        psi0 = 0.0                 
+        psi1 = 1.0
+        psi2 = None
+        for j in xrange(1,n_max-1,1): # Last potential not used
+            c1=2.0/(cb_meff[j]+cb_meff[j-1])
+            c2=2.0/(cb_meff[j]+cb_meff[j+1])
+            psi2=((c0*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
+            psi0=psi1
+            psi1=psi2
+        return psi2
+    
+
 
 #nb. function was much slower when fi is a numpy array than a python list.
 def calc_E_state(numlevels,fi,cb_meff,energyx0): # delta_E,d_E

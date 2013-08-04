@@ -27,26 +27,30 @@
 
 # Input File(s)
 # -------------
-#inputfilename = "sample-qw-barrierdope"
+inputfilename = "sample-qw-barrierdope"
 #inputfilename = "sample-qw-qwdope"
 #inputfilename = "sample-moddop"
 #inputfilename = "sample-qw-HarrisonCh3_3"
-inputfilename = "sample-qw-barrierdope-p"
+#inputfilename = "sample-qw-barrierdope-p"
+
+# Calculation
+# -----------
+use_cython = False #provides a speed up for aestimo and aestimo_numpy
+strain = True # for aestimo_numpy_h
 
 # Output Files
 # ------------
+output_directory = "outputs"
 electricfield_out = True
 potential_out = True
 sigma_out = True
 probability_out = True
 states_out = True
 
-output_directory = "outputs"
-
 # Result Viewer
 # -------------
-resultviewer = True
-strain = True
+resultviewer = False
+
 # Messages
 # --------
 messagesoff = False

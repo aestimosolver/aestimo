@@ -4,7 +4,9 @@
 
 # Files Backups #
 #################
-*.bak #winmerge
+#winmerge
+*.bak
+
 
 # OS generated files #
 ######################
