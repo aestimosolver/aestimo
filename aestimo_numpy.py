@@ -244,16 +244,15 @@ def vegard(first,second,mole):
 
 # FUNCTIONS for SHOOTING ------------------
 if config.use_cython:
-    from psi_at_inf_cython import psi_at_inf
+    from psi_at_inf_cython import psi_at_inf_numpy
 
     def psi_at_inf1(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
-        return psi_at_inf(E,fis,cb_meff,n_max,dx)
+        return psi_at_inf_numpy(E,fis,cb_meff,n_max,dx)
 
     def psi_at_inf2(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
         """shooting method with non-parabolicity"""
-        cb_meff_E = np.array(cb_meff)*(1.0 + np.array(cb_meff_alpha)*(E - np.array(fis)))
-        cb_meff_E.tolist()
-        return psi_at_inf(E,fis,cb_meff,n_max,dx)
+        cb_meff_E = cb_meff*(1.0 + cb_meff_alpha*(E - fis))
+        return psi_at_inf_numpy(E,fis,cb_meff,n_max,dx)
         
 else:
     
@@ -307,14 +306,17 @@ def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
         dx - step size (metres)
     energyx0 - minimum energy for starting subband search (Joules)"""
     E_state=[0.0]*numlevels #Energies of subbands (meV)
-    fi = fi.tolist() #lists are faster than numpy arrays for loops
     cb_meff = model.cb_meff # effective mass of electrons in conduction band (kg)
-    cb_meff = cb_meff.tolist() #lists are faster than numpy arrays for loops
     cb_meff_alpha = model.cb_meff_alpha # non-parabolicity constant for conduction band mass.
-    cb_meff_alpha = cb_meff_alpha.tolist() #lists are faster than numpy arrays for loops
     energyx = float(energyx0) #starting energy for subband search (Joules) + floats are faster than numpy.float64
     n_max = model.n_max
     dx = model.dx
+    
+    if config.use_cython == False: #lists are faster than numpy arrays for loops
+        fi = fi.tolist()    
+        cb_meff = cb_meff.tolist()
+        cb_meff_alpha = cb_meff_alpha.tolist()
+    
     #print 'energyx', energyx,type(energyx)
     #print 'cb_meff', cb_meff[0:10], type(cb_meff), type(cb_meff[0])
     #print 'n_max', n_max, type(n_max)
