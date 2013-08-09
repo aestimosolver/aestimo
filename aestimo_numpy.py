@@ -252,7 +252,7 @@ if config.use_cython:
     def psi_at_inf2(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
         """shooting method with non-parabolicity"""
         cb_meff_E = cb_meff*(1.0 + cb_meff_alpha*(E - fis))
-        return psi_at_inf_numpy(E,fis,cb_meff,n_max,dx)
+        return psi_at_inf_numpy(E,fis,cb_meff_E,n_max,dx)
         
 else:
     

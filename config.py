@@ -49,8 +49,7 @@ states_out = True
 
 # Result Viewer
 # -------------
-resultviewer = False
-
+resultviewer = True
 # Messages
 # --------
 messagesoff = False
