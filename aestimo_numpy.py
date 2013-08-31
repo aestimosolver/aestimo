@@ -143,13 +143,15 @@ class Structure():
                 eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
                 
             elif matType in alloy_property:
-                alloyprops = alloy_property[matType] 
+                alloyprops = alloy_property[matType]
+                mat1 = alloyprops['Material1']
+                mat2 = alloyprops['Material2']
                 x = layer[2] #alloy ratio
-                cb_meff_alloy = x*material_property[alloyprops['Material1']]['m_e'] + (1-x)* material_property[alloyprops['Material2']]['m_e']
+                cb_meff_alloy = x*material_property[mat1]['m_e'] + (1-x)* material_property[mat2]['m_e']
                 cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
-                cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(material_property[alloyprops['Material2']]['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
-                fi[startindex:finishindex] = alloyprops['Band_offset']*(x*material_property[alloyprops['Material1']]['Eg'] + (1-x)* material_property[alloyprops['Material2']]['Eg']-alloyprops['Bowing_param']*x*(1-x))*q # for electron. Joule
-                eps[startindex:finishindex] = (x*material_property[alloyprops['Material1']]['epsilonStatic'] + (1-x)* material_property[alloyprops['Material2']]['epsilonStatic'] )*eps0
+                cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(material_property[mat2]['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
+                fi[startindex:finishindex] = alloyprops['Band_offset']*(x*material_property[mat1]['Eg'] + (1-x)* material_property[mat2]['Eg']-alloyprops['Bowing_param']*x*(1-x))*q # for electron. Joule
+                eps[startindex:finishindex] = (x*material_property[mat1]['epsilonStatic'] + (1-x)* material_property[mat2]['epsilonStatic'] )*eps0
                 
             #doping
             if layer[4] == 'n':  
@@ -221,15 +223,13 @@ class StructureFrom(Structure):
         self.create_structure_arrays()
 
 
-
 # Shooting method parameters for Schrödinger Equation solution
-delta_E = 1.0*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. #This can be included in config as a setting?
-d_E = 1e-5*meV2J #Energy step (Joules) for Newton-Raphson method when improving the precision of the energy of a found level.
-E_start = 0.0    #Energy to start shooting method from #This can be included in config as a setting?
-damping = 0.5    #averaging factor between iterations to smooth convergence.
-max_iterations=80 #maximum number of iterations.
-convergence_test=1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
-
+delta_E = config.delta_E #0.5*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. #This can be included in config as a setting?
+d_E = config.d_E #1e-5*meV2J #Energy step (Joules) for Newton-Raphson method when improving the precision of the energy of a found level.
+E_start = config.E_start #0.0 #Energy to start shooting method from #This can be included in config as a setting?
+damping = config.damping #0.5 #averaging factor between iterations to smooth convergence.
+max_iterations= config.max_iterations #80 #maximum number of iterations.
+convergence_test= config.convergence_test #1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
 
 # DO NOT EDIT UNDER HERE FOR PARAMETERS
 # --------------------------------------
@@ -324,7 +324,7 @@ def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
     #print 'dx', dx, type(dx)
     #exit()
     #choose shooting function
-    if model.comp_scheme in (1,3): #then include non-parabolicity calculation
+    if model.comp_scheme in (1,3,6): #then include non-parabolicity calculation
         psi_at_inf = psi_at_inf2
     else:
         psi_at_inf = psi_at_inf1
@@ -580,16 +580,14 @@ def Poisson_Schrodinger(model):
     
     # Check
     if comp_scheme ==6:
-        print """The calculation of Vxc depends upon m*, however when non-parabolicity is also 
+        scheme6warning = """The calculation of Vxc depends upon m*, however when non-parabolicity is also 
                  considered m* becomes energy dependent which would make Vxc energy dependent.
                  Currently this effect is ignored and Vxc uses the effective masses from the 
                  bottom of the conduction bands even when non-parabolicity is considered 
                  elsewhere."""
-        logger.warning("""The calculation of Vxc depends upon m*, however when non-parabolicity is also 
-                 considered m* becomes energy dependent which would make Vxc energy dependent.
-                 Currently this effect is ignored and Vxc uses the effective masses from the 
-                 bottom of the conduction bands even when non-parabolicity is considered 
-                 elsewhere.""")
+        print scheme6warning
+        logger.warning(scheme6warning)
+        del scheme6warning
     
     # Preparing empty subband energy lists.
     E_state = [0.0]*subnumber_e     # Energies of subbands/levels (meV)
@@ -614,13 +612,6 @@ def Poisson_Schrodinger(model):
         print "Ntotal2d ",Ntotal2d," m**-2"
         logger.info("Ntotal2d %g m**-2" %Ntotal2d)
     
-    fi_min= min(fi) #minimum potential energy of structure (for limiting the energy range when searching for states)
-    
-    if abs(E_start)<1e-3*meV2J: #energyx is the minimum energy (meV) when starting the search for bound states.
-        energyx = fi_min
-    else:
-        energyx = E_start
-
     #Applied Field
     x0 = dx*n_max/2.0
     Vapp = q*Fapp*(xaxis-x0)
@@ -630,6 +621,13 @@ def Poisson_Schrodinger(model):
     iteration = 1   #iteration counter
     previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
     fitot = fi + Vapp #For initial iteration sum bandstructure and applied field
+    
+    fi_min= min(fitot) #minimum potential energy of structure (for limiting the energy range when searching for states)
+    if abs(E_start)>1e-3*meV2J: #energyx is the minimum energy (meV) when starting the search for bound states.
+        energyx = E_start
+    else:
+        energyx = fi_min
+        
     while True:
         if not(config.messagesoff) :
             print "Iteration:",iteration
@@ -640,6 +638,7 @@ def Poisson_Schrodinger(model):
         E_state=calc_E_state(subnumber_e,fitot,model,energyx)
         
         # Envelope Function Wave Functions
+        #print 'wf'
         for j in range(0,subnumber_e,1):
             if not(config.messagesoff) :
                 print "Working for subband no:",j+1
@@ -647,7 +646,8 @@ def Poisson_Schrodinger(model):
             wfe[j] = wf(E_state[j]*meV2J,fitot,model) #wavefunction units dx**0.5
 
         # Calculate the effective mass of each subband
-        if model.comp_scheme in (1,3): #include non-parabolicity in calculation
+        #print 'calc_meff_state'
+        if model.comp_scheme in (1,3,6): #include non-parabolicity in calculation
             meff_state = calc_meff_state2(wfe,E_state,fitot,model)
         else:
             meff_state = calc_meff_state(wfe,cb_meff)
@@ -657,10 +657,13 @@ def Poisson_Schrodinger(model):
         # Calculate the Fermi energy and subband populations at 0K
         #E_F_0K,N_state_0K=fermilevel_0K(Ntotal2d,E_state,meff_state)
         # Calculate the Fermi energy at the temperature T (K)
+        #print 'fermilevel'
         E_F = fermilevel(Ntotal2d,T,E_state,meff_state)
         # Calculate the subband populations at the temperature T (K)
+        #print 'calc_N_state'
         N_state=calc_N_state(E_F,T,Ntotal2d,E_state,meff_state)
         # Calculate `net' areal charge density
+        #print 'calc_sigma'
         sigma=calc_sigma(wfe,N_state,model) #one more instead of subnumber_e
         # Calculate electric field (Poisson/Hartree Effects)
         if comp_scheme != 4: #in (0,1,2,3,5,6):

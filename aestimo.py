@@ -103,12 +103,12 @@ if n_max > max_val:
     exit()
 
 # Shooting method parameters for Schrödinger Equation solution
-delta_E = 1.0*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. #This can be included in config as a setting?
-d_E = 1e-5*meV2J #Energy step (Joules) for Newton-Raphson method when improving the precision of the energy of a found level.
-E_start = 0.0    #Energy to start shooting method from #This can be included in config as a setting?
-damping = 0.5    #averaging factor between iterations to smooth convergence.
-max_iterations=80 #maximum number of iterations.
-convergence_test=1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
+delta_E = config.delta_E #0.5*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. #This can be included in config as a setting?
+d_E = config.d_E #1e-5*meV2J #Energy step (Joules) for Newton-Raphson method when improving the precision of the energy of a found level.
+E_start = config.E_start #0.0 #Energy to start shooting method from #This can be included in config as a setting?
+damping = config.damping #0.5 #averaging factor between iterations to smooth convergence.
+max_iterations= config.max_iterations #80 #maximum number of iterations.
+convergence_test= config.convergence_test #1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
 
 # Loading materials database
 material_property = database.materialproperty
@@ -430,20 +430,13 @@ Ntotal2d = Ntotal*dx
 #print "Ntotal ",Ntotal,"m**-3"
 print "Ntotal2d ",Ntotal2d," m**-2"
 logger.info("Ntotal2d %g m**-2" %Ntotal2d)
-
-fi_min= min(fi) #minimum potential energy of structure (for limiting the energy range when searching for states)
-
-#delta_acc = 1e-6
-
-if abs(E_start)<1e-3*meV2J: #energyx is the minimum energy (meV) when starting the search for bound states.
-    energyx = fi_min
-else:
-    energyx = E_start
     
 # Applied Field
 x0=dx*n_max/2.0 # Finding the middle point (z0) of z-axis for Fapp
 for i in range(0,n_max,1):
     Vapp[i] = q*Fapp*(i*dx-x0)
+
+#delta_acc = 1e-6
 
 # STARTING SELF CONSISTENT LOOP
 time2 = time.time() # timing audit
@@ -452,6 +445,12 @@ previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing
 #fitot = list(fi) #For initial iteration just copy fi. list(seq) returns a copy of the original rather than just an alias.
 for i in range(0,n_max,1):
     fitot[i] = fi[i] + Vapp[i]  # Adding field qF(z-z0)
+
+fi_min= min(fitot) #minimum potential energy of structure (for limiting the energy range when searching for states)
+if abs(E_start)>1e-3*meV2J: #energyx is the minimum energy (meV) when starting the search for bound states.
+    energyx = E_start
+else:
+    energyx = fi_min
 
 while True:
     if not(config.messagesoff) :

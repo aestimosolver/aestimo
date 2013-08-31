@@ -23,19 +23,33 @@
                 be multi-input file execution feature in the future.
   
 """
+q = 1.602176e-19 #C
+meV2J=1e-3*q #meV to Joules
+
 # CONFIGURATION 
 
 # Input File(s)
 # -------------
-inputfilename = "sample-qw-barrierdope"
-#inputfilename = "sample-qw-qwdope"
+#inputfilename = "sample-qw-barrierdope"
+inputfilename = "sample-qw-qwdope"
 #inputfilename = "sample-moddop"
 #inputfilename = "sample-qw-HarrisonCh3_3"
 #inputfilename = "sample-qw-barrierdope-p"
+#inputfilename = "sample-double-qw"
 
 # Calculation
 # -----------
-use_cython = False #provides a speed up for aestimo and aestimo_numpy
+# Aestimo / Aestimo_numpy
+use_cython = True #provides a speed up for aestimo and aestimo_numpy
+# Shooting method parameters for Schrödinger Equation solution
+delta_E = 0.5*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. #This can be included in config as a setting?
+d_E = 1e-5*meV2J #Energy step (Joules) for Newton-Raphson method when improving the precision of the energy of a found level.
+E_start = 0.0    #Energy to start shooting method from #This can be included in config as a setting?
+damping = 0.5    #averaging factor between iterations to smooth convergence.
+max_iterations=80 #maximum number of iterations.
+convergence_test=1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
+
+# Aestimo_numpy_h
 strain = True # for aestimo_numpy_h
 
 # Output Files
