@@ -372,7 +372,7 @@ def wf(E,fis,model):
     n_max = model.n_max
     dx = model.dx
     #choosing effective mass function
-    if model.comp_scheme in (1,3): #non-parabolicity calculation
+    if model.comp_scheme in (1,3,6): #non-parabolicity calculation
         cb_meff_E = lambda j : cb_meff[j]*(1.0 + cb_meff_alpha[j]*(E - fis[j])) # energy dependent mass
     else:
         cb_meff_E = lambda j : cb_meff[j]
@@ -544,6 +544,10 @@ def calc_Vxc(sigma,eps,cb_meff):
     nz= -(sigma - model.dop*model.dx) # electron density per m**2
     nz_3 = nz**(1/3.) #cube root of charge density.
     #a_B_eff = eps/cb_meff*a_B #effective Bohr radius
+    #r_s occaisonally suffers from division by zero errors due to nz=0.
+    #We will fix these by setting nz_3 = 1.0 for these points (a tiny charge in per m**2).
+    nz_3 = nz_3.clip(1.0,max(nz_3))
+    
     r_s = 1.0/((4*pi/3.0)**(1/3.)*nz_3*eps/cb_meff*a_B) #average distance between charges in units of effective Bohr radis.
     #A = q**4/(32*pi**2*hbar**2)*(9*pi/4.0)**(1/3.)*2/pi*(4*pi/3.0)**(1/3.)*4*pi*hbar**2/q**2 #constant factor for expression.
     A = q**2/(4*pi)*(3/pi)**(1/3.) #simplified constant factor for expression.
@@ -722,7 +726,7 @@ def Poisson_Schrodinger(model):
         else:
             iteration += 1
             previousE0 = E_state[0]
-            
+    
     # END OF SELF-CONSISTENT LOOP
     time3 = time.time() # timing audit
     logger.info("calculation time  %g s" %(time3 - time2))
