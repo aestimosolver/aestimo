@@ -224,9 +224,14 @@ class StructureFrom(Structure):
 
 
 # Shooting method parameters for Schrödinger Equation solution
-delta_E = config.delta_E #0.5*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. #This can be included in config as a setting?
+delta_E = config.delta_E #0.5*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV.
 d_E = config.d_E #1e-5*meV2J #Energy step (Joules) for Newton-Raphson method when improving the precision of the energy of a found level.
-E_start = config.E_start #0.0 #Energy to start shooting method from #This can be included in config as a setting?
+E_start = config.E_start #0.0 #Energy to start shooting method from (if E_start = 0.0 uses minimum of energy of bandstructure)
+Estate_convergence_test = config.Estate_convergence_test #1e-9*meV2J
+# FermiDirac
+FD_d_E = config.FD_d_E #1e-9 Initial Energy step (meV) for Newton-Raphson method to find E_F
+FD_convergence_test = config.convergence_test #1e-6
+# Poisson Loop
 damping = config.damping #0.5 #averaging factor between iterations to smooth convergence.
 max_iterations= config.max_iterations #80 #maximum number of iterations.
 convergence_test= config.convergence_test #1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
@@ -345,7 +350,7 @@ def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
             y = psi_at_inf(energyx,fi,cb_meff,cb_meff_alpha,n_max,dx)
             dy = (psi_at_inf(energyx+d_E,fi,cb_meff,cb_meff_alpha,n_max,dx)- psi_at_inf(energyx-d_E,fi,cb_meff,cb_meff_alpha,n_max,dx))/(2.0*d_E)
             energyx -= y/dy
-            if abs(y/dy) < 1e-9*meV2J:
+            if abs(y/dy) < Estate_convergence_test:
                 break
         E_state[i]=energyx*J2meV
         # clears x from solution
@@ -456,12 +461,12 @@ def fermilevel(Ntotal2d,T,E_state,meff_state):
     #return float(Ef)
     #implement Newton-Raphson method
     Ef = Ef_0K
-    d_E = 1e-9 #Energy step (meV)
+    d_E = FD_d_E #Energy step (meV)
     while True:
         y = func(Ef,E_state,meff_state,Ntotal2d,T)
         dy = (func(Ef+d_E,E_state,meff_state,Ntotal2d,T)- func(Ef-d_E,E_state,meff_state,Ntotal2d,T))/(2.0*d_E)
         Ef -= y/dy
-        if abs(y/dy) < 1e-12:
+        if abs(y/dy) < FD_convergence_test:
             break
     return Ef #(meV)
 

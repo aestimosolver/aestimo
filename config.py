@@ -42,9 +42,14 @@ inputfilename = "sample-qw-qwdope"
 # Aestimo / Aestimo_numpy
 use_cython = True #provides a speed up for aestimo and aestimo_numpy
 # Shooting method parameters for Schrödinger Equation solution
-delta_E = 0.5*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. #This can be included in config as a setting?
+delta_E = 0.5*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. 
 d_E = 1e-5*meV2J #Energy step (Joules) for Newton-Raphson method when improving the precision of the energy of a found level.
-E_start = 0.0    #Energy to start shooting method from #This can be included in config as a setting?
+E_start = 0.0    #Energy to start shooting method from (if E_start = 0.0 uses minimum of energy of bandstructure)
+Estate_convergence_test = 1e-9*meV2J
+# FermiDirac
+FD_d_E = 1e-9 #Initial Energy step (meV) for Newton-Raphson method to find E_F
+convergence_test = 1e-6 #meV
+# Poisson Loop
 damping = 0.5    #averaging factor between iterations to smooth convergence.
 max_iterations=80 #maximum number of iterations.
 convergence_test=1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
