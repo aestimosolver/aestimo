@@ -108,7 +108,7 @@ d_E = config.d_E #1e-5*meV2J #Energy step (Joules) for Newton-Raphson method whe
 E_start = config.E_start #0.0 #Energy to start shooting method from (if E_start = 0.0 uses minimum of energy of bandstructure)
 Estate_convergence_test = config.Estate_convergence_test #1e-9*meV2J
 # FermiDirac
-FD_d_E = config.FD_d_E #1e-9 Initial Energy step (meV) for Newton-Raphson method to find E_F
+FD_d_E = config.FD_d_E #1e-9 Initial and minimum Energy step (meV) for derivative calculation for Newton-Raphson method to find E_F
 FD_convergence_test = config.convergence_test #1e-6
 # Poisson Loop
 damping = config.damping #0.5 #averaging factor between iterations to smooth convergence.
@@ -292,10 +292,18 @@ def fermilevel(Ntotal2d,T,E_state,meff_state):
     while True:
         y = func(Ef,E_state,meff_state,Ntotal2d,T)
         dy = (func(Ef+d_E,E_state,meff_state,Ntotal2d,T)- func(Ef-d_E,E_state,meff_state,Ntotal2d,T))/(2.0*d_E)
+        if dy == 0.0: #increases interval size for derivative calculation in case of numerical error
+            d_E*=2.0
+            continue #goes back to start of loop, therefore d_E will increase until a non-zero derivative is found
         Ef -= y/dy
         if abs(y/dy) < FD_convergence_test:
             break
+        #reduces the interval by a couple of notches ready for the next iteration
+        for i in range(2):
+            if d_E>FD_d_E: 
+                d_E*=0.5
     return Ef #(meV)
+
 
 def calc_N_state(Ef,T,Ns,E_state,meff_state):
     # Find the subband populations, taking advantage of step like d.o.s. and analytic integral of FD
