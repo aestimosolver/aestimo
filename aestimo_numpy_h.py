@@ -34,7 +34,7 @@ import os
 from math import log,exp,sqrt
 import VBHM
 from scipy import linalg
-from VBHM import qsv,VBMAT1,VBMAT_V
+from VBHM import qsv,VBMAT1,VBMAT_V,CBMAT,CBMAT_V
 import config,database
 # --------------------------------------
 import logging
@@ -246,6 +246,7 @@ class StructureFrom(Structure):
         self.Fapp = inputfile.Fapplied
         self.T = inputfile.T
         self.subnumber_h = inputfile.subnumber_h
+        self.subnumber_e = inputfile.subnumber_e
         self.comp_scheme = inputfile.computation_scheme
         self.dx = inputfile.gridfactor*1e-9 #grid in m
         self.maxgridpoints = inputfile.maxgridpoints
@@ -300,13 +301,17 @@ def vegard(first,second,mole):
     return first*mole+second*(1-mole)
 
 # FUNCTIONS for FERMI-DIRAC STATISTICS-----------------------------------------   
-def fd2(Ei,Ef,model):#use
+def fd1(Ei,Ef,model):#use
     """integral of Fermi Dirac Equation for energy independent density of states.
     Ei [meV], Ef [meV], T [K]"""
-    T= model.T 
+    T= model.T
     return kb*T*log(exp(meV2J*(Ei-Ef)/(kb*T))+1)
-
-def calc_meff_state(wfh,model,list,m_hh,m_lh,m_so):
+def fd2(Ei,Ef,model):
+    """integral of Fermi Dirac Equation for energy independent density of states.
+    Ei [meV], Ef [meV], T [K]"""
+    T= model.T
+    return kb*T*log(exp(meV2J*(Ef-Ei)/(kb*T))+1)
+def calc_meff_state(wfh,wfe,model,fi,E_statec,list,m_hh,m_lh,m_so):
     n_max=len(m_hh)
     vb_meff= np.zeros((model.subnumber_h,n_max))
     #
@@ -319,18 +324,48 @@ def calc_meff_state(wfh,model,list,m_hh,m_lh,m_so):
            vb_meff[i]=m_so
     tmp = 1.0/np.sum(wfh**2/vb_meff,axis=1)
     meff_state = tmp.tolist()
-    return meff_state #kg
+    """find subband effective masses including non-parabolicity
+    (but stilling using a fixed effective mass for each subband dispersion)"""
+    cb_meff = model.cb_meff # effective mass of conduction band across structure
+    cb_meff_alpha = model.cb_meff_alpha # non-parabolicity constant across structure
+    cb_meff_states = np.array([cb_meff*(1.0 + cb_meff_alpha*(E*meV2J - fi)) for E in E_statec])
+    tmp1 = 1.0/np.sum(wfe**2/cb_meff_states,axis=1)
+    meff_statec = tmp1.tolist()
+    return meff_statec,meff_state
 
+def fermilevel_0Kc(Ntotal2d,E_statec,meff_statec,model):#use
+    Et2,Ef=0.0,0.0
+    meff_statec=np.array(meff_statec)
+    E_statec=np.array(E_statec)
+    for i in range (model.subnumber_e,0,-1): #,(Ei,vsb_meff) in enumerate(zip(E_state,meff_state)):
+        Efnew2=(sum(E_statec[0:i]*meff_statec[0:i]))
+        m2=(sum(meff_statec[0:i]))
+        Et2+=E_statec[i-model.subnumber_e]
+        Efnew=(Efnew2+Ntotal2d*hbar**2*pi*J2meV)/(m2)
+        if  Efnew>Et2:
+            Ef=Efnew
+            #print 'Ef[',i-subnumber_h,']=',Ef
+        else:
+            break #we have found Ef and so we should break out of the loop
+    else: #exception clause for 'for' loop.
+        print "Have processed all energy levels present and so can't be sure that Ef is below next higher energy level."
+
+    #Ef1=(sum(E_state*meff_state)-Ntotal2d*hbar**2*pi)/(sum(meff_state))
+    N_statec=[0.0]*len(E_statec)
+    for i,(Ei,csb_meff) in enumerate(zip(E_statec,meff_statec)):
+        Nic=(Ef - Ei)*csb_meff/(hbar**2*pi)*meV2J    # populations of levels
+        Nic*=(Nic>0.0)
+        N_statec[i]=Nic
+    return Ef,N_statec #Fermi levels at 0K (meV), number of electrons in each subband at 0K
 def fermilevel_0K(Ntotal2d,E_state,meff_state,model):#use
-    Et,Ef=0.0,0.0
+    Et1,Ef=0.0,0.0
     E_state=np.array(E_state)
-    meff_state=np.array(meff_state)   
     for i in range (model.subnumber_h,0,-1): #,(Ei,vsb_meff) in enumerate(zip(E_state,meff_state)):
-        Efnew=(sum(E_state[0:i]*meff_state[0:i])+Ntotal2d*hbar**2*pi*J2meV)/(sum(meff_state[0:i]))
-        #Efnew=(-Ntotal2d*hbar**2*pi/vsb_meff*J2meV + Et)/(i+1)#we romove -       
-        #print 'Efnew[',i-subnumber_h,']=',Efnew
-        Et+=E_state[i-model.subnumber_h]
-        if Efnew<Et:
+        Efnew1=(sum(E_state[0:i]*meff_state[0:i]))
+        m1=(sum(meff_state[0:i]))
+        Et1+=E_state[i-model.subnumber_h]
+        Efnew=(Efnew1+Ntotal2d*hbar**2*pi*J2meV)/(m1)
+        if Efnew<Et1 :
             Ef=Efnew
             #print 'Ef[',i-subnumber_h,']=',Ef
         else:
@@ -339,24 +374,31 @@ def fermilevel_0K(Ntotal2d,E_state,meff_state,model):#use
         print "Have processed all energy levels present and so can't be sure that Ef is below next higher energy level."
     
     #Ef1=(sum(E_state*meff_state)-Ntotal2d*hbar**2*pi)/(sum(meff_state))    
-    #print 'Ef1=',Ef1 
     N_state=[0.0]*len(E_state)
     for i,(Ei,vsb_meff) in enumerate(zip(E_state,meff_state)):
         Ni=(Ei - Ef)*vsb_meff/(hbar**2*pi)*meV2J    # populations of levels
         Ni*=(Ni>0.0)
         N_state[i]=Ni
-    return Ef,N_state #Fermi levels at 0K (meV), number of electrons in each subband at 0K
- 
-def fermilevel(Ntotal2d,model,E_state,meff_state):#use
+    return Ef,N_state  #Fermi levels at 0K (meV), number of electrons in each subband at 0K
+def fermilevel(Ntotal2d,model,E_state,E_statec,meff_state,meff_statec):#use
     #find the Fermi level (meV)
-    def func(Ef,E_state,meff_state,Ntotal2d,model):
-         #return Ntotal2d - sum( [vsb_meff*fd2(Ei,Ef,T) for Ei,vsb_meff in zip(E_state,meff_state)] )/(hbar**2*pi)
-         diff = Ntotal2d       
-         for Ei,vsb_meff in zip(E_state,meff_state):
-            #print 'fd2(Ei,Ef,model)=',fd2(Ei,Ef,model)             
-            diff += vsb_meff*fd2(Ei,Ef,model)/(hbar**2*pi)
-         return diff
-    Ef_0K,N_states_0K = fermilevel_0K(Ntotal2d,E_state,meff_state,model)
+    def func(Ef,E_state,meff_state,E_statec,meff_statec,Ntotal2d,model):
+        #return Ntotal2d - sum( [vsb_meff*fd2(Ei,Ef,T) for Ei,vsb_meff in zip(E_state,meff_state)] )/(hbar**2*pi)
+        diff,diff1,diff2=0.0,0.0,0.0
+        diff = Ntotal2d
+        for Ei,csb_meff in zip(E_statec,meff_statec):
+            diff1 -= csb_meff*fd2(Ei,Ef,model)/(hbar**2*pi)
+        for Ei,vsb_meff in zip(E_state,meff_state):
+            diff2 += vsb_meff*fd1(Ei,Ef,model)/(hbar**2*pi)
+        if Ntotal2d>0 :
+            diff+=diff1
+        else:
+            diff+=diff2
+        return diff
+    if Ntotal2d>0 :
+        Ef_0K,N_states_0K = fermilevel_0Kc(Ntotal2d,E_statec,meff_statec,model)
+    else:
+        Ef_0K,N_states_0K= fermilevel_0K(Ntotal2d,E_state,meff_state,model)
     #Ef=fsolve(func,Ef_0K,args=(E_state,meff_state,Ntotal2d,T))[0]
     #return float(Ef)
     #implement Newton-Raphson method
@@ -365,28 +407,48 @@ def fermilevel(Ntotal2d,model,E_state,meff_state):#use
     print 'Ef (at 0K)=',Ef
     d_E = 1e-9 #Energy step (meV)
     while True:
-        y = func(Ef,E_state,meff_state,Ntotal2d,model)
-        dy = (func(Ef+d_E,E_state,meff_state,Ntotal2d,model)- func(Ef-d_E,E_state,meff_state,Ntotal2d,model))/(2.0*d_E)        
+        y = func(Ef,E_state,meff_state,E_statec,meff_statec,Ntotal2d,model)
+        dy = (func(Ef+d_E,E_state,meff_state,E_statec,meff_statec,Ntotal2d,model)- func(Ef-d_E,E_state,meff_state,E_statec,meff_statec,Ntotal2d,model))/(2.0*d_E)
+        if dy == 0.0: #increases interval size for derivative calculation in case of numerical error
+            d_E*=2.0
+            continue
         Ef -= y/dy
+        """
+        print 'y=',y
+        print 'dy=',dy
+        print 'Ef =',Ef
+        print 'y/dy=',y/dy
+        """
         if abs(y/dy) < 1e-12:
             break
+        for i in range(2):
+            if d_E>1e-9:
+                d_E*=0.5
     return Ef #(meV)
 
-def calc_N_state(Ef,model,Ns,E_state,meff_state):#use
-    # Find the subband populations, taking advantage of step like d.o.s. and analytic integral of FD    
-    N_state=[fd2(Ei,Ef,model)*vsb_meff/(hbar**2*pi) for Ei,vsb_meff in zip(E_state,meff_state)]
-    return N_state # number of carriers in each subband
+def calc_N_state(Ef,model,E_state,meff_state,E_statec,meff_statec,Ntotal2d):#use
+    # Find the subband populations, taking advantage of step like d.o.s. and analytic integral of FD
+    N_statec,N_state=0.0,0.0
+    if Ntotal2d>0 :
+        N_statec=[fd2(Ei,Ef,model)*csb_meff/(hbar**2*pi) for Ei,csb_meff in zip(E_statec,meff_statec)]
+    else:
+        N_state=[fd1(Ei,Ef,model)*vsb_meff/(hbar**2*pi) for Ei,vsb_meff in zip(E_state,meff_state)]
+    return N_state,N_statec  # number of carriers in each subband
     
 # FUNCTIONS for SELF-CONSISTENT POISSON--------------------------------
 
-def calc_sigma(wfh,N_state,model): #use
+def calc_sigma(wfh,wfe,N_state,N_statec,model,Ntotal2d): #use
     """This function calculates `net' areal charge density
     n-type dopants lead to -ve charge representing electrons, and additionally 
     +ve ionised donors."""
     # note: model.dop is still a volume density, the delta_x converts it to an areal density
     sigma= model.dop*model.dx # The charges due to the dopant ions
-    for j in range(0,model.subnumber_h,1): # The charges due to the electrons in the subbands
-        sigma+= N_state[j]*(wfh[j])**2
+    if Ntotal2d>0 :
+        for j in range(0,model.subnumber_e,1): # The charges due to the electrons in the subbands
+            sigma-= N_statec[j]*(wfe[j])**2
+    else:
+        for i in range(0,model.subnumber_h,1): # The charges due to the electrons in the subbands
+            sigma+= N_state[i]*(wfh[i])**2
     return sigma #charge per m**2 (units of electronic charge)
     
 ##
@@ -476,14 +538,15 @@ def Poisson_Schrodinger(model):
     dx - grid spacing (m)
     n_max - number of points.
     """   
-    #fi = model.fi
-    #cb_meff = model.cb_meff
+    fi = model.fi
+    cb_meff = model.cb_meff
     eps = model.eps
     dop = model.dop
     Fapp = model.Fapp
     T = model.T
     comp_scheme = model.comp_scheme
-    subnumber_h = model.subnumber_h 
+    subnumber_h = model.subnumber_h
+    subnumber_e = model.subnumber_e
     dx = model.dx
     n_max = model.n_max
     
@@ -505,7 +568,7 @@ def Poisson_Schrodinger(model):
     GA1 = model.GA1
     GA2 = model.GA2
     GA3 = model.GA3
-    #Ac = model.Ac
+    Ac = model.Ac
     Av = model.Av
     B = model.B
     a0 = model.a0
@@ -514,12 +577,12 @@ def Poisson_Schrodinger(model):
     BW = model.BW
     WB = model.WB
     HUPMAT1=np.zeros((n_max*3, n_max*3))
-    #HUPMAT2=np.zeros((n_max*3, n_max*3))
+    HUPMATC1=np.zeros((n_max, n_max))
     UNIM = np.identity(n_max)
     EXX  = np.zeros(n_max)
     EZZ  = np.zeros(n_max)
     ZETA= np.zeros(n_max)
-    #CNIT= np.zeros(n_max)
+    CNIT= np.zeros(n_max)
     VNIT= np.zeros(n_max)
     S= np.zeros(n_max)
     k1= np.zeros(n_max)
@@ -531,7 +594,7 @@ def Poisson_Schrodinger(model):
         EXX= (min(a0)-a0)/a0
         EZZ= -2.0*C12/C11*EXX
         ZETA= -B/2.0*(EXX+EXX-2.0*EZZ)
-        #CNIT= Ac*(EXX+EXX+EZZ)
+        CNIT= Ac*(EXX+EXX+EZZ)
         VNIT= -Av*(EXX+EXX+EZZ)
         for i in range(0,n_max,1):
             if i < BW-1 or i > WB+1 :
@@ -547,24 +610,29 @@ def Poisson_Schrodinger(model):
     x_max=dx*n_max
     RATIO=m_e/hbar**2*(x_max)**2
     AC1=(n_max+1)**2    
-    AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM=qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,AC1,n_max,delta)
+    AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,Pce,GDELM=qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta)
     KP=0.0
     KPINT=0.01
     HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT,WB,BW)
-    
-    def calc_E_state(HUPMAT1,subnumber_h,fitot):
+    HUPMATC1=CBMAT(KP,Pce,cb_meff/m_e,x_max,n_max,AC1,UNIM,KPINT,WB,BW)
+    def calc_E_state(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc):
         #print fi_h ,len(fi_h)       
         HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)        
-        #print [HUPMAT3[i][i]*1e-3 for i in range(len(HUPMAT3))] #[0:3,0:3],len(HUPMAT3) #/RATIO*J2meV
+        HUPMATC3=CBMAT_V(HUPMATC1,fitotc,RATIO,n_max,UNIM)
         #stop
-        #print 'len(HUPMAT3)=',len(HUPMAT3)
+        KPV1=[0.0]*subnumber_e
+        la1,v1= linalg.eigh(HUPMATC3)
+        tmp1=la1/RATIO*J2meV
+        tmp1=tmp1.tolist()
+        for i in range(0,subnumber_e,1):
+            KPV1[i]=tmp1[i]
         KPV2=[0.0]*subnumber_h 
         la2,v2= linalg.eigh(HUPMAT3) 
         tmp=-la2/RATIO*J2meV
         tmp=tmp.tolist()
         for i in range(0,subnumber_h,1):
             KPV2[i]=tmp[i]
-        return KPV2,v2
+        return KPV1,v1,KPV2,v2
     
     # Check
     if comp_scheme ==6:
@@ -582,10 +650,12 @@ def Poisson_Schrodinger(model):
     # Preparing empty subband energy lists.
     E_state = [0.0]*subnumber_h     # Energies of subbands/levels (meV)
     N_state = [0.0]*subnumber_h     # Number of carriers in subbands  
-
+    E_statec = [0.0]*subnumber_e     # Energies of subbands/levels (meV)
+    N_statec = [0.0]*subnumber_e     # Number of carriers in subbands
     # Creating and Filling material arrays
     xaxis = np.arange(0,n_max)*dx   #metres
     fitot = np.zeros(n_max)         #Energy potential = Bandstructure + Coulombic potential
+    fitotc = np.zeros(n_max)         #Energy potential = Bandstructure + Coulombic potentia
     #eps = np.zeros(n_max+2)	    #dielectric constant
     #dop = np.zeros(n_max+2)	    #doping distribution
     #sigma = np.zeros(n_max+2)      #charge distribution (donors + free charges)
@@ -595,7 +665,7 @@ def Poisson_Schrodinger(model):
 
     # Subband wavefunction for holes list. 2-dimensional: [i][j] i:stateno, j:wavefunc
     wfh = np.zeros((subnumber_h,n_max))
-    
+    wfe = np.zeros((subnumber_e,n_max))
     # Setup the doping
     Ntotal = sum(dop) # calculating total doping density m-3
     Ntotal2d = Ntotal*dx
@@ -613,19 +683,22 @@ def Poisson_Schrodinger(model):
     iteration = 1   #iteration counter
     previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
     fitot = fi_h + Vapp #For initial iteration sum bandstructure and applied field
+    fitotc = fi + Vapp
     while True:
         if not(config.messagesoff) :
             print "Iteration:",iteration
             logger.info("Iteration: %d" %iteration)
         #HUPMAT2=np.zeros((n_max*3, n_max*3))
             
-        E_state,wvmat=calc_E_state(HUPMAT1,subnumber_h,fitot)
+        E_statec,wvmatc,E_state,wvmat=calc_E_state(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc)
         #print E_state
         #xax=range(3*n_max)
         #pl.plot(xax, wvmat[0:3*n_max,2])
         #pl.show()
         #stop
         # Envelope Function Wave Functions
+        for i in range(0,subnumber_e,1):
+                wfe[i] = wvmatc[0:n_max,i]
         list = ['']*subnumber_h
         for i in range(0,subnumber_h,1):
             k= np.argmax(abs(wvmat[:,i]))
@@ -640,19 +713,20 @@ def Poisson_Schrodinger(model):
                 list[i]='so'
 
         # Calculate the effective mass of each subband
-        meff_state = calc_meff_state(wfh,model,list,m_hh,m_lh,m_so)
-        
+        meff_statec,meff_state = calc_meff_state(wfh,wfe,model,fi,E_statec,list,m_hh,m_lh,m_so)
         ## Self-consistent Poisson
         
         # Calculate the Fermi energy and subband populations at 0K
         #E_F_0K,N_state_0K=fermilevel_0K(Ntotal2d,E_state,meff_state)
         # Calculate the Fermi energy at the temperature T (K)
-        E_F = fermilevel(Ntotal2d,model,E_state,meff_state)
-            
+        if Ntotal2d>0 :
+            E_F = fermilevel(Ntotal2d,model,E_state,E_statec,meff_state,meff_statec)
+        else:
+            E_F = fermilevel(Ntotal2d,model,E_state,E_statec,meff_state,meff_statec)
         # Calculate the subband populations at the temperature T (K)
-        N_state=calc_N_state(E_F,model,Ntotal2d,E_state,meff_state)
+        N_state,N_statec=calc_N_state(E_F,model,E_state,meff_state,E_statec,meff_statec,Ntotal2d)
         # Calculate `net' areal charge density
-        sigma=calc_sigma(wfh,N_state,model) #one more instead of subnumber_h
+        sigma=calc_sigma(wfh,wfe,N_state,N_statec,model,Ntotal2d) #one more instead of subnumber_h
         # Calculate electric field (Poisson/Hartree Effects)
         F=calc_field(sigma,eps)
         # Calculate potential due to charge distribution
@@ -666,19 +740,34 @@ def Poisson_Schrodinger(model):
             for i,meff in enumerate(meff_state):
                 print 'meff[',i,']= ',meff/m_e
                 logger.info("meff[%d]= %f"%(i,meff/m_e))
-            for i,Ni in enumerate(N_state):
-                print 'N[',i,']= ',Ni,' m**-2'
-                logger.info("N[%d]= %f m**-2"%(i,Ni))
+            if Ntotal2d<0:
+                for i,Ni in enumerate(N_state):
+                    print 'N[',i,']= ',Ni,' m**-2'
+                    logger.info("N[%d]= %f m**-2"%(i,Ni))
+            for i,level in enumerate(E_statec):
+                print "Ec[",i,"]=",level,"meV" #can be written on file.
+                logger.info("Ec[%d]= %f meV"%(i,level))
+            for i,meff in enumerate(meff_statec):
+                print 'meffc[',i,']= ',meff/m_e
+                logger.info("meff[%d]= %f"%(i,meff/m_e))
+            if Ntotal2d>0:
+                for i,Ni in enumerate(N_statec):
+                    print 'N[',i,']= ',Ni,' m**-2'
+                    logger.info("N[%d]= %f m**-2"%(i,Ni))
             #print 'Efermi (at 0K) = ',E_F_0K,' meV'
             #for i,Ni in enumerate(N_state_0K):
             #    print 'N[',i,']= ',Ni
             print 'Efermi (at %gK) = ' %T, E_F,' meV'
             print "total acceptor charge = ",np.sum(dop)*dx,"m**-2"
-            print "total level charge = ",sum(N_state),"m**-2"
+            if Ntotal2d>0:
+                print "total level charge c= ",sum(N_statec),"m**-2"
+            else:
+                print "total level charge = ",sum(N_state),"m**-2"
             print "total system charge = ",np.sum(sigma),"m**-2"
             logger.info('Efermi (at %gK) = %g meV' %(T, E_F))
             logger.info("total acceptor charge = %g m**-2" %(sum(dop)*dx))
-            logger.info("total level charge = %g m**-2" %(sum(N_state)))
+            #logger.info("total level charge = %g m**-2" %(sum(N_state)))
+            #logger.info("total level chargec = %g m**-2" %(sum(N_statec)))
             logger.info("total system charge = %g m**-2" %(sum(sigma)))
         #
         if comp_scheme in (0,1): 
@@ -691,6 +780,7 @@ def Poisson_Schrodinger(model):
         #fi_h=np.resize(fi_h,n_max)
         V+= damping*(Vnew - V)
         fitot = fi_h + V + Vapp
+        fitotc = fi + V + Vapp
         
         if abs(E_state[0]-previousE0) < convergence_test: #Convergence test
             break
@@ -711,19 +801,25 @@ def Poisson_Schrodinger(model):
     
     results.xaxis = xaxis
     results.wfh = wfh
+    results.wfe = wfe
     results.fitot = fitot
+    results.fitotc = fitotc
     results.sigma = sigma
     results.F = F
     results.V = V
     results.E_state = E_state
     results.N_state = N_state
     results.meff_state = meff_state
+    results.E_statec = E_statec
+    results.N_statec = N_statec
+    results.meff_statec = meff_statec
     results.Fapp = Fapp
     results.T = T
     results.E_F = E_F
     results.dx = dx
     results.subnumber_h = subnumber_h
-    
+    results.subnumber_e = subnumber_e
+    results.Ntotal2d = Ntotal2d
     return results
 
 def save_and_plot(result,model):
@@ -733,29 +829,52 @@ def save_and_plot(result,model):
     
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)
+    if result.Ntotal2d<0:
         
-    def saveoutput(fname,datatuple,header=None):
-        fname2 = os.path.join(output_directory,fname)
-        fobj = file(fname2,'wb')
-        if header: fobj.write(header+'\n')
-        np.savetxt(fobj,np.column_stack(datatuple),fmt='%.6e', delimiter=' ')
-        fobj.close()
+        def saveoutput(fname,datatuple,header=None):
+            fname2 = os.path.join(output_directory,fname)
+            fobj = file(fname2,'wb')
+            if header: fobj.write(header+'\n')
+            np.savetxt(fobj,np.column_stack(datatuple),fmt='%.6e', delimiter=' ')
+            fobj.close()
+
+        if config.sigma_out:
+            saveoutput("sigma_h.dat",(xaxis,result.sigma))
+        if config.electricfield_out:
+            saveoutput("efield_h.dat",(xaxis,result.F))
+        if config.potential_out:
+            saveoutput("potn_h.dat",(xaxis,result.fitot))
+        if config.states_out:
+            rel_meff_state = [meff/m_e for meff in result.meff_state] #going to report relative effective mass.
+            columns = range(model.subnumber_h), result.E_state, result.N_state, rel_meff_state
+            #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
+            header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+            saveoutput("states_h.dat",columns, header = header )
+        if config.probability_out:
+            saveoutput("wavefunctions_h.dat",(xaxis,result.wfh.transpose()) )
+    else:
         
-    if config.sigma_out:
-        saveoutput("sigma_h.dat",(xaxis,result.sigma))
-    if config.electricfield_out:
-        saveoutput("efield_h.dat",(xaxis,result.F))
-    if config.potential_out:
-        saveoutput("potn_h.dat",(xaxis,result.fitot))
-    if config.states_out:
-        rel_meff_state = [meff/m_e for meff in result.meff_state] #going to report relative effective mass.
-        columns = range(model.subnumber_h), result.E_state, result.N_state, rel_meff_state
-        #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
-        header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
-        saveoutput("states_h.dat",columns, header = header )
-    if config.probability_out:
-        saveoutput("wavefunctions_h.dat",(xaxis,result.wfh.transpose()) )
-    
+        def saveoutput2(fname,datatuple,header=None):
+            fname2 = os.path.join(output_directory,fname)
+            fobj = file(fname2,'wb')
+            if header: fobj.write(header+'\n')
+            np.savetxt(fobj,np.column_stack(datatuple),fmt='%.6e', delimiter=' ')
+            fobj.close()
+
+            if config.sigma_out:
+                saveoutput2("sigma.dat",(xaxis,result.sigma))
+            if config.electricfield_out:
+                saveoutput2("efield.dat",(xaxis,result.F))
+            if config.potential_out:
+                saveoutput2("potn.dat",(xaxis,result.fitot))
+            if config.states_out:
+                rel_meff_state = [meff/m_e for meff in result.meff_state] #going to report relative effective mass.
+                columns = range(model.subnumber_e), result.E_state, result.N_state, rel_meff_state
+                #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
+                header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+                saveoutput("states.dat",columns, header = header )
+            if config.probability_out:
+                saveoutput2("wavefunctions.dat",(xaxis,result.wfe.transpose()) )
     # Resultviewer
         
     if config.resultviewer:
@@ -783,30 +902,51 @@ def save_and_plot(result,model):
     
         #Plotting Potential
         #figure(2)
-        pl.subplot(2,2,3)
-        pl.plot(xaxis, result.fitot)
-        pl.xlabel('Position (m)')
-        pl.ylabel('E_c (J)')
-        pl.title('Potential')
-        pl.grid(True)
-    
-        #Plotting State(s)
-        #figure(3)
-        pl.subplot(2,2,4)
-        for j,state in enumerate(result.wfh):
-            pl.plot(xaxis, state, label='state %d' %j)
-        pl.xlabel('Position (m)')
-        pl.ylabel('Psi')
-        pl.title('First state')
-        pl.grid(True)
-        
+        if result.Ntotal2d<0:
+
+            pl.subplot(2,2,3)
+            pl.plot(xaxis, result.fitot)
+            pl.xlabel('Position (m)')
+            pl.ylabel('E_c (J)')
+            pl.title('Potential')
+            pl.grid(True)
+
+            #Plotting State(s)
+            #figure(3)
+            pl.subplot(2,2,4)
+            for j,state in enumerate(result.wfh):
+                pl.plot(xaxis, state, label='state %d' %j)
+            pl.xlabel('Position (m)')
+            pl.ylabel('Psi')
+            pl.title('First state')
+            pl.grid(True)
+        else:
+            pl.subplot(2,2,3)
+            pl.plot(xaxis, result.fitotc)
+            pl.xlabel('Position (m)')
+            pl.ylabel('E_c (J)')
+            pl.title('Potential')
+            pl.grid(True)
+
+            #Plotting State(s)
+            #figure(3)
+            pl.subplot(2,2,4)
+            for j,state in enumerate(result.wfe):
+                pl.plot(xaxis, state, label='state %d' %j)
+            pl.xlabel('Position (m)')
+            pl.ylabel('Psi')
+            pl.title('First state')
+            pl.grid(True)
         #QW representation
         #figure(5)
         pl.figure(figsize=(10,8))
         pl.suptitle('Aestimo Results')
         pl.subplot(1,1,1)
-        pl.plot(xaxis, result.fitot*J2meV,'k')
-        for level,state in zip(result.E_state,result.wfh): 
+        pl.plot(xaxis,result.fitot*J2meV,'k',xaxis,result.fitotc*J2meV,'k')
+        for levelc,statec in zip(result.E_statec,result.wfe):
+            pl.axhline(levelc,0.1,0.9,color='g',ls='--')
+            pl.plot(xaxis, statec*200.0+levelc,'b')
+        for level,state in zip(result.E_state,result.wfh):
             pl.axhline(level,0.1,0.9,color='g',ls='--')
             pl.plot(xaxis, state*200.0+level,'b')
             #pl.plot(xaxis, state**2*1e-9/dx*200.0+level,'b')
@@ -822,8 +962,11 @@ def QWplot(result,figno=None):
     pl.figure(figno,figsize=(10,8))
     pl.suptitle('Aestimo Results')
     pl.subplot(1,1,1)
-    pl.plot(xaxis, result.fitot*J2meV,'k')
-    for level,state in zip(result.E_state,result.wfe): 
+    pl.plot(xaxis,result.fitot*J2meV,'k',xaxis,result.fitotc*J2meV,'k')
+    for levelc,statec in zip(result.E_statec,result.wfe):
+        pl.axhline(levelc,0.1,0.9,color='g',ls='--')
+        pl.plot(xaxis, statec*200.0+levelc,'b')
+    for level,state in zip(result.E_state,result.wfh):
         pl.axhline(level,0.1,0.9,color='g',ls='--')
         pl.plot(xaxis, state*200.0+level,'b')
         #pl.plot(xaxis, state**2*1e-9/dx*200.0+level,'b')
