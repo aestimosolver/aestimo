@@ -35,6 +35,7 @@ from math import log,exp
 # --------------------------------------
 import logging
 logger = logging.getLogger('aestimo_numpy')
+#File
 hdlr = logging.FileHandler(config.logfile)
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
 hdlr.setFormatter(formatter)
@@ -248,57 +249,61 @@ def vegard(first,second,mole):
 # to the energy occurs for psi(+infinity)=0.
 
 # FUNCTIONS for SHOOTING ------------------
-if config.use_cython:
-    from psi_at_inf_cython import psi_at_inf_numpy
 
-    def psi_at_inf1(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
+def psi_at_inf1(E,fis,cb_meff,cb_meff_alpha,n_max,dx): #inclusion of cb_meff_alpha only so both versions have the same calling arguments
+    """Shooting method for heterostructure as given in Harrison's book"""
+    c0 = 2*(dx/hbar)**2
+    # boundary conditions
+    psi0 = 0.0                 
+    psi1 = 1.0
+    psi2 = None
+    for j in range(1,n_max-1,1):
+        # Last potential not used
+        c1=2.0/(cb_meff[j]+cb_meff[j-1])
+        c2=2.0/(cb_meff[j]+cb_meff[j+1])
+        psi2=((c0*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
+        psi0=psi1
+        psi1=psi2
+    return psi2
+    
+def psi_at_inf2(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
+    """shooting method with non-parabolicity"""
+    c0 = 2*(dx/hbar)**2
+    # boundary conditions
+    psi0 = 0.0                 
+    psi1 = 1.0
+    psi2 = None
+    for j in range(1,n_max-1,1): # Last potential not used
+        c1 = 2.0 / (cb_meff[j]*(1.0 + cb_meff_alpha[j]*(E - fis[j])) +\
+                    cb_meff[j-1]*(1.0 + cb_meff_alpha[j-1]*(E - fis[j-1])) ) 
+        c2 = 2.0 / (cb_meff[j]*(1.0 + cb_meff_alpha[j]*(E - fis[j])) +\
+                    cb_meff[j+1]*(1.0 + cb_meff_alpha[j+1]*(E - fis[j+1])) )       
+        psi2=((c0*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
+        psi0=psi1
+        psi1=psi2
+    return psi2
+
+def psi_at_inf2b(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
+    """shooting method with non-parabolicity"""
+    cb_meff_E = np.array(cb_meff)*(1.0 + np.array(cb_meff_alpha)*(E-np.array(fis))) # energy dependent mass
+    cb_meff_E = cb_meff_E.tolist()
+    return psi_at_inf1(E,fis,cb_meff_E,cb_meff_alpha,n_max,dx)
+    
+try:
+    from psi_at_inf_cython import psi_at_inf_numpy
+    
+    def psi_at_inf1_cython(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
         return psi_at_inf_numpy(E,fis,cb_meff,n_max,dx)
 
-    def psi_at_inf2(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
+    def psi_at_inf2_cython(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
         """shooting method with non-parabolicity"""
         cb_meff_E = cb_meff*(1.0 + cb_meff_alpha*(E - fis))
         return psi_at_inf_numpy(E,fis,cb_meff_E,n_max,dx)
-        
-else:
     
-    def psi_at_inf1(E,fis,cb_meff,cb_meff_alpha,n_max,dx): #inclusion of cb_meff_alpha only so both versions have the same calling arguments
-        """Shooting method for heterostructure as given in Harrison's book"""
-        c0 = 2*(dx/hbar)**2
-        # boundary conditions
-        psi0 = 0.0                 
-        psi1 = 1.0
-        psi2 = None
-        for j in range(1,n_max-1,1):
-            # Last potential not used
-            c1=2.0/(cb_meff[j]+cb_meff[j-1])
-            c2=2.0/(cb_meff[j]+cb_meff[j+1])
-            psi2=((c0*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
-            psi0=psi1
-            psi1=psi2
-        return psi2
-        
-    def psi_at_inf2(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
-        """shooting method with non-parabolicity"""
-        c0 = 2*(dx/hbar)**2
-        # boundary conditions
-        psi0 = 0.0                 
-        psi1 = 1.0
-        psi2 = None
-        for j in range(1,n_max-1,1): # Last potential not used
-            c1 = 2.0 / (cb_meff[j]*(1.0 + cb_meff_alpha[j]*(E - fis[j])) +\
-                        cb_meff[j-1]*(1.0 + cb_meff_alpha[j-1]*(E - fis[j-1])) ) 
-            c2 = 2.0 / (cb_meff[j]*(1.0 + cb_meff_alpha[j]*(E - fis[j])) +\
-                        cb_meff[j+1]*(1.0 + cb_meff_alpha[j+1]*(E - fis[j+1])) )       
-            psi2=((c0*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
-            psi0=psi1
-            psi1=psi2
-        return psi2
+except ImportError:
+    print "psi_at_inf_cython module not found"
+    logger.warning("psi_at_inf_cython module not found")
 
-    def psi_at_inf2b(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
-        """shooting method with non-parabolicity"""
-        cb_meff_E = np.array(cb_meff)*(1.0 + np.array(cb_meff_alpha)*(E-np.array(fis))) # energy dependent mass
-        cb_meff_E = cb_meff_E.tolist()
-        return psi_at_inf1(E,fis,cb_meff_E,cb_meff_alpha,n_max,dx)
 
 #nb. function was much slower when fi is a numpy array than a python list.
 def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
@@ -317,7 +322,12 @@ def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
     n_max = model.n_max
     dx = model.dx
     
-    if config.use_cython == False: #lists are faster than numpy arrays for loops
+    if config.use_cython == True: 
+        _psi_at_inf1 = psi_at_inf1_cython
+        _psi_at_inf2 = psi_at_inf2_cython
+    else: #lists are faster than numpy arrays for loops
+        _psi_at_inf1 = psi_at_inf1
+        _psi_at_inf2 = psi_at_inf2
         fi = fi.tolist()    
         cb_meff = cb_meff.tolist()
         cb_meff_alpha = cb_meff_alpha.tolist()
@@ -330,9 +340,9 @@ def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
     #exit()
     #choose shooting function
     if model.comp_scheme in (1,3,6): #then include non-parabolicity calculation
-        psi_at_inf = psi_at_inf2
+        psi_at_inf = _psi_at_inf2
     else:
-        psi_at_inf = psi_at_inf1
+        psi_at_inf = _psi_at_inf1
     
     for i in range(0,numlevels,1):  
         #increment energy-search for f(x)=0
@@ -593,7 +603,7 @@ def Poisson_Schrodinger(model):
     subnumber_e = model.subnumber_e
     dx = model.dx
     n_max = model.n_max
-    
+        
     # Check
     if comp_scheme ==6:
         scheme6warning = """The calculation of Vxc depends upon m*, however when non-parabolicity is also 
