@@ -40,6 +40,11 @@ hdlr = logging.FileHandler(config.logfile)
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
+#stderr
+ch = logging.StreamHandler()
+formatter2 = logging.Formatter('%(message)s')
+ch.setFormatter(formatter2)
+logger.addHandler(ch)
 # LOG level can be INFO, WARNING, ERROR
 logger.setLevel(logging.INFO)
 # --------------------------------------
@@ -57,7 +62,6 @@ J2meV=1e3/q #Joules to meV
 meV2J=1e-3*q #meV to Joules
 
 time1 = time.time() # timing audit
-print "Aestimo_numpy is starting..."
 logger.info("Aestimo_numpy is starting...")
 
 # Input Class
@@ -102,8 +106,7 @@ class Structure():
         self.alloy_property = database.alloyproperty
         totalalloy = alen(self.alloy_property)
         
-        print "Total material number in database: ",totalmaterial + totalalloy
-        logger.info("Total material number in database: %d" %(totalmaterial + totalalloy))
+        logger.info("Total material number in database: %d" ,(totalmaterial + totalalloy))
         
     def create_structure_arrays(self):
         """ initialise arrays/lists for structure"""
@@ -113,8 +116,7 @@ class Structure():
         # Check on n_max
         maxgridpoints = self.maxgridpoints
         if n_max > maxgridpoints:
-            print " Grid number is exceeding the max number of ", maxgridpoints
-            logger.error("Grid number is exceeding the max number of %d" %max_val)
+            logger.error("Grid number is exceeding the max number of %d",maxgridpoints)
             exit()
         #
         self.n_max = n_max
@@ -192,8 +194,7 @@ class StructureFrom(Structure):
         # Loading material list
         self.material = inputfile.material
         totallayer = alen(self.material)
-        print "Total layer number: ",totallayer
-        logger.info("Total layer number: %s" %totallayer)
+        logger.info("Total layer number: %s",totallayer)
         
         # Calculate the required number of grid points
         self.x_max = sum([layer[0] for layer in self.material])*1e-9 #total thickness (m)
@@ -202,7 +203,7 @@ class StructureFrom(Structure):
         # Check on n_max
         max_val = inputfile.maxgridpoints
         if self.n_max > max_val:
-            print " Grid number is exceeding the max number of ", max_val
+            logger.error(" Grid number is exceeding the max number of %d", max_val)
             exit()
                 
         # Loading materials database #
@@ -212,8 +213,7 @@ class StructureFrom(Structure):
         self.alloy_property = database.alloyproperty
         totalalloy = alen(self.alloy_property)
         
-        print "Total number of materials in database: ",totalmaterial+totalalloy
-        logger.info("Total number of materials in database: %d" %(totalmaterial+totalalloy))
+        logger.info("Total number of materials in database: %d",(totalmaterial+totalalloy))
         
         # Initialise arrays
         
@@ -301,7 +301,6 @@ try:
         return psi_at_inf_numpy(E,fis,cb_meff_E,n_max,dx)
     
 except ImportError:
-    print "psi_at_inf_cython module not found"
     logger.warning("psi_at_inf_cython module not found")
 
 
@@ -449,7 +448,6 @@ def fermilevel_0K(Ntotal2d,E_state,meff_state):
         else:
             break #we have found Ef and so we should break out of the loop
     else: #exception clause for 'for' loop.
-        print "Have processed all energy levels present and so can't be sure that Ef is below next higher energy level."
         logger.warning("Have processed all energy levels present and so can't be sure that Ef is below next higher energy level.")
     N_state=[0.0]*len(E_state)
     for i,(Ei,csb_meff) in enumerate(zip(E_state,meff_state)):
@@ -611,9 +609,7 @@ def Poisson_Schrodinger(model):
                  Currently this effect is ignored and Vxc uses the effective masses from the 
                  bottom of the conduction bands even when non-parabolicity is considered 
                  elsewhere."""
-        print scheme6warning
         logger.warning(scheme6warning)
-        del scheme6warning
     
     # Preparing empty subband energy lists.
     E_state = [0.0]*subnumber_e     # Energies of subbands/levels (meV)
@@ -635,8 +631,7 @@ def Poisson_Schrodinger(model):
     Ntotal2d = Ntotal*dx
     if not(config.messagesoff):
         #print "Ntotal ",Ntotal,"m**-3"
-        print "Ntotal2d ",Ntotal2d," m**-2"
-        logger.info("Ntotal2d %g m**-2" %Ntotal2d)
+        logger.info("Ntotal2d %g m**-2", Ntotal2d)
     
     #Applied Field
     x0 = dx*n_max/2.0
@@ -656,8 +651,7 @@ def Poisson_Schrodinger(model):
         
     while True:
         if not(config.messagesoff) :
-            print "Iteration:",iteration
-            logger.info("Iteration: %d" %iteration)
+            logger.info("Iteration: %d", iteration)
         if iteration> 1:
             energyx=min(fi_min,min(fitot),)
         
@@ -666,9 +660,8 @@ def Poisson_Schrodinger(model):
         # Envelope Function Wave Functions
         #print 'wf'
         for j in range(0,subnumber_e,1):
-            if not(config.messagesoff) :
-                print "Working for subband no:",j+1
-                logger.info("Working for subband no: %d"%(j+1))
+            if not(config.messagesoff):
+                logger.info("Working for subband no: %d",(j+1))
             wfe[j] = wf(E_state[j]*meV2J,fitot,model) #wavefunction units dx**0.5
 
         # Calculate the effective mass of each subband
@@ -709,25 +702,19 @@ def Poisson_Schrodinger(model):
         #status
         if not(config.messagesoff):
             for i,level in enumerate(E_state):
-                print "E[",i,"]=",level,"meV" #can be written on file.
-                logger.info("E[%d]= %f meV"%(i,level))
+                logger.info("E[%d]= %f meV",i,level)
             for i,meff in enumerate(meff_state):
-                print 'meff[',i,']= ',meff/m_e
-                logger.info("meff[%d]= %f"%(i,meff/m_e))
+
+                logger.info("meff[%d]= %f",i,meff/m_e)
             for i,Ni in enumerate(N_state):
-                print 'N[',i,']= ',Ni,' m**-2'
-                logger.info("N[%d]= %f m**-2"%(i,Ni))
+                logger.info("N[%d]= %g m**-2",i,Ni)
             #print 'Efermi (at 0K) = ',E_F_0K,' meV'
             #for i,Ni in enumerate(N_state_0K):
             #    print 'N[',i,']= ',Ni
-            print 'Efermi (at %gK) = ' %T, E_F,' meV'
-            print "total donor charge = ",np.sum(dop)*dx,"m**-2"
-            print "total level charge = ",sum(N_state),"m**-2"
-            print "total system charge = ",np.sum(sigma),"m**-2"
-            logger.info('Efermi (at %gK) = %g meV' %(T, E_F))
-            logger.info("total donor charge = %g m**-2" %(sum(dop)*dx))
-            logger.info("total level charge = %g m**-2" %(sum(N_state)))
-            logger.info("total system charge = %g m**-2" %(sum(sigma)))
+            logger.info('Efermi (at %gK) = %g meV',T, E_F)
+            logger.info("total donor charge = %g m**-2",sum(dop)*dx)
+            logger.info("total level charge = %g m**-2",sum(N_state))
+            logger.info("total system charge = %g m**-2",sum(sigma))
         #
         if comp_scheme in (0,1): 
             #if we are not self-consistently including Poisson Effects then only do one loop
@@ -742,7 +729,6 @@ def Poisson_Schrodinger(model):
         if abs(E_state[0]-previousE0) < convergence_test: #Convergence test
             break
         elif iteration >= max_iterations: #Iteration limit
-            print "Have reached maximum number of iterations"
             logger.warning("Have reached maximum number of iterations")
             break
         else:
@@ -751,7 +737,7 @@ def Poisson_Schrodinger(model):
     
     # END OF SELF-CONSISTENT LOOP
     time3 = time.time() # timing audit
-    logger.info("calculation time  %g s" %(time3 - time2))
+    logger.info("calculation time  %g s",(time3 - time2))
     
     class Results(): pass
     results = Results()
@@ -884,7 +870,7 @@ if __name__=="__main__":
         
     # Import from config file
     inputfile = __import__(config.inputfilename)
-    logger.info("inputfile is %s" %config.inputfilename)
+    logger.info("inputfile is %s",config.inputfilename)
     
     # Initialise structure class
     model = StructureFrom(inputfile,database)
@@ -893,15 +879,13 @@ if __name__=="__main__":
     result = Poisson_Schrodinger(model)
     
     time4 = time.time() #timing audit
-    logger.info("total running time (inc. loading libraries) %g s" %(time4 - time0))
-    logger.info("total running time (exc. loading libraries) %g s" %(time4 - time1))
+    logger.info("total running time (inc. loading libraries) %g s",(time4 - time0))
+    logger.info("total running time (exc. loading libraries) %g s",(time4 - time1))
 
     
     # Write the simulation results in files
     save_and_plot(result,model)
     
-    print "Simulation is finished. All files are closed."
-    print "Please control the related files."
     logger.info("""Simulation is finished. All files are closed.Please control the related files.
         -----------------------------------------------------------------""")
 
