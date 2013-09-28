@@ -564,7 +564,7 @@ def calc_Vxc(sigma,eps,cb_meff):
     nz= -(sigma - model.dop*model.dx) # electron density per m**2
     nz_3 = nz**(1/3.) #cube root of charge density.
     #a_B_eff = eps/cb_meff*a_B #effective Bohr radius
-    #r_s occaisonally suffers from division by zero errors due to nz=0.
+    #r_s occasionally suffers from division by zero errors due to nz=0.
     #We will fix these by setting nz_3 = 1.0 for these points (a tiny charge in per m**2).
     nz_3 = nz_3.clip(1.0,max(nz_3))
     
@@ -601,7 +601,7 @@ def Poisson_Schrodinger(model):
     subnumber_e = model.subnumber_e
     dx = model.dx
     n_max = model.n_max
-        
+    
     # Check
     if comp_scheme ==6:
         scheme6warning = """The calculation of Vxc depends upon m*, however when non-parabolicity is also 
@@ -704,7 +704,6 @@ def Poisson_Schrodinger(model):
             for i,level in enumerate(E_state):
                 logger.info("E[%d]= %f meV",i,level)
             for i,meff in enumerate(meff_state):
-
                 logger.info("meff[%d]= %f",i,meff/m_e)
             for i,Ni in enumerate(N_state):
                 logger.info("N[%d]= %g m**-2",i,Ni)

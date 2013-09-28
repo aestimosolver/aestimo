@@ -43,6 +43,11 @@ hdlr = logging.FileHandler(config.logfile)
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
+#stderr
+ch = logging.StreamHandler()
+formatter2 = logging.Formatter('%(message)s')
+ch.setFormatter(formatter2)
+logger.addHandler(ch)
 # LOG level can be INFO, WARNING, ERROR
 logger.setLevel(logging.INFO)
 # --------------------------------------
@@ -60,7 +65,6 @@ J2meV=1e3/q #Joules to meV
 meV2J=1e-3*q #meV to Joules
 
 time1 = time.time() # timing audit
-print "Aestimo_numpy is starting..."
 logger.info("Aestimo_numpy is starting...")
 
 # Input Class
@@ -105,8 +109,7 @@ class Structure():
         self.alloy_property = database.alloyproperty
         totalalloy = alen(self.alloy_property)
         
-        print "Total material number in database: ",totalmaterial + totalalloy
-        logger.info("Total material number in database: %d" %(totalmaterial + totalalloy))
+        logger.info("Total material number in database: %d" ,(totalmaterial + totalalloy))
         
     def create_structure_arrays(self):
         """ initialise arrays/lists for structure"""
@@ -116,8 +119,7 @@ class Structure():
         # Check on n_max
         maxgridpoints = self.maxgridpoints
         if n_max > maxgridpoints:
-            print " Grid number is exceeding the max number of ", maxgridpoints
-            logger.error("Grid number is exceeding the max number of %d" %max_val)
+            logger.error("Grid number is exceeding the max number of %d",maxgridpoints)
             exit()
         #
         self.n_max = n_max
@@ -179,29 +181,30 @@ class Structure():
                 a0[startindex:finishindex] = matprops['a0']*1e-10
             elif matType in alloy_property:
                 alloyprops = alloy_property[matType]
-                mat1 = alloyprops['Material1']
-                mat2 = alloyprops['Material2']
+                mat1 = material_property[alloyprops['Material1']]
+                mat2 = material_property[alloyprops['Material2']]
                 x = layer[2] #alloy ratio
-                cb_meff_alloy = x*material_property[mat1]['m_e'] + (1-x)* material_property[mat2]['m_e']
+                Eg = x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x) #eV
+                cb_meff_alloy = x*mat1['m_e'] + (1-x)* mat2['m_e']
                 cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
-                C11[startindex:finishindex] = x*material_property[mat1]['C11'] + (1-x)* material_property[mat2]['C11']
-                C12[startindex:finishindex] = x*material_property[mat1]['C12'] + (1-x)* material_property[mat2]['C12']
-                GA1[startindex:finishindex] =x*material_property[mat1]['GA1'] + (1-x)* material_property[mat2]['GA1']
-                GA2[startindex:finishindex] = x*material_property[mat1]['GA2'] + (1-x)* material_property[mat2]['GA2']               
-                GA3[startindex:finishindex] = x*material_property[mat1]['GA3'] + (1-x)* material_property[mat2]['GA3']                
-                Ac_alloy = x*material_property[mat1]['Ac'] + (1-x)* material_property[mat2]['Ac']
+                C11[startindex:finishindex] = x*mat1['C11'] + (1-x)* mat2['C11']
+                C12[startindex:finishindex] = x*mat1['C12'] + (1-x)* mat2['C12']
+                GA1[startindex:finishindex] =x*mat1['GA1'] + (1-x)* mat2['GA1']
+                GA2[startindex:finishindex] = x*mat1['GA2'] + (1-x)* mat2['GA2']               
+                GA3[startindex:finishindex] = x*mat1['GA3'] + (1-x)* mat2['GA3']                
+                Ac_alloy = x*mat1['Ac'] + (1-x)* mat2['Ac']
                 Ac[startindex:finishindex] = Ac_alloy*q
-                Av_alloy = x*material_property[mat1]['Av'] + (1-x)* material_property[mat2]['Av']
+                Av_alloy = x*mat1['Av'] + (1-x)* mat2['Av']
                 Av[startindex:finishindex] = Av_alloy*q
-                B_alloy = x*material_property[mat1]['B'] + (1-x)* material_property[mat2]['B']
+                B_alloy = x*mat1['B'] + (1-x)* mat2['B']
                 B[startindex:finishindex] = B_alloy*q
-                delta_alloy = x*material_property[mat1]['delta'] + (1-x)* material_property[mat2]['delta']
+                delta_alloy = x*mat1['delta'] + (1-x)* mat2['delta']
                 delta[startindex:finishindex] = delta_alloy*q
-                fi_h[startindex:finishindex] = -(1-alloyprops['Band_offset'])*(x*material_property[mat1]['Eg'] + (1-x)*material_property[mat2]['Eg']-alloyprops['Bowing_param']*x*(1-x))*q # -(-1.33*(1-x)-0.8*x)for electron. Joule-1.97793434e-20 #
-                eps[startindex:finishindex] = (x*material_property[mat1]['epsilonStatic'] + (1-x)* material_property[mat2]['epsilonStatic'] )*eps0
-                a0[startindex:finishindex] = ((1-x)*material_property[mat1]['a0'] + x* material_property[mat2]['a0'] )*1e-10
-                cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(material_property[mat2]['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
-                fi[startindex:finishindex] = alloyprops['Band_offset']*(x*material_property[mat1]['Eg'] + (1-x)* material_property[mat2]['Eg']-alloyprops['Bowing_param']*x*(1-x))*q # for electron. Joule                
+                fi_h[startindex:finishindex] = -(1-alloyprops['Band_offset'])*Eg*q # -(-1.33*(1-x)-0.8*x)for electron. Joule-1.97793434e-20 #
+                eps[startindex:finishindex] = (x*mat1['epsilonStatic'] + (1-x)* mat2['epsilonStatic'] )*eps0
+                a0[startindex:finishindex] = ((1-x)*mat1['a0'] + x* mat2['a0'] )*1e-10
+                cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(mat2['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
+                fi[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule                
             #doping
             if layer[4] == 'n':  
                 chargedensity = layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
@@ -253,8 +256,7 @@ class StructureFrom(Structure):
         # Loading material list
         self.material = inputfile.material
         totallayer = alen(self.material)
-        print "Total layer number: ",totallayer
-        logger.info("Total layer number: %s" %totallayer)
+        logger.info("Total layer number: %s",totallayer)
         
         # Calculate the required number of grid points
         self.x_max = sum([layer[0] for layer in self.material])*1e-9 #total thickness (m)
@@ -263,7 +265,7 @@ class StructureFrom(Structure):
         # Check on n_max
         max_val = inputfile.maxgridpoints
         if self.n_max > max_val:
-            print " Grid number is exceeding the max number of ", max_val
+            logger.error(" Grid number is exceeding the max number of %d", max_val)
             exit()
                 
         # Loading materials database #
@@ -273,7 +275,6 @@ class StructureFrom(Structure):
         self.alloy_property = database.alloyproperty
         totalalloy = alen(self.alloy_property)
         
-        print "Total number of materials in database: ",totalmaterial+totalalloy
         logger.info("Total number of materials in database: %d" %(totalmaterial+totalalloy))
         
         # Initialise arrays
@@ -336,7 +337,7 @@ def fermilevel_0K(Ntotal2d,E_state,meff_state,model):#use
         else:
             break #we have found Ef and so we should break out of the loop
     else: #exception clause for 'for' loop.
-        print "Have processed all energy levels present and so can't be sure that Ef is below next higher energy level."
+        logger.warning("Have processed all energy levels present and so can't be sure that Ef is below next higher energy level.")
     
     #Ef1=(sum(E_state*meff_state)-Ntotal2d*hbar**2*pi)/(sum(meff_state))    
     #print 'Ef1=',Ef1 
@@ -362,7 +363,7 @@ def fermilevel(Ntotal2d,model,E_state,meff_state):#use
     #implement Newton-Raphson method
     Ef =Ef_0K
     #itr=0
-    print 'Ef (at 0K)=',Ef
+    logger.info('Ef (at 0K)= %g',Ef)
     d_E = 1e-9 #Energy step (meV)
     while True:
         y = func(Ef,E_state,meff_state,Ntotal2d,model)
@@ -451,6 +452,10 @@ def calc_Vxc(sigma,eps,cb_meff):
     nz= -(sigma - model.dop*model.dx) # electron density per m**2
     nz_3 = nz**(1/3.) #cube root of charge density.
     #a_B_eff = eps/cb_meff*a_B #effective Bohr radius
+    #r_s occasionally suffers from division by zero errors due to nz=0.
+    #We will fix these by setting nz_3 = 1.0 for these points (a tiny charge in per m**2).
+    nz_3 = nz_3.clip(1.0,max(nz_3))
+    
     r_s = 1.0/((4*pi/3.0)**(1/3.)*nz_3*eps/cb_meff*a_B) #average distance between charges in units of effective Bohr radis.
     #A = q**4/(32*pi**2*hbar**2)*(9*pi/4.0)**(1/3.)*2/pi*(4*pi/3.0)**(1/3.)*4*pi*hbar**2/q**2 #constant factor for expression.
     A = q**2/(4*pi)*(3/pi)**(1/3.) #simplified constant factor for expression.
@@ -488,14 +493,10 @@ def Poisson_Schrodinger(model):
     n_max = model.n_max
     
     if comp_scheme in (4,5,6):
-        print """aestimo_numpy_h doesn't currently include exchange interactions
-        in its valence band calculations."""
         logger.error("""aestimo_numpy_h doesn't currently include exchange interactions
         in its valence band calculations.""")
         exit()
     if comp_scheme in (1,3,6):
-        print """aestimo_numpy_h doesn't currently include nonparabolicity effects in 
-        its valence band calculations."""
         logger.error("""aestimo_numpy_h doesn't currently include nonparabolicity effects in 
         its valence band calculations.""")
         exit()
@@ -568,11 +569,6 @@ def Poisson_Schrodinger(model):
     
     # Check
     if comp_scheme ==6:
-        print """The calculation of Vxc depends upon m*, however when non-parabolicity is also 
-                 considered m* becomes energy dependent which would make Vxc energy dependent.
-                 Currently this effect is ignored and Vxc uses the effective masses from the 
-                 bottom of the conduction bands even when non-parabolicity is considered 
-                 elsewhere."""
         logger.warning("""The calculation of Vxc depends upon m*, however when non-parabolicity is also 
                  considered m* becomes energy dependent which would make Vxc energy dependent.
                  Currently this effect is ignored and Vxc uses the effective masses from the 
@@ -601,9 +597,8 @@ def Poisson_Schrodinger(model):
     Ntotal2d = Ntotal*dx
     if not(config.messagesoff):
         #print "Ntotal ",Ntotal,"m**-3"
-        print "Ntotal2d ",Ntotal2d," m**-2"
-        logger.info("Ntotal2d %g m**-2" %Ntotal2d)
-
+        logger.info("Ntotal2d %g m**-2", Ntotal2d)
+    
     #Applied Field
     x0 = dx*n_max/2.0
     Vapp = q*Fapp*(xaxis-x0)
@@ -615,8 +610,7 @@ def Poisson_Schrodinger(model):
     fitot = fi_h + Vapp #For initial iteration sum bandstructure and applied field
     while True:
         if not(config.messagesoff) :
-            print "Iteration:",iteration
-            logger.info("Iteration: %d" %iteration)
+            logger.info("Iteration: %d", iteration)
         #HUPMAT2=np.zeros((n_max*3, n_max*3))
             
         E_state,wvmat=calc_E_state(HUPMAT1,subnumber_h,fitot)
@@ -661,25 +655,18 @@ def Poisson_Schrodinger(model):
         #status
         if not(config.messagesoff):
             for i,level in enumerate(E_state):
-                print "E[",i,"]=",level,"meV" #can be written on file.
-                logger.info("E[%d]= %f meV"%(i,level))
+                logger.info("E[%d]= %f meV",i,level)
             for i,meff in enumerate(meff_state):
-                print 'meff[',i,']= ',meff/m_e
-                logger.info("meff[%d]= %f"%(i,meff/m_e))
+                logger.info("meff[%d]= %f",i,meff/m_e)
             for i,Ni in enumerate(N_state):
-                print 'N[',i,']= ',Ni,' m**-2'
-                logger.info("N[%d]= %f m**-2"%(i,Ni))
+                logger.info("N[%d]= %g m**-2",i,Ni)
             #print 'Efermi (at 0K) = ',E_F_0K,' meV'
             #for i,Ni in enumerate(N_state_0K):
             #    print 'N[',i,']= ',Ni
-            print 'Efermi (at %gK) = ' %T, E_F,' meV'
-            print "total acceptor charge = ",np.sum(dop)*dx,"m**-2"
-            print "total level charge = ",sum(N_state),"m**-2"
-            print "total system charge = ",np.sum(sigma),"m**-2"
-            logger.info('Efermi (at %gK) = %g meV' %(T, E_F))
-            logger.info("total acceptor charge = %g m**-2" %(sum(dop)*dx))
-            logger.info("total level charge = %g m**-2" %(sum(N_state)))
-            logger.info("total system charge = %g m**-2" %(sum(sigma)))
+            logger.info('Efermi (at %gK) = %g meV',T, E_F)
+            logger.info("total donor charge = %g m**-2",sum(dop)*dx)
+            logger.info("total level charge = %g m**-2",sum(N_state))
+            logger.info("total system charge = %g m**-2",sum(sigma))
         #
         if comp_scheme in (0,1): 
             #if we are not self-consistently including Poisson Effects then only do one loop
@@ -695,7 +682,6 @@ def Poisson_Schrodinger(model):
         if abs(E_state[0]-previousE0) < convergence_test: #Convergence test
             break
         elif iteration >= max_iterations: #Iteration limit
-            print "Have reached maximum number of iterations"
             logger.warning("Have reached maximum number of iterations")
             break
         else:
@@ -704,7 +690,7 @@ def Poisson_Schrodinger(model):
             
     # END OF SELF-CONSISTENT LOOP
     time3 = time.time() # timing audit
-    logger.info("calculation time  %g s" %(time3 - time2))
+    logger.info("calculation time  %g s",(time3 - time2))
     
     class Results(): pass
     results = Results()
@@ -853,7 +839,5 @@ if __name__=="__main__":
     # Write the simulation results in files
     save_and_plot(result,model)
     
-    print "Simulation is finished. All files are closed."
-    print "Please control the related files."
     logger.info("""Simulation is finished. All files are closed.Please control the related files.
         -----------------------------------------------------------------""")
