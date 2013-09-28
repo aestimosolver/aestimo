@@ -562,7 +562,7 @@ def Poisson_Schrodinger(model):
         KPV2=[0.0]*subnumber_h 
         la2,v2= linalg.eigh(HUPMAT3) 
         tmp=-la2/RATIO*J2meV
-        tmp=tmp.tolist()
+        #tmp=tmp.tolist()
         for i in range(0,subnumber_h,1):
             KPV2[i]=tmp[i]
         return KPV2,v2

@@ -153,7 +153,29 @@ def VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT
                 B[I,J+n_max*2]=B[J+n_max*2,I]
                 B[I+n_max,J+n_max*2]=B[J+n_max*2,I+n_max]  
     return B
+
 def VBMAT_V(B2,fi_h,RATIO,n_max,UNIM):
+    #tmp=np.resize(fi_h,n_max+1)[1:]
+    tmp = -RATIO*np.roll(fi_h,-1)
+    #tmp[-1] = 0.0 #?
+    A = tmp[:np.newaxis]*UNIM
+    Z = np.zeros((n_max,n_max))
+    #Creating HUPMAT4
+    #1
+    #HUPMAT4 = np.vstack((np.hstack((A,Z,Z)),
+    #                     np.hstack((Z,A,Z)),
+    #                     np.hstack((Z,Z,A))))
+    #2 - using the strange c_ and r_ 'functions'
+    #HUPMAT4 = np.r_[np.c_[A,Z,Z],
+    #                np.c_[Z,A,Z],
+    #                np.c_[Z,Z,A]]
+    #3 - using block matrices (skips intermediates)
+    HUPMAT4 = np.asarray(np.bmat([(A,Z,Z),(Z,A,Z),(Z,Z,A)]))
+    
+    HUPMAT4+=B2       
+    return HUPMAT4
+    
+def VBMAT_V_old(B2,fi_h,RATIO,n_max,UNIM):
     HUPMAT4=np.zeros((n_max*3, n_max*3))
     tmp1=np.zeros(n_max)
     tmp1=fi_h

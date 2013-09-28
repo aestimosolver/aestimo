@@ -33,7 +33,7 @@ Fapplied = 0.00#/50e-9 # (V/m)
 
 # GRID
 # For 1D, z-axis is choosen
-gridfactor = 0.2 #nm
+gridfactor = 0.1 #nm
 maxgridpoints = 200000 #for controlling the size
 
 # REGIONS
