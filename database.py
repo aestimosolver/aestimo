@@ -154,7 +154,7 @@ materialproperty = {
 alloyproperty = {
 'AlGaAs':{
 'Bowing_param':0.37,
-'Band_offset':0.67,
+'Band_offset':0.65,
 'm_e_alpha':5.3782e18,
 'Material1':'AlAs',
 'Material2':'GaAs'
