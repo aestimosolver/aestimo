@@ -223,20 +223,6 @@ class StructureFrom(Structure):
         #dop #doping distribution (array, len n_max)
         self.create_structure_arrays()
 
-
-# Shooting method parameters for Schrödinger Equation solution
-delta_E = config.delta_E #0.5*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV.
-d_E = config.d_E #1e-5*meV2J #Energy step (Joules) for Newton-Raphson method when improving the precision of the energy of a found level.
-E_start = config.E_start #0.0 #Energy to start shooting method from (if E_start = 0.0 uses minimum of energy of bandstructure)
-Estate_convergence_test = config.Estate_convergence_test #1e-9*meV2J
-# FermiDirac
-FD_d_E = config.FD_d_E #1e-9 Initial and minimum Energy step (meV) for derivative calculation for Newton-Raphson method to find E_F
-FD_convergence_test = config.convergence_test #1e-6
-# Poisson Loop
-damping = config.damping #0.5 #averaging factor between iterations to smooth convergence.
-max_iterations= config.max_iterations #80 #maximum number of iterations.
-convergence_test= config.convergence_test #1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
-
 # DO NOT EDIT UNDER HERE FOR PARAMETERS
 # --------------------------------------
 
@@ -314,6 +300,11 @@ def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
         n_max - length of arrays
         dx - step size (metres)
     energyx0 - minimum energy for starting subband search (Joules)"""
+    # Shooting method parameters for Schrödinger Equation solution
+    delta_E = config.delta_E #0.5*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV.
+    d_E = config.d_E #1e-5*meV2J #Energy step (Joules) for Newton-Raphson method when improving the precision of the energy of a found level.
+    Estate_convergence_test = config.Estate_convergence_test #1e-9*meV2J
+    #
     E_state=[0.0]*numlevels #Energies of subbands (meV)
     cb_meff = model.cb_meff # effective mass of electrons in conduction band (kg)
     cb_meff_alpha = model.cb_meff_alpha # non-parabolicity constant for conduction band mass.
@@ -417,6 +408,7 @@ def wf(E,fis,model):
 
     
 # FUNCTIONS for FERMI-DIRAC STATISTICS-----------------------------------------   
+
 def fd2(Ei,Ef,T):
     """integral of Fermi Dirac Equation for energy independent density of states.
     Ei [meV], Ef [meV], T [K]"""
@@ -457,7 +449,11 @@ def fermilevel_0K(Ntotal2d,E_state,meff_state):
     return Ef,N_state #Fermi levels at 0K (meV), number of electrons in each subband at 0K
     
 def fermilevel(Ntotal2d,T,E_state,meff_state):
-    #find the Fermi level (meV)
+    """Finds the Fermi level (meV)"""
+    #parameters
+    FD_d_E = config.FD_d_E #1e-9 Initial and minimum Energy step (meV) for derivative calculation for Newton-Raphson method to find E_F
+    FD_convergence_test = config.convergence_test #1e-6
+    
     def func(Ef,E_state,meff_state,Ntotal2d,T):
         #return Ntotal2d - sum( [csb_meff*fd2(Ei,Ef,T) for Ei,csb_meff in zip(E_state,meff_state)] )/(hbar**2*pi)
         diff = Ntotal2d
@@ -601,6 +597,13 @@ def Poisson_Schrodinger(model):
     subnumber_e = model.subnumber_e
     dx = model.dx
     n_max = model.n_max
+    
+    #parameters
+    E_start = config.E_start #0.0 #Energy to start shooting method from (if E_start = 0.0 uses minimum of energy of bandstructure)
+    # Poisson Loop
+    damping = config.damping #0.5 #averaging factor between iterations to smooth convergence.
+    max_iterations= config.max_iterations #80 #maximum number of iterations.
+    convergence_test= config.convergence_test #1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
     
     # Check
     if comp_scheme ==6:
