@@ -163,8 +163,6 @@ class Structure():
                 cb_meff[startindex:finishindex] = matprops['m_e']*m_e
                 cb_meff_alpha[startindex:finishindex] = matprops['m_e_alpha']
                 fi[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
-                BW=startindex
-                WB=finishindex
                 C11[startindex:finishindex] = matprops['C11'] 
                 C12[startindex:finishindex] = matprops['C12']
                 GA1[startindex:finishindex] = matprops['GA1']
@@ -229,8 +227,6 @@ class Structure():
         self.delta = delta
         self.fi_h = fi_h
         self.eps = eps
-        self.WB = WB
-        self.BW = BW
 
 class AttrDict(dict):
     """turns a dictionary into an object with attribute style lookups"""
@@ -574,8 +570,6 @@ def Poisson_Schrodinger(model):
     a0 = model.a0
     delta = model.delta
     fi_h = model.fi_h
-    BW = model.BW
-    WB = model.WB
     HUPMAT1=np.zeros((n_max*3, n_max*3))
     HUPMATC1=np.zeros((n_max, n_max))
     UNIM = np.identity(n_max)
@@ -597,7 +591,7 @@ def Poisson_Schrodinger(model):
         CNIT= Ac*(EXX+EXX+EZZ)
         VNIT= -Av*(EXX+EXX+EZZ)
         for i in range(0,n_max,1):
-            if i < BW-1 or i > WB+1 :
+            if EXX[i]!=0:
                 S[i]=ZETA[i]/delta[i]
                 k1[i]=sqrt(1+2*S[i]+9*S[i]**2)
                 k2[i]=S[i]-1+k1[i]
@@ -613,8 +607,8 @@ def Poisson_Schrodinger(model):
     AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,Pce,GDELM=qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta)
     KP=0.0
     KPINT=0.01
-    HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT,WB,BW)
-    HUPMATC1=CBMAT(KP,Pce,cb_meff/m_e,x_max,n_max,AC1,UNIM,KPINT,WB,BW)
+    HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT)
+    HUPMATC1=CBMAT(KP,Pce,cb_meff/m_e,x_max,n_max,AC1,UNIM,KPINT)
     def calc_E_state(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc):
         #print fi_h ,len(fi_h)       
         HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)        

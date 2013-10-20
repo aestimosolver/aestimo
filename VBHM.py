@@ -75,7 +75,7 @@ def qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta):
 #
 #define VB Hamiltonian
 
-def VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT,WB,BW):
+def VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT):
     AVH1= np.zeros(n_max+2)
     AVH2= np.zeros(n_max+2)
     BVH1= np.zeros(n_max+2)
@@ -106,7 +106,6 @@ def VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT
             FVH2[I]=sqrt(2.0)*AP2[I]
             #boundary condition between barrier and well 
     for I in range (0,n_max,1):
-            if I== BW+1 or I == WB+1 :
                 AVH2[I]=(AVH2[I-1]+AVH2[I+1])/2.0
                 BVH2[I]=(BVH2[I-1]+BVH2[I+1])/2.0
                 GVH2[I]=(GVH2[I-1]+GVH2[I+1])/2.0
@@ -170,7 +169,7 @@ def VBMAT_V(B2,fi_h,RATIO,n_max,UNIM):
     HUPMAT4+=B2       
     return HUPMAT4
 
-def CBMAT(KP,Pce,EM,x_max,n_max,AC1,UNIM,KPINT,WB,BW):
+def CBMAT(KP,Pce,EM,x_max,n_max,AC1,UNIM,KPINT):
     B11V1= np.zeros(n_max+2)
     B11V2= np.zeros(n_max+2)
     B11=np.zeros((n_max+2, n_max+2))
@@ -178,11 +177,10 @@ def CBMAT(KP,Pce,EM,x_max,n_max,AC1,UNIM,KPINT,WB,BW):
     EM=np.resize(EM,n_max+2)
 #=====DEFINE MATRIX=================
     for I in range(0,n_max+2,1):
-            B11V2[I]=0.5*((KP*x_max*KPINT)**2)
+            B11V2[I]=0.5*((KP*x_max*KPINT)**2)/EM[I]
             B11V1[I]=-0.5/EM[I]
             #boundary condition between barrier and well
     for I in range (0,n_max,1):
-            if I== BW+1 or I == WB+1 :
                 B11V2[I]=(B11V2[I-1]+B11V2[I+1])/2.0
                 B11V1[I]=(B11V1[I-1]+B11V1[I+1])/2.0
     for I in range (0,n_max,1):
