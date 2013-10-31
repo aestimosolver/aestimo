@@ -348,7 +348,7 @@ def fermilevel_0Kc(Ntotal2d,E_statec,meff_statec,model):#use
         else:
             break #we have found Ef and so we should break out of the loop
     else: #exception clause for 'for' loop.
-        print "Have processed all energy levels present and so can't be sure that Ef is below next higher energy level."
+        logger.warning("Have processed all energy levels present and so can't be sure that Ef is below next higher energy level.")
 
     #Ef1=(sum(E_state*meff_state)-Ntotal2d*hbar**2*pi)/(sum(meff_state))
     N_statec=[0.0]*len(E_statec)
@@ -733,17 +733,14 @@ def Poisson_Schrodinger(model):
                 logger.info("meff[%d]= %f",i,meff/m_e)
             if Ntotal2d<0:
                 for i,Ni in enumerate(N_state):
-                logger.info("N[%d]= %g m**-2",i,Ni)
+                    logger.info("N[%d]= %g m**-2",i,Ni)
             for i,level in enumerate(E_statec):
-                print "Ec[",i,"]=",level,"meV" #can be written on file.
                 logger.info("Ec[%d]= %f meV"%(i,level))
             for i,meff in enumerate(meff_statec):
-                print 'meffc[',i,']= ',meff/m_e
                 logger.info("meff[%d]= %f"%(i,meff/m_e))
             if Ntotal2d>0:
                 for i,Ni in enumerate(N_statec):
-                    print 'N[',i,']= ',Ni,' m**-2'
-                    logger.info("N[%d]= %f m**-2"%(i,Ni))
+                    logger.info("N[%d]= %g m**-2"%(i,Ni))
             #print 'Efermi (at 0K) = ',E_F_0K,' meV'
             #for i,Ni in enumerate(N_state_0K):
             #    print 'N[',i,']= ',Ni
