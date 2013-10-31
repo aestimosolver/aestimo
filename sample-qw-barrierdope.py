@@ -18,11 +18,13 @@ T = 300.0 #Kelvin
 # 4: Schrodinger-Exchange interaction
 # 5: Schrodinger-Poisson + Exchange interaction
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
-computation_scheme = 6
+computation_scheme = 2
 
 # QUANTUM
 # Total subband number to be calculated for electrons
 subnumber_e = 3
+# Total subband number to be calculated for electrons (for aestimo_numpy_h)
+subnumber_h = 1
 
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.00/50e-9 # (V/m)
@@ -33,7 +35,7 @@ Fapplied = 0.00/50e-9 # (V/m)
 
 # GRID
 # For 1D, z-axis is choosen
-gridfactor = 0.1 #nm
+gridfactor = 0.2 #nm
 maxgridpoints = 200000 #for controlling the size
 
 # REGIONS
@@ -48,7 +50,7 @@ maxgridpoints = 200000 #for controlling the size
 material =[[ 10.0, 'AlGaAs', 0.3, 0.0, 'n'],
             [ 5.0, 'AlGaAs', 0.3, 5e17, 'n'],
             [ 5.0, 'AlGaAs', 0.3, 0.0, 'n'],
-            [ 10.0, 'GaAs', 0, 0, 'n'],
+            [ 11.0, 'GaAs', 0, 0, 'n'],
             [ 5.0, 'AlGaAs', 0.3, 0.0, 'n'],
             [ 5.0, 'AlGaAs', 0.3, 5e17, 'n'],
             [ 10.0, 'AlGaAs', 0.3, 0.0, 'n']]

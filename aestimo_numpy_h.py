@@ -302,11 +302,13 @@ def fd1(Ei,Ef,model):#use
     Ei [meV], Ef [meV], T [K]"""
     T= model.T
     return kb*T*log(exp(meV2J*(Ei-Ef)/(kb*T))+1)
+
 def fd2(Ei,Ef,model):
     """integral of Fermi Dirac Equation for energy independent density of states.
     Ei [meV], Ef [meV], T [K]"""
     T= model.T
     return kb*T*log(exp(meV2J*(Ef-Ei)/(kb*T))+1)
+
 def calc_meff_state(wfh,wfe,model,fi,E_statec,list,m_hh,m_lh,m_so):
     n_max=len(m_hh)
     vb_meff= np.zeros((model.subnumber_h,n_max))
@@ -323,9 +325,10 @@ def calc_meff_state(wfh,wfe,model,fi,E_statec,list,m_hh,m_lh,m_so):
     """find subband effective masses including non-parabolicity
     (but stilling using a fixed effective mass for each subband dispersion)"""
     cb_meff = model.cb_meff # effective mass of conduction band across structure
-    cb_meff_alpha = model.cb_meff_alpha # non-parabolicity constant across structure
-    cb_meff_states = np.array([cb_meff*(1.0 + cb_meff_alpha*(E*meV2J - fi)) for E in E_statec])
-    tmp1 = 1.0/np.sum(wfe**2/cb_meff_states,axis=1)
+    #cb_meff_alpha = model.cb_meff_alpha # non-parabolicity constant across structure
+    #cb_meff_states = np.array([cb_meff*(1.0 + cb_meff_alpha*(E*meV2J - fi)) for E in E_statec])
+    #tmp1 = 1.0/np.sum(wfe**2/cb_meff_states,axis=1)
+    tmp1 = 1.0/np.sum(wfe**2/cb_meff,axis=1)
     meff_statec = tmp1.tolist()
     return meff_statec,meff_state
 
@@ -353,6 +356,7 @@ def fermilevel_0Kc(Ntotal2d,E_statec,meff_statec,model):#use
         Nic*=(Nic>0.0)
         N_statec[i]=Nic
     return Ef,N_statec #Fermi levels at 0K (meV), number of electrons in each subband at 0K
+
 def fermilevel_0K(Ntotal2d,E_state,meff_state,model):#use
     Et1,Ef=0.0,0.0
     E_state=np.array(E_state)
@@ -376,6 +380,7 @@ def fermilevel_0K(Ntotal2d,E_state,meff_state,model):#use
         Ni*=(Ni>0.0)
         N_state[i]=Ni
     return Ef,N_state  #Fermi levels at 0K (meV), number of electrons in each subband at 0K
+
 def fermilevel(Ntotal2d,model,E_state,E_statec,meff_state,meff_statec):#use
     #find the Fermi level (meV)
     def func(Ef,E_state,meff_state,E_statec,meff_statec,Ntotal2d,model):
