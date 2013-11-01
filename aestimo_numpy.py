@@ -238,6 +238,8 @@ def vegard(first,second,mole):
 
 def psi_at_inf1(E,fis,cb_meff,cb_meff_alpha,n_max,dx): #inclusion of cb_meff_alpha only so both versions have the same calling arguments
     """Shooting method for heterostructure as given in Harrison's book"""
+    fis = fis.tolist() #lists are faster than numpy arrays for loops
+    cb_meff = cb_meff.tolist() #lists are faster than numpy arrays for loops
     c0 = 2*(dx/hbar)**2
     # boundary conditions
     psi0 = 0.0                 
@@ -254,6 +256,9 @@ def psi_at_inf1(E,fis,cb_meff,cb_meff_alpha,n_max,dx): #inclusion of cb_meff_alp
     
 def psi_at_inf2(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
     """shooting method with non-parabolicity"""
+    fis = fis.tolist() #lists are faster than numpy arrays for loops
+    cb_meff = cb_meff.tolist() #lists are faster than numpy arrays for loops
+    cb_meff_alpha = cb_meff_alpha.tolist() #lists are faster than numpy arrays for loops 
     c0 = 2*(dx/hbar)**2
     # boundary conditions
     psi0 = 0.0                 
@@ -272,7 +277,6 @@ def psi_at_inf2(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
 def psi_at_inf2b(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
     """shooting method with non-parabolicity"""
     cb_meff_E = np.array(cb_meff)*(1.0 + np.array(cb_meff_alpha)*(E-np.array(fis))) # energy dependent mass
-    cb_meff_E = cb_meff_E.tolist()
     return psi_at_inf1(E,fis,cb_meff_E,cb_meff_alpha,n_max,dx)
     
 try:
@@ -312,15 +316,17 @@ def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
     n_max = model.n_max
     dx = model.dx
     
+    #choose shooting function
     if config.use_cython == True: 
-        _psi_at_inf1 = psi_at_inf1_cython
-        _psi_at_inf2 = psi_at_inf2_cython
-    else: #lists are faster than numpy arrays for loops
-        _psi_at_inf1 = psi_at_inf1
-        _psi_at_inf2 = psi_at_inf2
-        fi = fi.tolist()    
-        cb_meff = cb_meff.tolist()
-        cb_meff_alpha = cb_meff_alpha.tolist()
+        if model.comp_scheme in (1,3,6): #then include non-parabolicity calculation
+            psi_at_inf = psi_at_inf2_cython
+        else:
+            psi_at_inf = psi_at_inf1_cython
+    else:
+        if model.comp_scheme in (1,3,6): #then include non-parabolicity calculation
+            psi_at_inf = psi_at_inf2
+        else:
+            psi_at_inf = psi_at_inf1
     
     #print 'energyx', energyx,type(energyx)
     #print 'cb_meff', cb_meff[0:10], type(cb_meff), type(cb_meff[0])
@@ -328,11 +334,6 @@ def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
     #print 'fi', fi[0:10], type(fi), type(fi[0])
     #print 'dx', dx, type(dx)
     #exit()
-    #choose shooting function
-    if model.comp_scheme in (1,3,6): #then include non-parabolicity calculation
-        psi_at_inf = _psi_at_inf2
-    else:
-        psi_at_inf = _psi_at_inf1
     
     for i in range(0,numlevels,1):  
         #increment energy-search for f(x)=0
