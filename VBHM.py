@@ -156,10 +156,16 @@ def VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT
     return B
 
 def VBMAT_V(B2,fi_h,RATIO,n_max,UNIM):
+    """B2 - float?
+    fi_h - 1d array, potential
+    RATIO - float?
+    n_max - int, number of points in grid.
+    UNIM - 2d array
+    """
     #tmp=np.resize(fi_h,n_max+1)[1:]
     tmp = -RATIO*np.roll(fi_h,-1)
     #tmp[-1] = 0.0 #?
-    A = tmp[:np.newaxis]*UNIM
+    A = tmp[:,np.newaxis]*UNIM
     Z = np.zeros((n_max,n_max))
     #Creating HUPMAT4
     #1
@@ -222,7 +228,15 @@ def CBMAT(KP,Pce,EM,x_max,n_max,AC1,UNIM,KPINT):
                 B[I,J]+=B11[I,J]+B11V2[I+1]*UNIM[I,J]+Pce[I+1]*UNIM[I,J]*AC1
     return B
 
-def CBMAT_V (BC,fi,RATIO,n_max,UNIM):
+def CBMAT_V(BC,fi,RATIO,n_max,UNIM):
+    #tmp=np.resize(fi_h,n_max+1)[1:]
+    tmp = RATIO*np.roll(fi,-1)
+    #tmp[-1] = 0.0 #?
+    HUPMAT7 = tmp[:,np.newaxis]*UNIM    
+    HUPMAT7+=BC       
+    return HUPMAT7
+
+def CBMAT_V_old(BC,fi,RATIO,n_max,UNIM):
     HUPMAT7=np.zeros((n_max, n_max))
     tmp1=np.zeros(n_max)
     tmp=np.zeros(n_max+2)
