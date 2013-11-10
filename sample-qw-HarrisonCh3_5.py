@@ -10,7 +10,12 @@
 # HARRISON'S MATERIAL VALUES
 # ----------------
 import database
+import config
 import numpy as np
+import aestimo_numpy as aestimo
+import database
+meV2J = aestimo.meV2J # conversion factor
+q = aestimo.q # electron charge
 
 # Nb. Harrison's initial examples don't take account of different effective masses
 # in the different materials.
@@ -78,7 +83,8 @@ maxgridpoints = 200000 #for controlling the size
 # STRUCTURE
 # a finite parabolic well between two barriers
 a = 10.0 #nm #maximum width of parabolic well (at the barrier's energy level)
-b = 4.5 #nm #width of the barrier layers
+b = 10.0 #nm #width of the first barrier layer
+b2 = 5.0 #nm #width of the first barrier layer
 xmin = 0.0 #minimum Al alloy in structure
 xmax = 10.0 #maximum Al alloy in structure
 
@@ -97,8 +103,7 @@ def bandstructure_profile(x):
 
 # We can't declare our structure in the usual way, instead we will have to create
 # the structure arrays ourselves.
-import aestimo_numpy as aestimo
-import database
+
 
 structure_param = {'Fapp': Fapplied,
                        'T': T,
@@ -113,7 +118,7 @@ model = aestimo.Structure(database,**structure_param)
 ## Create structure arrays -----------------------------------------------------
 
 # Calculate the required number of grid points
-model.x_max = sum([b,a,b])*1e-9 #total thickness (m)
+model.x_max = sum([b,a,b2])*1e-9 #total thickness (m)
 model.n_max = n_max = int(model.x_max/model.dx)
 # Check on n_max
 if model.n_max > model.maxgridpoints:
@@ -133,10 +138,11 @@ model.fi = bandstructure_profile(alloy_profile(model.z))   #Bandstructure potent
 
 ## -----------------------------------------------------------------------------
 
+#config.d_E = 1e-5*meV2J
+#config.Estate_convergence_test = 3e-10*meV2J
 result= aestimo.Poisson_Schrodinger(model)
 
 #Plot QW representation
-import config
 config.wavefunction_scalefactor = 5000
 aestimo.QWplot(result)#,figno=None)
     
