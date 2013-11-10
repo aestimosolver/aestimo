@@ -48,7 +48,7 @@ E_start = 0.0    #Energy to start shooting method from (if E_start = 0.0 uses mi
 Estate_convergence_test = 1e-9*meV2J
 # FermiDirac
 FD_d_E = 1e-9 #Initial and minimum Energy step (meV) for derivative calculation for Newton-Raphson method to find E_F
-convergence_test = 1e-6 #meV
+FD_convergence_test = 1e-6 #meV
 # Poisson Loop
 damping = 0.5    #averaging factor between iterations to smooth convergence.
 max_iterations=80 #maximum number of iterations.

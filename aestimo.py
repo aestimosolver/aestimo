@@ -109,7 +109,7 @@ E_start = config.E_start #0.0 #Energy to start shooting method from (if E_start 
 Estate_convergence_test = config.Estate_convergence_test #1e-9*meV2J
 # FermiDirac
 FD_d_E = config.FD_d_E #1e-9 Initial and minimum Energy step (meV) for derivative calculation for Newton-Raphson method to find E_F
-FD_convergence_test = config.convergence_test #1e-6
+FD_convergence_test = config.FD_convergence_test #1e-6
 # Poisson Loop
 damping = config.damping #0.5 #averaging factor between iterations to smooth convergence.
 max_iterations= config.max_iterations #80 #maximum number of iterations.

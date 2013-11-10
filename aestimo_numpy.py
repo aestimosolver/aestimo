@@ -452,7 +452,7 @@ def fermilevel(Ntotal2d,T,E_state,meff_state):
     """Finds the Fermi level (meV)"""
     #parameters
     FD_d_E = config.FD_d_E #1e-9 Initial and minimum Energy step (meV) for derivative calculation for Newton-Raphson method to find E_F
-    FD_convergence_test = config.convergence_test #1e-6
+    FD_convergence_test = config.FD_convergence_test #1e-6
     
     def func(Ef,E_state,meff_state,Ntotal2d,T):
         #return Ntotal2d - sum( [csb_meff*fd2(Ei,Ef,T) for Ei,csb_meff in zip(E_state,meff_state)] )/(hbar**2*pi)
