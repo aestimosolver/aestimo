@@ -168,10 +168,27 @@ class Structure():
         
         self.fi = fi
         self.cb_meff = cb_meff
-        self.cb_meff_alpha = cb_meff_alpha
+        self._cb_meff_alpha = cb_meff_alpha
         self.eps = eps
         self.dop = dop
         #return fi,cb_meff,eps,dop
+        
+    def cb_meff_E(self,E,fi):
+        """returns an array for the structure giving the effective mass for a particular
+        energy.
+        E - energy (J)
+        fi - bandstructure potential (J) (numpy array)
+        """
+        return self.cb_meff
+        
+    def cb_meff_E(self,E,fi):
+        """returns an array for the structure giving the effective mass for a particular
+        energy.
+        E - energy (J)
+        fi - bandstructure potential (J) (numpy array)
+        """
+        return self.cb_meff*(1.0 + self._cb_meff_alpha*(E-fi))
+        
 
 class AttrDict(dict):
     """turns a dictionary into an object with attribute style lookups"""
@@ -234,6 +251,7 @@ def vegard(first,second,mole):
 # at +infinity for a given value of the energy.  The solution
 # to the energy occurs for psi(+infinity)=0.
 
+
 # FUNCTIONS for SHOOTING ------------------
 
 def psi_at_inf(E,fis,cb_meff,n_max,dx):
@@ -263,42 +281,40 @@ def psi_at_inf(E,fis,cb_meff,n_max,dx):
         psi1=psi2
     return psi2
     
-def psi_at_inf2(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
-    """shooting method with non-parabolicity"""
-    fis = fis.tolist() #lists are faster than numpy arrays for loops
-    cb_meff = cb_meff.tolist() #lists are faster than numpy arrays for loops
-    cb_meff_alpha = cb_meff_alpha.tolist() #lists are faster than numpy arrays for loops 
-    c0 = 2*(dx/hbar)**2
-    # boundary conditions
-    psi0 = 0.0                 
-    psi1 = 1.0
-    psi2 = None
-    for j in range(1,n_max-1,1): # Last potential not used
-        c1 = 2.0 / (cb_meff[j]*(1.0 + cb_meff_alpha[j]*(E - fis[j])) +\
-                    cb_meff[j-1]*(1.0 + cb_meff_alpha[j-1]*(E - fis[j-1])) ) 
-        c2 = 2.0 / (cb_meff[j]*(1.0 + cb_meff_alpha[j]*(E - fis[j])) +\
-                    cb_meff[j+1]*(1.0 + cb_meff_alpha[j+1]*(E - fis[j+1])) )       
-        psi2=((c0*(fis[j]-E)+c2+c1)*psi1-c1*psi0)/c2
-        psi0=psi1
-        psi1=psi2
-    return psi2
+def psi_at_inf1(E,fis,model,n_max,dx):
+    """shooting method with non-parabolicity.
+    E - energy (Joules)
+    fis - potential energy (J)
+    cb_meff_f is a function that returns an array of effective mass at a given Energy E
+    model - instance of Structure
+    n_max - number of points in arrays describing structure wrt z-axis
+    dx - step size of distance quantisation (metres)
+    """
+    return psi_at_inf1(E,fis,model.cb_meff,n_max,dx)
 
-def psi_at_inf2b(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
-    """shooting method with non-parabolicity"""
-    cb_meff_E = np.array(cb_meff)*(1.0 + np.array(cb_meff_alpha)*(E-np.array(fis))) # energy dependent mass
-    return psi_at_inf1(E,fis,cb_meff_E,cb_meff_alpha,n_max,dx)
-    
+def psi_at_inf2(E,fis,model,n_max,dx):
+    """shooting method with non-parabolicity.
+    E - energy (Joules)
+    fis - potential energy (J)
+    cb_meff_f is a function that returns an array of effective mass at a given Energy E
+    model - instance of Structure
+    n_max - number of points in arrays describing structure wrt z-axis
+    dx - step size of distance quantisation (metres)
+    """
+    cb_meff = model.cb_meff_E(E,fis) # energy dependent mass
+    return psi_at_inf1(E,fis,cb_meff,n_max,dx)
+
 try:
     from psi_at_inf_cython import psi_at_inf_numpy
     
-    def psi_at_inf1_cython(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
-        return psi_at_inf_numpy(E,fis,cb_meff,n_max,dx)
+    def psi_at_inf1_cython(E,fis,model,n_max,dx):
+        return psi_at_inf_numpy(E,fis,model.cb_meff,n_max,dx)
 
-    def psi_at_inf2_cython(E,fis,cb_meff,cb_meff_alpha,n_max,dx):
+    def psi_at_inf2_cython(E,fis,model,n_max,dx):
         """shooting method with non-parabolicity"""
-        cb_meff_E = cb_meff*(1.0 + cb_meff_alpha*(E - fis))
+        cb_meff_E = model.cb_meff_E(E,fis) # energy dependent mass
         return psi_at_inf_numpy(E,fis,cb_meff_E,n_max,dx)
-    
+        
 except ImportError:
     logger.warning("psi_at_inf_cython module not found")
 
@@ -320,13 +336,12 @@ def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
     #
     E_state=[0.0]*numlevels #Energies of subbands (meV)
     cb_meff = model.cb_meff # effective mass of electrons in conduction band (kg)
-    cb_meff_alpha = model.cb_meff_alpha # non-parabolicity constant for conduction band mass.
     energyx = float(energyx0) #starting energy for subband search (Joules) + floats are faster than numpy.float64
     n_max = model.n_max
     dx = model.dx
     
     #choose shooting function
-    if config.use_cython == True: 
+    if config.use_cython == True:
         if model.comp_scheme in (1,3,6): #then include non-parabolicity calculation
             psi_at_inf = psi_at_inf2_cython
         else:
@@ -346,19 +361,19 @@ def calc_E_state(numlevels,fi,model,energyx0): # delta_E,d_E
     
     for i in range(0,numlevels,1):  
         #increment energy-search for f(x)=0
-        y2=psi_at_inf(energyx,fi,cb_meff,cb_meff_alpha,n_max,dx)
+        y2=psi_at_inf(energyx,fi,model,n_max,dx)
         while True:
             y1=y2
             energyx += delta_E
-            y2=psi_at_inf(energyx,fi,cb_meff,cb_meff_alpha,n_max,dx)
+            y2=psi_at_inf(energyx,fi,model,n_max,dx)
             if y1*y2 < 0:
                 break
         # improve estimate using midpoint rule
         energyx -= abs(y2)/(abs(y1)+abs(y2))*delta_E
         #implement Newton-Raphson method
         while True:
-            y = psi_at_inf(energyx,fi,cb_meff,cb_meff_alpha,n_max,dx)
-            dy = (psi_at_inf(energyx+d_E,fi,cb_meff,cb_meff_alpha,n_max,dx)- psi_at_inf(energyx-d_E,fi,cb_meff,cb_meff_alpha,n_max,dx))/(2.0*d_E)
+            y = psi_at_inf(energyx,fi,model,n_max,dx)
+            dy = (psi_at_inf(energyx+d_E,fi,model,n_max,dx)- psi_at_inf(energyx-d_E,fi,model,n_max,dx))/(2.0*d_E)
             energyx -= y/dy
             if abs(y/dy) < Estate_convergence_test:
                 break
@@ -381,16 +396,14 @@ def wf(E,fis,model):
         cb_meff - array of effective mass (len n_max)
         n_max - length of arrays
         dx - step size (metres)"""
-    fis = fis.tolist() #lists are faster than numpy arrays for loops
-    cb_meff = model.cb_meff.tolist() #lists are faster than numpy arrays for loops
-    cb_meff_alpha = model.cb_meff_alpha.tolist() #
-    n_max = model.n_max
-    dx = model.dx
     #choosing effective mass function
     if model.comp_scheme in (1,3,6): #non-parabolicity calculation
-        cb_meff_E = lambda j : cb_meff[j]*(1.0 + cb_meff_alpha[j]*(E - fis[j])) # energy dependent mass
+        cb_meff_E = model.cb_meff_E(E,fis).tolist()
     else:
-        cb_meff_E = lambda j : cb_meff[j]
+        cb_meff_E = model.cb_meff.tolist() #lists are faster than numpy arrays for loops
+    fis = fis.tolist() #lists are faster than numpy arrays for loops
+    n_max = model.n_max
+    dx = model.dx
     #
     N = 0.0 # Normalization integral
     psi = []
@@ -405,8 +418,8 @@ def wf(E,fis,model):
     N += (psi[1])**2
     for j in range(1,n_max-1,1):
         # Last potential not used
-        c1=2.0/(cb_meff_E(j)+cb_meff_E(j-1))
-        c2=2.0/(cb_meff_E(j)+cb_meff_E(j+1))
+        c1=2.0/(cb_meff_E[j]+cb_meff_E[j-1])
+        c2=2.0/(cb_meff_E[j]+cb_meff_E[j+1])
         psi[2] = ((2*(dx/hbar)**2*(fis[j]-E)+c2+c1)*psi[1]-c1*psi[0])/c2
         b[j+1]=psi[2]
         N += (psi[2])**2
@@ -428,13 +441,11 @@ def calc_meff_state(wfe,cb_meff):
     tmp = 1.0/np.sum(wfe**2/cb_meff,axis=1)
     meff_state = tmp.tolist()
     return meff_state #kg
-    
+
 def calc_meff_state2(wfe,E_state,fi,model):
     """find subband effective masses including non-parabolicity
     (but stilling using a fixed effective mass for each subband dispersion)"""
-    cb_meff = model.cb_meff # effective mass of conduction band across structure
-    cb_meff_alpha = model.cb_meff_alpha # non-parabolicity constant across structure
-    cb_meff_states = np.array([cb_meff*(1.0 + cb_meff_alpha*(E*meV2J - fi)) for E in E_state])
+    cb_meff_states = np.vstack([model.cb_meff_E(E*meV2J,fi) for E in E_state])
     tmp = 1.0/np.sum(wfe**2/cb_meff_states,axis=1)
     meff_state = tmp.tolist()
     return meff_state #kg
@@ -597,7 +608,7 @@ def Poisson_Schrodinger(model):
     n_max - number of points.
     """   
     fi = model.fi
-    cb_meff = model.cb_meff
+    cb_meff = model.cb_meff # effective mass at band edge (effective mass with non-parabolicity is model.cb_meff_E(E,fi))
     eps = model.eps
     dop = model.dop
     Fapp = model.Fapp
@@ -773,7 +784,7 @@ def Poisson_Schrodinger(model):
 def save_and_plot(result,model):
     xaxis = result.xaxis
     
-    output_directory = config.output_directory+"-numpy"
+    output_directory = config.output_directory+"-numpy2"
     
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)
@@ -899,4 +910,3 @@ if __name__=="__main__":
     
     logger.info("""Simulation is finished. All files are closed.Please control the related files.
 -----------------------------------------------------------------""")
-
