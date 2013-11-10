@@ -243,7 +243,6 @@ def psi_at_inf(E,fis,cb_meff,n_max,dx):
     E - energy (Joules)
     fis - potential energy (J)
     cb_meff - effective mass in conduction band (array)
-    model - instance of Structure class
     n_max - number of points in arrays describing structure wrt z-axis
     dx - step size of distance quantisation (metres)
     """
