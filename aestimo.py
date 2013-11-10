@@ -644,4 +644,4 @@ if config.resultviewer:
 print "Simulation is finished. All files are closed."
 print "Please control the related files."
 logger.info("""Simulation is finished. All files are closed.Please control the related files.
-        -----------------------------------------------------------------""")
+-----------------------------------------------------------------""")

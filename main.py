@@ -51,7 +51,7 @@ if False:
     aestimo.save_and_plot(result,model)
     
     aestimo.logger.info("""Simulation is finished. All files are closed.Please control the related files.
-    -----------------------------------------------------------------""")
+-----------------------------------------------------------------""")
 
 elif True:
     import aestimo_numpy_h as aestimo
@@ -75,7 +75,7 @@ elif True:
     aestimo.save_and_plot(result,model)
     
     aestimo.logger.info("""Simulation is finished. All files are closed.Please control the related files.
-        -----------------------------------------------------------------""")
+-----------------------------------------------------------------""")
 else:
     import aestimo
 
