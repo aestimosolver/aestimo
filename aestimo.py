@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
  Aestimo 1D Schrodinger-Poisson Solver
- Version v.0.8
+ Version v.0.9
  Copyright (C) 2013 Sefer Bora Lisesivdin and Aestimo group
 
     This program is free software: you can redistribute it and/or modify
