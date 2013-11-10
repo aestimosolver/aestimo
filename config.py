@@ -69,6 +69,7 @@ states_out = True
 # Result Viewer
 # -------------
 resultviewer = True
+wavefunction_scalefactor = 200 # scales wavefunctions when plotting QW diagrams
 # Messages
 # --------
 messagesoff = False

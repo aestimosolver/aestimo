@@ -409,7 +409,6 @@ def wf(E,fis,model):
 
     
 # FUNCTIONS for FERMI-DIRAC STATISTICS-----------------------------------------   
-
 def fd2(Ei,Ef,T):
     """integral of Fermi Dirac Equation for energy independent density of states.
     Ei [meV], Ef [meV], T [K]"""
@@ -844,7 +843,7 @@ def save_and_plot(result,model):
         pl.plot(xaxis, result.fitot*J2meV,'k')
         for level,state in zip(result.E_state,result.wfe): 
             pl.axhline(level,0.1,0.9,color='g',ls='--')
-            pl.plot(xaxis, state*200.0+level,'b')
+            pl.plot(xaxis, state*config.wavefunction_scalefactor+level,'b')
             #pl.plot(xaxis, state**2*1e-9/dx*200.0+level,'b')
         pl.axhline(result.E_F,0.1,0.9,color='r',ls='--')
         pl.xlabel('Position (m)')
@@ -861,7 +860,7 @@ def QWplot(result,figno=None):
     pl.plot(xaxis, result.fitot*J2meV,'k')
     for level,state in zip(result.E_state,result.wfe): 
         pl.axhline(level,0.1,0.9,color='g',ls='--')
-        pl.plot(xaxis, state*200.0+level,'b')
+        pl.plot(xaxis, state*config.wavefunction_scalefactor+level,'b')
         #pl.plot(xaxis, state**2*1e-9/dx*200.0+level,'b')
     pl.axhline(result.E_F,0.1,0.9,color='r',ls='--')
     pl.xlabel('Position (m)')

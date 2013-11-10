@@ -633,7 +633,7 @@ if config.resultviewer:
     pl.plot(xaxis,np.array(fitot)*J2meV,'k')
     for level,state in zip(E_state,wfe): 
         pl.axhline(level,0.1,0.9,color='g',ls='--')
-        pl.plot(xaxis, np.array(state)*200.0+level,'b')
+        pl.plot(xaxis, np.array(state)*config.wavefunction_scalefactor+level,'b')
         #pl.plot(xaxis, np.array(state)**2*1e-9/dx*200.0+level,'b')
     pl.axhline(E_F,0.1,0.9,color='r',ls='--')
     pl.xlabel('Position (m)')
