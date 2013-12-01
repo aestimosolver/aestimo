@@ -34,30 +34,36 @@
 # materialproperties| Material : m_e | m_hh | epsilonStatic | Eg | Bowing_param | m_e_alpha |  Luttinger Parameters γ1,2 & 3 |Elastic constants C11,12|Lattice constant a0| Deformation potentials ac,av & b| delta splitt off|
 materialproperty = {
 'GaAs':{
-'m_e':0.067,
-'m_hh':0.45,
-'m_lh':0.087,
-'epsilonStatic':12.90,
-'Eg':1.42,
-'Band_offset':0.65,
-'m_e_alpha':5.3782e18,
-'GA1':6.8,
-'GA2':1.9,
-'GA3':2.73, 
-'C11':11.879,
-'C12':5.376,
-'a0':5.6533,
-'Ac':-7.17,
-'Av':1.16,
-'B':-1.7,
-'delta':0.34
+'m_e':0.067, #conduction band effective mass (relative to electron mass)
+'m_hh':0.45, #heavy hole band effective mass (used by aestimo_numpy_h)
+'m_lh':0.087, #light hole band effective mass (used by aetsimo_numpy_h)
+'epsilonStatic':12.90, #dielectric constant
+'Eg':1.519,#1.42 # (ev) band gap
+'Ep':28.8, # (eV) k.p matrix element (used for non-parabolicity calculation (Vurgaftman2001)
+'F':-1.94, # Kane parameter (used for non-parabolicity calculation (Vurgaftman2001)
+'Band_offset':0.65, # conduction band/valence band offset ratio for GaAs - AlGaAs heterojunctions
+'m_e_alpha':5.3782e18, # conduction band non-parabolicity variable for linear relation (Nelson approach)
+# Valence band constants 
+'delta':0.341, # (eV) Spin split-off energy gap
+# below used by aestimo_numpy_h
+'GA1':6.8, #luttinger parameter
+'GA2':1.9, #luttinger parameter
+'GA3':2.73, #luttinger parameter
+'C11':11.879, # (GPa) Elastic Constants
+'C12':5.376, # (GPa) Elastic Constants
+'a0':5.6533, # (A)Lattice constant
+'Ac':-7.17, # (eV) deformation potentials (Van de Walle formalism)
+'Av':1.16, # (eV) deformation potentials (Van de Walle formalism)
+'B':-1.7, # (eV) shear deformation potential (Van de Walle formalism)
 },
 'AlAs':{
-'m_e':0.1,
+'m_e':0.15,
 'm_hh':0.51,
 'm_lh':0.18,
 'epsilonStatic':10.06,
-'Eg':2.980,
+'Eg':3.099,#2.980,
+'Ep':21.1,
+'F':-0.48,
 'Band_offset':0.53,
 'm_e_alpha':0.0,
 'GA1':3.45,
@@ -77,6 +83,8 @@ materialproperty = {
 'm_lh':0.027,
 'epsilonStatic':15.15,
 'Eg':0.4,
+'Ep':21.5,
+'F':-2.90,
 'Band_offset':0.63,
 'm_e_alpha':0.0,
 'GA1':20.4,
@@ -96,6 +104,8 @@ materialproperty = {
 'm_lh':0.12,
 'epsilonStatic':12.50,
 'Eg':1.35,
+'Ep':20.7,
+'F':-1.31,
 'Band_offset':0.38,
 'm_e_alpha':0.0,
 'GA1':5.33,
@@ -115,6 +125,8 @@ materialproperty = {
 'm_lh':0.6,
 'epsilonStatic':11.1,
 'Eg':2.261,
+'Ep':31.4,
+'F':-2.04,
 'Band_offset':0.55,
 'm_e_alpha':0.0,
 'GA1':4.04,
@@ -134,6 +146,8 @@ materialproperty = {
 'm_lh':0.2,
 'epsilonStatic':10.464,
 'Eg':2.48,
+'Ep':17.7,
+'F':-0.65,
 'Band_offset':0.55,
 'm_e_alpha':0.0,
 'GA1':3.47,
@@ -156,6 +170,7 @@ alloyproperty = {
 'Bowing_param':0.37,
 'Band_offset':0.65,
 'm_e_alpha':5.3782e18,
+'delta_bowing_param':0.0,
 'Material1':'AlAs',
 'Material2':'GaAs'
 },
@@ -163,6 +178,7 @@ alloyproperty = {
 'Bowing_param':0.58,
 'Band_offset':0.63,
 'm_e_alpha':0.0,
+'delta_bowing_param':0.0,
 'Material1':'InAs',
 'Material2':'GaAs'
 },
@@ -170,6 +186,7 @@ alloyproperty = {
 'Bowing_param':0.65,
 'Band_offset':0.33,
 'm_e_alpha':0.0,
+'delta_bowing_param':0.0,
 'Material1':'InP',
 'Material2':'GaP'
 },
@@ -177,6 +194,7 @@ alloyproperty = {
 'Bowing_param':0.13,
 'Band_offset':0.52,
 'm_e_alpha':0.0,
+'delta_bowing_param':0.0,
 'Material1':'AlP',
 'Material2':'InP'
 }

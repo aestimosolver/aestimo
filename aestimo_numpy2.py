@@ -126,6 +126,10 @@ class Structure():
         
         cb_meff = np.zeros(n_max)	#conduction band effective mass
         cb_meff_alpha = np.zeros(n_max) #non-parabolicity constant.
+        F = np.zeros(n_max)             #? (?)
+        Eg = np.zeros(n_max)            #bandgap energy (?)
+        delta_SO = np.zeros(n_max)      #spin-split off energy (?)
+        Ep = np.zeros(n_max)            #? (?)
         fi = np.zeros(n_max)		#Bandstructure potential
         eps =np.zeros(n_max)		#dielectric constant
         dop = np.zeros(n_max)           #doping
@@ -142,19 +146,27 @@ class Structure():
                 matprops = material_property[matType]
                 cb_meff[startindex:finishindex] = matprops['m_e']*m_e
                 cb_meff_alpha[startindex:finishindex] = matprops['m_e_alpha']
+                F[startindex:finishindex] = matprops['F']
+                Eg[startindex:finishindex] = matprops['Eg'] #eV
+                delta_SO[startindex:finishindex] = matprops['delta']
+                Ep[startindex:finishindex] = matprops['Ep']
                 fi[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
                 eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
                 
             elif matType in alloy_property:
                 alloyprops = alloy_property[matType]
-                mat1 = alloyprops['Material1']
-                mat2 = alloyprops['Material2']
+                mat1 = material_property[alloyprops['Material1']]
+                mat2 = material_property[alloyprops['Material2']]
                 x = layer[2] #alloy ratio
-                cb_meff_alloy = x*material_property[mat1]['m_e'] + (1-x)* material_property[mat2]['m_e']
+                cb_meff_alloy = x*mat1['m_e'] + (1-x)* mat2['m_e']
                 cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
-                cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(material_property[mat2]['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
-                fi[startindex:finishindex] = alloyprops['Band_offset']*(x*material_property[mat1]['Eg'] + (1-x)* material_property[mat2]['Eg']-alloyprops['Bowing_param']*x*(1-x))*q # for electron. Joule
-                eps[startindex:finishindex] = (x*material_property[mat1]['epsilonStatic'] + (1-x)* material_property[mat2]['epsilonStatic'] )*eps0
+                cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(mat2['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
+                F[startindex:finishindex] = x*mat1['F'] + (1-x)* mat2['F']
+                Eg[startindex:finishindex] = x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x) #eV
+                delta_SO[startindex:finishindex] = x*mat1['delta'] + (1-x)* mat2['delta']-alloyprops['delta_bowing_param']*x*(1-x)
+                Ep[startindex:finishindex] = x*mat1['Ep'] + (1-x)* mat2['Ep']
+                fi[startindex:finishindex] = alloyprops['Band_offset']*(x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x))*q # for electron. Joule
+                eps[startindex:finishindex] = (x*mat1['epsilonStatic'] + (1-x)* mat2['epsilonStatic'] )*eps0
                 
             #doping
             if layer[4] == 'n':  
@@ -169,11 +181,15 @@ class Structure():
         self.fi = fi
         self.cb_meff = cb_meff
         self._cb_meff_alpha = cb_meff_alpha
+        self.F = F
+        self.Eg = Eg
+        self.delta_SO = delta_SO
+        self.Ep = Ep
         self.eps = eps
         self.dop = dop
         #return fi,cb_meff,eps,dop
         
-    def cb_meff_E(self,E,fi):
+    def cb_meff_E0(self,E,fi):
         """returns an array for the structure giving the effective mass for a particular
         energy.
         E - energy (J)
@@ -181,7 +197,7 @@ class Structure():
         """
         return self.cb_meff
         
-    def cb_meff_E(self,E,fi):
+    def cb_meff_E1(self,E,fi):
         """returns an array for the structure giving the effective mass for a particular
         energy.
         E - energy (J)
@@ -189,6 +205,14 @@ class Structure():
         """
         return self.cb_meff*(1.0 + self._cb_meff_alpha*(E-fi))
         
+    def cb_meff_E(self,E,fi):
+        """returns an array for the structure giving the effective mass using the
+        non-parabolicity calculation as given by Vurgaftman's 2001 paper
+        E - energy (J)
+        fi - bandstructure potential (J) (numpy array)
+        """
+        EeV = (E - fi)/q
+        return m_e/((1+2*self.F) + self.Ep/3.0*(2.0/(EeV+self.Eg) + 1.0/(EeV+self.Eg+self.delta_SO)))
 
 class AttrDict(dict):
     """turns a dictionary into an object with attribute style lookups"""
