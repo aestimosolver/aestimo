@@ -195,7 +195,7 @@ class Structure():
         E - energy (J)
         fi - bandstructure potential (J) (numpy array)
         """
-        return self.cb_meff
+        return self.cb_meff*np.ones_like(E)
         
     def cb_meff_E1(self,E,fi):
         """returns an array for the structure giving the effective mass for a particular
@@ -229,6 +229,7 @@ class StructureFrom(Structure):
         self.T = inputfile.T
         self.subnumber_e = inputfile.subnumber_e
         self.comp_scheme = inputfile.computation_scheme
+        self.fermi_np_scheme = inputfile.fermi_np_scheme
         self.dx = inputfile.gridfactor*1e-9 #grid in m
         self.maxgridpoints = inputfile.maxgridpoints
         
@@ -306,7 +307,7 @@ def psi_at_inf(E,fis,cb_meff,n_max,dx):
     return psi2
     
 def psi_at_inf1(E,fis,model,n_max,dx):
-    """shooting method with non-parabolicity.
+    """shooting method with parabolic dispersions (energy independent effective mass).
     E - energy (Joules)
     fis - potential energy (J)
     cb_meff_f is a function that returns an array of effective mass at a given Energy E
@@ -454,7 +455,7 @@ def wf(E,fis,model):
     return b2 # units of dx**0.5
 
     
-# FUNCTIONS for FERMI-DIRAC STATISTICS-----------------------------------------   
+# FUNCTIONS for FERMI-DIRAC STATISTICS---SIMPLE---------------------------------   
 def fd2(Ei,Ef,T):
     """integral of Fermi Dirac Equation for energy independent density of states.
     Ei [meV], Ef [meV], T [K]"""
@@ -529,6 +530,72 @@ def calc_N_state(Ef,T,Ns,E_state,meff_state):
     # Find the subband populations, taking advantage of step like d.o.s. and analytic integral of FD
     N_state=[fd2(Ei,Ef,T)*csb_meff/(hbar**2*pi) for Ei,csb_meff in zip(E_state,meff_state)]
     return N_state # number of carriers in each subband
+    
+# FUNCTIONS for FERMI-DIRAC STATISTICS---NON-PARABOLIC--------------------------
+
+def calc_meff_state3(wfe,cb_meff):
+    """find subband effective masses"""
+    meff_states = 1.0/np.sum(wfe**2/cb_meff,axis=1)
+    return meff_states #kg
+
+def calc_dispersions(Emin,Emax,dE,wfe,E_state,fi,model):
+    """Calculate dispersion curves and their effective masses for each subband."""
+    output = [] #(Ea,cb_meff,k)
+    for Ei,wfi in zip(E_state,wfe):
+        Ea = np.arange(Ei,Emax,dE) #meV
+        cb_meff_2darray = model.cb_meff_E(Ea[:,np.newaxis]*meV2J,fi)
+        cb_meff_a = calc_meff_state3(wfi,cb_meff_2darray) # effective mass of dispersion wrt Ea
+        ka = np.sqrt(2.0/hbar**2*meV2J*(Ea-Ei)*cb_meff_a) # k-space array wrt Ea
+        output.append((Ea,cb_meff_a,ka))
+    return output
+
+def calc_N_state_np(Ef,T,level_dispersions):
+    """numerical integral of Fermi Dirac Equation for 2d density of states with 
+    energy dependent effective mass
+    level_dispersions - list of tuples describing each level's dispersion. Each tuple
+    is (energy array, effective mass array, k-vector array). This is non-coincidently
+    the output of calc_dispersions.
+    function.
+    Ef - Fermi energy (meV)
+    T - Temperature (K)."""
+    N_state = []
+    for Ea,cb_meff_a,ka in level_dispersions: #treat level separately
+        Ea2 = Ea*meV2J
+        tmp = cb_meff_a/(pi*hbar**2)/(np.exp((Ea2-meV2J*Ef)/(kb*T))+1.0)
+        N_state.append(np.trapz(tmp,x=Ea2))
+    return N_state
+
+def fermilevel_np(Ntotal2d,T,wfe,E_state,fi,model):
+    """Finds the Fermi level (meV) for non-parabolic subbands"""
+    #parameters
+    FD_d_E = config.FD_d_E #1e-9 Initial and minimum Energy step (meV) for derivative calculation for Newton-Raphson method to find E_F
+    FD_convergence_test = config.FD_convergence_test #1e-6
+    #level dispersions
+    level_dispersions = calc_dispersions(Emin=0.0,Emax=E_state[-1]+kb*T*J2meV,dE=config.np_d_E,wfe=wfe,E_state=E_state,fi=fi,model=model)
+    #error function
+    def func(Ef,Ntotal2d,T,level_dispersions):
+        return Ntotal2d - sum(calc_N_state_np(Ef,T,level_dispersions))
+    #starting estimates
+    Ef_0K,N_states_0K = fermilevel_0K(Ntotal2d,E_state,calc_meff_state2(wfe,E_state,fi,model))
+    #Ef=fsolve(func,Ef_0K,args=(E_state,meff_state,Ntotal2d,T))[0]
+    #return float(Ef)
+    #implement Newton-Raphson method
+    Ef = Ef_0K
+    d_E = FD_d_E #Energy step (meV)
+    while True:
+        y = func(Ef,Ntotal2d,T,level_dispersions)
+        dy = (func(Ef+d_E,Ntotal2d,T,level_dispersions)- func(Ef-d_E,Ntotal2d,T,level_dispersions))/(2.0*d_E)
+        if dy == 0.0: #increases interval size for derivative calculation in case of numerical error
+            d_E*=2.0
+            continue #goes back to start of loop, therefore d_E will increase until a non-zero derivative is found
+        Ef -= y/dy
+        if abs(y/dy) < FD_convergence_test:
+            break
+        #reduces the interval by a couple of notches ready for the next iteration
+        for i in range(2):
+            if d_E>FD_d_E: 
+                d_E*=0.5
+    return Ef #(meV)
     
 # FUNCTIONS for SELF-CONSISTENT POISSON----------------------------------------
 
@@ -723,11 +790,23 @@ def Poisson_Schrodinger(model):
         # Calculate the Fermi energy and subband populations at 0K
         #E_F_0K,N_state_0K=fermilevel_0K(Ntotal2d,E_state,meff_state)
         # Calculate the Fermi energy at the temperature T (K)
-        #print 'fermilevel'
-        E_F = fermilevel(Ntotal2d,T,E_state,meff_state)
-        # Calculate the subband populations at the temperature T (K)
-        #print 'calc_N_state'
-        N_state=calc_N_state(E_F,T,Ntotal2d,E_state,meff_state)
+        if model.comp_scheme in (1,3,6) and model.fermi_np_scheme == True: #include non-parabolicity in calculation
+            #print 'fermilevel'
+            E_F = fermilevel_np(Ntotal2d,T,wfe,E_state,fi,model)
+            # Calculate the subband populations at the temperature T (K)
+            #print 'calc_N_state'
+            Emin_np = 0.0
+            Emax_np = E_state[-1]+kb*T*J2meV
+            dE_np = config.np_d_E
+            level_dispersions = calc_dispersions(Emin_np,Emax_np,dE_np,wfe,E_state,fi,model)
+            N_state = calc_N_state_np(E_F,T,level_dispersions)
+        else:
+            level_dispersions = None
+            #print 'fermilevel'
+            E_F = fermilevel(Ntotal2d,T,E_state,meff_state)
+            # Calculate the subband populations at the temperature T (K)
+            #print 'calc_N_state'
+            N_state = calc_N_state(E_F,T,Ntotal2d,E_state,meff_state)
         # Calculate `net' areal charge density
         #print 'calc_sigma'
         sigma=calc_sigma(wfe,N_state,model) #one more instead of subnumber_e
@@ -802,6 +881,7 @@ def Poisson_Schrodinger(model):
     results.E_F = E_F
     results.dx = dx
     results.subnumber_e = subnumber_e
+    results.level_dispersions = level_dispersions
     
     return results
 
@@ -893,10 +973,34 @@ def save_and_plot(result,model):
         pl.xlabel('Position (m)')
         pl.ylabel('Energy (meV)')
         pl.grid(True)
+        
+        #dispersion plot
+        pl.figure(figsize=(10,8))
+        pl.suptitle('Subband Dispersions')
+        ax = pl.subplot(1,1,1)
+        result.level_dispersions
+        cb_meff0 = result.meff_state[0] #kg
+        print cb_meff0
+        ka = np.linspace(0.0,np.sqrt(2.0*cb_meff0*result.fitot.ptp())/hbar,50) #m**-1
+        kax = ka*1e-9
+        for Ei,meffi in zip(result.E_state,result.meff_state):
+            p1, = pl.plot(kax,Ei+J2meV*hbar**2*ka**2/(2*cb_meff0),'k')
+            p2, = pl.plot(kax,Ei+J2meV*hbar**2*ka**2/(2*meffi),'b')
+        if result.level_dispersions:
+            for Ea,cb_meff_a,ka in result.level_dispersions:
+                p3, = pl.plot(ka*1e-9,Ea,'g')
+            ax.legend([p1,p2,p3],['parabolic dispersions','parabolic dispersion (subband meff)','non-parabolic dispersions'])
+        else:
+            ax.legend([p1,p2],['parabolic dispersions','parabolic dispersion (subband meff)'])
+        pl.axhline(result.E_F,0.0,1.0,color='r',ls='--')
+        pl.xlabel('k-space (nm**-1)')
+        pl.ylabel('Energy (meV)')
+        pl.grid(True)
+        
         pl.show()
 
 def QWplot(result,figno=None):
-    #QW representation
+    """QW representation"""
     xaxis = result.xaxis
     pl.figure(figno,figsize=(10,8))
     pl.suptitle('Aestimo Results')
@@ -908,6 +1012,31 @@ def QWplot(result,figno=None):
         #pl.plot(xaxis, state**2*1e-9/dx*200.0+level,'b')
     pl.axhline(result.E_F,0.1,0.9,color='r',ls='--')
     pl.xlabel('Position (m)')
+    pl.ylabel('Energy (meV)')
+    pl.grid(True)
+    pl.show()
+        
+def dispersionplot(result,figno=None):
+    """subband dispersion plot"""
+    pl.figure(figsize=(10,8))
+    pl.suptitle('Subband Dispersions')
+    ax = pl.subplot(1,1,1)
+    result.level_dispersions
+    cb_meff0 = result.meff_state[0] #kg
+    kmax = np.sqrt(2.0*cb_meff0*result.fitot.ptp()*meV2J)/hbar
+    ka = np.linspace(0.0,kmax,50) #m**-1
+    kax = ka*1e-9
+    for Ei,meffi in zip(result.E_state,result.meff_state):
+        p1, = pl.plot(kax,Ei+J2meV*hbar**2*ka**2/(2*cb_meff0),'k')
+        p2, = pl.plot(kax,Ei+J2meV*hbar**2*ka**2/(2*meffi),'b')
+    if result.level_dispersions:
+        for Ea,cb_meff_a,ka in result.level_dispersions:
+            p3, = pl.plot(ka*1e-9,Ea,'g')
+        ax.legend([p1,p2,p3],['parabolic dispersions','parabolic dispersion (subband meff)','non-parabolic dispersions'])
+    else:
+        ax.legend([p1,p2],['parabolic dispersions','parabolic dispersion (subband meff)'])
+    pl.axhline(result.E_F,0.0,1.0,color='r',ls='--')
+    pl.xlabel('k-space (nm**-1)')
     pl.ylabel('Energy (meV)')
     pl.grid(True)
     pl.show()

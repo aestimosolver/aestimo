@@ -8,7 +8,7 @@
 # ----------------
 
 # TEMPERATURE
-T = 300.0 #Kelvin
+T = 60.0 #Kelvin
 
 # COMPUTATIONAL SCHEME
 # 0: Schrodinger
@@ -18,7 +18,10 @@ T = 300.0 #Kelvin
 # 4: Schrodinger-Exchange interaction
 # 5: Schrodinger-Poisson + Exchange interaction
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
-computation_scheme = 2
+computation_scheme = 3
+
+# Non-parabolic Dispersion Calculations for Fermi-Dirac
+fermi_np_scheme = True
 
 # QUANTUM
 # Total subband number to be calculated for electrons
