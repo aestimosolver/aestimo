@@ -876,6 +876,48 @@ def QWplot(result,figno=None):
     pl.grid(True)
     pl.show()
 
+
+def load_results():
+    """Loads the data stored in the output folder"""
+    class Results(): pass
+    results = Results()
+    
+    output_directory = config.output_directory+"-numpy"
+            
+    def loadoutput(fname,header=False,unpack=True):
+        fname2 = os.path.join(output_directory,fname)
+        fobj = file(fname2,'rb')
+        if header: header = fobj.readline()
+        else: header = ''
+        data = np.loadtxt(fobj,delimiter=' ',unpack=unpack)
+        fobj.close()
+        return data,header
+        
+    if config.sigma_out:
+        (results.xaxis,results.sigma),hdr = loadoutput("sigma.dat")
+    if config.electricfield_out:
+        (results.xaxis,results.F),hdr = loadoutput("efield.dat")
+    if config.potential_out:
+        (results.xaxis,results.fitot),hdr = loadoutput("potn.dat")
+    if config.states_out:
+        (states,result.E_state,result.N_state,rel_meff_state),hdr = loadoutput("states.dat", header=True)
+        result.subnumber_e = max(states)
+    if config.probability_out:
+        _wfe,hdr = loadoutput("wavefunctions.dat",unpack=False)
+        results.xaxis = _wfe[:,0]
+        results.wfe = _wfe[:,1:].transpose()
+    
+    #missing variables
+    #results.V
+    #results.Fapp
+    #results.T
+    #results.E_F
+    results.dx = np.mean(results.xaxis[1:]-results.xaxis[:-1])
+    #results.level_dispersions = level_dispersions
+    
+    return results
+
+
 if __name__=="__main__":
         
     # Import from config file
@@ -896,6 +938,7 @@ if __name__=="__main__":
     # Write the simulation results in files
     save_and_plot(result,model)
     
-    logger.info("""Simulation is finished. All files are closed.Please control the related files.
+    logger.info("""Simulation is finished. All files are closed. Please control the related files.
 -----------------------------------------------------------------""")
 
+    result2 = load_results()
