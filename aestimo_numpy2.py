@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
  Aestimo 1D Schrodinger-Poisson Solver
- Version v.0.8
+ Version v.0.9
  Copyright (C) 2013 Sefer Bora Lisesivdin and Aestimo group
 
     This program is free software: you can redistribute it and/or modify
@@ -607,7 +607,7 @@ def calc_sigma(wfe,N_state,model):
     sigma= model.dop*model.dx # The charges due to the dopant ions
     for j in range(0,model.subnumber_e,1): # The charges due to the electrons in the subbands
         sigma-= N_state[j]*(wfe[j])**2
-    return sigma #charge per m**2 (units of electronic charge)
+    return sigma #charge per m**2 per dz (units of electronic charge)
     
 ##
 def calc_field(sigma,eps):
@@ -900,6 +900,16 @@ def save_and_plot(result,model):
         np.savetxt(fobj,np.column_stack(datatuple),fmt='%.6e', delimiter=' ')
         fobj.close()
         
+    def saveoutput2(fname2,datatuple,header=None,fmt='%.6g',delimiter=', '):
+        fname2 = os.path.join(output_directory,fname2)
+        fobj = file(fname2,'wb')
+        if header: fobj.write(header+'\n')
+        np.savetxt(fobj,np.column_stack(datatuple),fmt=fmt, delimiter=delimiter)
+        fobj.close()
+    
+    if config.parameters:
+        saveoutput2("parameters.dat",header=('T (K), Fapp (V/m), E_F (meV)'),
+                    datatuple=(result.T,result.Fapp,result.E_F))
     if config.sigma_out:
         saveoutput("sigma.dat",(xaxis,result.sigma))
     if config.electricfield_out:
@@ -1056,7 +1066,11 @@ def load_results():
         data = np.loadtxt(fobj,delimiter=' ',unpack=unpack)
         fobj.close()
         return data,header
-        
+    
+    if config.parameters:
+        results.T,results.Fapp,results.E_F = np.loadtxt(
+                      open(os.path.join(output_directory,"parameters.dat"),'rb'),
+                      unpack=True,delimiter=',',skiprows=1)
     if config.sigma_out:
         (results.xaxis,results.sigma),hdr = loadoutput("sigma.dat")
     if config.electricfield_out:
@@ -1064,8 +1078,9 @@ def load_results():
     if config.potential_out:
         (results.xaxis,results.fitot),hdr = loadoutput("potn.dat")
     if config.states_out:
-        (states,result.E_state,result.N_state,rel_meff_state),hdr = loadoutput("states.dat", header=True)
-        result.subnumber_e = max(states)
+        (states,results.E_state,results.N_state,rel_meff_state),hdr = loadoutput("states.dat", header=True)
+        results.subnumber_e = max(states)
+        results.meff_state = rel_meff_state*m_e
     if config.probability_out:
         _wfe,hdr = loadoutput("wavefunctions.dat",unpack=False)
         results.xaxis = _wfe[:,0]
@@ -1073,14 +1088,12 @@ def load_results():
     
     #missing variables
     #results.V
-    #results.Fapp
-    #results.T
-    #results.E_F
     results.dx = np.mean(results.xaxis[1:]-results.xaxis[:-1])
     #results.level_dispersions = level_dispersions
     
-    return results    
-    
+    return results
+
+
 if __name__=="__main__":
         
     # Import from config file
