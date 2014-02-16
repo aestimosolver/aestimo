@@ -61,6 +61,7 @@ strain = True # for aestimo_numpy_h
 # Output Files
 # ------------
 output_directory = "outputs"
+parameters = True
 electricfield_out = True
 potential_out = True
 sigma_out = True

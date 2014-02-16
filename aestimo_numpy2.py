@@ -924,7 +924,7 @@ def save_and_plot(result,model):
         saveoutput("states.dat",columns, header = header )
     if config.probability_out:
         saveoutput("wavefunctions.dat",(xaxis,result.wfe.transpose()) )
-    
+            
     # Resultviewer
         
     if config.resultviewer:

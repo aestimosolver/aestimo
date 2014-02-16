@@ -29,8 +29,9 @@ import time
 
 import config
 
-if False:
-    import aestimo_numpy as aestimo
+if True:
+    #import aestimo_numpy as aestimo
+    import aestimo_numpy2 as aestimo
     import database
     
     # Import from config file
@@ -53,7 +54,7 @@ if False:
     aestimo.logger.info("""Simulation is finished. All files are closed.Please control the related files.
 -----------------------------------------------------------------""")
 
-elif True:
+elif False:
     import aestimo_numpy_h as aestimo
     import database
     
