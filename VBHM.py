@@ -35,9 +35,10 @@
 #from scipy.optimize import fsolve
 import numpy as np
 from math import *
+import config
 #start
 #material parametre for barrier and well
-def qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta):
+def qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta,A1,A2,A3,A4,A5,A6,delta_so,delta_cr):
     AP1= np.zeros(n_max+2)
     AP2= np.zeros(n_max+2)
     AP3= np.zeros(n_max+2)
@@ -48,18 +49,35 @@ def qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta):
     FH= np.zeros(n_max+2)
     FL= np.zeros(n_max+2)
     FSO=  np.zeros(n_max+2)
+    DEL3=  np.zeros(n_max+2)
+    DEL1=  np.zeros(n_max+2)
+    DEL2=  np.zeros(n_max+2)
     Pce=  np.zeros(n_max+2)
-    AP1=GA1
-    AP2=GA2
-    AP3=GA1
-    AP4=GA2
-    AP5=(GA2+GA3)/2.0
-    AP6=GA3
-    GDELM=RATIO*(sqrt(2.0)*ZETA)/AC1
-    FH=RATIO*(VNIT+ZETA)/AC1
-    FL=RATIO*(VNIT-ZETA)/AC1
-    FSO=RATIO*(VNIT+delta)/AC1
-    Pce=RATIO*(CNIT)/AC1
+    if config.Zincblind:     
+        AP1=GA1
+        AP2=GA2
+        AP3=GA1
+        AP4=GA2
+        AP5=(GA2+GA3)/2.0
+        AP6=GA3
+        GDELM=RATIO*(sqrt(2.0)*ZETA)/AC1
+        FH=RATIO*(VNIT+ZETA)/AC1
+        FL=RATIO*(VNIT-ZETA)/AC1
+        FSO=RATIO*(VNIT+delta)/AC1
+        Pce=RATIO*(CNIT)/AC1
+    if config.Wurtzite:
+        AP1=A1
+        AP2=A2
+        AP3=A3
+        AP4=A4
+        AP5=A5
+        AP6=A6
+        FH=RATIO*(ZETA)/AC1
+        FL=RATIO*(VNIT)/AC1
+        DEL3=RATIO*(delta_so/3)/AC1
+        DEL1=RATIO*(delta_cr)/AC1
+        DEL2=RATIO*(delta_so/3)/AC1
+        Pce=RATIO*(CNIT)/AC1+DEL1+DEL2
     AP1=np.resize(AP1,n_max+2)
     AP2=np.resize(AP2,n_max+2)
     AP3=np.resize(AP3,n_max+2)
@@ -70,8 +88,11 @@ def qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta):
     FL=np.resize(FL,n_max+2)
     FSO=np.resize(FSO,n_max+2)
     GDELM=np.resize(GDELM,n_max+2)
+    DEL3=np.resize(DEL3,n_max+2)
+    DEL1=np.resize(DEL1,n_max+2)
+    DEL2=np.resize(DEL2,n_max+2)
     Pce=np.resize(Pce,n_max+2)
-    return AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,Pce,GDELM
+    return AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,Pce,GDELM,DEL3,DEL1,DEL2
 #
 #define VB Hamiltonian
 
@@ -155,6 +176,100 @@ def VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT
                 B[I+n_max,J+n_max*2]=B[J+n_max*2,I+n_max]  
     return B
 
+def VBMAT2(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,x_max,n_max,AC1,UNIM,KPINT,DEL3,DEL1,DEL2):
+    B11V1= np.zeros(n_max+2)
+    B11V2= np.zeros(n_max+2)
+    B12V1= np.zeros(n_max+2)
+    B13V1= np.zeros(n_max+2)	
+    B21V1= np.zeros(n_max+2)		
+    B22V1= np.zeros(n_max+2)
+    B22V2= np.zeros(n_max+2)		 
+    B23V1= np.zeros(n_max+2)
+    B31V1= np.zeros(n_max+2)
+    B32V1= np.zeros(n_max+2)		 
+    B33V1= np.zeros(n_max+2)
+    B33V2= np.zeros(n_max+2)
+    B11=np.zeros((n_max+2, n_max+2))
+    B22=np.zeros((n_max+2, n_max+2))
+    B33=np.zeros((n_max+2, n_max+2))
+    B13=np.zeros((n_max+2, n_max+2))
+    B23=np.zeros((n_max+2, n_max+2))
+    B31=np.zeros((n_max+2, n_max+2))
+    B32=np.zeros((n_max+2, n_max+2))
+    B=np.zeros((n_max*3, n_max*3)) 
+#=====DEFINE MATRIX=================
+    for I in range(0,n_max+2,1):
+            B11V2[I]=0.5*(AP2[I]+AP4[I])*((KP*x_max*KPINT)**2)
+            B12V1[I]=0.5*AP5[I]*((KP*x_max*KPINT)**2)
+            B21V1[I]=0.5*AP5[I]*((KP*x_max*KPINT)**2)
+            B22V2[I]=0.5*(AP2[I]+AP4[I])*((KP*x_max*KPINT)**2)
+            B33V2[I]=0.5*AP2[I]*(KP*x_max*KPINT)**2
+            ###################################################
+            B33V1[I]=-0.5*AP1[I]
+            B22V1[I]=-0.5*(AP1[I]+AP3[I])
+            B11V1[I]=-0.5*(AP1[I]+AP3[I])
+            ###################################################
+            B13V1[I]=0.5*AP6[I]*(KP*x_max*KPINT)
+            B23V1[I]=0.5*AP6[I]*(KP*x_max*KPINT)
+            B31V1[I]=0.5*AP6[I]*(KP*x_max*KPINT)
+            B32V1[I]=0.5*AP6[I]*(KP*x_max*KPINT)
+            #boundary condition between barrier and well 
+    for I in range (0,n_max,1):
+                B33V2[I]=(B33V2[I-1]+B33V2[I+1])/2.0
+                B33V1[I]=(B33V1[I-1]+B33V1[I+1])/2.0
+                B32V1[I]=(B32V1[I-1]+B32V1[I+1])/2.0
+                B31V1[I]=(B31V1[I-1]+B31V1[I+1])/2.0
+                B23V1[I]=(B23V1[I-1]+B23V1[I+1])/2.0
+                B22V2[I]=(B22V2[I-1]+B22V2[I+1])/2.0
+                B22V1[I]=(B22V1[I-1]+B22V1[I+1])/2.0
+                B21V1[I]=(B21V1[I-1]+B21V1[I+1])/2.0
+                B13V1[I]=(B13V1[I-1]+B13V1[I+1])/2.0
+                B12V1[I]=(B12V1[I-1]+B12V1[I+1])/2.0
+                B11V2[I]=(B11V2[I-1]+B11V2[I+1])/2.0
+                B11V1[I]=(B11V1[I-1]+B11V1[I+1])/2.0                
+    for I in range (0,n_max,1):
+            # filling i row
+            B11[I,I]+=-B11V1[I+1]-(B11V1[I]+B11V1[I+2])/2.0
+            B22[I,I]+=-B22V1[I+1]-(B22V1[I]+B22V1[I+2])/2.0
+            B33[I,I]+=-B33V1[I+1]-(B33V1[I]+B33V1[I+2])/2.0
+            # filling i-1 and i+1 rows
+            B11[I,I+1]+=(B11V1[I+1]+B11V1[I+2])/2.0
+            B11[I+1,I]+=(B11V1[I+2]+B11V1[I+1])/2.0
+            B13[I,I+1]+=-(B13V1[I+1]+B13V1[I+2])/2.0
+            B13[I+1,I]+=(B13V1[I+1]+B13V1[I+1])/2.0
+            B22[I,I+1]+=(B22V1[I+1]+B22V1[I+2])/2.0
+            B22[I+1,I]+=(B22V1[I+1]+B22V1[I+1])/2.0
+            B23[I,I+1]+=-(B23V1[I+1]+B23V1[I+2])/2.0
+            B23[I+1,I]+=(B23V1[I+1]+B23V1[I+1])/2.0
+            B31[I,I+1]+=(B31V1[I+2]+B31V1[I+1])/2.0
+            B31[I+1,I]+=-(B31V1[I+1]+B31V1[I+1])/2.0
+            B32[I,I+1]+=(B32V1[I+1]+B32V1[I+2])/2.0
+            B32[I+1,I]+=-(B32V1[I+1]+B32V1[I+1])/2.0
+            B33[I,I+1]+=(B33V1[I+1]+B33V1[I+2])/2.0
+            B33[I+1,I]+=(B33V1[I+2]+B33V1[I+1])/2.0           
+
+    for I in range (0,n_max,1):
+            for J in range (0,n_max,1):        
+                B11[I,J]*=AC1
+                B13[I,J]*=sqrt(AC1)/2
+                B22[I,J]*=AC1
+                B23[I,J]*=sqrt(AC1)/2
+                B31[I,J]*=sqrt(AC1)/2
+                B32[I,J]*=sqrt(AC1)/2
+                B33[I,J]*=AC1
+                #here where start filling the matrix
+    for I in range (0,n_max,1):
+        for J in range (0,n_max,1):
+                B[I,J]+=B11[I,J]+B11V2[I+1]*UNIM[I,J]+(DEL1[I+1]+DEL2[I+1]+FH[I+1]+FL[I+1])*UNIM[I,J]*AC1
+                B[I+n_max,J+n_max]+=B22[I,J]+B22V2[I+1]*UNIM[I,J]+(DEL1[I+1]-DEL2[I+1]+FH[I+1]+FL[I+1])*UNIM[I,J]*AC1
+                B[I+n_max*2,J+n_max*2]+=B33[I,J]+B33V2[I+1]*UNIM[I,J]+FH[I+1]*UNIM[I,J]*AC1
+                B[I+n_max,J]+=B21V1[I+1]*UNIM[I,J]
+                B[I+n_max*2,J]+=B31[I,J]
+                B[I+n_max*2,J+n_max]+=B32[I,J]+sqrt(2)*DEL3[I+1]*UNIM[I,J]*AC1       
+                B[I,J+n_max]+=B12V1[I+1]*UNIM[I,J]
+                B[I,J+n_max*2]+=B13[I,J]
+                B[I+n_max,J+n_max*2]+=B23[I,J]+sqrt(2)*DEL3[I+1]*UNIM[I,J]*AC1
+    return B
 def VBMAT_V(B2,fi_h,RATIO,n_max,UNIM):
     """B2 - float?
     fi_h - 1d array, potential

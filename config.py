@@ -30,13 +30,14 @@ meV2J=1e-3*q #meV to Joules
 
 # Input File(s)
 # -------------
-inputfilename = "sample-qw-barrierdope"
+#inputfilename = "sample-qw-barrierdope"
 #inputfilename = "sample-qw-qwdope"
 #inputfilename = "sample-moddop"
 #inputfilename = "sample-qw-HarrisonCh3_3"
 #inputfilename = "sample-qw-barrierdope-p"
 #inputfilename = "sample-double-qw"
-
+inputfilename = "sample-qw-barrierdope-p_ingan"
+#inputfilename = "sample-qw-barrierdope-p_cdzno"
 # Calculation
 # -----------
 # Aestimo / Aestimo_numpy
@@ -57,7 +58,11 @@ convergence_test=1e-6 #convergence is reached when the ground state energy (meV)
 
 # Aestimo_numpy_h
 strain = True # for aestimo_numpy_h
-
+Wurtzite=True
+Zincblind=False
+piezo=True
+#--------------
+parameters=False
 # Output Files
 # ------------
 output_directory = "outputs"

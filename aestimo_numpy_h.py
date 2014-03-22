@@ -34,7 +34,7 @@ import os
 from math import log,exp,sqrt
 import VBHM
 from scipy import linalg
-from VBHM import qsv,VBMAT1,VBMAT_V,CBMAT,CBMAT_V
+from VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V
 import config,database
 # --------------------------------------
 import logging
@@ -134,20 +134,48 @@ class Structure():
         # Elastic constants C11,C12
         C12 = np.zeros(n_max)		
         C11 = np.zeros(n_max)
+        #Elastic constants Wurtzite C13,C33
+        C13 = np.zeros(n_max)
+        C33 = np.zeros(n_max)
+        C44 = np.zeros(n_max)
+        #Spontaneous and Piezoelectric Polarizations constants D15,D13,D33 and Psp
+        D15 = np.zeros(n_max)
+        D31 = np.zeros(n_max)
+        D33 = np.zeros(n_max)
+        Psp = np.zeros(n_max)
         # Luttinger Parameters γ1,γ2,γ3
         GA3 = np.zeros(n_max)		
         GA2 = np.zeros(n_max)            
-        GA1 = np.zeros(n_max)			
+        GA1 = np.zeros(n_max)
+        #Hole eff. mass parameter  Wurtzite Semiconductors
+        A1 = np.zeros(n_max)
+        A2 = np.zeros(n_max)
+        A3 = np.zeros(n_max)
+        A4= np.zeros(n_max)
+        A5 = np.zeros(n_max)
+        A6 = np.zeros(n_max)
         # Lattice constant a0
         a0 = np.zeros(n_max)
+        a0_wz = np.zeros(n_max)
+        a0_sub =np.zeros(n_max)
+        c0_wz = np.zeros(n_max)
+        c0_sub =np.zeros(n_max)
         #  Deformation potentials ac,av,b		
         Ac = np.zeros(n_max)             
         Av = np.zeros(n_max)
         B = np.zeros(n_max)
-        fi_h = np.zeros(n_max) #
+        # Deformation potentials Wurtzite Semiconductors
+        D1 = np.zeros(n_max)
+        D2 = np.zeros(n_max)
+        D3 = np.zeros(n_max)
+        D4 = np.zeros(n_max)
+        D5 = np.zeros(n_max)
+        D6 = np.zeros(n_max)
         delta = np.zeros(n_max) #delta splitt off
+        delta_so = np.zeros(n_max) #delta Spin–orbit split energy
+        delta_cr = np.zeros(n_max) #delta Crystal-field split energy 
         # Strain related
-        
+        fi_h = np.zeros(n_max)    #Bandstructure potential
         fi = np.zeros(n_max)		#Bandstructure potential
         eps =np.zeros(n_max)		#dielectric constant
         dop = np.zeros(n_max)           #doping
@@ -159,50 +187,106 @@ class Structure():
             finishindex = round2int(position*1e-9/dx)
             #
             matType = layer[1]
-            
             if matType in material_property:
                 matprops = material_property[matType]
                 cb_meff[startindex:finishindex] = matprops['m_e']*m_e
                 cb_meff_alpha[startindex:finishindex] = matprops['m_e_alpha']
                 fi[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
-                C11[startindex:finishindex] = matprops['C11'] 
-                C12[startindex:finishindex] = matprops['C12']
-                GA1[startindex:finishindex] = matprops['GA1']
-                GA2[startindex:finishindex] = matprops['GA2']
-                GA3[startindex:finishindex] = matprops['GA3']
-                Ac[startindex:finishindex] = matprops['Ac']*q
-                Av[startindex:finishindex] = matprops['Av']*q
-                B[startindex:finishindex] = matprops['B']*q
-                delta[startindex:finishindex] = matprops['delta']*q
-                fi_h[startindex:finishindex] =-(1-matprops['Band_offset'])*matprops['Eg']*q #Joule  #-0.8*q-(1-matprops['Band_offset'])*matprops['Eg']*q #Joule
-                eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
-                a0[startindex:finishindex] = matprops['a0']*1e-10
+                if config.Zincblind :
+                    a0_sub[startindex:finishindex]=matprops['a0']*1e-10
+                    C11[startindex:finishindex] = matprops['C11'] 
+                    C12[startindex:finishindex] = matprops['C12']
+                    GA1[startindex:finishindex] = matprops['GA1']
+                    GA2[startindex:finishindex] = matprops['GA2']
+                    GA3[startindex:finishindex] = matprops['GA3']
+                    Ac[startindex:finishindex] = matprops['Ac']*q
+                    Av[startindex:finishindex] = matprops['Av']*q
+                    B[startindex:finishindex] = matprops['B']*q
+                    delta[startindex:finishindex] = matprops['delta']*q
+                    fi_h[startindex:finishindex] =-(1-matprops['Band_offset'])*matprops['Eg']*q #Joule  #-0.8*q-(1-matprops['Band_offset'])*matprops['Eg']*q #Joule
+                    eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
+                    a0[startindex:finishindex] = matprops['a0']*1e-10
+                if config.Wurtzite :
+                    a0_sub[startindex:finishindex]=matprops['a0_wz']*1e-10
+                    C11[startindex:finishindex] = matprops['C11']*1e10
+                    C12[startindex:finishindex] = matprops['C12']*1e10
+                    C13[startindex:finishindex] = matprops['C13']*1e10
+                    C33[startindex:finishindex] = matprops['C33']*1e10
+                    A1[startindex:finishindex] = matprops['A1']
+                    A2[startindex:finishindex] = matprops['A2']
+                    A3[startindex:finishindex] = matprops['A3']
+                    A4[startindex:finishindex] = matprops['A4']
+                    A5[startindex:finishindex] = matprops['A5']
+                    A6[startindex:finishindex] = matprops['A6']
+                    D1[startindex:finishindex] = matprops['D1']*q
+                    D2[startindex:finishindex] = matprops['D2']*q
+                    D3[startindex:finishindex] = matprops['D3']*q
+                    D4[startindex:finishindex] = matprops['D4']*q                  
+                    a0_wz[startindex:finishindex] = matprops['a0_wz']*1e-10 
+                    delta_so[startindex:finishindex] = matprops['delta_so']*q
+                    delta_cr[startindex:finishindex] = matprops['delta_cr']*q
+                    eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
+                    fi_h[startindex:finishindex] =-(1-matprops['Band_offset'])*matprops['Eg']*q
+                    Psp[startindex:finishindex]=matprops['Psp']
             elif matType in alloy_property:
                 alloyprops = alloy_property[matType]
                 mat1 = material_property[alloyprops['Material1']]
                 mat2 = material_property[alloyprops['Material2']]
                 x = layer[2] #alloy ratio
-                Eg = x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x) #eV
                 cb_meff_alloy = x*mat1['m_e'] + (1-x)* mat2['m_e']
                 cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
-                C11[startindex:finishindex] = x*mat1['C11'] + (1-x)* mat2['C11']
-                C12[startindex:finishindex] = x*mat1['C12'] + (1-x)* mat2['C12']
-                GA1[startindex:finishindex] =x*mat1['GA1'] + (1-x)* mat2['GA1']
-                GA2[startindex:finishindex] = x*mat1['GA2'] + (1-x)* mat2['GA2']               
-                GA3[startindex:finishindex] = x*mat1['GA3'] + (1-x)* mat2['GA3']                
-                Ac_alloy = x*mat1['Ac'] + (1-x)* mat2['Ac']
-                Ac[startindex:finishindex] = Ac_alloy*q
-                Av_alloy = x*mat1['Av'] + (1-x)* mat2['Av']
-                Av[startindex:finishindex] = Av_alloy*q
-                B_alloy = x*mat1['B'] + (1-x)* mat2['B']
-                B[startindex:finishindex] = B_alloy*q
-                delta_alloy = x*mat1['delta'] + (1-x)* mat2['delta']
-                delta[startindex:finishindex] = delta_alloy*q
-                fi_h[startindex:finishindex] = -(1-alloyprops['Band_offset'])*Eg*q # -(-1.33*(1-x)-0.8*x)for electron. Joule-1.97793434e-20 #
-                eps[startindex:finishindex] = (x*mat1['epsilonStatic'] + (1-x)* mat2['epsilonStatic'] )*eps0
-                a0[startindex:finishindex] = ((1-x)*mat1['a0'] + x* mat2['a0'] )*1e-10
-                cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(mat2['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
-                fi[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule                
+                Eg = x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x) #eV
+                fi[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule
+                a0_sub[startindex:finishindex]=alloyprops['a0_sub']*1e-10
+                if config.Zincblind :
+                    C11[startindex:finishindex] = x*mat1['C11'] + (1-x)* mat2['C11']
+                    C12[startindex:finishindex] = x*mat1['C12'] + (1-x)* mat2['C12']
+                    GA1[startindex:finishindex] =x*mat1['GA1'] + (1-x)* mat2['GA1']
+                    GA2[startindex:finishindex] = x*mat1['GA2'] + (1-x)* mat2['GA2']               
+                    GA3[startindex:finishindex] = x*mat1['GA3'] + (1-x)* mat2['GA3']                
+                    Ac_alloy = x*mat1['Ac'] + (1-x)* mat2['Ac']
+                    Ac[startindex:finishindex] = Ac_alloy*q
+                    Av_alloy = x*mat1['Av'] + (1-x)* mat2['Av']
+                    Av[startindex:finishindex] = Av_alloy*q
+                    B_alloy = x*mat1['B'] + (1-x)* mat2['B']
+                    B[startindex:finishindex] = B_alloy*q
+                    delta_alloy = x*mat1['delta'] + (1-x)* mat2['delta']
+                    delta[startindex:finishindex] = delta_alloy*q
+                    fi_h[startindex:finishindex] = -(1-alloyprops['Band_offset'])*Eg*q # -(-1.33*(1-x)-0.8*x)for electron. Joule-1.97793434e-20 #
+                    eps[startindex:finishindex] = (x*mat1['epsilonStatic'] + (1-x)* mat2['epsilonStatic'] )*eps0
+                    a0[startindex:finishindex] = ((1-x)*mat1['a0'] + x* mat2['a0'] )*1e-10
+                    cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(mat2['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
+                if config.Wurtzite :
+                    A1[startindex:finishindex] =x*material_property[alloyprops['Material1']]['A1'] + (1-x)* material_property[alloyprops['Material2']]['A1']
+                    A2[startindex:finishindex] =x*material_property[alloyprops['Material1']]['A2'] + (1-x)* material_property[alloyprops['Material2']]['A2']
+                    A3[startindex:finishindex] =x*material_property[alloyprops['Material1']]['A3'] + (1-x)* material_property[alloyprops['Material2']]['A3']
+                    A4[startindex:finishindex] =x*material_property[alloyprops['Material1']]['A4'] + (1-x)* material_property[alloyprops['Material2']]['A4']
+                    A5[startindex:finishindex] =x*material_property[alloyprops['Material1']]['A5'] + (1-x)* material_property[alloyprops['Material2']]['A5']
+                    A6[startindex:finishindex] =x*material_property[alloyprops['Material1']]['A6'] + (1-x)* material_property[alloyprops['Material2']]['A6']
+                    D1[startindex:finishindex] =(x*material_property[alloyprops['Material1']]['D1'] + (1-x)* material_property[alloyprops['Material2']]['D1'])*q
+                    D2[startindex:finishindex] =(x*material_property[alloyprops['Material1']]['D2'] + (1-x)* material_property[alloyprops['Material2']]['D2'])*q
+                    D3[startindex:finishindex] =(x*material_property[alloyprops['Material1']]['D3'] + (1-x)* material_property[alloyprops['Material2']]['D3'])*q
+                    D4[startindex:finishindex] =(x*material_property[alloyprops['Material1']]['D4'] + (1-x)* material_property[alloyprops['Material2']]['D4'])*q
+                    C13[startindex:finishindex] = (x*material_property[alloyprops['Material1']]['C13'] + (1-x)* material_property[alloyprops['Material2']]['C13'])*1e10# for newton/meter²
+                    C33[startindex:finishindex] = (x*material_property[alloyprops['Material1']]['C33'] + (1-x)* material_property[alloyprops['Material2']]['C33'])*1e10
+                    D31[startindex:finishindex] = x*material_property[alloyprops['Material1']]['D31'] + (1-x)* material_property[alloyprops['Material2']]['D31']
+                    D33[startindex:finishindex] = x*material_property[alloyprops['Material1']]['D33'] + (1-x)* material_property[alloyprops['Material2']]['D33']
+                    Psp[startindex:finishindex] = x*material_property[alloyprops['Material1']]['Psp'] + (1-x)* material_property[alloyprops['Material2']]['Psp']
+                    C11[startindex:finishindex] = (x*material_property[alloyprops['Material1']]['C11'] + (1-x)* material_property[alloyprops['Material2']]['C11'])*1e10
+                    C12[startindex:finishindex] = (x*material_property[alloyprops['Material1']]['C12'] + (1-x)* material_property[alloyprops['Material2']]['C12'])*1e10
+                    a0_wz[startindex:finishindex] = ( x*material_property[alloyprops['Material1']]['a0_wz'] +(1-x)* material_property[alloyprops['Material2']]['a0_wz'])*1e-10
+                    eps[startindex:finishindex] = (x*material_property[alloyprops['Material1']]['epsilonStatic'] + (1-x)* material_property[alloyprops['Material2']]['epsilonStatic'])*eps0
+                    fi_h[startindex:finishindex] =-(1-alloyprops['Band_offset'])*Eg*q
+                    delta_so[startindex:finishindex]  = (x*material_property[alloyprops['Material1']]['delta_so'] + (1-x)* material_property[alloyprops['Material2']]['delta_so'])*q
+                    delta_cr[startindex:finishindex]  = (x*material_property[alloyprops['Material1']]['delta_cr'] + (1-x)* material_property[alloyprops['Material2']]['delta_cr'])*q
+                    Ac_alloy = x*material_property[alloyprops['Material1']]['Ac'] + (1-x)* material_property[alloyprops['Material2']]['Ac']
+                    Ac[startindex:finishindex] = Ac_alloy*q
+            if config.piezo:                
+                matRole= layer[5]
+                if  matRole == 'w':               
+                    x1=layer[2]
+                    BW=startindex                    
+                    WB=finishindex
             #doping
             if layer[4] == 'n':  
                 chargedensity = layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
@@ -230,7 +314,27 @@ class Structure():
         self.delta = delta
         self.fi_h = fi_h
         self.eps = eps
-
+        self.A1 = A1
+        self.A2 = A2
+        self.A3 = A3
+        self.A4 = A4
+        self.A5 = A5
+        self.A6 = A6
+        self.D1 = D1
+        self.D2 = D2
+        self.D3 = D3
+        self.D4 = D4
+        self.C13 = C13
+        self.C33 = C33
+        self.D31 = D31
+        self.D33 = D33
+        self.Psp = Psp
+        self.a0_wz = a0_wz
+        self.a0_sub =  a0_sub
+        self.delta_so = delta_so
+        self.delta_cr = delta_cr
+        self.WB = WB
+        self.BW = BW
 class AttrDict(dict):
     """turns a dictionary into an object with attribute style lookups"""
     def __init__(self, *args, **kwargs):
@@ -576,6 +680,28 @@ def Poisson_Schrodinger(model):
     a0 = model.a0
     delta = model.delta
     fi_h = model.fi_h
+    A1 = model.A1
+    A2 = model.A2
+    A3 = model.A3
+    A4 = model.A4
+    A5 = model.A5
+    A6 = model.A6
+    D1 = model.D1
+    D2 = model.D2
+    D3 = model.D3
+    D4 = model.D4
+    C13 = model.C13
+    C33 = model.C33
+    D31 = model.D31
+    D33 = model.D33
+    Psp = model.Psp
+    a0_wz = model.a0_wz
+    a0_sub = model.a0_sub
+    delta_so = model.delta_so
+    delta_cr = model.delta_cr
+    BW = model.BW
+    WB = model.WB
+    Ppz= np.zeros(n_max)
     HUPMAT1=np.zeros((n_max*3, n_max*3))
     HUPMATC1=np.zeros((n_max, n_max))
     UNIM = np.identity(n_max)
@@ -590,46 +716,77 @@ def Poisson_Schrodinger(model):
     k3= np.zeros(n_max)
     fp= np.ones(n_max)
     fm= np.ones(n_max)
+    BPC= np.zeros(n_max)
+    m_hh = np.zeros(n_max)
+    m_lh = np.zeros(n_max)
+    m_so = np.zeros(n_max)
+    x_max=dx*n_max
     if config.strain :
-        EXX= (min(a0)-a0)/a0
-        EZZ= -2.0*C12/C11*EXX
-        ZETA= -B/2.0*(EXX+EXX-2.0*EZZ)
-        CNIT= Ac*(EXX+EXX+EZZ)
-        VNIT= -Av*(EXX+EXX+EZZ)
+        if config.Zincblind :
+            EXX= (a0_sub-a0)/a0
+            EZZ= -2.0*C12/C11*EXX
+            ZETA= -B/2.0*(EXX+EXX-2.0*EZZ)
+            CNIT= Ac*(EXX+EXX+EZZ)
+            VNIT= -Av*(EXX+EXX+EZZ)           
+        if config.Wurtzite :
+            EXX= (a0_sub-a0_wz)/a0_wz
+            EZZ=-2.0*C13/C33*EXX
+            CNIT= Ac*(EXX+EXX+EZZ)
+            ZETA= (D2*(EXX+EXX)+D1*EZZ)
+            VNIT= (D4*(EXX+EXX)+D3*EZZ)
+            Ppz=((D31*(C11+C12)+D33*C13)*(EXX+EXX)+(2*D31*C13+D33*C33)*(EZZ))
+            if config.piezo:
+                dx=x_max/n_max    
+                Lw=dx*(WB-BW)
+                lb=dx*BW
+                for I in range (0,n_max,1):
+                    if I>= BW and I <= WB:            
+                        BPC[I]=q*dx*(I-BW)*(Psp[BW-5]+Ppz[BW-5]-Psp[BW+5]-Ppz[BW+5])*lb/(eps[BW-5]*Lw+eps[BW+5]*lb)
+                    elif I <=BW : 
+                        BPC[I]=q*dx*(BW-I)*(Psp[BW-5]+Ppz[BW-5]-Psp[BW+5]-Ppz[BW+5])*Lw/(eps[BW-5]*Lw+eps[BW+5]*lb)
+                    else:
+                        BPC[I]=q*dx*(BW+WB-I)*(Psp[WB+5]+Ppz[WB+5]-Psp[WB-5]-Ppz[WB-5])*Lw/(eps[WB+5]*Lw+eps[WB-5]*lb)
+    if config.Zincblind :
         for i in range(0,n_max,1):
-            if EXX[i]!=0:
+            if  EXX[i]!=0: #look futher
                 S[i]=ZETA[i]/delta[i]
                 k1[i]=sqrt(1+2*S[i]+9*S[i]**2)
                 k2[i]=S[i]-1+k1[i]
                 k3[i]=S[i]-1-k1[i]
                 fp[i]=(2*S[i]*(1+1.5*k2[i])+6*S[i]**2)/(0.75*k2[i]**2+k2[i]-3*S[i]**2)
                 fm[i]=(2*S[i]*(1+1.5*k3[i])+6*S[i]**2)/(0.75*k3[i]**2+k3[i]-3*S[i]**2)
-    m_hh = m_e/(GA1 -2*GA2 )
-    m_lh = m_e/(GA1 +2*fp*GA2 )
-    m_so = m_e/(GA1 +2*fm*GA2 )
-    x_max=dx*n_max
+        m_hh = m_e/(GA1 -2*GA2 )
+        m_lh = m_e/(GA1 +2*fp*GA2 )
+        m_so = m_e/(GA1 +2*fm*GA2 )            
+    if config.Wurtzite :
+        m_hh = -m_e/(A2 + A4 -A5)
+        m_lh = -m_e/(A2 + A4 +A5 )
+        m_so = -m_e/(A2)    
     RATIO=m_e/hbar**2*(x_max)**2
     AC1=(n_max+1)**2    
-    AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,Pce,GDELM=qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta)
+    AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,Pce,GDELM,DEL3,DEL1,DEL2=qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta,A1,A2,A3,A4,A5,A6,delta_so,delta_cr)
     KP=0.0
     KPINT=0.01
-    HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT)
+    if config.Zincblind :        
+        HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT)
+    if config.Wurtzite :
+        HUPMAT1=-VBMAT2(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,x_max,n_max,AC1,UNIM,KPINT,DEL3,DEL1,DEL2)
     HUPMATC1=CBMAT(KP,Pce,cb_meff/m_e,x_max,n_max,AC1,UNIM,KPINT)
     def calc_E_state(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc):
-        #print fi_h ,len(fi_h)       
-        HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)        
+        HUPMAT3=np.zeros((n_max*3, n_max*3))
+        HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)
         HUPMATC3=CBMAT_V(HUPMATC1,fitotc,RATIO,n_max,UNIM)
         #stop
         KPV1=[0.0]*subnumber_e
         la1,v1= linalg.eigh(HUPMATC3)
         tmp1=la1/RATIO*J2meV
-        #tmp1=tmp1.tolist()
+        tmp1=tmp1.tolist()
         for i in range(0,subnumber_e,1):
             KPV1[i]=tmp1[i]
         KPV2=[0.0]*subnumber_h 
         la2,v2= linalg.eigh(HUPMAT3) 
         tmp=-la2/RATIO*J2meV
-        #tmp=tmp.tolist()
+        tmp=tmp.tolist()
         for i in range(0,subnumber_h,1):
             KPV2[i]=tmp[i]
         return KPV1,v1,KPV2,v2
@@ -676,15 +833,14 @@ def Poisson_Schrodinger(model):
     time2 = time.time() # timing audit
     iteration = 1   #iteration counter
     previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
-    fitot = fi_h + Vapp #For initial iteration sum bandstructure and applied field
-    fitotc = fi + Vapp
+    fitot = fi_h + Vapp+BPC #For initial iteration sum bandstructure and applied field
+    fitotc = fi + Vapp+BPC
     while True:
         if not(config.messagesoff) :
             logger.info("Iteration: %d", iteration)
         #HUPMAT2=np.zeros((n_max*3, n_max*3))
             
         E_statec,wvmatc,E_state,wvmat=calc_E_state(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc)
-        #print E_state
         #xax=range(3*n_max)
         #pl.plot(xax, wvmat[0:3*n_max,2])
         #pl.show()
@@ -704,7 +860,6 @@ def Poisson_Schrodinger(model):
             else:
                 wfh[i] = wvmat[2*n_max:3*n_max,i]
                 list[i]='so'
-
         # Calculate the effective mass of each subband
         meff_statec,meff_state = calc_meff_state(wfh,wfe,model,fi,E_statec,list,m_hh,m_lh,m_so)
         ## Self-consistent Poisson
@@ -762,9 +917,8 @@ def Poisson_Schrodinger(model):
         #with previous iterations. By dampening the corrective term, we avoid oscillations.
         #fi_h=np.resize(fi_h,n_max)
         V+= damping*(Vnew - V)
-        fitot = fi_h + V + Vapp
-        fitotc = fi + V + Vapp
-        
+        fitot = fi_h + V + Vapp+BPC
+        fitotc = fi + V + Vapp+BPC
         if abs(E_state[0]-previousE0) < convergence_test: #Convergence test
             break
         elif iteration >= max_iterations: #Iteration limit
