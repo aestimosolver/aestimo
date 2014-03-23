@@ -504,7 +504,7 @@ def calc_sigma(wfe,N_state,model):
     sigma= model.dop*model.dx # The charges due to the dopant ions
     for j in range(0,model.subnumber_e,1): # The charges due to the electrons in the subbands
         sigma-= N_state[j]*(wfe[j])**2
-    return sigma #charge per m**2 (units of electronic charge)
+    return sigma #charge per m**2 per dz (units of electronic charge)
     
 ##
 def calc_field(sigma,eps):
@@ -554,7 +554,7 @@ def calc_potn(F,dx):
 
 # FUNCTIONS FOR EXCHANGE INTERACTION-------------------------------------------
 
-def calc_Vxc(sigma,eps,cb_meff):
+def calc_Vxc(sigma,dop,eps,cb_meff,dx):
     """An effective field describing the exchange-interactions between the electrons
     derived from Kohn-Sham density functional theory. This formula is given in many
     papers, for example see Gunnarsson and Lundquist (1976), Ando, Taniyama, Ohtani 
@@ -565,7 +565,7 @@ def calc_Vxc(sigma,eps,cb_meff):
     sigma = charge carriers per m**2, however this includes the donor atoms and we are only
             interested in the electron density."""
     a_B = 4*pi*hbar**2/q**2 # Bohr radius.
-    nz= -(sigma - model.dop*model.dx) # electron density per m**2
+    nz= -(sigma - dop*dx) # electron density per m**2
     nz_3 = nz**(1/3.) #cube root of charge density.
     #a_B_eff = eps/cb_meff*a_B #effective Bohr radius
     #r_s occasionally suffers from division by zero errors due to nz=0.
@@ -707,7 +707,7 @@ def Poisson_Schrodinger(model):
         # Exchange interaction    
         if comp_scheme in (4,5,6):
             # Exchange Potential
-            Vnew += calc_Vxc(sigma,eps,cb_meff)
+            Vnew += calc_Vxc(sigma,dop,eps,cb_meff,dx)
             
         #
         #status
