@@ -321,7 +321,7 @@ def calc_R2(w_if,z_if,dn_if,eps_w,Lperiod):
             (normally this is the period length in a multiple QW stack). Whatever you use
             for Lperiod, you should use for 'd' when calculating the ISBT absorptions.
     """
-    return 2*dn_if*(w_if*meV2J)*(q*z_if)**2/(hbar**2*(eps_b*eps0)*Lperiod*(2*pi)**2) 
+    return 2*dn_if*(w_if*meV2J)*(q*z_if)**2/(hbar**2*(eps_w*eps0)*eps_w*Lperiod*(2*pi)**2) 
 
 # Summary of Transitions
 
@@ -428,6 +428,12 @@ def transitions(results,Lperiod,eps_z):
     
     return transitions_table,units
 
+def get_Leff_est(transitions_table):
+    """gets a value of Leff for the QW that will be applied to all transitions.
+    We will use the Leff of the transition with the highest oscillator strength."""
+    j = np.argmax([tra['R'] for tra in transitions_table])
+    return transitions_table[j]['Leff']
+    
 ## Calculating Dielectric Constants
 # Below we have some different models for intersubband transitions
 
@@ -442,7 +448,7 @@ def inv_eps_zz_1(transitions_table,freqaxis,eps_z):
         w_if = np.sqrt(trn['freq']**2 + trn['wp']**2) #depolarisation shifted frequency
         Xi = susceptibility_Losc(freqaxis,w0=w_if,f=1.0,w_p=trn['R'],y0=trn['y_if'])
         #print trn['R'],np.sqrt(trn['f']*trn['wp']**2*trn['Leff']/trn['Lperiod'])
-        isbt_term -= Xi/trn['eps_w']
+        isbt_term -= Xi
     inv_eps_zz = np.mean(np.atleast_1d(1.0/eps_z),axis=0) + isbt_term
     return inv_eps_zz
 
@@ -472,7 +478,7 @@ def inv_eps_zz_classical(transitions_table,freqaxis,eps_z):
         eps_qw = eps_classical(transitions_table,freqaxis,eps_b=eps_w) #?? what's the point??
     
     Lperiod = transitions_table[0]['Lperiod'] #nm
-    Lqw = transitions_table[0]['Leff'] #(nm) 
+    Lqw = get_Leff_est(transitions_table) #(nm) 
     #using the effective length for the first transition  as an estimate of the thickness of the 2d electron gas contained within the QW
     ff = Lqw/Lperiod
     #inv_eps_zz = ((1.0-ff)/eps_bb + ff/eps_qw) 
@@ -586,12 +592,12 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z):
     theta =pi/4
     nk = np.sqrt(np.mean(np.atleast_1d(eps_z),axis=0)) # should be eps_xx really
     d = transitions_table[0]['Lperiod']*1e-9
-    Leff0 = transitions_table[0]['Leff']*1e-9
     f2w = 1e12*2*pi
     
     #model 0 # the slightly niave model usng the 'standard' absorption calculation and Lorentz oscillator model
     # this is only for comparison.
     eps_simple = eps_classical(transitions_table,freqaxis,eps_b)#.conjugate()
+    Leff0 = get_Leff_est(transitions_table)*1e-9
     absorption_simple = absorption_standard(freqaxis*f2w,eps_simple,Leff0)
     #eps_b=1.0
     #ff = transitions_table[0]['Leff']/Lperiod
