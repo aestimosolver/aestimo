@@ -179,7 +179,8 @@ class Structure():
         fi = np.zeros(n_max)		#Bandstructure potential
         eps =np.zeros(n_max)		#dielectric constant
         dop = np.zeros(n_max)           #doping
-        
+        WB=0
+        BW=0
         position = 0.0 # keeping in nanometres (to minimise errors)
         for layer in self.material:
             startindex = round2int(position*1e-9/dx)
