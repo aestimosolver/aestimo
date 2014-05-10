@@ -427,6 +427,15 @@ alloyproperty = {
 'Material1':'AlP',
 'Material2':'InP'
 },
+'AlGaN':{
+'Bowing_param':1.3,
+'Band_offset':0.67,
+'m_e_alpha':5.3782e18,
+'a0_sub':3.189,
+'c0_sub':4.982,
+'Material1':'AlN',
+'Material2':'GaN'
+},
 'InGaN':{
 'Bowing_param':3.2,
 'Band_offset':0.677,
