@@ -611,10 +611,12 @@ def calc_sigma(wfe,N_state,model):
     
 ##
 def calc_field(sigma,eps):
-    # F electric field as a function of z-
+    """calculate electric field as a function of z-
+    sigma is a number density per unit area
+    eps is dielectric constant"""
     # i index over z co-ordinates
     # j index over z' co-ordinates
-    # Note: sigma is a number density per unit area, needs to be converted to Couloumb per unit area
+    # Note: 
     F0 = -np.sum(q*sigma)/(2.0) #CMP'deki i ve j yer değişebilir - de + olabilir
     # is the above necessary since the total field due to the structure should be zero.
     # Do running integral
@@ -622,7 +624,7 @@ def calc_field(sigma,eps):
     tmp*= q/2.0 # Note: sigma is a number density per unit area, needs to be converted to Couloumb per unit area
     tmp[0] = F0 
     F = np.cumsum(tmp)/eps
-    return F
+    return F #electric field
 
 def calc_field_convolve(sigma,eps):
     tmp = np.ones(len(sigma)-1)
@@ -632,7 +634,9 @@ def calc_field_convolve(sigma,eps):
     return F
 
 def calc_field_old(sigma,eps):
-    # F electric field as a function of z-
+    """calculate F electric field as a function of z-
+    sigma is a number density per unit area,
+    eps is dielectric constant"""
     # i index over z co-ordinates
     # j index over z' co-ordinates
     n_max = len(sigma)
@@ -645,7 +649,7 @@ def calc_field_old(sigma,eps):
     return F
 
 def calc_potn(F,dx):
-    # This function calculates the potential (energy actually)
+    """This function calculates the potential (energy actually)"""
     # V electric field as a function of z-
     # i	index over z co-ordinates
 
