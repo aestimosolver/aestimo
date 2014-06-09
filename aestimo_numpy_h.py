@@ -65,7 +65,7 @@ J2meV=1e3/q #Joules to meV
 meV2J=1e-3*q #meV to Joules
 
 time1 = time.time() # timing audit
-logger.info("Aestimo_numpy is starting...")
+#logger.info("Aestimo_numpy is starting...")
 
 # Input Class
 # -------------------------------------
@@ -959,6 +959,7 @@ def QWplot(result,figno=None):
     pl.show()
 
 if __name__=="__main__":
+    logger.info("Aestimo_numpy is starting...")
         
     # Import from config file
     inputfile = __import__(config.inputfilename)
