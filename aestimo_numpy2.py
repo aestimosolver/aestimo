@@ -315,7 +315,7 @@ def psi_at_inf1(E,fis,model,n_max,dx):
     n_max - number of points in arrays describing structure wrt z-axis
     dx - step size of distance quantisation (metres)
     """
-    return psi_at_inf1(E,fis,model.cb_meff,n_max,dx)
+    return psi_at_inf(E,fis,model.cb_meff,n_max,dx)
 
 def psi_at_inf2(E,fis,model,n_max,dx):
     """shooting method with non-parabolicity.
@@ -327,7 +327,7 @@ def psi_at_inf2(E,fis,model,n_max,dx):
     dx - step size of distance quantisation (metres)
     """
     cb_meff = model.cb_meff_E(E,fis) # energy dependent mass
-    return psi_at_inf1(E,fis,cb_meff,n_max,dx)
+    return psi_at_inf(E,fis,cb_meff,n_max,dx)
 
 try:
     from psi_at_inf_cython import psi_at_inf_numpy
