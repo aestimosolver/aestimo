@@ -1531,19 +1531,19 @@ init_mathjax();
 </div>
 
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Aestimo is a python module for modelling a type of semiconductor heterostructure called a quantum well. These are structures made up of nanometre thick layers of semiconductors and we want to model how electrons behave within them which has to be done using quantum mechanics. So, this is a topic within condensed matter physics and the study of crystal bandstructure. Quantum wells are interesting because they expose the quantum mechanical nature of electrons in a way that we can engineer and they are also useful technologically to make diode lasers, photodetectors ... [ref.]</p>
+<p>Aestimo is a python module for modelling a type of semiconductor heterostructure called a quantum well. These are structures made up of nanometre thick layers of semiconductors and we want to model how electrons behave within them which has to be done using quantum mechanics. So, this is a topic within condensed matter physics and the study of crystal bandstructure. Quantum wells are interesting because they expose the quantum mechanical nature of electrons in a way that we can engineer and they are also useful technologically to make diode lasers, photodetectors ... [1,2,3]</p>
 <h3 id="solvers">Solvers</h3>
-<p>Aestimo currently contains a choice of solvers in order to model the quantum states. The solvers are all 1-dimensional self-consistant Poisson-Schrodinger solvers of the envolope wavefunctions and energy levels of bound states within quantum wells. A self-consistant Poisson-Schrodinger solution is one that finds the wavefunctions and charge distribution for a given potential and then updates the electric field part of the potential using the new solution before solving again; thus the algorithm iterates/converges towards a solution where the wavefunctions and the electronic potential are self-consistant.</p>
-<p>Aestimo supports various types of semiconductors and arbitary quantum well designs. All the solvers take their parameters from the files <code>config.py</code>, <code>database.py</code> and an <code>input file</code> (<code>sample-\*.py</code> files). However, most solvers can also be used as library modules as well as scripts.</p>
-<p>This first set of solvers are only useful for conduction band states and they find the wavefunctions using the shooting-wave method. All of these solvers can be dramatically sped up by compiling a cython module (see <code>setup_cython.py</code>)</p>
+<p>Aestimo currently contains a choice of solvers in order to model the quantum states. The solvers are all 1-dimensional self-consistant Poisson-Schrodinger solvers for finding the envelope wavefunctions and energy levels of bound states within quantum wells. A self-consistant Poisson-Schrodinger solution is one that finds the wavefunctions and charge distribution for a given potential and then updates the electric field part of the potential using the new solution before solving again; thus the algorithm iterates/converges towards a solution where the wavefunctions and the electronic potential are self-consistant.</p>
+<p>Aestimo supports various types of semiconductors and arbitary quantum well designs. All the solvers take their parameters from the files <code>config.py</code>, <code>database.py</code> and an input file (<code>sample-*.py</code> files). However, most solvers can also be used as library modules as well as scripts.</p>
+<p>This first set of solvers are only useful for conduction band states and they find the wavefunctions using the shooting-wave method [1]. All of these solvers can be dramatically sped up by compiling a cython module (see <code>setup_cython.py</code>)</p>
 <ul>
 <li><code>aestimo.py</code> is the original solver. It has deliberately been kept simple in order to make it easier to study how the simulation proceeds. This is a script rather than a library module and so if we try to import it, it will run immediately. This makes it a bit hard to programatically script this solver but it is possible (see <code>main_iterating.py</code>).</li>
-<li><code>aestimo_numpy.py</code> is also a conduction band Poisson-Schrodinger solver but rewritten to make it useful as a library. It also incorporates a basic correction for the nonparabolicity of the conduction band (Nelson ref.) and accounts for electron exchange interaction using an equation from Kohn-Sham density functional theory (Helm)</li>
-<li><code>aestimo_numpy2.py</code> is an update to <code>aestimo_numpy.py</code> that has a more advance nonparabolicity model (Vurgaftman).</li>
+<li><code>aestimo_numpy.py</code> is also a conduction band Poisson-Schrodinger solver but rewritten to make it useful as a library. It also incorporates a basic correction for the nonparabolicity of the conduction band (Nelson's empirical 2-band model [4,5]) and accounts for the electron exchange interaction using an equation from Kohn-Sham density functional theory [4]</li>
+<li><code>aestimo_numpy2.py</code> is an update to <code>aestimo_numpy.py</code> that has a more advanced nonparabolicity model [5].</li>
 </ul>
 <p>The next solver finds solutions for both the conduction and valence bands</p>
 <ul>
-<li><code>aestimo_numpy_h.py</code> uses a finite-element model for both bands and a 3x3 k.p model for the valence band to account for mixing between the states. A k.p model is a more advanced model than a quaisi-free electron model and can naturally account for nonparabolicity in each state's dispersion curves (although conduction band nonparabolicity is not currently accounted for since the conduction band is modelled separately from the valence band). This model also includes the effects of strain on the bandstructure. Since it uses a finite-element model, it behaves differently from the other solvers particualarly for large grid sizes.</li>
+<li><code>aestimo_numpy_h.py</code> uses a finite-element model for both bands and a 3x3 k.p model for the valence band to account for mixing between the states. A k.p model is a more advanced model [1] than a quaisi-free electron model and can naturally account for nonparabolicity in each state's dispersion curves (although conduction band nonparabolicity is not currently accounted for since the conduction band is modelled separately from the valence band). This model also includes the effects of strain on the bandstructure. Since it uses a finite-element model, it behaves differently from the other solvers particularly for large grid sizes.</li>
 </ul>
 <p>In this tutorial, we will find the wavefunctions of a simple structure using <code>aestimo_numpy2.py</code>. For this notebook to work, we just need to make sure that aestimo exists somewhere on the PYTHONPATH.</p>
 </div>
@@ -4376,6 +4376,16 @@ state, Energy, Population, effective mass
 </div>
 </div>
 
+</div>
+<div class="text_cell_render border-box-sizing rendered_html">
+<ol style="list-style-type: decimal">
+<li>Paul Harrison, <em>Quantum Wells, Wires and Dots</em>, 3rd. Ed. (Wiley, 2010).</li>
+<li>John Singleton, <em>Band Theory and Electronic Properties of Solids</em>, 1st Ed. (Oxford University Press, 2001).</li>
+<li>Mark Fox, <em>Optical Properties of Solids</em>, 2nd Ed. (Oxford University Press, 2010).</li>
+<li>Manfred Manfred, <em>Intersubband Transitions in Quantum Wells: Physics and Device Applications I.</em>, Ch.1, edited by H.C.Liu and F. Capasso. (Academic Press, Semiconductors and Semimetals Series, 2000).</li>
+<li>D.F. Nelson et al., Phys. Rev. B <strong>35</strong>, 7770 (1987)</li>
+<li>I. Vurgaftman, J.R. Meyer, JR, L.R. Ram-Mohan, <em>Band parameters for III–V compound semiconductors and their alloys</em>, Journal of applied physics, <strong>89</strong>(11), 5815–5875 (2001).</li>
+</ol>
 </div>
 </body>
 </html>
