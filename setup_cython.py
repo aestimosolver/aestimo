@@ -20,7 +20,8 @@
     For the list of contributors, see ~/AUTHORS
 
  Description:  Compile the cythonised version of the psi_at_inf function
-	       with the command python setup_cython.py build_ext --inplace --compiler=mingw32
+             with the command python setup_cython.py build_ext --inplace
+             or python setup_cython.py build_ext --inplace --compiler=mingw32 on windows
 """
 from distutils.core import setup
 from distutils.extension import Extension
