@@ -1539,7 +1539,7 @@ init_mathjax();
 <ul>
 <li><code>aestimo.py</code> is the original solver. It has deliberately been kept simple in order to make it easier to study how the simulation proceeds. This is a script rather than a library module and so if we try to import it, it will run immediately. This makes it a bit hard to programatically script this solver but it is possible (see <code>main_iterating.py</code>).</li>
 <li><code>aestimo_numpy.py</code> is also a conduction band Poisson-Schrodinger solver but rewritten to make it useful as a library. It also incorporates a basic correction for the nonparabolicity of the conduction band (Nelson's empirical 2-band model [4,5]) and accounts for the electron exchange interaction using an equation from Kohn-Sham density functional theory [4]</li>
-<li><code>aestimo_numpy2.py</code> is an update to <code>aestimo_numpy.py</code> that has a more advanced nonparabolicity model [5].</li>
+<li><code>aestimo_numpy2.py</code> is an update to <code>aestimo_numpy.py</code> that has a more advanced nonparabolicity model [6].</li>
 </ul>
 <p>The next solver finds solutions for both the conduction and valence bands</p>
 <ul>
