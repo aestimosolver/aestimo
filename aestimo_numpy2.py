@@ -94,6 +94,15 @@ class Structure():
         
         These last 4 can be created by using the method 
         create_structure_arrays(material_list)
+        
+        COMPUTATIONAL SCHEMES (comp_scheme)
+        0: Schrodinger
+        1: Schrodinger + nonparabolicity
+        2: Schrodinger-Poisson
+        3: Schrodinger-Poisson with nonparabolicity
+        4: Schrodinger-Exchange interaction
+        5: Schrodinger-Poisson + Exchange interaction
+        6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
         """
         # setting any parameters provided with initialisation
         for key,value in kwargs.items():
