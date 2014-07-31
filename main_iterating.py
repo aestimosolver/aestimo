@@ -27,6 +27,7 @@ import numpy as np
 import os
 
 # aestimo modules
+import aestimo_numpy as aestimo
 import config
 inputfile = __import__(config.inputfilename) 
 import database
@@ -34,90 +35,49 @@ import database
 ### Example: Parameter to loop over.
 #thickness of first layer of structure
 thicknesses = [8,12,14,16,20] #nm
+        
+# Initialise structure class
+model = aestimo.StructureFrom(inputfile,database)
 
+# Looping over the parameter
+"""In order to write the code correctly, it is necessary to have 
+understood the Structure class and it's attributes. Some of the 
+input file variables and the class's attribute use different names
+but they are normally easy to match up. Alternatively, we could vary the 
+(runtime values of the) variables within inputfile module's namespace
+and then create a fresh Structure class instance.
 
-if True: #numpy_aestimo version
-    import aestimo_numpy as aestimo
-            
-    # Initialise structure class
-    model = aestimo.StructureFrom(inputfile,database)
+Equally, we can vary the values in the database module if we want to."""
+
+results = []
+output_directory = config.output_directory+'-numpy' # will be our local copy of the original value
+
+for thickness in thicknesses:
+    model.material[0][0] = thickness
+    #other examples -
+    #model.Fapp = ... #equivalent to Fapplied
+    #model.subnumber_e = ...
+    #model.dx = gridfactor*1e-9
+    #database.materialproperty['GaAs']['epsilonStatic']= ...
     
-    # Looping over the parameter
-    """In order to write the code correctly, it is necessary to have 
-    understood the Structure class and it's attributes. Some of the 
-    input file variables and the class's attribute use different names
-    but they are normally easy to match up. Alternatively, we could vary the 
-    (runtime values of the) variables within inputfile module's namespace
-    and then create a fresh Structure class instance.
+    model.create_structure_arrays() # update the instance's internals
     
-    Equally, we can vary the values in the database module if we want to."""
+    # Perform the calculation
+    result= aestimo.Poisson_Schrodinger(model)
     
-    results = []
-    output_directory = config.output_directory+'-numpy' # will be our local copy of the original value
+    results.append(result) #all the results can be stored for further analysis. 
     
-    for thickness in thicknesses:
-        model.material[0][0] = thickness
-        #other examples -
-        #model.Fapp = ... #equivalent to Fapplied
-        #model.subnumber_e = ...
-        #model.dx = gridfactor*1e-9
-        #database.materialproperty['GaAs']['epsilonStatic']= ...
-        
-        model.create_structure_arrays() # update the instance's internals
-        
-        # Perform the calculation
-        result= aestimo.Poisson_Schrodinger(model)
-        
-        results.append(result) #all the results can be stored for further analysis. 
-        
-        # Set output directory 
-        # aestimo_numpy reads the output directory from the config module, so
-        config.output_directory = os.path.join(output_directory,'dz0_%dnm' %thickness)
+    # Set output directory 
+    # aestimo_numpy reads the output directory from the config module, so
+    config.output_directory = os.path.join(output_directory,'dz0_%dnm' %thickness)
+
+    # Write the simulation results in files
+    aestimo.save_and_plot(result,model)
     
-        # Write the simulation results in files
-        aestimo.save_and_plot(result,model)
-        
-        #Plot QW representation
-        #aestimo.QWplot(result)#,figno=None) # an alternative to save_and_plot function
-                                             # which only plots the QW diagram and doesn't
-                                             # save anything.
-          
-else: # aestimo example
-    # first value
-    inputfile.material[0][0] = thicknesses[0]
-    output_directory = config.output_directory # will be our local copy of the original value
-    config.output_directory = os.path.join(output_directory,'dz0_%dnm' %thicknesses[0])
-    
-    import aestimo # this will run aestimo for the initial time (necessary to do 
-    # we want to use the python module reload function)
-    
-    #the desired results can be stored for further analysis. 
-    #e.g.
-    results=[aestimo.E_state]
-    
-    # Looping over the parameter
-    """we vary the (runtime values of the) variables within inputfile module's 
-    namespace and then use the reload function on the aestimo module in order 
-    to run the simulation afresh for each value. Equally, we could vary the 
-    values in the database module if we wanted to."""
-    for thickness in thicknesses[1:]:
-        inputfile.material[0][0] = thickness
-        #other examples -
-        #inputfile.Fapplied = ... 
-        #inputfile.subnumber_e = ...
-        #inputfile.gridfactor = ...
-        #database.materialproperty['GaAs']['epsilonStatic']= ...
-        
-        # Set output directory 
-        # aestimo_numpy reads the output directory from the config module, so
-        config.output_directory = os.path.join(output_directory,'dz0_%dnm' %thickness)
-            
-        reload(aestimo) # by reloading the module, we rerun the calculation for the new input parameters
-        
-        #e.g.
-        results.append(aestimo.E_state) #the desired results can be stored for further analysis. 
-        
-    print results
-    
+    #Plot QW representation
+    #aestimo.QWplot(result)#,figno=None) # an alternative to save_and_plot function
+                                            # which only plots the QW diagram and doesn't
+                                            # save anything.
+
 print "Simulation is finished. All files are closed."
 print "Please control the related files."

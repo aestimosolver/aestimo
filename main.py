@@ -77,8 +77,6 @@ elif False:
     
     aestimo.logger.info("""Simulation is finished. All files are closed.Please control the related files.
 -----------------------------------------------------------------""")
-else:
-    import aestimo
 
     
 
