@@ -1238,26 +1238,44 @@ def QWplot(result,figno=None):
     pl.grid(True)
     pl.show()
 
-if __name__=="__main__":
-    logger.info("Aestimo_numpy is starting...")
+
+def run_aestimo(input_obj):
+    """A utility function that performs the standard simulation run
+    for 'normal' input files. Input_obj can be a dict, class, named tuple or 
+    module with the attributes needed to create the StructureFrom class, see 
+    the class implementation or some of the sample-*.py files for details."""
+    logger.info("Aestimo_numpy_h is starting...")
         
-    # Import from config file
-    inputfile = __import__(config.inputfilename)
-    logger.info("inputfile is %s" %config.inputfilename)
-    
     # Initialise structure class
-    model = StructureFrom(inputfile,database)
+    model = StructureFrom(input_obj,database)
          
     # Perform the calculation
     result = Poisson_Schrodinger(model)
     
     time4 = time.time() #timing audit
-    logger.info("total running time (inc. loading libraries) %g s" %(time4 - time0))
-    logger.info("total running time (exc. loading libraries) %g s" %(time4 - time1))
+    logger.info("total running time (inc. loading libraries) %g s",(time4 - time0))
+    logger.info("total running time (exc. loading libraries) %g s",(time4 - time1))
 
     
     # Write the simulation results in files
     save_and_plot(result,model)
     
-    logger.info("""Simulation is finished. All files are closed.Please control the related files.
+    logger.info("""Simulation is finished. All files are closed. Please control the related files.
 -----------------------------------------------------------------""")
+    
+    return input_obj, model, result
+
+
+if __name__=="__main__":
+    import optparse
+    parser = optparse.OptionParser()
+    parser.add_option("-i","--inputfile",action="store", dest="inputfile", 
+                  default=config.inputfilename,
+                  help="chose input file to override default in config.py")
+    (options, args) = parser.parse_args()
+    
+    # Import from config file
+    inputfile = __import__(options.inputfile)
+    logger.info("inputfile is %s",options.inputfile)
+    
+    run_aestimo(inputfile)

@@ -1106,16 +1106,15 @@ def load_results():
     
     return results
 
-
-if __name__=="__main__":
+def run_aestimo(input_obj):
+    """A utility function that performs the standard simulation run
+    for 'normal' input files. Input_obj can be a dict, class, named tuple or 
+    module with the attributes needed to create the StructureFrom class, see 
+    the class implementation or some of the sample-*.py files for details."""
     logger.info("Aestimo_numpy is starting...")
-    
-    # Import from config file
-    inputfile = __import__(config.inputfilename)
-    logger.info("inputfile is %s",config.inputfilename)
-    
+        
     # Initialise structure class
-    model = StructureFrom(inputfile,database)
+    model = StructureFrom(input_obj,database)
          
     # Perform the calculation
     result = Poisson_Schrodinger(model)
@@ -1131,4 +1130,20 @@ if __name__=="__main__":
     logger.info("""Simulation is finished. All files are closed. Please control the related files.
 -----------------------------------------------------------------""")
     
-    result2 = load_results()
+    return input_obj, model, result
+
+
+if __name__=="__main__":
+    import optparse
+    parser = optparse.OptionParser()
+    parser.add_option("-i","--inputfile",action="store", dest="inputfile", 
+                  default=config.inputfilename,
+                  help="chose input file to override default in config.py")
+    (options, args) = parser.parse_args()
+    
+    # Import from config file
+    inputfile = __import__(options.inputfile)
+    logger.info("inputfile is %s",options.inputfile)
+    
+    run_aestimo(inputfile)
+    

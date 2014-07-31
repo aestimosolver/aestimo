@@ -59,3 +59,9 @@ material =[[ 10.0, 'AlGaAs', 0.3, 0.0, 'n'],
             [ 10.0, 'AlGaAs', 0.3, 0.0, 'n']]
  
 
+
+if __name__ == "__main__": #this code allows you to run the input file directly
+    input_obj = vars()
+    import aestimo_numpy2 as aestimo
+    aestimo.run_aestimo(input_obj)
+    
