@@ -22,10 +22,10 @@ computation_scheme = 2
 
 # QUANTUM
 # Total subband number to be calculated for electrons
-subnumber_h = 5
+subnumber_h = 4
 subnumber_e = 2
 # APPLIED ELECTRIC FIELD
-Fapplied = 0.00#/50e-9 # (V/m)
+Fapplied = 0#2.5e6/50e-9 # (V/m)
 
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
@@ -35,7 +35,6 @@ Fapplied = 0.00#/50e-9 # (V/m)
 # For 1D, z-axis is choosen
 gridfactor = 0.2 #nm
 maxgridpoints = 200000 #for controlling the size
-
 # REGIONS
 # Region input is a two-dimensional list input.
 # An example:
@@ -45,12 +44,17 @@ maxgridpoints = 200000 #for controlling the size
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material =[[ 2.0, 'AlGaAs', 0.3, 0.0, 'p'],
-            [ 2.0, 'AlGaAs', 0.3, 5e17, 'p'],
-            [ 2.0, 'AlGaAs', 0.3, 0.0, 'p'],
-            [ 7.8, 'GaAs', 0, 0, 'p'],
-            [ 2.0, 'AlGaAs', 0.3, 0.0, 'p'],
-            [ 2.0, 'AlGaAs', 0.3, 5e17, 'p'],
-            [ 2.0, 'AlGaAs', 0.3, 0.0, 'p']]
+material =[[ 1.0, 'GaN', 0.0, 0.0, 'p','b'],
+            [ 2.0, 'GaN', 0.0, 0.0, 'p','b'],
+            [ 2.0, 'GaN', 0.0, 5e17, 'p','b'],
+            [ 3.0, 'InGaN', 0.15, 0,'p','w'],
+            [ 2.0, 'GaN', 0.0, 0, 'p','b'],
+            [ 3.0, 'InGaN', 0.15, 0,'p','w'],
+            [ 2.0, 'GaN', 0.0, 0, 'p','b'],
+            [ 3.0, 'InGaN', 0.15, 0,'p','w'],
+            [ 2.0, 'GaN', 0.0, 5e17, 'p','b'],                           
+            [ 2.0, 'GaN', 0.0, 0.0, 'p','b'],
+            [ 1.0, 'GaN', 0.0, 0.0, 'p','b']]
+
  
 

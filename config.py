@@ -30,12 +30,16 @@ meV2J=1e-3*q #meV to Joules
 
 # Input File(s)
 # -------------
-inputfilename = "sample-qw-barrierdope"
+#inputfilename = "sample-qw-barrierdope"
 #inputfilename = "sample-qw-qwdope"
 #inputfilename = "sample-moddop"
 #inputfilename = "sample-qw-HarrisonCh3_3"
 #inputfilename = "sample-qw-barrierdope-p"
+#inputfilename = "sample-multi-qw-barrierdope-p"
 #inputfilename = "sample-double-qw"
+#inputfilename = "sample-qw-barrierdope-p_ingan"
+#inputfilename = "sample-qw-barrierdope-p_cdzno"
+inputfilename = "sample-multi-qw-barrierdope-p_ingan"
 
 # Calculation
 # -----------
@@ -56,8 +60,14 @@ max_iterations=80 #maximum number of iterations.
 convergence_test=1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
 
 # Aestimo_numpy_h
-strain = True # for aestimo_numpy_h
+strain =True # for aestimo_numpy_h
+piezo=True
+#Set material type used in the structure 
+Wurtzite=True
+Zincblind=False
 
+#--------------
+parameters=False
 # Output Files
 # ------------
 output_directory = "outputs"
