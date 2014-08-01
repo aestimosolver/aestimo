@@ -38,7 +38,7 @@ from VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V
 import config,database
 # --------------------------------------
 import logging
-logger = logging.getLogger('aestimo_numpy')
+logger = logging.getLogger('aestimo')
 hdlr = logging.FileHandler(config.logfile)
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
 hdlr.setFormatter(formatter)
@@ -65,7 +65,7 @@ J2meV=1e3/q #Joules to meV
 meV2J=1e-3*q #meV to Joules
 
 time1 = time.time() # timing audit
-#logger.info("Aestimo_numpy is starting...")
+#logger.info("Aestimo is starting...")
 
 # Input Class
 # -------------------------------------
@@ -694,11 +694,11 @@ def Poisson_Schrodinger(model):
     n_max = model.n_max
     
     if comp_scheme in (4,5,6):
-        logger.error("""aestimo_numpy_h doesn't currently include exchange interactions
+        logger.error("""aestimo_h doesn't currently include exchange interactions
         in its valence band calculations.""")
         exit()
     if comp_scheme in (1,3,6):
-        logger.error("""aestimo_numpy_h doesn't currently include nonparabolicity effects in 
+        logger.error("""aestimo_h doesn't currently include nonparabolicity effects in 
         its valence band calculations.""")
         exit()
     
@@ -1084,7 +1084,7 @@ def Poisson_Schrodinger(model):
 def save_and_plot(result,model):
     xaxis = result.xaxis
     
-    output_directory = config.output_directory+"-numpy-h"
+    output_directory = config.output_directory+"_h"
     
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)
@@ -1244,7 +1244,7 @@ def run_aestimo(input_obj):
     for 'normal' input files. Input_obj can be a dict, class, named tuple or 
     module with the attributes needed to create the StructureFrom class, see 
     the class implementation or some of the sample-*.py files for details."""
-    logger.info("Aestimo_numpy_h is starting...")
+    logger.info("Aestimo_h is starting...")
         
     # Initialise structure class
     model = StructureFrom(input_obj,database)

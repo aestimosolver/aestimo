@@ -34,7 +34,7 @@ import config,database
 from math import log,exp
 # --------------------------------------
 import logging
-logger = logging.getLogger('aestimo_numpy')
+logger = logging.getLogger('aestimo')
 #File
 hdlr = logging.FileHandler(config.logfile)
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
@@ -62,7 +62,7 @@ J2meV=1e3/q #Joules to meV
 meV2J=1e-3*q #meV to Joules
 
 time1 = time.time() # timing audit
-#logger.info("Aestimo_numpy is starting...")
+#logger.info("Aestimo is starting...")
 
 # Input Class
 # -------------------------------------
@@ -901,7 +901,7 @@ def Poisson_Schrodinger(model):
 def save_and_plot(result,model):
     xaxis = result.xaxis
     
-    output_directory = config.output_directory+"-numpy2"
+    output_directory = config.output_directory
     
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)
@@ -1069,7 +1069,7 @@ def load_results():
     class Results(): pass
     results = Results()
     
-    output_directory = config.output_directory+"-numpy2"
+    output_directory = config.output_directory
             
     def loadoutput(fname,header=False,unpack=True):
         fname2 = os.path.join(output_directory,fname)
@@ -1111,7 +1111,7 @@ def run_aestimo(input_obj):
     for 'normal' input files. Input_obj can be a dict, class, named tuple or 
     module with the attributes needed to create the StructureFrom class, see 
     the class implementation or some of the sample-*.py files for details."""
-    logger.info("Aestimo_numpy is starting...")
+    logger.info("Aestimo is starting...")
         
     # Initialise structure class
     model = StructureFrom(input_obj,database)

@@ -626,7 +626,7 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z):
 if __name__ == "__main__":
     import config
     import database
-    import aestimo_numpy2 as aestimo
+    import aestimo
     import os
     import time
     

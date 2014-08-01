@@ -12,7 +12,7 @@
 import database
 import config
 import numpy as np
-import aestimo_numpy as aestimo
+import aestimo
 import database
 meV2J = aestimo.meV2J # conversion factor
 q = aestimo.q # electron charge

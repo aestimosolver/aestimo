@@ -37,14 +37,14 @@ meV2J=1e-3*q #meV to Joules
 #inputfilename = "sample-qw-barrierdope-p"
 #inputfilename = "sample-multi-qw-barrierdope-p"
 #inputfilename = "sample-double-qw"
-inputfilename = "sample-qw-barrierdope-p_ingan"
+#inputfilename = "sample-qw-barrierdope-p_ingan"
 #inputfilename = "sample-qw-barrierdope-p_cdzno"
-#inputfilename = "sample-multi-qw-barrierdope-p_ingan"
+inputfilename = "sample-multi-qw-barrierdope-p_ingan"
 
 # Calculation
 # -----------
-# Aestimo / Aestimo_numpy
-use_cython = True #provides a speed up for aestimo and aestimo_numpy
+# Aestimo
+use_cython = True #provides a speed up for aestimo
 # Shooting method parameters for Schrödinger Equation solution
 delta_E = 0.5*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. 
 d_E = 1e-5*meV2J #Energy step (Joules) within Newton-Raphson method when improving the precision of the energy of a found level.
@@ -59,8 +59,8 @@ damping = 0.5    #averaging factor between iterations to smooth convergence.
 max_iterations=80 #maximum number of iterations.
 convergence_test=1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
 
-# Aestimo_numpy_h
-strain =True # for aestimo_numpy_h
+# Aestimo_h
+strain =True # for aestimo_h
 piezo=True
 #Set material type used in the structure 
 Wurtzite=True

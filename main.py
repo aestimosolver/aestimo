@@ -29,9 +29,8 @@
 
 import config
 
-#import aestimo_numpy as aestimo
-#import aestimo_numpy2 as aestimo
-import aestimo_numpy_h as aestimo    
+#import aestimo_h as aestimo
+import aestimo
     
 
 # Import from config file

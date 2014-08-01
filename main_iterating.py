@@ -27,7 +27,7 @@ import numpy as np
 import os
 
 # aestimo modules
-import aestimo_numpy as aestimo
+import aestimo
 import config
 inputfile = __import__(config.inputfilename) 
 import database

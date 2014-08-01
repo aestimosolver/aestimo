@@ -65,7 +65,7 @@ material =[[ 10.0, 'AlGaAs', 0.3, 0.0, 'n'],
 if __name__=="__main__":
     import config
     import database
-    import aestimo_numpy2 as aestimo
+    import aestimo
     import intersubband_optical_transitions as isbt
     import os
     import time

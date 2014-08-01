@@ -94,7 +94,7 @@ if __name__=="__main__":
     import matplotlib.pyplot as pl
     import numpy as np
     #import config
-    import aestimo_numpy as aestimo
+    import aestimo
     import database
     
     # Initialise structure class
