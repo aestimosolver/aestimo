@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# ----------------------------------------------------------------------
-# Input File Description:  Si p/n junction.
-# ----------------------------------------------------------------------
+# ------------------------------------------------------------------------
+# Input File Description:  Double Quantum well doped AlGaAs/GaAs heterostructure.
+# ------------------------------------------------------------------------
 # ----------------
 # GENERAL SETTINGS
 # ----------------
@@ -25,7 +25,10 @@ fermi_np_scheme = True
 
 # QUANTUM
 # Total subband number to be calculated for electrons
-subnumber_e = 1
+subnumber_e = 6
+
+# APPLIED ELECTRIC FIELD
+Fapplied = 0.0 # (V/m)
 
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
@@ -33,20 +36,23 @@ subnumber_e = 1
 
 # GRID
 # For 1D, z-axis is choosen
-gridfactor = 0.2 #nm
+gridfactor = 0.1 #nm
 maxgridpoints = 200000 #for controlling the size
 
 # REGIONS
 # Region input is a two-dimensional list input.
 # An example:
 # Si p-n diode. Firstly lets picturize the regional input.
-#         | Thickness (nm) | Material | Alloy fraction | Doping(cm^-3) | n or p type |
-# Layer 0 |      250.0     |   Si     |      0         |     1e16      |     n       |
-# Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
+#         | Thickness (nm)  | Material | Alloy fraction | Doping(cm^-3) | n or p type |
+# Layer 0 |       250.0     |   Si     |      0         |     1e16      |     n       |
+# Layer 1 |       250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material =[[500.0, 'Si', 0, 1.0e16, 'p'],
-            [500.0, 'Si', 0, 1.0e16, 'n']]
+material =[[ 20.0, 'AlGaAs', 0.3, 1e14, 'n'],
+            [10.0, 'GaAs', 0, 2e16, 'n'],
+            [5.0, 'AlGaAs', 0.3, 1e14, 'n'],
+            [10.0, 'GaAs', 0, 2e16, 'n'],
+            [20.0, 'AlGaAs', 0.3, 1e14, 'n']]
  
 
 if __name__ == "__main__": #this code allows you to run the input file directly

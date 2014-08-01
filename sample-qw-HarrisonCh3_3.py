@@ -57,6 +57,9 @@ T = 300.0 #Kelvin
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 computation_scheme = 0
 
+# Non-parabolic Dispersion Calculations for Fermi-Dirac
+fermi_np_scheme = True
+
 # QUANTUM
 # Total subband number to be calculated for electrons
 subnumber_e = 1
