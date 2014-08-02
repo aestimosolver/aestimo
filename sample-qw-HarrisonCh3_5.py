@@ -64,6 +64,12 @@ T = 300.0 #Kelvin
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 computation_scheme = 0
 
+# Non-parabolic effective mass function
+# 0: no energy dependence
+# 1: Nelson's effective 2-band model
+# 2: k.p model from Vurgaftman's 2001 paper
+meff_method = 0
+
 # Non-parabolic Dispersion Calculations for Fermi-Dirac
 fermi_np_scheme = True
 
@@ -112,6 +118,8 @@ structure_param = {'Fapp': Fapplied,
                        'T': T,
                        'subnumber_e': subnumber_e,
                        'comp_scheme': computation_scheme,
+                       'meff_method': meff_method,
+                       'fermi_np_scheme': fermi_np_scheme,
                        'dx': gridfactor*1e-9, #grid in m
                        'maxgridpoints': maxgridpoints,
                        }

@@ -20,6 +20,12 @@ T = 60.0 #Kelvin
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 computation_scheme = 3
 
+# Non-parabolic effective mass function
+# 0: no energy dependence
+# 1: Nelson's effective 2-band model
+# 2: k.p model from Vurgaftman's 2001 paper
+meff_method = 2
+
 # Non-parabolic Dispersion Calculations for Fermi-Dirac
 fermi_np_scheme = True
 

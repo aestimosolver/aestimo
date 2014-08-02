@@ -117,6 +117,13 @@ class Structure():
         
         logger.info("Total material number in database: %d" ,(totalmaterial + totalalloy))
         
+        #choosing effective mass function for non-parabolicity calculations
+        self.meff_method = kwargs['meff_method']
+        if self.meff_method == 1:
+            self.cb_meff_E = self.cb_meff_E1
+        elif self.meff_method == 2:
+            self.cb_meff_E = self.cb_meff_E2
+        
     def create_structure_arrays(self):
         """ initialise arrays/lists for structure"""
         # Calculate the required number of grid points
@@ -153,30 +160,35 @@ class Structure():
             
             if matType in material_property:
                 matprops = material_property[matType]
-                cb_meff[startindex:finishindex] = matprops['m_e']*m_e
-                cb_meff_alpha[startindex:finishindex] = matprops['m_e_alpha']
-                F[startindex:finishindex] = matprops['F']
-                Eg[startindex:finishindex] = matprops['Eg'] #eV
-                delta_SO[startindex:finishindex] = matprops['delta']
-                Ep[startindex:finishindex] = matprops['Ep']
                 fi[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
                 eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
+                cb_meff[startindex:finishindex] = matprops['m_e']*m_e
+                if self.meff_method == 1:
+                    cb_meff_alpha[startindex:finishindex] = matprops['m_e_alpha']
+                elif self.meff_method == 2:
+                    F[startindex:finishindex] = matprops['F']
+                    Eg[startindex:finishindex] = matprops['Eg'] #eV
+                    delta_SO[startindex:finishindex] = matprops['delta']
+                    Ep[startindex:finishindex] = matprops['Ep']
+
                 
             elif matType in alloy_property:
                 alloyprops = alloy_property[matType]
                 mat1 = material_property[alloyprops['Material1']]
                 mat2 = material_property[alloyprops['Material2']]
                 x = layer[2] #alloy ratio
-                cb_meff_alloy = x*mat1['m_e'] + (1-x)* mat2['m_e']
-                cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
-                cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(mat2['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
-                F[startindex:finishindex] = x*mat1['F'] + (1-x)* mat2['F']
-                Eg[startindex:finishindex] = x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x) #eV
-                delta_SO[startindex:finishindex] = x*mat1['delta'] + (1-x)* mat2['delta']-alloyprops['delta_bowing_param']*x*(1-x)
-                Ep[startindex:finishindex] = x*mat1['Ep'] + (1-x)* mat2['Ep']
                 fi[startindex:finishindex] = alloyprops['Band_offset']*(x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x))*q # for electron. Joule
                 eps[startindex:finishindex] = (x*mat1['epsilonStatic'] + (1-x)* mat2['epsilonStatic'] )*eps0
-                
+                cb_meff_alloy = x*mat1['m_e'] + (1-x)* mat2['m_e']
+                cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
+                if self.meff_method == 1:
+                    cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(mat2['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
+                elif self.meff_method == 2:
+                    F[startindex:finishindex] = x*mat1['F'] + (1-x)* mat2['F']
+                    Eg[startindex:finishindex] = x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x) #eV
+                    delta_SO[startindex:finishindex] = x*mat1['delta'] + (1-x)* mat2['delta']-alloyprops['delta_bowing_param']*x*(1-x)
+                    Ep[startindex:finishindex] = x*mat1['Ep'] + (1-x)* mat2['Ep']
+            
             #doping
             if layer[4] == 'n':  
                 chargedensity = layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
@@ -188,19 +200,24 @@ class Structure():
             dop[startindex:finishindex] = chargedensity
         
         self.fi = fi
-        self.cb_meff = cb_meff
-        self._cb_meff_alpha = cb_meff_alpha
-        self.F = F
-        self.Eg = Eg
-        self.delta_SO = delta_SO
-        self.Ep = Ep
         self.eps = eps
         self.dop = dop
+        self.cb_meff = cb_meff
+        if self.meff_method == 1: #only define optional arrays if we think that we need them
+            self._cb_meff_alpha = cb_meff_alpha
+        elif self.meff_method == 2:
+            self.F = F
+            self.Eg = Eg
+            self.delta_SO = delta_SO
+            self.Ep = Ep
+
         #return fi,cb_meff,eps,dop
         
-    def cb_meff_E0(self,E,fi):
+    def cb_meff_E(self,E,fi):
         """returns an array for the structure giving the effective mass for a particular
-        energy.
+        energy. This version simply returns the conduction-band edge effective mass without
+        any energy dependence. This default method should be overwritten in the class'
+        __init__() method in order to model non-parabolicity.
         E - energy (J)
         fi - bandstructure potential (J) (numpy array)
         """
@@ -208,20 +225,25 @@ class Structure():
         
     def cb_meff_E1(self,E,fi):
         """returns an array for the structure giving the effective mass for a particular
-        energy.
+        energy. This method implements Nelson's empirical 2-band model of non-parabolicity.
+        This method needs to be aliased to the cb_meff_E() method in order for aestimo to
+        use it.
         E - energy (J)
         fi - bandstructure potential (J) (numpy array)
         """
         return self.cb_meff*(1.0 + self._cb_meff_alpha*(E-fi))
         
-    def cb_meff_E(self,E,fi):
-        """returns an array for the structure giving the effective mass using the
-        non-parabolicity calculation as given by Vurgaftman's 2001 paper
+    def cb_meff_E2(self,E,fi):
+        """returns an array for the structure giving the effective mass for a particular
+        energy. This uses the non-parabolicity calculation as given by Vurgaftman's 2001 
+        paper on semiconductor properties. This method needs to be aliased to the 
+        cb_meff_E() method in order for aestimo to use it.
         E - energy (J)
         fi - bandstructure potential (J) (numpy array)
         """
         EeV = (E - fi)/q
         return m_e/((1+2*self.F) + self.Ep/3.0*(2.0/(EeV+self.Eg) + 1.0/(EeV+self.Eg+self.delta_SO)))
+ 
 
 class AttrDict(dict):
     """turns a dictionary into an object with attribute style lookups"""
@@ -265,6 +287,13 @@ class StructureFrom(Structure):
         totalalloy = alen(self.alloy_property)
         
         logger.info("Total number of materials in database: %d",(totalmaterial+totalalloy))
+        
+        #choosing effective mass function for non-parabolicity calculations
+        self.meff_method = inputfile.meff_method
+        if self.meff_method == 1:
+            self.cb_meff_E = self.cb_meff_E1
+        elif self.meff_method == 2:
+            self.cb_meff_E = self.cb_meff_E2
         
         # Initialise arrays
         
