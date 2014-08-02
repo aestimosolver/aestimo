@@ -1533,27 +1533,26 @@ init_mathjax();
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Aestimo is a python module for modelling a type of semiconductor heterostructure called a quantum well. These are structures made up of nanometre thick layers of semiconductors and we want to model how electrons behave within them which has to be done using quantum mechanics. So, this is a topic within condensed matter physics and the study of crystal bandstructure. Quantum wells are interesting because they expose the quantum mechanical nature of electrons in a way that we can engineer and they are also useful technologically to make diode lasers, photodetectors ... [1,2,3]</p>
 <h3 id="solvers">Solvers</h3>
-<p>Aestimo currently contains a choice of solvers in order to model the quantum states. The solvers are all 1-dimensional self-consistant Poisson-Schrodinger solvers for finding the envelope wavefunctions and energy levels of bound states within quantum wells. A self-consistant Poisson-Schrodinger solution is one that finds the wavefunctions and charge distribution for a given potential and then updates the electric field part of the potential using the new solution before solving again; thus the algorithm iterates/converges towards a solution where the wavefunctions and the electronic potential are self-consistant.</p>
-<p>Aestimo supports various types of semiconductors and arbitary quantum well designs. All the solvers take their parameters from the files <code>config.py</code>, <code>database.py</code> and an input file (<code>sample-*.py</code> files). However, most solvers can also be used as library modules as well as scripts.</p>
-<p>This first set of solvers are only useful for conduction band states and they find the wavefunctions using the shooting-wave method [1]. All of these solvers can be dramatically sped up by compiling a cython module (see <code>setup_cython.py</code>)</p>
+<p>Aestimo currently contains a choice of solvers in order to model the quantum states. The solvers are both 1-dimensional self-consistant Poisson-Schrodinger solvers for finding the envelope wavefunctions and energy levels of bound states within quantum wells. A self-consistant Poisson-Schrodinger solution is one that finds the wavefunctions and charge distribution for a given potential and then updates the electric field part of the potential using the new solution before solving again; thus the algorithm iterates/converges towards a solution where the wavefunctions and the electronic potential are self-consistant.</p>
+<p>Aestimo supports various types of semiconductors and arbitary quantum well designs. All the solvers take their parameters from the files <code>config.py</code>, <code>database.py</code> and an input file (<code>sample-*.py</code> files). The solvers can also be used as library modules as well as scripts.</p>
+<p>This first solver is only useful for conduction band states and finds the wavefunctions using the shooting-wave method [1]. This solver can be dramatically sped up by compiling a cython module (see <code>setup_cython.py</code>)</p>
 <ul>
-<li><code>aestimo.py</code> is the original solver. It has deliberately been kept simple in order to make it easier to study how the simulation proceeds. This is a script rather than a library module and so if we try to import it, it will run immediately. This makes it a bit hard to programatically script this solver but it is possible (see <code>main_iterating.py</code>).</li>
-<li><code>aestimo_numpy.py</code> is also a conduction band Poisson-Schrodinger solver but rewritten to make it useful as a library. It also incorporates a basic correction for the nonparabolicity of the conduction band (Nelson's empirical 2-band model [4,5]) and accounts for the electron exchange interaction using an equation from Kohn-Sham density functional theory [4]</li>
-<li><code>aestimo_numpy2.py</code> is an update to <code>aestimo_numpy.py</code> that has a more advanced nonparabolicity model [6].</li>
+<li><code>aestimo.py</code> is a conduction band Poisson-Schrodinger solver using the shooting-method. It can also account for the electron exchange interaction using an equation from Kohn-Sham density functional theory [4]. Additionally non-parabolicity of the in-plane dispersion curve can be modelled using an energy dependent effective mass, currently 2 models are implemented: Nelson's empirical 2-band model [4,5] and a k.p based model from Vurgaftman's 2001 paper [6]</li>
 </ul>
 <p>The next solver finds solutions for both the conduction and valence bands</p>
 <ul>
 <li><code>aestimo_numpy_h.py</code> uses a finite-element model for both bands and a 3x3 k.p model for the valence band to account for mixing between the states. A k.p model is a more advanced model [1] than a quaisi-free electron model and can naturally account for nonparabolicity in each state's dispersion curves (although conduction band nonparabolicity is not currently accounted for since the conduction band is modelled separately from the valence band). This model also includes the effects of strain on the bandstructure. Since it uses a finite-element model, it behaves differently from the other solvers particularly for large grid sizes.</li>
 </ul>
-<p>In this tutorial, we will find the wavefunctions of a simple structure using <code>aestimo_numpy2.py</code>. For this notebook to work, we just need to make sure that aestimo exists somewhere on the PYTHONPATH.</p>
+<p>In this tutorial, we will find the wavefunctions of a simple structure using <code>aestimo.py</code>. For this notebook to work, we just need to make sure that aestimo exists somewhere on the PYTHONPATH.</p>
+<p>Nb. In older versions of aestimo, <code>aestimo.py</code> was a different solver. It was a script rather than a library module (i.e. it ran immediately if imported) which made it less flexible to use. The current <code>aestimo.py</code> module corresponds to <code>aestimo_numpy2.py</code> in previous versions of aestimo. However, the original <code>aestimo.py</code> was deliberately kept simple in order to make it easier for someone to study how a simulation proceeds and it can still be found in the aestimo_elementary branch of the repository.</p>
 </div>
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[9]:
+In&nbsp;[1]:
 </div>
 <div class="input_area box-flex1">
-<div class="highlight"><pre><span class="kn">import</span> <span class="nn">aestimo.aestimo_numpy2</span> <span class="kn">as</span> <span class="nn">solver</span>
+<div class="highlight"><pre><span class="kn">import</span> <span class="nn">aestimo.aestimo</span> <span class="kn">as</span> <span class="nn">solver</span>
 </pre></div>
 
 </div>
@@ -1567,7 +1566,7 @@ In&nbsp;[9]:
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[10]:
+In&nbsp;[2]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="c"># CONFIGURATION </span>
@@ -1605,6 +1604,10 @@ In&nbsp;[10]:
 
 <span class="c"># Aestimo_numpy_h</span>
 <span class="n">ac</span><span class="o">.</span><span class="n">strain</span> <span class="o">=</span> <span class="bp">True</span> <span class="c"># for aestimo_numpy_h</span>
+<span class="n">ac</span><span class="o">.</span><span class="n">piezo</span><span class="o">=</span><span class="bp">True</span>
+<span class="c">#Set material type used in the structure </span>
+<span class="n">ac</span><span class="o">.</span><span class="n">Wurtzite</span><span class="o">=</span><span class="bp">True</span>
+<span class="n">ac</span><span class="o">.</span><span class="n">Zincblind</span><span class="o">=</span><span class="bp">False</span>
 
 <span class="c"># Output Files</span>
 <span class="c"># ------------</span>
@@ -1633,7 +1636,7 @@ In&nbsp;[10]:
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[11]:
+In&nbsp;[3]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="c">#Here, we will alter the default settings of the config.py file for the purposes of this tutorial</span>
@@ -1652,7 +1655,7 @@ In&nbsp;[11]:
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[12]:
+In&nbsp;[4]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="kn">import</span> <span class="nn">aestimo.database</span> <span class="kn">as</span> <span class="nn">adatabase</span>
@@ -1706,7 +1709,7 @@ In&nbsp;[12]:
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[13]:
+In&nbsp;[10]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="k">class</span> <span class="nc">Structure</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span> <span class="k">pass</span>
@@ -1724,6 +1727,12 @@ In&nbsp;[13]:
 <span class="c"># 5: Schrodinger-Poisson + Exchange interaction</span>
 <span class="c"># 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity</span>
 <span class="n">s</span><span class="o">.</span><span class="n">computation_scheme</span> <span class="o">=</span> <span class="mi">3</span>
+
+<span class="c"># Non-parabolic effective mass function</span>
+<span class="c"># 0: no energy dependence</span>
+<span class="c"># 1: Nelson&#39;s effective 2-band model</span>
+<span class="c"># 2: k.p model from Vurgaftman&#39;s 2001 paper</span>
+<span class="n">s</span><span class="o">.</span><span class="n">meff_method</span> <span class="o">=</span> <span class="mi">2</span>
 
 <span class="c"># Non-parabolic Dispersion Calculations for Fermi-Dirac</span>
 <span class="n">s</span><span class="o">.</span><span class="n">fermi_np_scheme</span> <span class="o">=</span> <span class="bp">True</span> <span class="c">#needed only for aestimo_numpy2.py</span>
@@ -1769,7 +1778,7 @@ In&nbsp;[13]:
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[15]:
+In&nbsp;[11]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="c"># Initialise structure class</span>
@@ -1796,11 +1805,11 @@ In&nbsp;[15]:
 <div class="box-flex1 output_subarea output_stream output_stderr">
 <pre>
 Total layer number: 7
-INFO:aestimo_numpy:Total layer number: 7
-Total number of materials in database: 10
-INFO:aestimo_numpy:Total number of materials in database: 10
-calculation time  13.7435 s
-INFO:aestimo_numpy:calculation time  13.7435 s
+INFO:aestimo:Total layer number: 7
+Total number of materials in database: 20
+INFO:aestimo:Total number of materials in database: 20
+calculation time  13.6481 s
+INFO:aestimo:calculation time  13.6481 s
 
 </pre>
 </div>
@@ -4328,7 +4337,7 @@ Qgg3IY2bEEIIIYSbkMZNCCGEEMJN/D8O0wa/TOq2JgAAAABJRU5ErkJggg==
 <div class="box-flex1 output_subarea output_stream output_stderr">
 <pre>
 Simulation is finished.
-INFO:aestimo_numpy:Simulation is finished.
+INFO:aestimo:Simulation is finished.
 
 </pre>
 </div>
@@ -4344,7 +4353,7 @@ INFO:aestimo_numpy:Simulation is finished.
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[28]:
+In&nbsp;[12]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="k">print</span> <span class="s">&#39;state, Energy, Population, effective mass&#39;</span>

@@ -1532,7 +1532,7 @@ init_mathjax();
 
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>In this tutorial, we are going to consider hybridising of degenerate energy levels. This occurs when two or more systems which share some identical energy levels interact and this interaction causes these energy levels to shift apart from each other. This is called lifting of the degeneracy.</p>
-<p>To model this phenomenen, we will model two identical quantum wells as they are brought close together. There is a small problem though, in that the shooting wave method of finding energy levels used by <code>aestimo_numpy2</code> doesn't work well with degenerate energy levels. So we will have to model the system at the point where the two quantum wells are already starting to interact and their levels hybridise.</p>
+<p>To model this phenomenen, we will model two identical quantum wells as they are brought close together. There is a small problem though, in that the shooting wave method of finding energy levels used by <code>aestimo</code> doesn't work well with degenerate energy levels. So we will have to model the system at the point where the two quantum wells are already starting to interact and their levels hybridise.</p>
 <p>First though, we will model a single well on its own.</p>
 </div>
 <div class="cell border-box-sizing code_cell vbox">
@@ -1541,7 +1541,7 @@ init_mathjax();
 In&nbsp;[1]:
 </div>
 <div class="input_area box-flex1">
-<div class="highlight"><pre><span class="kn">import</span> <span class="nn">aestimo.aestimo_numpy2</span> <span class="kn">as</span> <span class="nn">solver</span>
+<div class="highlight"><pre><span class="kn">import</span> <span class="nn">aestimo.aestimo</span> <span class="kn">as</span> <span class="nn">solver</span>
 <span class="kn">import</span> <span class="nn">aestimo.config</span> <span class="kn">as</span> <span class="nn">ac</span>
 <span class="n">ac</span><span class="o">.</span><span class="n">messagesoff</span> <span class="o">=</span> <span class="bp">True</span> <span class="c"># turn off logging in order to keep notebook from being flooded with messages.</span>
 <span class="kn">import</span> <span class="nn">aestimo.database</span> <span class="kn">as</span> <span class="nn">adatabase</span>
@@ -1558,7 +1558,7 @@ In&nbsp;[1]:
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[2]:
+In&nbsp;[4]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="k">class</span> <span class="nc">Structure</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span> <span class="k">pass</span>
@@ -1576,6 +1576,12 @@ In&nbsp;[2]:
 <span class="c"># 5: Schrodinger-Poisson + Exchange interaction</span>
 <span class="c"># 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity</span>
 <span class="n">s0</span><span class="o">.</span><span class="n">computation_scheme</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="c"># Non-parabolic effective mass function</span>
+<span class="c"># 0: no energy dependence</span>
+<span class="c"># 1: Nelson&#39;s effective 2-band model</span>
+<span class="c"># 2: k.p model from Vurgaftman&#39;s 2001 paper</span>
+<span class="n">s0</span><span class="o">.</span><span class="n">meff_method</span> <span class="o">=</span> <span class="mi">0</span>
 
 <span class="c"># Non-parabolic Dispersion Calculations for Fermi-Dirac</span>
 <span class="n">s0</span><span class="o">.</span><span class="n">fermi_np_scheme</span> <span class="o">=</span> <span class="bp">True</span> <span class="c">#needed only for aestimo_numpy2.py</span>
@@ -1611,7 +1617,7 @@ In&nbsp;[2]:
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[3]:
+In&nbsp;[5]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="c"># Initialise structure class</span>
@@ -1637,11 +1643,11 @@ In&nbsp;[3]:
 <div class="box-flex1 output_subarea output_stream output_stderr">
 <pre>
 Total layer number: 3
-INFO:aestimo_numpy:Total layer number: 3
-Total number of materials in database: 10
-INFO:aestimo_numpy:Total number of materials in database: 10
-calculation time  0.027035 s
-INFO:aestimo_numpy:calculation time  0.027035 s
+INFO:aestimo:Total layer number: 3
+Total number of materials in database: 20
+INFO:aestimo:Total number of materials in database: 20
+calculation time  0.020046 s
+INFO:aestimo:calculation time  0.020046 s
 
 </pre>
 </div>
@@ -2122,7 +2128,7 @@ pjO1UgtPYQAAAABJRU5ErkJggg==
 <div class="box-flex1 output_subarea output_stream output_stderr">
 <pre>
 Simulation is finished.
-INFO:aestimo_numpy:Simulation is finished.
+INFO:aestimo:Simulation is finished.
 
 </pre>
 </div>
@@ -2138,7 +2144,7 @@ INFO:aestimo_numpy:Simulation is finished.
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[4]:
+In&nbsp;[6]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="n">s1</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">s0</span><span class="p">)</span> <span class="c">#simpler than redefining everything and changes to s0 should propagate to s1</span>
@@ -2179,11 +2185,11 @@ In&nbsp;[4]:
 <div class="box-flex1 output_subarea output_stream output_stderr">
 <pre>
 Total layer number: 5
-INFO:aestimo_numpy:Total layer number: 5
-Total number of materials in database: 10
-INFO:aestimo_numpy:Total number of materials in database: 10
-calculation time  0.0324519 s
-INFO:aestimo_numpy:calculation time  0.0324519 s
+INFO:aestimo:Total layer number: 5
+Total number of materials in database: 20
+INFO:aestimo:Total number of materials in database: 20
+calculation time  0.0383871 s
+INFO:aestimo:calculation time  0.0383871 s
 
 </pre>
 </div>
@@ -2897,7 +2903,7 @@ gxikEREREdkgBmlERERENuj/AaImVIKQBWg6AAAAAElFTkSuQmCC
 <div class="box-flex1 output_subarea output_stream output_stderr">
 <pre>
 Simulation is finished.
-INFO:aestimo_numpy:Simulation is finished.
+INFO:aestimo:Simulation is finished.
 
 </pre>
 </div>
@@ -2932,7 +2938,7 @@ state, Energy
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[5]:
+In&nbsp;[7]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="n">q</span> <span class="o">=</span> <span class="mf">1.602176e-19</span> <span class="c">#C</span>
@@ -2951,7 +2957,7 @@ In&nbsp;[5]:
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[6]:
+In&nbsp;[8]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="k">def</span> <span class="nf">set_barrier</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
@@ -2979,26 +2985,26 @@ In&nbsp;[6]:
 <div class="hbox output_area"><div class="prompt"></div>
 <div class="box-flex1 output_subarea output_stream output_stderr">
 <pre>
-calculation time  1.82646 s
-INFO:aestimo_numpy:calculation time  1.82646 s
-calculation time  1.6606 s
-INFO:aestimo_numpy:calculation time  1.6606 s
-calculation time  1.62913 s
-INFO:aestimo_numpy:calculation time  1.62913 s
-calculation time  1.61271 s
-INFO:aestimo_numpy:calculation time  1.61271 s
-calculation time  1.61419 s
-INFO:aestimo_numpy:calculation time  1.61419 s
-calculation time  1.62155 s
-INFO:aestimo_numpy:calculation time  1.62155 s
-calculation time  1.62997 s
-INFO:aestimo_numpy:calculation time  1.62997 s
-calculation time  1.64312 s
-INFO:aestimo_numpy:calculation time  1.64312 s
-calculation time  1.6548 s
-INFO:aestimo_numpy:calculation time  1.6548 s
-calculation time  1.67408 s
-INFO:aestimo_numpy:calculation time  1.67408 s
+calculation time  1.73137 s
+INFO:aestimo:calculation time  1.73137 s
+calculation time  1.66888 s
+INFO:aestimo:calculation time  1.66888 s
+calculation time  1.64143 s
+INFO:aestimo:calculation time  1.64143 s
+calculation time  1.61989 s
+INFO:aestimo:calculation time  1.61989 s
+calculation time  1.62761 s
+INFO:aestimo:calculation time  1.62761 s
+calculation time  1.62602 s
+INFO:aestimo:calculation time  1.62602 s
+calculation time  1.63055 s
+INFO:aestimo:calculation time  1.63055 s
+calculation time  1.64965 s
+INFO:aestimo:calculation time  1.64965 s
+calculation time  1.66582 s
+INFO:aestimo:calculation time  1.66582 s
+calculation time  1.68194 s
+INFO:aestimo:calculation time  1.68194 s
 
 </pre>
 </div>
@@ -3014,7 +3020,7 @@ INFO:aestimo_numpy:calculation time  1.67408 s
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[7]:
+In&nbsp;[9]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
@@ -3284,7 +3290,7 @@ iIg0MSSIiEgTQ4KIiDQxJIiISNP/B8Ai8pkTgnvHAAAAAElFTkSuQmCC
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[8]:
+In&nbsp;[10]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="c">#reset delta_E</span>
@@ -3334,9 +3340,9 @@ In&nbsp;[8]:
 <div class="box-flex1 output_subarea output_stream output_stderr">
 <pre>
 Total layer number: 5
-INFO:aestimo_numpy:Total layer number: 5
-Total number of materials in database: 10
-INFO:aestimo_numpy:Total number of materials in database: 10
+INFO:aestimo:Total layer number: 5
+Total number of materials in database: 20
+INFO:aestimo:Total number of materials in database: 20
 
 </pre>
 </div>
@@ -3349,7 +3355,7 @@ INFO:aestimo_numpy:Total number of materials in database: 10
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[9]:
+In&nbsp;[11]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="n">ax2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>

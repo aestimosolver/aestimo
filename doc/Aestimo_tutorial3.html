@@ -1538,10 +1538,10 @@ init_mathjax();
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[8]:
+In&nbsp;[3]:
 </div>
 <div class="input_area box-flex1">
-<div class="highlight"><pre><span class="kn">import</span> <span class="nn">aestimo.aestimo_numpy2</span> <span class="kn">as</span> <span class="nn">solver</span>
+<div class="highlight"><pre><span class="kn">import</span> <span class="nn">aestimo.aestimo</span> <span class="kn">as</span> <span class="nn">solver</span>
 <span class="kn">import</span> <span class="nn">aestimo.config</span> <span class="kn">as</span> <span class="nn">ac</span>
 <span class="n">ac</span><span class="o">.</span><span class="n">messagesoff</span> <span class="o">=</span> <span class="bp">True</span> <span class="c"># turn off logging in order to keep notebook from being flooded with messages.</span>
 <span class="kn">import</span> <span class="nn">aestimo.database</span> <span class="kn">as</span> <span class="nn">adatabase</span>
@@ -1561,7 +1561,7 @@ In&nbsp;[8]:
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[9]:
+In&nbsp;[4]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="n">meV2J</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">meV2J</span> <span class="c"># conversion factor</span>
@@ -1600,19 +1600,18 @@ In&nbsp;[9]:
 
 </div>
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Here we define the system's properties. However, we can't create our 'Structure' object in the usual way, instead we will have to create some of the structure object's attributes ourselves, specifically the arrays that describe the system w.r.t. position.</p>
-<p>The Structure class is used by Aestimo to hold all of the details about the system that is being modelled. In essence, it is a collection of attributes hanging off a class instance plus a method for calculating the effective mass (array) with respect to energy. These attributes are either scalars or they are 1d arrays of parameters w.r.t. position across the structure.</p>
-<p>The Structure class has one more method create_structure_arrays(), this calculates the structure's arrays from the 'material' list structure that we normally use in our input files. We need to run this method if we ever update any of the model's paramters so that the structure's arrays are up to date.</p>
-<p>In one final twist, we normally use the subclass 'StructureFrom' instead of the Structure class since StructureFrom knows how to turn the input files into a structure object.</p>
-<p>Confused? I know that I am. This part of aestimo may need some work.</p>
-<p>Here are the parameters that StructureFrom needs:</p>
+<p>Here we define the system's properties. However, we can't create our 'Structure' object in the usual way using the <code>StructureFrom</code> class, instead we will work directly with its parent class <code>Structure</code>. We willh ave to create some of the structure object's attributes ourselves, specifically the arrays that describe the system w.r.t. position.</p>
+<p>The Structure class is used by Aestimo to hold all of the details about the system that is being modelled. In essence, it is a collection of attributes hanging off a class instance plus a method for calculating the effective mass (array) with respect to energy for those times that we ask non-parabolicity to be included in the simulation. These attributes are either scalars or they are 1d arrays of parameters w.r.t. position across the structure.</p>
+<p>We normally use the subclass <code>StructureFrom</code> instead of the <code>Structure</code> class since <code>StructureFrom</code> knows how to turn the input files into a <code>Structure</code> object.The <code>StructureFrom</code> class uses the method <code>create_structure_arrays()</code> to calculate the attribute arrays from the <code>material</code> list structure that we normally use in our input files. So we also need to run this method if we ever update any of the model's parameters during a simulation so that the <code>Structure</code> object's arrays are up to date.</p>
+<p>First, here are the parameters that <code>StructureFrom</code> needs:</p>
 <ul>
 <li>inputfile object</li>
 <li>material - list of layers describing structure. Each layer is a list of [Thickness (nm) | Material | Alloy fraction | Doping(cm^-3) | n or p type ]</li>
 <li>T - (float) Temperature (K)</li>
 <li>gridfactor - grid step size (m)</li>
 <li>computation_scheme - (int) computing scheme - see example files for details.</li>
-<li>fermi_np_scheme - (bool) chooses whether to calculate fermi-level including non-parabolicity terms to in-plane dispersion (this is only needed in aestimo_numpy2 solver)</li>
+<li>meff_method - chooses effective mass energy dependent function for times that nonparabolicity is included in simulation - see example files for details. (not needed for the aestimo_h solver</li>
+<li>fermi_np_scheme - (bool) chooses whether to calculate fermi-level including non-parabolicity terms to in-plane dispersion (not needed for the aestimo_h solver)</li>
 <li>subnumber_e - number of subbands to look for.</li>
 <li>subnumber_h - number of valence subbands to look for. (only needed for aestimo_numpy_h solver)</li>
 <li>Fapplied - applied field (Vm**-1)</li>
@@ -1625,11 +1624,12 @@ In&nbsp;[9]:
 <li><strong>value attributes</strong></li>
 <li>T - Temperature (K)</li>
 <li>dx - grid step size (m) (gridfactor in input files)</li>
-<li>comp_scheme - computing scheme</li>
-<li>fermi_np_scheme - (bool) (see above) (only aestimo_numpy2)</li>
+<li>comp_scheme - (int) computing scheme</li>
+<li>meff_method - (int) effective mass function (see above) (only aestimo not aestimo_h)</li>
+<li>fermi_np_scheme - (bool) (see above) (only aestimo not aestimo_h)</li>
 <li>subnumber_e - number of subbands to look for.</li>
 <li>subnumber_h - number of valence bands (only aestimo_numpy_h)</li>
-<li>Fapp - applied field (Vm**-1)</li>
+<li>Fapp - applied field (Vm**-1) (Fapplied in input files)</li>
 <li>n_max - number of grid points</li>
 <li><p>x_max - total thickness of structure (m) (currently optional)</p></li>
 <li><strong>array attributes</strong></li>
@@ -1645,13 +1645,13 @@ In&nbsp;[9]:
 <li>Ep - (Used for k.p model found in Vurgaftman[3])</li>
 <li>F - (Used for k.p model found in Vurgaftman[3])</li>
 <li><p>delta_S0 - spin split-off energy (Used for k.p model found in Vurgaftman[3])</p></li>
-<li><p><strong>array attributes 3</strong> (valence band modelling) - In aestimo_numpy_h there are several more arrays that should be defined but I will not discuss this any further since things are getting complicated enough.</p></li>
+<li><p><strong>array attributes 3</strong> (valence band modelling) - In aestimo_numpy_h there are many more arrays that should be defined but I will not discuss this any further since things are getting complicated enough.</p></li>
 </ul>
 </div>
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[10]:
+In&nbsp;[9]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="n">s0</span> <span class="o">=</span> <span class="p">{}</span> <span class="c"># this will be our datastructure</span>
@@ -1669,6 +1669,15 @@ In&nbsp;[10]:
 <span class="c"># 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity</span>
 <span class="n">s0</span><span class="p">[</span><span class="s">&#39;comp_scheme&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
+<span class="c"># Non-parabolic effective mass function</span>
+<span class="c"># 0: no energy dependence</span>
+<span class="c"># 1: Nelson&#39;s effective 2-band model</span>
+<span class="c"># 2: k.p model from Vurgaftman&#39;s 2001 paper</span>
+<span class="n">s0</span><span class="p">[</span><span class="s">&#39;meff_method&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span> 
+
+<span class="c"># Non-parabolic Dispersion Calculations for Fermi-Dirac</span>
+<span class="n">s0</span><span class="p">[</span><span class="s">&#39;fermi_np_scheme&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
 <span class="c"># QUANTUM</span>
 <span class="c"># Total subband number to be calculated for electrons</span>
 <span class="n">s0</span><span class="p">[</span><span class="s">&#39;subnumber_e&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
@@ -1680,10 +1689,7 @@ In&nbsp;[10]:
 <span class="c"># For 1D, z-axis is choosen</span>
 <span class="n">gridfactor</span><span class="o">=</span> <span class="mf">0.01</span> <span class="c">#nm</span>
 <span class="n">s0</span><span class="p">[</span><span class="s">&#39;dx&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gridfactor</span><span class="o">*</span><span class="mf">1e-9</span>
-<span class="n">s0</span><span class="p">[</span><span class="s">&#39;maxgridpoints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">200000</span> <span class="c">#for controlling the size</span>
-
-<span class="c"># Initialise structure class</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="n">adatabase</span><span class="p">,</span><span class="o">**</span><span class="n">s0</span><span class="p">)</span>
+<span class="n">maxgridpoints</span> <span class="o">=</span> <span class="mi">200000</span> <span class="c">#for controlling the size</span>
 
 <span class="c"># STRUCTURE</span>
 <span class="c"># a finite parabolic well between two barriers</span>
@@ -1693,57 +1699,46 @@ In&nbsp;[10]:
 <span class="n">xmin</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="c">#minimum Al alloy in structure</span>
 <span class="n">xmax</span> <span class="o">=</span> <span class="mf">10.0</span> <span class="c">#maximum Al alloy in structure</span>
 
-
 <span class="k">def</span> <span class="nf">alloy_profile</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;function of alloy profile for finite parabolic well&quot;&quot;&quot;</span>
     <span class="n">well</span> <span class="o">=</span> <span class="n">xmin</span> <span class="o">+</span> <span class="p">(</span><span class="n">z</span> <span class="o">-</span> <span class="p">(</span><span class="n">b</span><span class="o">+</span><span class="n">a</span><span class="o">/</span><span class="mf">2.0</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">a</span><span class="o">/</span><span class="mf">2.0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">xmax</span> <span class="o">-</span> <span class="n">xmin</span><span class="p">)</span>    
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">well</span><span class="o">&lt;</span><span class="n">xmax</span><span class="p">,</span><span class="n">well</span><span class="p">,</span><span class="n">xmax</span><span class="p">)</span> <span class="c">#cuts off parabolic well at barrier height</span>
 
 <span class="k">def</span> <span class="nf">bandstructure_profile</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="n">mat1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">material_property</span><span class="p">[</span><span class="s">&#39;AlAs&#39;</span><span class="p">]</span>
-    <span class="n">mat2</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">material_property</span><span class="p">[</span><span class="s">&#39;GaAs&#39;</span><span class="p">]</span>
-    <span class="n">alloy</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">alloy_property</span><span class="p">[</span><span class="s">&#39;AlGaAs&#39;</span><span class="p">]</span>
+    <span class="n">mat1</span> <span class="o">=</span> <span class="n">adatabase</span><span class="o">.</span><span class="n">materialproperty</span><span class="p">[</span><span class="s">&#39;AlAs&#39;</span><span class="p">]</span>
+    <span class="n">mat2</span> <span class="o">=</span> <span class="n">adatabase</span><span class="o">.</span><span class="n">materialproperty</span><span class="p">[</span><span class="s">&#39;GaAs&#39;</span><span class="p">]</span>
+    <span class="n">alloy</span> <span class="o">=</span> <span class="n">adatabase</span><span class="o">.</span><span class="n">alloyproperty</span><span class="p">[</span><span class="s">&#39;AlGaAs&#39;</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">alloy</span><span class="p">[</span><span class="s">&#39;Band_offset&#39;</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">mat1</span><span class="p">[</span><span class="s">&#39;Eg&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">x</span><span class="p">)</span><span class="o">*</span> <span class="n">mat2</span><span class="p">[</span><span class="s">&#39;Eg&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">alloy</span><span class="p">[</span><span class="s">&#39;Bowing_param&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">x</span><span class="p">))</span><span class="o">*</span><span class="n">solver</span><span class="o">.</span><span class="n">q</span> <span class="c"># for electron. Joule</span>
     <span class="c">#return alloy[&#39;Band_offset&#39;]*(x*mat1[&#39;Eg&#39;] + (1-x)* mat2[&#39;Eg&#39;])*aestimo.q # for electron. Joule</span>
+
+<span class="c"># Nb. we could have avoided using the database module at all since we are </span>
+<span class="c"># defining our own Structure object and calculating its attribute arrays </span>
+<span class="c"># ourselves but I wanted to show how easy it is to customise the database&#39;s values.</span>
 
 <span class="c">## Create structure arrays -----------------------------------------------------</span>
 
 <span class="c"># Calculate the required number of grid points</span>
-<span class="n">model</span><span class="o">.</span><span class="n">x_max</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">b</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b2</span><span class="p">])</span><span class="o">*</span><span class="mf">1e-9</span> <span class="c">#total thickness (m)</span>
-<span class="n">model</span><span class="o">.</span><span class="n">n_max</span> <span class="o">=</span> <span class="n">n_max</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">x_max</span><span class="o">/</span><span class="n">model</span><span class="o">.</span><span class="n">dx</span><span class="p">)</span>
+<span class="n">s0</span><span class="p">[</span><span class="s">&#39;x_max&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">b</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b2</span><span class="p">])</span><span class="o">*</span><span class="mf">1e-9</span> <span class="c">#total thickness (m)</span>
+<span class="n">s0</span><span class="p">[</span><span class="s">&#39;n_max&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_max</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">s0</span><span class="p">[</span><span class="s">&#39;x_max&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">s0</span><span class="p">[</span><span class="s">&#39;dx&#39;</span><span class="p">])</span>
 <span class="c"># Check on n_max</span>
-<span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">n_max</span> <span class="o">&gt;</span> <span class="n">model</span><span class="o">.</span><span class="n">maxgridpoints</span><span class="p">:</span>
+<span class="k">if</span> <span class="n">s0</span><span class="p">[</span><span class="s">&#39;n_max&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">maxgridpoints</span><span class="p">:</span>
     <span class="n">solver</span><span class="o">.</span><span class="n">logger</span><span class="p">(</span><span class="s">&quot; Grid number is exceeding the max number of </span><span class="si">%d</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">maxgridpoints</span><span class="p">)</span>
     <span class="nb">exit</span><span class="p">()</span>
 <span class="c">#</span>
-<span class="n">meff</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">material_property</span><span class="p">[</span><span class="s">&#39;GaAs&#39;</span><span class="p">][</span><span class="s">&#39;m_e&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">solver</span><span class="o">.</span><span class="n">m_e</span>
-<span class="n">epsGaAs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">material_property</span><span class="p">[</span><span class="s">&#39;GaAs&#39;</span><span class="p">][</span><span class="s">&#39;epsilonStatic&#39;</span><span class="p">]</span>
+<span class="n">meff</span> <span class="o">=</span> <span class="n">adatabase</span><span class="o">.</span><span class="n">materialproperty</span><span class="p">[</span><span class="s">&#39;GaAs&#39;</span><span class="p">][</span><span class="s">&#39;m_e&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">solver</span><span class="o">.</span><span class="n">m_e</span>
+<span class="n">epsGaAs</span> <span class="o">=</span> <span class="n">adatabase</span><span class="o">.</span><span class="n">materialproperty</span><span class="p">[</span><span class="s">&#39;GaAs&#39;</span><span class="p">][</span><span class="s">&#39;epsilonStatic&#39;</span><span class="p">]</span>
 
-<span class="n">model</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">x_max</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">dx</span><span class="p">)</span><span class="o">*</span><span class="mf">1e9</span> <span class="c">#nm</span>
+<span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="n">s0</span><span class="p">[</span><span class="s">&#39;x_max&#39;</span><span class="p">],</span><span class="n">s0</span><span class="p">[</span><span class="s">&#39;dx&#39;</span><span class="p">])</span><span class="o">*</span><span class="mf">1e9</span> <span class="c">#nm</span>
 
-<span class="n">model</span><span class="o">.</span><span class="n">cb_meff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_max</span><span class="p">)</span><span class="o">*</span><span class="n">meff</span>	<span class="c">#conduction band effective mass</span>
-<span class="n">model</span><span class="o">.</span><span class="n">cb_meff_alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_max</span><span class="p">)</span>   <span class="c">#non-parabolicity constant.</span>
-<span class="n">model</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_max</span><span class="p">)</span><span class="o">*</span><span class="n">epsGaAs</span>	<span class="c">#dielectric constant</span>
-<span class="n">model</span><span class="o">.</span><span class="n">dop</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_max</span><span class="p">)</span><span class="o">*</span><span class="mf">0.0</span>          <span class="c">#doping</span>
-<span class="n">model</span><span class="o">.</span><span class="n">fi</span> <span class="o">=</span> <span class="n">bandstructure_profile</span><span class="p">(</span><span class="n">alloy_profile</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">z</span><span class="p">))</span>   <span class="c">#Bandstructure potential</span>
+<span class="n">s0</span><span class="p">[</span><span class="s">&#39;cb_meff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_max</span><span class="p">)</span><span class="o">*</span><span class="n">meff</span>	<span class="c">#conduction band effective mass</span>
+<span class="n">s0</span><span class="p">[</span><span class="s">&#39;cb_meff_alpha&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_max</span><span class="p">)</span>   <span class="c">#non-parabolicity constant.</span>
+<span class="n">s0</span><span class="p">[</span><span class="s">&#39;eps&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_max</span><span class="p">)</span><span class="o">*</span><span class="n">epsGaAs</span>	<span class="c">#dielectric constant</span>
+<span class="n">s0</span><span class="p">[</span><span class="s">&#39;dop&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_max</span><span class="p">)</span><span class="o">*</span><span class="mf">0.0</span>          <span class="c">#doping</span>
+<span class="n">s0</span><span class="p">[</span><span class="s">&#39;fi&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bandstructure_profile</span><span class="p">(</span><span class="n">alloy_profile</span><span class="p">(</span><span class="n">z</span><span class="p">))</span>   <span class="c">#Bandstructure potential</span>
+
+<span class="c"># Initialise structure class</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="o">**</span><span class="n">s0</span><span class="p">)</span>
 </pre></div>
-
-</div>
-</div>
-
-<div class="vbox output_wrapper">
-<div class="output vbox">
-
-
-<div class="hbox output_area"><div class="prompt"></div>
-<div class="box-flex1 output_subarea output_stream output_stderr">
-<pre>
-Total material number in database: 3
-INFO:aestimo_numpy:Total material number in database: 3
-
-</pre>
-</div>
-</div>
 
 </div>
 </div>
@@ -1752,7 +1747,7 @@ INFO:aestimo_numpy:Total material number in database: 3
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[11]:
+In&nbsp;[10]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="c">#config.d_E = 1e-5*meV2J</span>
@@ -1775,8 +1770,8 @@ In&nbsp;[11]:
 <div class="hbox output_area"><div class="prompt"></div>
 <div class="box-flex1 output_subarea output_stream output_stderr">
 <pre>
-calculation time  2.049 s
-INFO:aestimo_numpy:calculation time  2.049 s
+calculation time  2.03413 s
+INFO:aestimo:calculation time  2.03413 s
 
 </pre>
 </div>
@@ -2640,7 +2635,7 @@ AAAASUVORK5CYII=
 <div class="cell border-box-sizing code_cell vbox">
 <div class="input hbox">
 <div class="prompt input_prompt">
-In&nbsp;[12]:
+In&nbsp;[11]:
 </div>
 <div class="input_area box-flex1">
 <div class="highlight"><pre><span class="n">Energies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">E_state</span><span class="p">)</span>
@@ -2655,7 +2650,7 @@ In&nbsp;[12]:
 
 
 <div class="hbox output_area"><div class="prompt output_prompt">
-    Out[12]:</div>
+    Out[11]:</div>
 <div class="box-flex1 output_subarea output_pyout">
 
 
