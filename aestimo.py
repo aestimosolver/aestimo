@@ -75,7 +75,11 @@ def round2int(x):
     return int(x+0.5)
 
 class Structure():
-    def __init__(self,database,**kwargs):
+    def __init__(self,T,Fapp,subnumber_e,dx,n_max, #parameters
+                 fi,eps,dop,cb_meff, #arrays
+                 comp_scheme,meff_method,fermi_np_scheme, #model choices
+                 cb_meff_alpha=None,Eg=None,Ep=None,F=None,delta_S0=None, #optional arrays
+                 **kwargs):
         """This class holds details on the structure to be simulated.
         database is the module containing the material properties. Then
         this class should have the following attributes set
@@ -83,14 +87,23 @@ class Structure():
         T - Temperature (K)
         subnumber_e - number of subbands to look for.
         comp_scheme - computing scheme
+        meff_method - choose effective mass function to model non-parabolicity
+        fermi_np_scheme - include nonparabolicity in calculation of Fermi level
+        
         dx - grid step size (m)
         n_max - number of grid points
         
-        cb_meff #conduction band effective mass (kg) (array, len n_max)
-        cb_meff_alpha #non-parabolicity constant.
         fi #Bandstructure potential (J) (array, len n_max)
         eps #dielectric constant (including eps0) (array, len n_max)
         dop #doping distribution (m**-3) (array, len n_max)
+        cb_meff #conduction band effective mass (kg) (array, len n_max)
+        
+        #optional arrays
+        cb_meff_alpha - non-parabolicity constant. Used for Nelson's empirical 2-band model)
+        Eg - band gap energy (Used for k.p model found in Vurgaftman)
+        Ep - (Used for k.p model found in Vurgaftman)
+        F - (Used for k.p model found in Vurgaftman)
+        delta_S0 - spin split-off energy (Used for k.p model found in Vurgaftman)
         
         These last 4 can be created by using the method 
         create_structure_arrays(material_list)
@@ -103,115 +116,45 @@ class Structure():
         4: Schrodinger-Exchange interaction
         5: Schrodinger-Poisson + Exchange interaction
         6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
+        
+        EFFECTIVE MASS MODELS (meff_method) - for when nonparabolicity is modelled (see comp_scheme)
+        0: no energy dependence
+        1: Nelson's effective 2-band model
+        2: k.p model from Vurgaftman's 2001 paper
         """
-        # setting any parameters provided with initialisation
-        for key,value in kwargs.items():
-            setattr(self,key,value)
-                
-        # Loading materials database
-        self.material_property = database.materialproperty
-        totalmaterial = alen(self.material_property)
-        
-        self.alloy_property = database.alloyproperty
-        totalalloy = alen(self.alloy_property)
-        
-        logger.info("Total material number in database: %d" ,(totalmaterial + totalalloy))
-        
-        #choosing effective mass function for non-parabolicity calculations
-        self.meff_method = kwargs['meff_method']
-        if self.meff_method == 1:
-            self.cb_meff_E = self.cb_meff_E1
-        elif self.meff_method == 2:
-            self.cb_meff_E = self.cb_meff_E2
-        
-    def create_structure_arrays(self):
-        """ initialise arrays/lists for structure"""
-        # Calculate the required number of grid points
-        self.x_max = sum([layer[0] for layer in self.material])*1e-9 #total thickness (m)
-        n_max = round2int(self.x_max/self.dx)
-        # Check on n_max
-        maxgridpoints = self.maxgridpoints
-        if n_max > maxgridpoints:
-            logger.error("Grid number is exceeding the max number of %d",maxgridpoints)
-            exit()
-        #
+        #value attributes        
+        self.T = T
+        self.Fapp = Fapp
+        self.subnumber_e = subnumber_e
+        self.comp_scheme = comp_scheme
+        self.fermi_np_scheme = fermi_np_scheme
+        self.dx = dx
         self.n_max = n_max
-        dx =self.dx
-        material_property = self.material_property
-        alloy_property = self.alloy_property
-        
-        cb_meff = np.zeros(n_max)	#conduction band effective mass
-        cb_meff_alpha = np.zeros(n_max) #non-parabolicity constant.
-        F = np.zeros(n_max)             #? (?)
-        Eg = np.zeros(n_max)            #bandgap energy (?)
-        delta_SO = np.zeros(n_max)      #spin-split off energy (?)
-        Ep = np.zeros(n_max)            #? (?)
-        fi = np.zeros(n_max)		#Bandstructure potential
-        eps =np.zeros(n_max)		#dielectric constant
-        dop = np.zeros(n_max)           #doping
-        
-        position = 0.0 # keeping in nanometres (to minimise errors)
-        for layer in self.material:
-            startindex = round2int(position*1e-9/dx)
-            position += layer[0] # update position to end of the layer
-            finishindex = round2int(position*1e-9/dx)
-            #
-            matType = layer[1]
-            
-            if matType in material_property:
-                matprops = material_property[matType]
-                fi[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
-                eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
-                cb_meff[startindex:finishindex] = matprops['m_e']*m_e
-                if self.meff_method == 1:
-                    cb_meff_alpha[startindex:finishindex] = matprops['m_e_alpha']
-                elif self.meff_method == 2:
-                    F[startindex:finishindex] = matprops['F']
-                    Eg[startindex:finishindex] = matprops['Eg'] #eV
-                    delta_SO[startindex:finishindex] = matprops['delta']
-                    Ep[startindex:finishindex] = matprops['Ep']
-
-                
-            elif matType in alloy_property:
-                alloyprops = alloy_property[matType]
-                mat1 = material_property[alloyprops['Material1']]
-                mat2 = material_property[alloyprops['Material2']]
-                x = layer[2] #alloy ratio
-                fi[startindex:finishindex] = alloyprops['Band_offset']*(x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x))*q # for electron. Joule
-                eps[startindex:finishindex] = (x*mat1['epsilonStatic'] + (1-x)* mat2['epsilonStatic'] )*eps0
-                cb_meff_alloy = x*mat1['m_e'] + (1-x)* mat2['m_e']
-                cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
-                if self.meff_method == 1:
-                    cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(mat2['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
-                elif self.meff_method == 2:
-                    F[startindex:finishindex] = x*mat1['F'] + (1-x)* mat2['F']
-                    Eg[startindex:finishindex] = x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x) #eV
-                    delta_SO[startindex:finishindex] = x*mat1['delta'] + (1-x)* mat2['delta']-alloyprops['delta_bowing_param']*x*(1-x)
-                    Ep[startindex:finishindex] = x*mat1['Ep'] + (1-x)* mat2['Ep']
-            
-            #doping
-            if layer[4] == 'n':  
-                chargedensity = layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
-            elif layer[4] == 'p': 
-                chargedensity = -layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
-            else:
-                chargedensity = 0.0
-            
-            dop[startindex:finishindex] = chargedensity
+        self.x_max = dx*n_max
         
         self.fi = fi
         self.eps = eps
         self.dop = dop
         self.cb_meff = cb_meff
-        if self.meff_method == 1: #only define optional arrays if we think that we need them
-            self._cb_meff_alpha = cb_meff_alpha
+        
+        #Nelson's 2-band nonparabolicity model
+        self.cb_meff_alpha= cb_meff_alpha
+        #Vurgaftman's k.p nonparabolicity model
+        self.Eg= Eg
+        self.Ep= Ep
+        self.F= F
+        self.delta_S0= delta_S0
+        
+        # setting any extra parameters provided with initialisation
+        for key,value in kwargs.items():
+            setattr(self,key,value)
+        
+        #choosing effective mass function for non-parabolicity calculations
+        self.meff_method = meff_method
+        if self.meff_method == 1:
+            self.cb_meff_E = self.cb_meff_E1
         elif self.meff_method == 2:
-            self.F = F
-            self.Eg = Eg
-            self.delta_SO = delta_SO
-            self.Ep = Ep
-
-        #return fi,cb_meff,eps,dop
+            self.cb_meff_E = self.cb_meff_E2
         
     def cb_meff_E(self,E,fi):
         """returns an array for the structure giving the effective mass for a particular
@@ -279,7 +222,7 @@ class StructureFrom(Structure):
             logger.error(" Grid number is exceeding the max number of %d", max_val)
             exit()
                 
-        # Loading materials database #
+        # Loading materials database
         self.material_property = database.materialproperty
         totalmaterial = alen(self.material_property)
         
@@ -302,6 +245,95 @@ class StructureFrom(Structure):
         #eps #dielectric constant (array, len n_max)
         #dop #doping distribution (array, len n_max)
         self.create_structure_arrays()
+        
+    def create_structure_arrays(self):
+        """ initialise arrays/lists for structure"""
+        # Calculate the required number of grid points
+        self.x_max = sum([layer[0] for layer in self.material])*1e-9 #total thickness (m)
+        n_max = round2int(self.x_max/self.dx)
+        # Check on n_max
+        maxgridpoints = self.maxgridpoints
+        if n_max > maxgridpoints:
+            logger.error("Grid number is exceeding the max number of %d",maxgridpoints)
+            exit()
+        #
+        self.n_max = n_max
+        dx =self.dx
+        material_property = self.material_property
+        alloy_property = self.alloy_property
+        
+        cb_meff = np.zeros(n_max)   #conduction band effective mass
+        cb_meff_alpha = np.zeros(n_max) #non-parabolicity constant.
+        F = np.zeros(n_max)             #? (?)
+        Eg = np.zeros(n_max)            #bandgap energy (?)
+        delta_SO = np.zeros(n_max)      #spin-split off energy (?)
+        Ep = np.zeros(n_max)            #? (?)
+        fi = np.zeros(n_max)        #Bandstructure potential
+        eps =np.zeros(n_max)        #dielectric constant
+        dop = np.zeros(n_max)           #doping
+        
+        position = 0.0 # keeping in nanometres (to minimise errors)
+        for layer in self.material:
+            startindex = round2int(position*1e-9/dx)
+            position += layer[0] # update position to end of the layer
+            finishindex = round2int(position*1e-9/dx)
+            #
+            matType = layer[1]
+            
+            if matType in material_property:
+                matprops = material_property[matType]
+                fi[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
+                eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
+                cb_meff[startindex:finishindex] = matprops['m_e']*m_e
+                if self.meff_method == 1:
+                    cb_meff_alpha[startindex:finishindex] = matprops['m_e_alpha']
+                elif self.meff_method == 2:
+                    F[startindex:finishindex] = matprops['F']
+                    Eg[startindex:finishindex] = matprops['Eg'] #eV
+                    delta_SO[startindex:finishindex] = matprops['delta']
+                    Ep[startindex:finishindex] = matprops['Ep']
+
+                
+            elif matType in alloy_property:
+                alloyprops = alloy_property[matType]
+                mat1 = material_property[alloyprops['Material1']]
+                mat2 = material_property[alloyprops['Material2']]
+                x = layer[2] #alloy ratio
+                fi[startindex:finishindex] = alloyprops['Band_offset']*(x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x))*q # for electron. Joule
+                eps[startindex:finishindex] = (x*mat1['epsilonStatic'] + (1-x)* mat2['epsilonStatic'] )*eps0
+                cb_meff_alloy = x*mat1['m_e'] + (1-x)* mat2['m_e']
+                cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
+                if self.meff_method == 1:
+                    cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(mat2['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
+                elif self.meff_method == 2:
+                    F[startindex:finishindex] = x*mat1['F'] + (1-x)* mat2['F']
+                    Eg[startindex:finishindex] = x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x) #eV
+                    delta_SO[startindex:finishindex] = x*mat1['delta'] + (1-x)* mat2['delta']-alloyprops['delta_bowing_param']*x*(1-x)
+                    Ep[startindex:finishindex] = x*mat1['Ep'] + (1-x)* mat2['Ep']
+            
+            #doping
+            if layer[4] == 'n':  
+                chargedensity = layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
+            elif layer[4] == 'p': 
+                chargedensity = -layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
+            else:
+                chargedensity = 0.0
+            
+            dop[startindex:finishindex] = chargedensity
+        
+        self.fi = fi
+        self.eps = eps
+        self.dop = dop
+        self.cb_meff = cb_meff
+        if self.meff_method == 1: #only define optional arrays if we think that we need them
+            self._cb_meff_alpha = cb_meff_alpha
+        elif self.meff_method == 2:
+            self.F = F
+            self.Eg = Eg
+            self.delta_SO = delta_SO
+            self.Ep = Ep
+
+        #return fi,cb_meff,eps,dop
 
 # DO NOT EDIT UNDER HERE FOR PARAMETERS
 # --------------------------------------

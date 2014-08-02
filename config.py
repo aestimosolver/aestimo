@@ -28,12 +28,12 @@ meV2J=1e-3*q #meV to Joules
 
 # CONFIGURATION 
 
-# Input File(s)
+# Default Input File(s)
 # -------------
 #inputfilename = "sample-qw-barrierdope"
-#inputfilename = "sample-qw-qwdope"
+inputfilename = "sample-qw-qwdope"
 #inputfilename = "sample-moddop"
-inputfilename = "sample-qw-HarrisonCh3_3"
+#inputfilename = "sample-qw-HarrisonCh3_3"
 #inputfilename = "sample-qw-barrierdope-p"
 #inputfilename = "sample-multi-qw-barrierdope-p"
 #inputfilename = "sample-double-qw"
@@ -66,8 +66,6 @@ piezo=True
 Wurtzite=True
 Zincblind=False
 
-#--------------
-parameters=False
 # Output Files
 # ------------
 output_directory = "outputs"
