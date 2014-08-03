@@ -133,8 +133,14 @@ if __name__=="__main__":
         #currently the matrix model doesn't cope with frequency dependent dielectric constants
         #therefore the classical model is the best approach.
     
+    # Linewidth
+    def linewidth(freq): return 0.1*freq #define linewidth in THz
+    
     # Optical Intersubband Transitions
-    transitions_table,units = isbt.transitions(result,Lperiod,eps_z)
+    transitions_table,(hdr,units) = isbt.transitions(result,Lperiod,eps_z,linewidth)
+    
+    isbt.print_levels(result)
+    isbt.print_transitions(transitions_table,hdr,units)
     
     isbt.plotting_absorption(model,result,transitions_table,eps_b,eps_z)
  

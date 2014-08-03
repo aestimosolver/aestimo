@@ -41,15 +41,17 @@ consider the transition as a plasma and the effect of the depolarisation field
 induced within the plasma when interacting with an electric field leads to a 
 shift of the peak's position (called the depolarisation shift). The plasma 
 behaviour of the transition is also referred to as the collective excitation of 
-the electrons since it the effect of the electrons on each other. In addition 
-there is another shift due to the exchange interaction between the electrons. We
-may also need to account for the non-parabolicity of the subbands and the different
-effective masses of the different layers.
+the electrons since it the effect of the electrons on each other. 
 
-Finally, we may need to consider the free electron absorption from electrons
-moving within the plane of the well (for instance using a Drude model). Very rarely
-we may need to include weaker transitions such as the magnetic dipole, electric
-quadrupole.
+There are even some more advanced effects that can often be ignored (and have been 
+in the models implemented here). So there is another frequency shift due to the exchange 
+interaction between the electrons but this is much smaller that the depolarisation 
+shift. We may also need to account for the non-parabolicity of the subbands and 
+the different effective masses of the different layers (and so would need to integrate 
+over k-space). Finally, we may need to consider the free electron absorption from 
+electrons moving within the plane of the well (for instance using a Drude model). 
+Very rarely we may need to include weaker transitions such as the magnetic dipole, 
+electric quadrupole.
 
 For the collective excitation, we need to calculate of the plasma density of the 
 transition. This is not as simple as it first appears, since we shouldn't just use
@@ -113,6 +115,7 @@ import numpy as np
 from scipy.integrate import simps
 import matplotlib.pyplot as pl
 from itertools import combinations,permutations
+import types
 from scipy.linalg import eigh #,eig
 
 sin,cos,log,exp = np.sin,np.cos,np.log,np.exp
@@ -330,11 +333,19 @@ def transition_generator(seq):
     only returned once and the ordering found in the input is maintained"""
     return combinations(seq,2)
 
-def transitions(results,Lperiod,eps_z):
+def transitions(results,Lperiod,eps_z,linewidths):
     """Calculates the parameters needed to describe the intersubband transitions.
     Returns a list of dictionaries (one for each transition) with the following 
     keys:
     'ilevel','flevel','dE','freq','lambda','wavno','dN','z_if','f','Leff','S_if','S_if_b','wp'
+    
+    results - object created by aestimo containing results of the bandstructure simulation
+    Lperiod - (m) length (m), thickness of effective medium containing heterostructure 
+              i.e. should be equal or larger than extent of the structures wavefunctions.
+    eps_z   - (unitless) dielectric constant array wrt position. Giving dielectric constant 
+              of the structure's materials at the optical frequencies of interest.
+    linewidths - (THz) a number or function that gives/returns the transition linewidths. If
+              using a function, it should take the transition frequency (THz) as a parameter.
     """
     E_state = results.E_state #list of energy levels (meV)
     N_state = results.N_state #occupation of energy levels (m**-2)
@@ -347,26 +358,16 @@ def transitions(results,Lperiod,eps_z):
     #reversethepolarities[1::2]*=-1
     #for j,p in enumerate(reversethepolarities):wfe[j]*=p
     
+    #calculate the mean dielectric constant as for the heterostructure
+    #using the lowest subband of the system.
     eps_w = 1.0/(np.sum(wfe[0]**2/eps_z,axis=0)*dx)
-    print 'eps_w = ',eps_w
     
-    print 'the energy levels\population are (meV)\t(m**-2):'
-    for Ei,Ni in zip(E_state,N_state): print Ei,'\t',Ni
-    print
-    print 'T = %gK' %T
-    print
-    #print 'the energy levels gaps are'
-    #print '\t'.join(('(meV)','(THz)','(um)','(wavno)'))
-    #for leveli,levelj in transition_generator(levels):
-    #    gaps=levelj-leveli
-    #    freq=gap*1e-3*eC/h/1e12
-    #    wav=1e6*h*c/(gap*1e-3*eC)
-    #    wavno=gap*1e-3*eC/h/c*1e-2
-    #    print '\t'.join((gap,freq,wav,wavno))
-    #print
-    #Summary of intersubband transitions
-    hdr=['j','ilevel','flevel','dE','freq','lambda','wavno','dN','z_if','f','Leff','S_if','S_if_b','wp','R','Lperiod','y_if','eps_w']
-    units=['','','','meV','THz','um','cm-1','1e11cm-2 @%gK'%T,'nm','','nm','nm','nm','THz','THz','nm','THz','']
+    #create linewidth function
+    if type(linewidths) is types.FunctionType:
+        lw = linewidths
+    else:
+        lw = lambda freq: linewidths
+     
     
     def transition(j,i,f): #Doing it this way would let me create a dielectric function for each transition using a function closure.
         """j - transition number (useful later)
@@ -411,22 +412,61 @@ def transitions(results,Lperiod,eps_z):
                'Lperiod':Lperiod*1e9, #nm
                'eps_w':eps_wi,
                }
-        col['y_if'] = col['freq']*0.1 #(THz real) guesstimate of transition broadening
+        col['y_if'] = lw(col['freq']) #(THz real) transition broadening
         return col
     
-    table=[hdr,units]
     transitions_table = []
     for j,(i,f) in enumerate(transition_generator(np.arange(len(E_state)))):
         col = transition(j,i,f)
         transitions_table.append(col)
-        table.append([col[row] for row in hdr])
+    
+    hdr=['j','ilevel','flevel','dE','freq','lambda','wavno','dN','z_if','f','Leff','S_if','S_if_b','wp','R','Lperiod','y_if','eps_w']
+    units=['','','','meV','THz','um','cm-1','1e11cm-2 @%gK'%T,'nm','','nm','nm','nm','THz','THz','nm','THz','']
+    
+    return transitions_table,(hdr,units)
+
+
+def print_levels(results):
+    """prints out energy levels and their populations. Also
+    print out their gaps"""
+    print 'the energy levels\population are (meV)\t(m**-2):'
+    for Ei,Ni in zip(results.E_state,results.N_state): print Ei,'\t',Ni
+    print
+    print 'T = %gK' %results.T
+    print
+    print 'the energy levels gaps are'
+    print '\t'.join(('(meV)','(THz)','(um)','(wavno)'))
+    for leveli,levelj in transition_generator(results.E_state):
+        gap=levelj-leveli
+        freq=gap*1e-3*q/h/1e12
+        wav=1e6*h*c/(gap*1e-3*q)
+        wavno=gap*1e-3*q/h/c*1e-2
+        print '\t'.join('%.3g' %i for i in (gap,freq,wav,wavno))
+    #print
+    
+def print_transitions(transitions_table,hdr,units):
+    """print out summary of transition values""" 
+    printwidth = np.get_printoptions()['linewidth']
+    var_w = 8 #print width for variable names
+    unit_w = 14 #print width for units
+    data_w = 11 #print width for data
+    # find number of repeats needed
+    cols_per_repeat = (printwidth - var_w - unit_w)//data_w
+    
+    def repeat_generator(n,cols_per_repeat):
+        startindex = 0
+        while startindex < n:
+            yield slice(startindex,startindex+cols_per_repeat)
+            startindex += cols_per_repeat
     
     print "Summary of Intersubband Transitions"
-    wids=[8,14]+[11]*(len(table)-2)
-    for row in zip(*table):
-        print ''.join([row[0].rjust(wids[0]),row[1].rjust(wids[1])]+[('%.3g' %item).rjust(wid) for wid,item in zip(wids[2:],row[2:])])
-    
-    return transitions_table,units
+    for selection in repeat_generator(len(transitions_table),cols_per_repeat):
+        data = transitions_table[selection]
+        for var,unit in zip(hdr,units):
+            row = [var.rjust(var_w),unit.rjust(unit_w)]
+            row += [('%.3g' %tr[var]).rjust(data_w) for tr in data]
+            print ''.join(row)
+        print
 
 def get_Leff_est(transitions_table):
     """gets a value of Leff for the QW that will be applied to all transitions.
@@ -691,8 +731,14 @@ if __name__ == "__main__":
         #currently the matrix model doesn't cope with frequency dependent dielectric constants
         #therefore the classical model is the best approach.
     
+    # Linewidth
+    def linewidth(freq): return 0.1*freq #define linewidth in THz
+    
     # Optical Intersubband Transitions
-    transitions_table,units = transitions(result,Lperiod,eps_z)
+    transitions_table,(hdr,units) = transitions(result,Lperiod,eps_z,linewidth)
+    
+    print_levels(result)
+    print_transitions(transitions_table,hdr,units)
     
     plotting_absorption(model,result,transitions_table,eps_b,eps_z)
     
