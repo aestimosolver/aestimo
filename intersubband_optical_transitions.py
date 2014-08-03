@@ -552,7 +552,7 @@ def calc_S_c(Psi0,Psi1,Psi2,Psi3,eps_z,zaxis):
     i3*=dz**3
     return -i3
     
-def inv_eps_zz_Ando(results,transitions_table,freqaxis,eps_z):
+def inv_eps_zz_Ando(results,transitions_table,freqaxis,eps_z,linewidth):
     """Uses a multilevel version of the mathematical formalism given in Ando 1977
     A matrix is constucted describing the transitions and the interactions between
     them which can be diagonalised to give a description of the system as a simple
@@ -608,7 +608,7 @@ def inv_eps_zz_Ando(results,transitions_table,freqaxis,eps_z):
     print 'w     R'
     ff0 = transitions_table[0]['Leff']/transitions_table[0]['Lperiod']
     for wy,Ry2 in zip(wya,Ry2a):
-        y_y = np.sqrt(wy**2-Ry2/ff0)*0.1 #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
+        y_y = linewidth(np.sqrt(wy**2-Ry2/ff0)) #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
         print wy,np.sqrt(Ry2)
         Xi = susceptibility_Losc(freqaxis,w0=wy,f=Ry2,w_p=1.0,y0=y_y)
         inveps-= Xi
@@ -616,7 +616,7 @@ def inv_eps_zz_Ando(results,transitions_table,freqaxis,eps_z):
 
 ## Making plots of absorption
 
-def plotting_absorption(model,results,transitions_table,eps_b,eps_z):
+def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
     """plots an approximation to the ISBT absorptions of a QW"""    
     f1 = pl.figure()
     ax1 = f1.add_subplot(111)
@@ -655,7 +655,7 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z):
     ax1.plot(freqaxis,absorption2,label='Classical Transitions Model')
     
     #model 3 # An accurate model for multiple transitions (neglecting non-parabolicity).  
-    (wya,Rya),inv_eps_zz3 = inv_eps_zz_Ando(results,transitions_table,freqaxis,eps_z)
+    (wya,Rya),inv_eps_zz3 = inv_eps_zz_Ando(results,transitions_table,freqaxis,eps_z,linewidth)
     eps_ratio3 = eps_b*inv_eps_zz3
     absorption3 = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio3,nk,d)
     ax1.plot(freqaxis,absorption3,label='Matrix Model')
@@ -740,7 +740,7 @@ if __name__ == "__main__":
     print_levels(result)
     print_transitions(transitions_table,hdr,units)
     
-    plotting_absorption(model,result,transitions_table,eps_b,eps_z)
+    plotting_absorption(model,result,transitions_table,eps_b,eps_z,linewidth)
     
 """
 TO DO:

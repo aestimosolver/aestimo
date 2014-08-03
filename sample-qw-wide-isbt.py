@@ -144,5 +144,5 @@ if __name__=="__main__":
     isbt.print_levels(result)
     isbt.print_transitions(transitions_table,hdr,units)
     
-    isbt.plotting_absorption(model,result,transitions_table,eps_b,eps_z)
+    isbt.plotting_absorption(model,result,transitions_table,eps_b,eps_z,linewidth)
  
