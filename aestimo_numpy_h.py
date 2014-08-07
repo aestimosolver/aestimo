@@ -179,10 +179,13 @@ class Structure():
         N_wells_real=0
         N_wells_real0=self.N_wells_real0
         N_wells_virtual=N_wells_real0+2
+        N_wells_virtual2=N_wells_real0+2
         Well_boundary=np.zeros((N_wells_virtual,2))
+        barrier_boundary=np.zeros((N_wells_virtual+1,2))
         n_max_general=np.zeros(N_wells_virtual)
         Well_boundary[N_wells_virtual-1,0]=n_max 
-        Well_boundary[N_wells_virtual-1,1]=n_max 
+        Well_boundary[N_wells_virtual-1,1]=n_max
+        barrier_boundary[N_wells_virtual,0]=n_max
         position = 0.0 # keeping in nanometres (to minimise errors)
         for layer in self.material:
             startindex = round2int(position*1e-9/dx)
@@ -288,7 +291,10 @@ class Structure():
             if  matRole == 'w':
                 N_wells_real+=1
                 Well_boundary[N_wells_real,0]=startindex 
-                Well_boundary[N_wells_real,1]=finishindex 
+                Well_boundary[N_wells_real,1]=finishindex           
+            for J in range(0,N_wells_virtual2):
+                barrier_boundary[J,0]=Well_boundary[J-1,1]
+                barrier_boundary[J,1]=Well_boundary[J,0]
             #doping
             if layer[4] == 'n':  
                 chargedensity = layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
@@ -296,9 +302,7 @@ class Structure():
                 chargedensity = -layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
             else:
                 chargedensity = 0.0
-            
-            dop[startindex:finishindex] = chargedensity
-        
+            dop[startindex:finishindex] = chargedensity                
         self.fi = fi
         self.cb_meff = cb_meff
         self.cb_meff_alpha = cb_meff_alpha
@@ -336,8 +340,10 @@ class Structure():
         self.delta_so = delta_so
         self.delta_cr = delta_cr
         self.N_wells_virtual=N_wells_virtual
+        self.N_wells_virtual2=N_wells_virtual2
         self.N_wells_real0=N_wells_real0
         self.Well_boundary=Well_boundary
+        self.barrier_boundary=barrier_boundary
 class AttrDict(dict):
     """turns a dictionary into an object with attribute style lookups"""
     def __init__(self, *args, **kwargs):
@@ -458,14 +464,14 @@ def calc_meff_state(wfh,wfe,subnumber_h,subnumber_e,list,m_hh,m_lh,m_so):
     meff_statec = tmp1.tolist()
     return meff_statec,meff_state
 
-def fermilevel_0Kc(Ntotal2d,E_statec,meff_statec,subnumber_h,subnumber_e):#use
+def fermilevel_0Kc(Ntotal2d,E_statec,meff_statec,model):#use
     Et2,Ef=0.0,0.0
     meff_statec=np.array(meff_statec)
     E_statec=np.array(E_statec)
-    for i in range (subnumber_e,0,-1): #,(Ei,vsb_meff) in enumerate(zip(E_state,meff_state)):
+    for i in range (model.subnumber_e,0,-1): #,(Ei,vsb_meff) in enumerate(zip(E_state,meff_state)):
         Efnew2=(sum(E_statec[0:i]*meff_statec[0:i]))
         m2=(sum(meff_statec[0:i]))
-        Et2+=E_statec[i-subnumber_e]
+        Et2+=E_statec[i-model.subnumber_e]
         Efnew=(Efnew2+Ntotal2d*hbar**2*pi*J2meV)/(m2)
         if  Efnew>Et2:
             Ef=Efnew
@@ -486,10 +492,10 @@ def fermilevel_0Kc(Ntotal2d,E_statec,meff_statec,subnumber_h,subnumber_e):#use
 def fermilevel_0K(Ntotal2d,E_state,meff_state,model):#use
     Et1,Ef=0.0,0.0
     E_state=np.array(E_state)
-    for i in range (model.subnumber_h*model.N_wells_real0,0,-1): #,(Ei,vsb_meff) in enumerate(zip(E_state,meff_state)):
+    for i in range (model.subnumber_h,0,-1): #,(Ei,vsb_meff) in enumerate(zip(E_state,meff_state)):
         Efnew1=(sum(E_state[0:i]*meff_state[0:i]))
         m1=(sum(meff_state[0:i]))
-        Et1+=E_state[i-model.subnumber_h*model.N_wells_real0]
+        Et1+=E_state[i-model.subnumber_h]
         Efnew=(Efnew1+Ntotal2d*hbar**2*pi*J2meV)/(m1)
         if Efnew<Et1 :
             Ef=Efnew
@@ -540,12 +546,6 @@ def fermilevel(Ntotal2d,model,E_state,E_statec,meff_state,meff_statec):#use
             d_E*=2.0
             continue
         Ef -= y/dy
-        """
-        print 'y=',y
-        print 'dy=',dy
-        print 'Ef =',Ef
-        print 'y/dy=',y/dy
-        """
         if abs(y/dy) < 1e-12:
             break
         for i in range(2):
@@ -596,6 +596,7 @@ def calc_field(sigma,eps):
     # i index over z co-ordinates
     # j index over z' co-ordinates
     # Note: sigma is a number density per unit area, needs to be converted to Couloumb per unit area
+    sigma=sigma
     F0 = -np.sum(q*sigma)/(2.0) #CMP'deki i ve j yer değişebilir - de + olabilir
     # is the above necessary since the total field due to the structure should be zero.
     # Do running integral
@@ -688,8 +689,9 @@ def Poisson_Schrodinger(model):
     Fapp = model.Fapp
     T = model.T
     comp_scheme = model.comp_scheme
-    subnumber_h = model.subnumber_h#*model.N_wells_real0
-    subnumber_e = model.subnumber_e#*model.N_wells_real0
+    subnumber_h = model.subnumber_h
+    N_wells_real0=model.N_wells_real0
+    subnumber_e = model.subnumber_e
     dx = model.dx
     n_max = model.n_max
     
@@ -733,8 +735,9 @@ def Poisson_Schrodinger(model):
     delta_so = model.delta_so
     delta_cr = model.delta_cr
     N_wells_virtual = model.N_wells_virtual
-    N_wells_real0=model.N_wells_real0
+    N_wells_virtual2 = model.N_wells_virtual2
     Well_boundary=model.Well_boundary
+    barrier_boundary=model.barrier_boundary
     Ppz= np.zeros(n_max)
     HUPMAT1=np.zeros((n_max*3, n_max*3))
     HUPMATC1=np.zeros((n_max, n_max))
@@ -751,6 +754,8 @@ def Poisson_Schrodinger(model):
     fp= np.ones(n_max)
     fm= np.ones(n_max)
     BPC= np.zeros(n_max)
+    EPC= np.zeros(n_max)
+    EPC1= np.zeros(n_max)
     m_hh = np.zeros(n_max)
     m_lh = np.zeros(n_max)
     m_so = np.zeros(n_max)
@@ -769,24 +774,33 @@ def Poisson_Schrodinger(model):
             ZETA= (D2*(EXX+EXX)+D1*EZZ)
             VNIT= (D4*(EXX+EXX)+D3*EZZ)
             Ppz=((D31*(C11+C12)+D33*C13)*(EXX+EXX)+(2*D31*C13+D33*C33)*(EZZ))
+            dx=x_max/n_max
+            sum_1=0.0
+            sum_2=0.0
             if config.piezo:
-                dx=x_max/n_max
-                for J in range(1,N_wells_virtual-1):
-                    Lw=dx*(Well_boundary[J,1]-Well_boundary[J,0])
-                    lb1=dx*(Well_boundary[J,0]-Well_boundary[J-1,1])
-                    lb2=dx*(Well_boundary[J+1,0]-Well_boundary[J,1])
+                #spontaneous and piezoelectric polarization built-in field
+                # F. Bernardini and V. Fiorentini phys. stat. sol. (b) 216, 391 (1999)
+                # Book 'Quantum Wells,Wires & Dots', Paul Harrison, pages 236-241                
+                for J in range(1,N_wells_virtual2-1):
                     BW=Well_boundary[J,0]
-                    WB=Well_boundary[J,1]
-                    for I in range (0,n_max,1):
-                        if I> BW and I < WB:            
-                            BPC[I]=q*dx*(I-BW)*(Psp[BW-1]+Ppz[BW-1]-Psp[BW+1]-Ppz[BW+1])*lb1/(eps[BW-1]*Lw+eps[BW+1]*lb1)
-                        elif I>= Well_boundary[J-1,1] and I <= BW: 
-                            BPC[I]=q*dx*(BW-I)*(Psp[BW-1]+Ppz[BW-1]-Psp[BW+1]-Ppz[BW+1])*Lw/(eps[BW-1]*Lw+eps[BW+1]*lb1)
-                        elif I>= WB and I <= Well_boundary[J+1,0]: 
-                            BPC[I]=q*dx*(Well_boundary[J+1,0]-I)*(Psp[WB+1]+Ppz[WB+1]-Psp[WB-1]-Ppz[WB-1])*Lw/(eps[WB+1]*Lw+eps[WB-1]*lb2)
+                    WB=Well_boundary[J,1]                    
+                    Lw=(WB-BW)*dx
+                    lb1=(BW-Well_boundary[J-1,1])*dx
+                    lb2=(Well_boundary[J+1,0]-WB)*dx
+                    sum_1+=(Psp[BW+1]+Ppz[BW+1])*Lw/eps[BW+1]+(Psp[BW-1]+Ppz[BW-1])*lb1/eps[BW-1]
+                    sum_2+=Lw/eps[BW+1]+lb1/eps[BW-1]
+                EPC=(sum_1-(Psp+Ppz)*sum_2)/(eps*sum_2)
+                """
+                sum_1=0.0
+                sum_2=0.0
+                sum_1=sum((Psp+Ppz)/eps)*dx
+                sum_2=sum(1/eps)*dx
+                EPC=(sum_1-(Psp+Ppz)*sum_2)/(eps*sum_2)
+                """
+
     if config.Zincblind :
         for i in range(0,n_max,1):
-            if  EXX[i]!=0: #look futher
+            if  EXX[i]!=0: 
                 S[i]=ZETA[i]/delta[i]
                 k1[i]=sqrt(1+2*S[i]+9*S[i]**2)
                 k2[i]=S[i]-1+k1[i]
@@ -937,8 +951,8 @@ def Poisson_Schrodinger(model):
     time2 = time.time() # timing audit
     iteration = 1   #iteration counter
     previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
-    fitot = fi_h + Vapp+BPC #For initial iteration sum bandstructure and applied field
-    fitotc = fi + Vapp+BPC
+    fitot = fi_h + Vapp #For initial iteration sum bandstructure and applied field
+    fitotc = fi + Vapp
     while True:
         if not(config.messagesoff) :
             logger.info("Iteration: %d", iteration)
@@ -985,9 +999,9 @@ def Poisson_Schrodinger(model):
             sigma_general[Well_boundary[j-1,1]:Well_boundary[j+1,0]]=sigma
             # Calculate electric field (Poisson/Hartree Effects)
             F=calc_field(sigma,eps[Well_boundary[j-1,1]:Well_boundary[j+1,0]])
-            F_general[Well_boundary[j-1,1]:Well_boundary[j+1,0]]=F
+            F_general[Well_boundary[j-1,1]:Well_boundary[j+1,0]]=F+EPC[Well_boundary[j-1,1]:Well_boundary[j+1,0]]
             # Calculate potential due to charge distribution
-            Vnew=calc_potn(F,model)
+            Vnew=calc_potn(F+EPC[Well_boundary[j-1,1]:Well_boundary[j+1,0]],model)
             Vnew_general[Well_boundary[j-1,1]:Well_boundary[j+1,0]]=Vnew
             
             #status
@@ -1028,8 +1042,8 @@ def Poisson_Schrodinger(model):
         #with previous iterations. By dampening the corrective term, we avoid oscillations.
         #fi_h=np.resize(fi_h,n_max)
         V+= damping*(Vnew_general - V)
-        fitot = fi_h + V + Vapp+BPC
-        fitotc = fi + V + Vapp+BPC
+        fitot = fi_h + V + Vapp
+        fitotc = fi + V + Vapp
         if abs(E_state_general[1,0]-previousE0) < convergence_test: #Convergence test
             break
         elif iteration >= max_iterations: #Iteration limit

@@ -30,6 +30,7 @@ meV2J=1e-3*q #meV to Joules
 
 # Input File(s)
 # -------------
+Zincblind=False #Set material type used in the structure
 #inputfilename = "sample-qw-barrierdope"
 #inputfilename = "sample-qw-qwdope"
 #inputfilename = "sample-moddop"
@@ -37,9 +38,10 @@ meV2J=1e-3*q #meV to Joules
 #inputfilename = "sample-qw-barrierdope-p"
 #inputfilename = "sample-multi-qw-barrierdope-p"
 #inputfilename = "sample-double-qw"
-#inputfilename = "sample-qw-barrierdope-p_ingan"
+Wurtzite=True #Set material type used in the structure
+inputfilename = "sample-qw-barrierdope-p_ingan"
 #inputfilename = "sample-qw-barrierdope-p_cdzno"
-inputfilename = "sample-multi-qw-barrierdope-p_ingan"
+#inputfilename = "sample-multi-qw-barrierdope-p_ingan"
 
 # Calculation
 # -----------
@@ -61,11 +63,7 @@ convergence_test=1e-6 #convergence is reached when the ground state energy (meV)
 
 # Aestimo_numpy_h
 strain =True # for aestimo_numpy_h
-piezo=True
-#Set material type used in the structure 
-Wurtzite=True
-Zincblind=False
-
+piezo=True # directly calculationg the induced electric field.
 #--------------
 parameters=False
 # Output Files

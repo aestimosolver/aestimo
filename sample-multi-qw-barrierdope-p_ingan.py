@@ -22,7 +22,7 @@ computation_scheme = 2
 
 # QUANTUM
 # Total subband number to be calculated for electrons
-subnumber_h = 4
+subnumber_h = 3
 subnumber_e = 2
 # APPLIED ELECTRIC FIELD
 Fapplied = 0#2.5e6/50e-9 # (V/m)
@@ -48,13 +48,14 @@ material =[[ 1.0, 'GaN', 0.0, 0.0, 'p','b'],
             [ 2.0, 'GaN', 0.0, 0.0, 'p','b'],
             [ 2.0, 'GaN', 0.0, 5e17, 'p','b'],
             [ 3.0, 'InGaN', 0.15, 0,'p','w'],
-            [ 2.0, 'GaN', 0.0, 0, 'p','b'],
+            [ 2.0, 'GaN', 0.0,0, 'p','b'],
             [ 3.0, 'InGaN', 0.15, 0,'p','w'],
-            [ 2.0, 'GaN', 0.0, 0, 'p','b'],
+            [ 2.0, 'GaN', 0.0,0, 'p','b'],
             [ 3.0, 'InGaN', 0.15, 0,'p','w'],
-            [ 2.0, 'GaN', 0.0, 5e17, 'p','b'],                           
+            [ 2.0, 'GaN', 0.0, 5e17,'p','b'],                           
             [ 2.0, 'GaN', 0.0, 0.0, 'p','b'],
             [ 1.0, 'GaN', 0.0, 0.0, 'p','b']]
+
 
  
 
