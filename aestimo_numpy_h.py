@@ -779,8 +779,8 @@ def Poisson_Schrodinger(model):
             sum_2=0.0
             if config.piezo:
                 #spontaneous and piezoelectric polarization built-in field
-                # F. Bernardini and V. Fiorentini phys. stat. sol. (b) 216, 391 (1999)
-                # Book 'Quantum Wells,Wires & Dots', Paul Harrison, pages 236-241                
+                # [1] F. Bernardini and V. Fiorentini phys. stat. sol. (b) 216, 391 (1999)
+                # [2] Book 'Quantum Wells,Wires & Dots', Paul Harrison, pages 236-241
                 for J in range(1,N_wells_virtual2-1):
                     BW=Well_boundary[J,0]
                     WB=Well_boundary[J,1]                    
