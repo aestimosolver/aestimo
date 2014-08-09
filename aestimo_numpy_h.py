@@ -177,15 +177,20 @@ class Structure():
         eps =np.zeros(n_max)		#dielectric constant
         dop = np.zeros(n_max)           #doping
         N_wells_real=0
+        N_wells_real2=0
         N_wells_real0=self.N_wells_real0
         N_wells_virtual=N_wells_real0+2
         N_wells_virtual2=N_wells_real0+2
         Well_boundary=np.zeros((N_wells_virtual,2))
+        Well_boundary2=np.zeros((N_wells_virtual,2))
         barrier_boundary=np.zeros((N_wells_virtual+1,2))
         n_max_general=np.zeros(N_wells_virtual)
         Well_boundary[N_wells_virtual-1,0]=n_max 
         Well_boundary[N_wells_virtual-1,1]=n_max
+        Well_boundary2[N_wells_virtual-1,0]=n_max 
+        Well_boundary2[N_wells_virtual-1,1]=n_max
         barrier_boundary[N_wells_virtual,0]=n_max
+        barrier_len=np.zeros(N_wells_virtual+1)
         position = 0.0 # keeping in nanometres (to minimise errors)
         for layer in self.material:
             startindex = round2int(position*1e-9/dx)
@@ -289,12 +294,14 @@ class Structure():
                     Ac[startindex:finishindex] = Ac_alloy*q
             matRole= layer[5]
             if  matRole == 'w':
-                N_wells_real+=1
-                Well_boundary[N_wells_real,0]=startindex 
-                Well_boundary[N_wells_real,1]=finishindex           
+                N_wells_real2+=1
+                Well_boundary2[N_wells_real2,0]=startindex 
+                Well_boundary2[N_wells_real2,1]=finishindex
+                
             for J in range(0,N_wells_virtual2):
-                barrier_boundary[J,0]=Well_boundary[J-1,1]
-                barrier_boundary[J,1]=Well_boundary[J,0]
+                barrier_boundary[J,0]=Well_boundary2[J-1,1]
+                barrier_boundary[J,1]=Well_boundary2[J,0]
+                barrier_len[J]=barrier_boundary[J,1]-barrier_boundary[J,0]
             #doping
             if layer[4] == 'n':  
                 chargedensity = layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
@@ -302,7 +309,27 @@ class Structure():
                 chargedensity = -layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
             else:
                 chargedensity = 0.0
-            dop[startindex:finishindex] = chargedensity                
+            dop[startindex:finishindex] = chargedensity
+        #here we remove barriers who are less than anti_crossing_lenght
+        #so we can constructe the new well boundary using the resulted barrier boundary
+        brr=0
+        anti_crossing_lenght=config.anti_crossing_lenght*1e-9
+        for J in range(1,N_wells_virtual2-1):
+            if (barrier_len[J]*dx <= anti_crossing_lenght ) :
+                brr+=1
+        brr_vec=np.zeros(brr)
+        brr2=0
+        for J in range(1,N_wells_virtual2-1):
+            if (barrier_len[J]*dx <= anti_crossing_lenght ) :
+                brr2+=1
+                brr_vec[brr2-1]=J+1-brr2
+        for I in range (0,brr):
+            barrier_boundary=np.delete(barrier_boundary,brr_vec[I], 0)
+        N_wells_virtual=N_wells_virtual-brr
+        Well_boundary=np.resize(Well_boundary,(N_wells_virtual,2))
+        for J in range(0,N_wells_virtual):
+            Well_boundary[J-1,1]=barrier_boundary[J,0]
+            Well_boundary[J,0]=barrier_boundary[J,1]
         self.fi = fi
         self.cb_meff = cb_meff
         self.cb_meff_alpha = cb_meff_alpha
@@ -343,6 +370,7 @@ class Structure():
         self.N_wells_virtual2=N_wells_virtual2
         self.N_wells_real0=N_wells_real0
         self.Well_boundary=Well_boundary
+        self.Well_boundary2=Well_boundary2
         self.barrier_boundary=barrier_boundary
 class AttrDict(dict):
     """turns a dictionary into an object with attribute style lookups"""
@@ -737,6 +765,7 @@ def Poisson_Schrodinger(model):
     N_wells_virtual = model.N_wells_virtual
     N_wells_virtual2 = model.N_wells_virtual2
     Well_boundary=model.Well_boundary
+    Well_boundary2=model.Well_boundary2
     barrier_boundary=model.barrier_boundary
     Ppz= np.zeros(n_max)
     HUPMAT1=np.zeros((n_max*3, n_max*3))
@@ -753,9 +782,7 @@ def Poisson_Schrodinger(model):
     k3= np.zeros(n_max)
     fp= np.ones(n_max)
     fm= np.ones(n_max)
-    BPC= np.zeros(n_max)
     EPC= np.zeros(n_max)
-    EPC1= np.zeros(n_max)
     m_hh = np.zeros(n_max)
     m_lh = np.zeros(n_max)
     m_so = np.zeros(n_max)
@@ -778,15 +805,15 @@ def Poisson_Schrodinger(model):
             sum_1=0.0
             sum_2=0.0
             if config.piezo:
-                #spontaneous and piezoelectric polarization built-in field
-                # [1] F. Bernardini and V. Fiorentini phys. stat. sol. (b) 216, 391 (1999)
-                # [2] Book 'Quantum Wells,Wires & Dots', Paul Harrison, pages 236-241
+                """ spontaneous and piezoelectric polarization built-in field 
+                [1] F. Bernardini and V. Fiorentini phys. stat. sol. (b) 216, 391 (1999)
+                [2] Book 'Quantum Wells,Wires & Dots', Paul Harrison, pages 236-241"""
                 for J in range(1,N_wells_virtual2-1):
-                    BW=Well_boundary[J,0]
-                    WB=Well_boundary[J,1]                    
+                    BW=Well_boundary2[J,0]
+                    WB=Well_boundary2[J,1]                    
                     Lw=(WB-BW)*dx
-                    lb1=(BW-Well_boundary[J-1,1])*dx
-                    lb2=(Well_boundary[J+1,0]-WB)*dx
+                    lb1=(BW-Well_boundary2[J-1,1])*dx
+                    lb2=(Well_boundary2[J+1,0]-WB)*dx
                     sum_1+=(Psp[BW+1]+Ppz[BW+1])*Lw/eps[BW+1]+(Psp[BW-1]+Ppz[BW-1])*lb1/eps[BW-1]
                     sum_2+=Lw/eps[BW+1]+lb1/eps[BW-1]
                 EPC=(sum_1-(Psp+Ppz)*sum_2)/(eps*sum_2)
@@ -990,7 +1017,6 @@ def Poisson_Schrodinger(model):
             meff_statec_general[j,:],meff_state_general[j,:] =meff_statec,meff_state
             E_F = fermilevel(Ntotal2d,model,E_state_general[j],E_statec_general[j],meff_state,meff_statec)
             E_F_general[j]=E_F
-            ###############################################################################################
             # Calculate the subband populations at the temperature T (K)
             N_state,N_statec=calc_N_state(E_F,model,E_state_general[j,:],meff_state,E_statec_general[j,:],meff_statec,Ntotal2d)
             N_state_general[j,:],N_statec_general[j,:]=N_state,N_statec
@@ -1006,7 +1032,7 @@ def Poisson_Schrodinger(model):
             
             #status
             if not(config.messagesoff):
-                logger.info("-----------Starting calculation for QW number %d ------------------",j)
+                logger.info("-----------Starting calculation for Quantum Region number %d ------------------",j)
                 for i,level in enumerate(E_state_general[j]):
                     logger.info("E[%d]= %f meV",i,level)
                 for i,meff in enumerate(meff_state):

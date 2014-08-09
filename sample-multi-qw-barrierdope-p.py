@@ -22,8 +22,8 @@ computation_scheme = 2
 
 # QUANTUM
 # Total subband number to be calculated for electrons
-subnumber_h = 2
-subnumber_e = 1
+subnumber_h = 4
+subnumber_e = 2
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.00#/50e-9 # (V/m)
 
@@ -50,6 +50,8 @@ material =[[ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
             [ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
             [ 3.8, 'GaAs', 0, 0, 'p','w'],
             [ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
+            [ 3.8, 'GaAs', 0, 0, 'p','w'],
+            [ 6.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
             [ 3.8, 'GaAs', 0, 0, 'p','w'],
             [ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
             [ 3.8, 'GaAs', 0, 0, 'p','w'],
