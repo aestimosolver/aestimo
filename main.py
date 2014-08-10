@@ -22,62 +22,21 @@
 
  Description:  This is the main file.
 """
-import matplotlib.pyplot as pl
-import numpy as np
-import time
+#import matplotlib.pyplot as pl
+#import numpy as np
+#import time
 #import sys 
 
 import config
 
-if False:
-    import aestimo_numpy as aestimo
-    import database
+#import aestimo_h as aestimo
+import aestimo
     
-    # Import from config file
-    inputfile = __import__(config.inputfilename)
-    aestimo.logger.info("inputfile is %s" %config.inputfilename)
-    
-    # Initialise structure class
-    model = aestimo.StructureFrom(inputfile,database)
-    
-    # Perform the calculation
-    result= aestimo.Poisson_Schrodinger(model)
-    
-    time4 = time.time() #timing audit
-    aestimo.logger.info("total running time (inc. loading libraries) %g s" %(time4 - aestimo.time0))
-    aestimo.logger.info("total running time (exc. loading libraries) %g s" %(time4 - aestimo.time1))
-    
-    # Write the simulation results in files
-    aestimo.save_and_plot(result,model)
-    
-    aestimo.logger.info("""Simulation is finished. All files are closed.Please control the related files.
------------------------------------------------------------------""")
 
-elif True:
-    import aestimo_numpy_h as aestimo
-    import database
-    
-    # Import from config file
-    inputfile = __import__(config.inputfilename)
-    aestimo.logger.info("inputfile is %s" %config.inputfilename)
-    
-    # Initialise structure class
-    model = aestimo.StructureFrom(inputfile,database)
-         
-    # Perform the calculation
-    result = aestimo.Poisson_Schrodinger(model)
-    
-    time4 = time.time() #timing audit
-    aestimo.logger.info("total running time (inc. loading libraries) %g s" %(time4 - aestimo.time0))
-    aestimo.logger.info("total running time (exc. loading libraries) %g s" %(time4 - aestimo.time1))
-    
-    # Write the simulation results in files
-    aestimo.save_and_plot(result,model)
-    
-    aestimo.logger.info("""Simulation is finished. All files are closed.Please control the related files.
------------------------------------------------------------------""")
-else:
-    import aestimo
+# Import from config file
+inputfile = __import__(config.inputfilename)
+aestimo.logger.info("inputfile is %s" %config.inputfilename)
 
-    
+aestimo.run_aestimo(inputfile)
+
 

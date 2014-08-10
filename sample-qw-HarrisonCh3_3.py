@@ -57,6 +57,15 @@ T = 300.0 #Kelvin
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 computation_scheme = 0
 
+# Non-parabolic effective mass function
+# 0: no energy dependence
+# 1: Nelson's effective 2-band model
+# 2: k.p model from Vurgaftman's 2001 paper
+meff_method = 0
+
+# Non-parabolic Dispersion Calculations for Fermi-Dirac
+fermi_np_scheme = True
+
 # QUANTUM
 # Total subband number to be calculated for electrons
 subnumber_e = 1
@@ -94,7 +103,7 @@ if __name__=="__main__":
     import matplotlib.pyplot as pl
     import numpy as np
     #import config
-    import aestimo_numpy as aestimo
+    import aestimo
     import database
     
     # Initialise structure class

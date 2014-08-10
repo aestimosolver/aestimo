@@ -20,6 +20,15 @@ T = 300.0 #Kelvin
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 computation_scheme = 2
 
+# Non-parabolic effective mass function
+# 0: no energy dependence
+# 1: Nelson's effective 2-band model
+# 2: k.p model from Vurgaftman's 2001 paper
+meff_method = 2
+
+# Non-parabolic Dispersion Calculations for Fermi-Dirac
+fermi_np_scheme = True
+
 # QUANTUM
 # Total subband number to be calculated for electrons
 subnumber_e = 1
@@ -49,3 +58,8 @@ material =[[ 20.0, 'AlGaAs', 0.3, 1e17, 'n'],
            [ 50.0, 'GaAs', 0, 0, 'n']]
  
 
+
+if __name__ == "__main__": #this code allows you to run the input file directly
+    input_obj = vars()
+    import aestimo
+    aestimo.run_aestimo(input_obj)

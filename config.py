@@ -28,11 +28,11 @@ meV2J=1e-3*q #meV to Joules
 
 # CONFIGURATION 
 
-# Input File(s)
+# Default Input File(s)
 # -------------
 Zincblind=True #Set material type used in the structure
 #inputfilename = "sample-qw-barrierdope"
-#inputfilename = "sample-qw-qwdope"
+inputfilename = "sample-qw-qwdope"
 #inputfilename = "sample-moddop"
 #inputfilename = "sample-qw-HarrisonCh3_3"
 #inputfilename = "sample-qw-barrierdope-p"
@@ -45,8 +45,8 @@ Wurtzite=False #Set material type used in the structure
 
 # Calculation
 # -----------
-# Aestimo / Aestimo_numpy
-use_cython = True #provides a speed up for aestimo and aestimo_numpy
+# Aestimo
+use_cython = True #provides a speed up for aestimo
 # Shooting method parameters for Schrödinger Equation solution
 delta_E = 0.5*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. 
 d_E = 1e-5*meV2J #Energy step (Joules) within Newton-Raphson method when improving the precision of the energy of a found level.
@@ -67,9 +67,11 @@ strain =True # for aestimo_numpy_h
 piezo=True # directly calculationg the induced electric field.
 #--------------
 parameters=False
+
 # Output Files
 # ------------
 output_directory = "outputs"
+parameters = True
 electricfield_out = True
 potential_out = True
 sigma_out = True

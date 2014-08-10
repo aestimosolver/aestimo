@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# -------------------------------------------------------------------
-# Input File Description:  Barrier doped AlGaAs/GaAs heterostructure.
-# -------------------------------------------------------------------
+# ------------------------------------------------------------------------
+# Input File Description:  Double Quantum well doped AlGaAs/GaAs heterostructure.
+# ------------------------------------------------------------------------
 # ----------------
 # GENERAL SETTINGS
 # ----------------
 
 # TEMPERATURE
-T = 60.0 #Kelvin
+T = 300.0 #Kelvin
 
 # COMPUTATIONAL SCHEME
 # 0: Schrodinger
@@ -18,7 +18,7 @@ T = 60.0 #Kelvin
 # 4: Schrodinger-Exchange interaction
 # 5: Schrodinger-Poisson + Exchange interaction
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
-computation_scheme = 3
+computation_scheme = 2
 
 # Non-parabolic effective mass function
 # 0: no energy dependence
@@ -31,12 +31,10 @@ fermi_np_scheme = True
 
 # QUANTUM
 # Total subband number to be calculated for electrons
-subnumber_e = 3
-# Total subband number to be calculated for electrons (for aestimo_numpy_h)
-subnumber_h = 1
+subnumber_e = 6
 
 # APPLIED ELECTRIC FIELD
-Fapplied = 0.00/50e-9 # (V/m)
+Fapplied = 0.0 # (V/m)
 
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
@@ -51,23 +49,19 @@ maxgridpoints = 200000 #for controlling the size
 # Region input is a two-dimensional list input.
 # An example:
 # Si p-n diode. Firstly lets picturize the regional input.
-#         | Thickness (nm) | Material | Alloy fraction | Doping(cm^-3) | n or p type |
-# Layer 0 |      250.0     |   Si     |      0         |     1e16      |     n       |
-# Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
+#         | Thickness (nm)  | Material | Alloy fraction | Doping(cm^-3) | n or p type |
+# Layer 0 |       250.0     |   Si     |      0         |     1e16      |     n       |
+# Layer 1 |       250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material =[[ 10.0, 'AlGaAs', 0.3, 0.0, 'n'],
-            [ 5.0, 'AlGaAs', 0.3, 5e17, 'n'],
-            [ 5.0, 'AlGaAs', 0.3, 0.0, 'n'],
-            [ 11.0, 'GaAs', 0, 0, 'n'],
-            [ 5.0, 'AlGaAs', 0.3, 0.0, 'n'],
-            [ 5.0, 'AlGaAs', 0.3, 5e17, 'n'],
-            [ 10.0, 'AlGaAs', 0.3, 0.0, 'n']]
+material =[[ 20.0, 'AlGaAs', 0.3, 1e14, 'n'],
+            [10.0, 'GaAs', 0, 2e16, 'n'],
+            [5.0, 'AlGaAs', 0.3, 1e14, 'n'],
+            [10.0, 'GaAs', 0, 2e16, 'n'],
+            [20.0, 'AlGaAs', 0.3, 1e14, 'n']]
  
-
 
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
     import aestimo
     aestimo.run_aestimo(input_obj)
-    
