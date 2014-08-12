@@ -91,7 +91,7 @@ s0['Fapp'] = 0.00 # (V/m)
 gridfactor = 0.01 #nm
 s0['dx'] = gridfactor*1e-9
 maxgridpoints = 200000 #for controlling the size
-
+mat_type='Zincblind'
 ## Create structure arrays -----------------------------------------------------
 
 # We can't declare our structure in the usual way using the StructureFrom class

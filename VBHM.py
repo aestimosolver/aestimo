@@ -35,10 +35,9 @@
 #from scipy.optimize import fsolve
 import numpy as np
 from math import *
-import config
 #start
 #material parametre for barrier and well
-def qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta,A1,A2,A3,A4,A5,A6,delta_so,delta_cr):
+def qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta,A1,A2,A3,A4,A5,A6,delta_so,delta_cr,mat_type):
     AP1= np.zeros(n_max+2)
     AP2= np.zeros(n_max+2)
     AP3= np.zeros(n_max+2)
@@ -53,7 +52,7 @@ def qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta,A1,A2,A3,A4,A5,A6,delta
     DEL1=  np.zeros(n_max+2)
     DEL2=  np.zeros(n_max+2)
     Pce=  np.zeros(n_max+2)
-    if config.Zincblind:     
+    if mat_type=='Zincblind':     
         AP1=GA1
         AP2=GA2
         AP3=GA1
@@ -65,7 +64,7 @@ def qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta,A1,A2,A3,A4,A5,A6,delta
         FL=RATIO*(VNIT-ZETA)/AC1
         FSO=RATIO*(VNIT+delta)/AC1
         Pce=RATIO*(CNIT)/AC1
-    if config.Wurtzite:
+    if mat_type=='Wurtzite':
         AP1=A1
         AP2=A2
         AP3=A3

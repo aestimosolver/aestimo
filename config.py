@@ -30,15 +30,13 @@ meV2J=1e-3*q #meV to Joules
 
 # Default Input File(s)
 # -------------
-Zincblind=True #Set material type used in the structure
 #inputfilename = "sample-qw-barrierdope"
-inputfilename = "sample-qw-qwdope"
+#inputfilename = "sample-qw-qwdope"
 #inputfilename = "sample-moddop"
 #inputfilename = "sample-qw-HarrisonCh3_3"
 #inputfilename = "sample-qw-barrierdope-p"
 inputfilename = "sample-multi-qw-barrierdope-p"
 #inputfilename = "sample-double-qw"
-Wurtzite=False #Set material type used in the structure
 #inputfilename = "sample-qw-barrierdope-p_ingan"
 #inputfilename = "sample-qw-barrierdope-p_cdzno"
 #inputfilename = "sample-multi-qw-barrierdope-p_ingan"

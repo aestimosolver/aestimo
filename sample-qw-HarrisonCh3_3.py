@@ -81,7 +81,7 @@ Fapplied = 0.00 # (V/m)
 # For 1D, z-axis is choosen
 gridfactor = 0.1 #nm
 maxgridpoints = 200000 #for controlling the size
-
+mat_type='Zincblind'
 # REGIONS
 # Region input is a two-dimensional list input.
 # An example:

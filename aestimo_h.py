@@ -119,6 +119,7 @@ class Structure():
         n_max = round2int(self.x_max/self.dx)
         # Check on n_max
         maxgridpoints = self.maxgridpoints
+        mat_type= self.mat_type
         if n_max > maxgridpoints:
             logger.error("Grid number is exceeding the max number of %d",maxgridpoints)
             exit()
@@ -203,7 +204,7 @@ class Structure():
                 cb_meff[startindex:finishindex] = matprops['m_e']*m_e
                 cb_meff_alpha[startindex:finishindex] = matprops['m_e_alpha']
                 fi[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
-                if config.Zincblind :
+                if mat_type=='Zincblind' :
                     a0_sub[startindex:finishindex]=matprops['a0']*1e-10
                     C11[startindex:finishindex] = matprops['C11'] 
                     C12[startindex:finishindex] = matprops['C12']
@@ -217,7 +218,7 @@ class Structure():
                     fi_h[startindex:finishindex] =-(1-matprops['Band_offset'])*matprops['Eg']*q #Joule  #-0.8*q-(1-matprops['Band_offset'])*matprops['Eg']*q #Joule
                     eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
                     a0[startindex:finishindex] = matprops['a0']*1e-10
-                if config.Wurtzite :
+                if mat_type=='Wurtzite' :
                     a0_sub[startindex:finishindex]=matprops['a0_wz']*1e-10
                     C11[startindex:finishindex] = matprops['C11']*1e10
                     C12[startindex:finishindex] = matprops['C12']*1e10
@@ -249,7 +250,7 @@ class Structure():
                 Eg = x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x) #eV
                 fi[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule
                 a0_sub[startindex:finishindex]=alloyprops['a0_sub']*1e-10
-                if config.Zincblind :
+                if mat_type=='Zincblind':
                     C11[startindex:finishindex] = x*mat1['C11'] + (1-x)* mat2['C11']
                     C12[startindex:finishindex] = x*mat1['C12'] + (1-x)* mat2['C12']
                     GA1[startindex:finishindex] =x*mat1['GA1'] + (1-x)* mat2['GA1']
@@ -267,7 +268,7 @@ class Structure():
                     eps[startindex:finishindex] = (x*mat1['epsilonStatic'] + (1-x)* mat2['epsilonStatic'] )*eps0
                     a0[startindex:finishindex] = ((1-x)*mat1['a0'] + x* mat2['a0'] )*1e-10
                     cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(mat2['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
-                if config.Wurtzite :
+                if mat_type=='Wurtzite' :
                     A1[startindex:finishindex] =x*material_property[alloyprops['Material1']]['A1'] + (1-x)* material_property[alloyprops['Material2']]['A1']
                     A2[startindex:finishindex] =x*material_property[alloyprops['Material1']]['A2'] + (1-x)* material_property[alloyprops['Material2']]['A2']
                     A3[startindex:finishindex] =x*material_property[alloyprops['Material1']]['A3'] + (1-x)* material_property[alloyprops['Material2']]['A3']
@@ -390,6 +391,7 @@ class StructureFrom(Structure):
         self.comp_scheme = inputfile.computation_scheme
         self.dx = inputfile.gridfactor*1e-9 #grid in m
         self.maxgridpoints = inputfile.maxgridpoints
+        self.mat_type = inputfile.mat_type
         # Loading material list
         self.material = inputfile.material
         totallayer = alen(self.material)
@@ -722,6 +724,7 @@ def Poisson_Schrodinger(model):
     subnumber_e = model.subnumber_e
     dx = model.dx
     n_max = model.n_max
+    mat_type= model.mat_type
     
     if comp_scheme in (4,5,6):
         logger.error("""aestimo_h doesn't currently include exchange interactions
@@ -788,13 +791,13 @@ def Poisson_Schrodinger(model):
     m_so = np.zeros(n_max)
     x_max=dx*n_max
     if config.strain :
-        if config.Zincblind :
+        if mat_type=='Zincblind' :
             EXX= (a0_sub-a0)/a0
             EZZ= -2.0*C12/C11*EXX
             ZETA= -B/2.0*(EXX+EXX-2.0*EZZ)
             CNIT= Ac*(EXX+EXX+EZZ)
             VNIT= -Av*(EXX+EXX+EZZ)           
-        if config.Wurtzite :
+        if mat_type=='Wurtzite':
             EXX= (a0_sub-a0_wz)/a0_wz
             EZZ=-2.0*C13/C33*EXX
             CNIT= Ac*(EXX+EXX+EZZ)
@@ -825,7 +828,7 @@ def Poisson_Schrodinger(model):
                 EPC=(sum_1-(Psp+Ppz)*sum_2)/(eps*sum_2)
                 """
 
-    if config.Zincblind :
+    if mat_type=='Zincblind' :
         for i in range(0,n_max,1):
             if  EXX[i]!=0: 
                 S[i]=ZETA[i]/delta[i]
@@ -837,18 +840,18 @@ def Poisson_Schrodinger(model):
         m_hh = m_e/(GA1 -2*GA2 )
         m_lh = m_e/(GA1 +2*fp*GA2 )
         m_so = m_e/(GA1 +2*fm*GA2 )            
-    if config.Wurtzite :
+    if mat_type=='Wurtzite' :
         m_hh = -m_e/(A2 + A4 -A5)
         m_lh = -m_e/(A2 + A4 +A5 )
         m_so = -m_e/(A2)    
     RATIO=m_e/hbar**2*(x_max)**2
     AC1=(n_max+1)**2    
-    AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,Pce,GDELM,DEL3,DEL1,DEL2=qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta,A1,A2,A3,A4,A5,A6,delta_so,delta_cr)
+    AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,Pce,GDELM,DEL3,DEL1,DEL2=qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta,A1,A2,A3,A4,A5,A6,delta_so,delta_cr,mat_type)
     KP=0.0
     KPINT=0.01
-    if config.Zincblind :        
+    if mat_type=='Zincblind' :        
         HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT)
-    if config.Wurtzite :
+    if mat_type=='Wurtzite' :
         HUPMAT1=-VBMAT2(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,x_max,n_max,AC1,UNIM,KPINT,DEL3,DEL1,DEL2)
     HUPMATC1=CBMAT(KP,Pce,cb_meff/m_e,x_max,n_max,AC1,UNIM,KPINT)
     def calc_E_state(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc):
@@ -1147,9 +1150,9 @@ def save_and_plot(result,model):
                 columns = range(model.subnumber_h), result.E_state_general[j], result.N_state_general[j], rel_meff_state
                 #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
                 header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
-                saveoutput("states_h_QW%d.dat" %j,columns, header = header )
+                saveoutput("states_h_QWR%d.dat" %j,columns, header = header )
                 if config.probability_out:
-                    saveoutput("wavefunctions_h_QW%d.dat" %j,(xaxis,result.wfh_general[j].transpose()))
+                    saveoutput("wavefunctions_h_QWR%d.dat" %j,(xaxis,result.wfh_general[j].transpose()))
     else:
         if config.sigma_out:
             saveoutput("sigma.dat",(xaxis,result.sigma_general))
@@ -1165,7 +1168,7 @@ def save_and_plot(result,model):
                 header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
                 saveoutput("states_h_QW%d.dat" %j,columns, header = header )
                 if config.probability_out:
-                    saveoutput("wavefunctions_h_QW%d.dat" %j,(xaxis,result.wfh_general[j].transpose()))
+                    saveoutput("wavefunctions_h_QWR%d.dat" %j,(xaxis,result.wfh_general[j].transpose()))
     # Resultviewer
         
     if config.resultviewer:

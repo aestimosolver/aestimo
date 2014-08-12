@@ -35,7 +35,7 @@ Fapplied = 0.00#/50e-9 # (V/m)
 # For 1D, z-axis is choosen
 gridfactor = 0.2 #nm
 maxgridpoints = 200000 #for controlling the size
-
+mat_type='Zincblind'
 # REGIONS
 # Region input is a two-dimensional list input.
 # An example:
@@ -48,13 +48,13 @@ maxgridpoints = 200000 #for controlling the size
 material =[[ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
             [ 2.0, 'AlGaAs', 0.3, 5e17, 'p','b'],
             [ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
-            [ 3.8, 'GaAs', 0, 0, 'p','w'],
-            [ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
-            [ 3.8, 'GaAs', 0, 0, 'p','w'],
-            [ 6.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
-            [ 3.8, 'GaAs', 0, 0, 'p','w'],
-            [ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
-            [ 3.8, 'GaAs', 0, 0, 'p','w'],
+            [ 3.0, 'GaAs', 0, 0, 'p','w'],
+            [ 8.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
+            [ 3.0, 'GaAs', 0, 0, 'p','w'],
+            [ 8.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
+            [ 3.0, 'GaAs', 0, 0, 'p','w'],
+            [ 8.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
+            [ 3.0, 'GaAs', 0, 0, 'p','w'],
             [ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
             [ 2.0, 'AlGaAs', 0.3, 5e17, 'p','b'],
             [ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b']]
