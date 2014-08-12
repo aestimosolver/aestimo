@@ -204,7 +204,7 @@ class Structure():
                 cb_meff[startindex:finishindex] = matprops['m_e']*m_e
                 cb_meff_alpha[startindex:finishindex] = matprops['m_e_alpha']
                 fi[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
-                if mat_type=='Zincblind' :
+                if mat_type=='Zincblende' :
                     a0_sub[startindex:finishindex]=matprops['a0']*1e-10
                     C11[startindex:finishindex] = matprops['C11'] 
                     C12[startindex:finishindex] = matprops['C12']
@@ -250,7 +250,7 @@ class Structure():
                 Eg = x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x) #eV
                 fi[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule
                 a0_sub[startindex:finishindex]=alloyprops['a0_sub']*1e-10
-                if mat_type=='Zincblind':
+                if mat_type=='Zincblende':
                     C11[startindex:finishindex] = x*mat1['C11'] + (1-x)* mat2['C11']
                     C12[startindex:finishindex] = x*mat1['C12'] + (1-x)* mat2['C12']
                     GA1[startindex:finishindex] =x*mat1['GA1'] + (1-x)* mat2['GA1']
@@ -791,7 +791,7 @@ def Poisson_Schrodinger(model):
     m_so = np.zeros(n_max)
     x_max=dx*n_max
     if config.strain :
-        if mat_type=='Zincblind' :
+        if mat_type=='Zincblende' :
             EXX= (a0_sub-a0)/a0
             EZZ= -2.0*C12/C11*EXX
             ZETA= -B/2.0*(EXX+EXX-2.0*EZZ)
@@ -828,7 +828,7 @@ def Poisson_Schrodinger(model):
                 EPC=(sum_1-(Psp+Ppz)*sum_2)/(eps*sum_2)
                 """
 
-    if mat_type=='Zincblind' :
+    if mat_type=='Zincblende' :
         for i in range(0,n_max,1):
             if  EXX[i]!=0: 
                 S[i]=ZETA[i]/delta[i]
@@ -849,7 +849,7 @@ def Poisson_Schrodinger(model):
     AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,Pce,GDELM,DEL3,DEL1,DEL2=qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta,A1,A2,A3,A4,A5,A6,delta_so,delta_cr,mat_type)
     KP=0.0
     KPINT=0.01
-    if mat_type=='Zincblind' :        
+    if mat_type=='Zincblende' :        
         HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT)
     if mat_type=='Wurtzite' :
         HUPMAT1=-VBMAT2(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,x_max,n_max,AC1,UNIM,KPINT,DEL3,DEL1,DEL2)

@@ -52,7 +52,7 @@ def qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta,A1,A2,A3,A4,A5,A6,delta
     DEL1=  np.zeros(n_max+2)
     DEL2=  np.zeros(n_max+2)
     Pce=  np.zeros(n_max+2)
-    if mat_type=='Zincblind':     
+    if mat_type=='Zincblende':     
         AP1=GA1
         AP2=GA2
         AP3=GA1
