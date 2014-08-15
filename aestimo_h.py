@@ -315,12 +315,12 @@ class Structure():
         #so we can constructe the new well boundary using the resulted barrier boundary
         brr=0
         anti_crossing_lenght=config.anti_crossing_lenght*1e-9
-        for J in range(1,N_wells_virtual2-1):
+        for J in range(2,N_wells_virtual2-1):
             if (barrier_len[J]*dx <= anti_crossing_lenght ) :
                 brr+=1
         brr_vec=np.zeros(brr)
         brr2=0
-        for J in range(1,N_wells_virtual2-1):
+        for J in range(2,N_wells_virtual2-1):
             if (barrier_len[J]*dx <= anti_crossing_lenght ) :
                 brr2+=1
                 brr_vec[brr2-1]=J+1-brr2
