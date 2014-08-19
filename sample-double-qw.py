@@ -32,10 +32,10 @@ fermi_np_scheme = True
 # QUANTUM
 # Total subband number to be calculated for electrons
 subnumber_e = 6
-
+subnumber_h = 4
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.0 # (V/m)
-
+mat_type='Zincblende'
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
@@ -54,14 +54,19 @@ maxgridpoints = 200000 #for controlling the size
 # Layer 1 |       250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material =[[ 20.0, 'AlGaAs', 0.3, 1e14, 'n'],
-            [10.0, 'GaAs', 0, 2e16, 'n'],
-            [5.0, 'AlGaAs', 0.3, 1e14, 'n'],
-            [10.0, 'GaAs', 0, 2e16, 'n'],
-            [20.0, 'AlGaAs', 0.3, 1e14, 'n']]
+material =[[ 20.0, 'AlGaAs', 0.3, 1e14, 'n','b'],
+            [10.0, 'GaAs', 0, 2e16, 'n','w'],
+            [5.0, 'AlGaAs', 0.3, 1e14, 'n','b'],
+            [10.0, 'GaAs', 0, 2e16, 'n','w'],
+            [20.0, 'AlGaAs', 0.3, 1e14, 'n','b']]
  
-
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
     import aestimo
     aestimo.run_aestimo(input_obj)
+"""    
+if __name__ == "__main__": #this code allows you to run the input file directly
+    input_obj = vars()
+    import aestimo_h
+    aestimo_h.run_aestimo(input_obj)
+"""

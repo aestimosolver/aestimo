@@ -35,9 +35,9 @@ meV2J=1e-3*q #meV to Joules
 #inputfilename = "sample-moddop"
 #inputfilename = "sample-qw-HarrisonCh3_3"
 #inputfilename = "sample-qw-barrierdope-p"
-inputfilename = "sample-multi-qw-barrierdope-p"
+#inputfilename = "sample-multi-qw-barrierdope-p"
 #inputfilename = "sample-double-qw"
-#inputfilename = "sample-qw-barrierdope-p_ingan"
+inputfilename = "sample-qw-barrierdope-p_ingan"
 #inputfilename = "sample-qw-barrierdope-p_cdzno"
 #inputfilename = "sample-multi-qw-barrierdope-p_ingan"
 
@@ -60,7 +60,7 @@ max_iterations=80 #maximum number of iterations.
 convergence_test=1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
 
 # Aestimo_numpy_h
-anti_crossing_lenght=4 # the lower lenght limit to consider anti-crossing (nm)
+anti_crossing_length=6 # the lower lenght limit to consider anti-crossing (nm)
 strain =True # for aestimo_numpy_h
 piezo=True # directly calculationg the induced electric field.
 #--------------

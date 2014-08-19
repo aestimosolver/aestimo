@@ -311,17 +311,17 @@ class Structure():
             else:
                 chargedensity = 0.0
             dop[startindex:finishindex] = chargedensity
-        #here we remove barriers who are less than anti_crossing_lenght
+        #here we remove barriers who are less than anti_crossing_length
         #so we can constructe the new well boundary using the resulted barrier boundary
         brr=0
-        anti_crossing_lenght=config.anti_crossing_lenght*1e-9
+        anti_crossing_length=config.anti_crossing_length*1e-9
         for J in range(2,N_wells_virtual2-1):
-            if (barrier_len[J]*dx <= anti_crossing_lenght ) :
+            if (barrier_len[J]*dx <= anti_crossing_length ) :
                 brr+=1
         brr_vec=np.zeros(brr)
         brr2=0
         for J in range(2,N_wells_virtual2-1):
-            if (barrier_len[J]*dx <= anti_crossing_lenght ) :
+            if (barrier_len[J]*dx <= anti_crossing_length ) :
                 brr2+=1
                 brr_vec[brr2-1]=J+1-brr2
         for I in range (0,brr):
@@ -1025,14 +1025,7 @@ def Poisson_Schrodinger(model):
             N_state_general[j,:],N_statec_general[j,:]=N_state,N_statec
             # Calculate `net' areal charge density
             sigma=calc_sigma_general(wfh_general[j,:,0:n_max_general[j]],wfe_general[j,:,0:n_max_general[j]],N_state,N_statec,model,Ntotal2d,j,Well_boundary) #one more instead of subnumber_h
-            sigma_general[Well_boundary[j-1,1]:Well_boundary[j+1,0]]=sigma
-            # Calculate electric field (Poisson/Hartree Effects)
-            F=calc_field(sigma,eps[Well_boundary[j-1,1]:Well_boundary[j+1,0]])
-            F_general[Well_boundary[j-1,1]:Well_boundary[j+1,0]]=F+EPC[Well_boundary[j-1,1]:Well_boundary[j+1,0]]
-            # Calculate potential due to charge distribution
-            Vnew=calc_potn(F+EPC[Well_boundary[j-1,1]:Well_boundary[j+1,0]],model)
-            Vnew_general[Well_boundary[j-1,1]:Well_boundary[j+1,0]]=Vnew
-            
+            sigma_general[Well_boundary[j-1,1]:Well_boundary[j+1,0]]=sigma            
             #status
             if not(config.messagesoff):
                 logger.info("-----------Starting calculation for Quantum Region number %d ------------------",j)
@@ -1060,6 +1053,13 @@ def Poisson_Schrodinger(model):
                 else:
                     logger.info("total level charge = %g m**-2" %(sum(N_state)))
                 logger.info("total system charge = %g m**-2" %(sum(sigma)))
+        # Calculate electric field (Poisson/Hartree Effects)
+        #F=calc_field(sigma,eps[Well_boundary[j-1,1]:Well_boundary[j+1,0]])
+        #print EPC
+        F_general=calc_field(sigma_general,eps)+EPC#[Well_boundary[j-1,1]:Well_boundary[j+1,0]]=F+EPC[Well_boundary[j-1,1]:Well_boundary[j+1,0]]
+        # Calculate potential due to charge distribution
+        #Vnew=calc_potn(F+EPC[Well_boundary[j-1,1]:Well_boundary[j+1,0]],model)
+        Vnew_general=calc_potn(F_general,model)#[Well_boundary[j-1,1]:Well_boundary[j+1,0]]=Vnew        
         #
         #
         if comp_scheme in (0,1): 
@@ -1099,7 +1099,7 @@ def Poisson_Schrodinger(model):
     results.fitotc = fitotc
     results.sigma = sigma
     results.sigma_general = sigma_general
-    results.F = F
+    #results.F = F
     results.V = V
     results.E_state = E_state
     results.N_state = N_state
