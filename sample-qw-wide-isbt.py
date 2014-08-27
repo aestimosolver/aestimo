@@ -110,30 +110,7 @@ if __name__=="__main__":
         eps_b = 10.364
         eps_gaas = 10.364 # @ 16um
         eps_algaas = 8.2067
-        eps_z = np.zeros(model.n_max)
-        
-        position = 0.0 # keeping in nanometres (to minimise errors)
-        for layer in model.material:
-            startindex = aestimo.round2int(position*1e-9/model.dx)
-            position += layer[0] # update position to end of the layer
-            finishindex = aestimo.round2int(position*1e-9/model.dx)
-            #
-            matType = layer[1]
-            if matType == 'GaAs':
-                eps_z[startindex:finishindex] = eps_gaas
-            elif matType == 'AlGaAs':
-                eps_z[startindex:finishindex] = eps_algaas
-    
-    elif case==3: #w-dependent dielectric constants
-        #because the zeroth axis is assumed to be the z-axis, our eps_z array must be 2d
-        pass
-        #currently the matrix model doesn't cope with frequency dependent dielectric constants
-        #therefore the classical model is the best approach.
-    
-    elif case==4: #z-dependent and w-dependent dielectric constants
-        pass
-        #currently the matrix model doesn't cope with frequency dependent dielectric constants
-        #therefore the classical model is the best approach.
+        eps_z = isbt.eps_background_GaAs(model,eps_gaas,eps_algaas)
     
     # Linewidth
     def linewidth(freq): return 0.1*freq #define linewidth in THz

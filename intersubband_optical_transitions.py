@@ -116,7 +116,8 @@ from scipy.integrate import simps
 import matplotlib.pyplot as pl
 from itertools import combinations,permutations
 import types
-from scipy.linalg import eigh #,eig
+from scipy.linalg import eigh,eig
+from aestimo import round2int
 
 sin,cos,log,exp = np.sin,np.cos,np.log,np.exp
 
@@ -519,7 +520,7 @@ def inv_eps_zz_classical(transitions_table,freqaxis,eps_z):
     
     Lperiod = transitions_table[0]['Lperiod'] #nm
     Lqw = get_Leff_est(transitions_table) #(nm) 
-    #using the effective length for the first transition  as an estimate of the thickness of the 2d electron gas contained within the QW
+    #using the effective length for the first transition as an estimate of the thickness of the 2d electron gas contained within the QW
     ff = Lqw/Lperiod
     #inv_eps_zz = ((1.0-ff)/eps_bb + ff/eps_qw) 
     inveps_bb_term = np.mean(np.atleast_1d(1.0/eps_z),axis=0) - ff/eps_w
@@ -552,7 +553,7 @@ def calc_S_c(Psi0,Psi1,Psi2,Psi3,eps_z,zaxis):
     i3*=dz**3
     return -i3
     
-def inv_eps_zz_Ando(results,transitions_table,freqaxis,eps_z,linewidth):
+def calc_wR_Ando(results,transitions_table,eps_z):
     """Uses a multilevel version of the mathematical formalism given in Ando 1977
     A matrix is constucted describing the transitions and the interactions between
     them which can be diagonalised to give a description of the system as a simple
@@ -592,7 +593,10 @@ def inv_eps_zz_Ando(results,transitions_table,freqaxis,eps_z,linewidth):
         B[a,b] = B[b,a] = const*S[a,b]*np.sqrt(tra['dN']*tra['dE']*trb['dN']*trb['dE'])
     #print 'B'; print B
     #diagonalise
-    Bdiag,U = eigh(B, lower=True, eigvals_only=False, turbo=True, type=1)
+    if np.iscomplex(eps_z).any():
+        Bdiag,U = eigh(B, lower=True, eigvals_only=False, turbo=True, type=1)
+    else:
+        Bdiag,U = eig(B)
     #final values of R,w0
     rhs = np.zeros(ntr)
     for tra in transitions_table:
@@ -603,17 +607,23 @@ def inv_eps_zz_Ando(results,transitions_table,freqaxis,eps_z,linewidth):
         rhs[a] = np.sqrt(tra['dN']*1e15*tra['dE']*meV2J)*q*x_if
     Ry2a = np.dot(U.transpose(),rhs)**2 * 2.0/(eps0*tra['Lperiod']*1e-9)*(1e-12/h)**2#THz**2 (real)
     wya = np.sqrt(Bdiag)/h*1e-12 #THz (real)
-    #calculate dielectric constant ratio - eps_b/eps_ISBT
-    inveps = np.mean(1.0/eps_z)
+    return wya,Ry2a
+
+def print_wR(wya,Rya2):
     print 'w     R'
+    for wy,Ry2 in zip(wya,Ry2a):
+        print wy,np.sqrt(Ry2)   
+
+def inv_eps_zz_Ando(wya,Ry2a,transitions_table,linewidth,freqaxis,eps_z):
+    """calculate dielectric constant ratio - eps_b/eps_ISBT for results of matrix calculation"""
+    inveps = np.mean(1.0/eps_z)
     ff0 = transitions_table[0]['Leff']/transitions_table[0]['Lperiod']
     for wy,Ry2 in zip(wya,Ry2a):
-        y_y = linewidth(np.sqrt(wy**2-Ry2/ff0)) #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
-        print wy,np.sqrt(Ry2)
+        y_y = linewidth(np.sqrt(wy**2-Ry2/ff0)) if callable(linewidth) else linewidth #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
         Xi = susceptibility_Losc(freqaxis,w0=wy,f=Ry2,w_p=1.0,y0=y_y)
         inveps-= Xi
-    return (wya,Ry2a),inveps
-
+    return inveps
+    
 ## Making plots of absorption
 
 def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
@@ -650,18 +660,40 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
     ax1.plot(freqaxis,absorption1,label='Independent Transitions Model')
     
     #model 2 # A classical approach to modelling multiple transitions. Not exact but accounts for coupling between transitions in a physically intuitive way.
-    eps_ratio2 = eps_b*inv_eps_zz_classical(transitions_table,freqaxis,eps_z)
-    absorption2 = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio2,nk,d)
-    ax1.plot(freqaxis,absorption2,label='Classical Transitions Model')
+    #eps_ratio2 = eps_b*inv_eps_zz_classical(transitions_table,freqaxis,eps_z)
+    #absorption2 = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio2,nk,d)
+    #ax1.plot(freqaxis,absorption2,label='Classical Transitions Model')
     
     #model 3 # An accurate model for multiple transitions (neglecting non-parabolicity).  
-    (wya,Rya),inv_eps_zz3 = inv_eps_zz_Ando(results,transitions_table,freqaxis,eps_z,linewidth)
+    wya,Ry2a = calc_wR_Ando(results,transitions_table,eps_z)
+    inv_eps_zz3 = inv_eps_zz_Ando(wya,Ry2a,transitions_table,linewidth,freqaxis,eps_z)
     eps_ratio3 = eps_b*inv_eps_zz3
     absorption3 = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio3,nk,d)
     ax1.plot(freqaxis,absorption3,label='Matrix Model')
     
     ax1.legend()
-    pl.show()
+    if not pl.isinteractive(): pl.show()
+
+
+def eps_background_GaAs(model,eps_gaas,eps_algaas):
+    """Helper function for calculating background dielectric constant
+    array for GaAs/AlGaAs structures"""
+    eps_z = np.zeros(model.n_max)
+    
+    position = 0.0 # keeping in nanometres (to minimise errors)
+    for layer in model.material:
+        startindex = round2int(position*1e-9/model.dx)
+        position += layer[0] # update position to end of the layer
+        finishindex = round2int(position*1e-9/model.dx)
+        #
+        matType = layer[1]
+        if matType == 'GaAs':
+            eps_z[startindex:finishindex] = eps_gaas
+        elif matType == 'AlGaAs':
+            eps_z[startindex:finishindex] = eps_algaas
+    return eps_z    
+
+
 
 if __name__ == "__main__":
     import config
@@ -706,33 +738,31 @@ if __name__ == "__main__":
         eps_b = 10.364
         eps_gaas = 10.364 # @ 16um
         eps_algaas = 8.2067
-        eps_z = np.zeros(model.n_max)
-        
-        position = 0.0 # keeping in nanometres (to minimise errors)
-        for layer in model.material:
-            startindex = aestimo.round2int(position*1e-9/model.dx)
-            position += layer[0] # update position to end of the layer
-            finishindex = aestimo.round2int(position*1e-9/model.dx)
-            #
-            matType = layer[1]
-            if matType == 'GaAs':
-                eps_z[startindex:finishindex] = eps_gaas
-            elif matType == 'AlGaAs':
-                eps_z[startindex:finishindex] = eps_algaas
+        eps_z = eps_background_GaAs(model,eps_gaas,eps_algaas)
     
     elif case==3: #w-dependent dielectric constants
         #because the zeroth axis is assumed to be the z-axis, our eps_z array must be 2d
         pass
         #currently the matrix model doesn't cope with frequency dependent dielectric constants
-        #therefore the classical model is the best approach.
+        #therefore the classical model would be the best approach (model2) although it seems
+        #to over-estimate the coupling between the transitions.
+        #Alternatively, we could resolve the matrix at each frequency (for each value of the
+        #background dielectric constant which would be accurate but may be quite computationally
+        #intensive.
     
     elif case==4: #z-dependent and w-dependent dielectric constants
         pass
         #currently the matrix model doesn't cope with frequency dependent dielectric constants
-        #therefore the classical model is the best approach.
+        #therefore the classical model is the best approach (model2) although it seems
+        #to over-estimate the coupling between the transitions.
+        #Alternatively, we could resolve the matrix at each frequency (for each value of the
+        #background dielectric constant which would be accurate but may be quite computationally
+        #intensive.
     
     # Linewidth
     def linewidth(freq): return 0.1*freq #define linewidth in THz
+
+    linewidth = 1.0 #THz
     
     # Optical Intersubband Transitions
     transitions_table,(hdr,units) = transitions(result,Lperiod,eps_z,linewidth)
