@@ -1,6 +1,6 @@
 """
  Aestimo 1D Schrodinger-Poisson Solver
- Copyright (C) 2013 Sefer Bora Lisesivdin and Aestimo group
+ Copyright (C) 2013-2014 Sefer Bora Lisesivdin and Aestimo group
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

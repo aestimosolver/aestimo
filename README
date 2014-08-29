@@ -1,5 +1,5 @@
 AESTIMO 1-D SELF-CONSISTENT SCHRÖDINGER-POISSON SOLVER
-Version 0.9
+Version 1.0
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Overview
@@ -30,7 +30,7 @@ See the examples subdirectory of the distribution. Also, detailed information ca
 License
 -------
 
-Aestimo is Copyrighted by (C) 2013 Sefer Bora Lisesivdin and Aestimo group. This software is distributed under the terms of the GNU General Public License v3, see ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt . This means that everyone is free to use, change, share and share the changes.
+Aestimo is Copyrighted by (C) 2013-2014 Sefer Bora Lisesivdin and Aestimo group. This software is distributed under the terms of the GNU General Public License v3, see ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt . This means that everyone is free to use, change, share and share the changes.
 
 For the list of contributors, see ~/AUTHORS 
 
