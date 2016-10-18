@@ -1001,7 +1001,7 @@ def save_and_plot(result,model):
     # Resultviewer
         
     if config.resultviewer:
-        pl.figure(figsize=(10,8))
+        fig1 = pl.figure(figsize=(10,8))
         pl.suptitle('Aestimo Results')
         pl.subplots_adjust(hspace=0.4,wspace=0.4)
                             
@@ -1044,7 +1044,7 @@ def save_and_plot(result,model):
         
         #QW representation
         #figure(5)
-        pl.figure(figsize=(10,8))
+        fig2 = pl.figure(figsize=(10,8))
         pl.suptitle('Aestimo Results')
         pl.subplot(1,1,1)
         pl.plot(xaxis, result.fitot*J2meV,'k')
@@ -1058,7 +1058,7 @@ def save_and_plot(result,model):
         pl.grid(True)
         
         #dispersion plot
-        pl.figure(figsize=(10,8))
+        fig3 = pl.figure(figsize=(10,8))
         pl.suptitle('Subband Dispersions')
         ax = pl.subplot(1,1,1)
         result.level_dispersions
@@ -1080,27 +1080,29 @@ def save_and_plot(result,model):
         pl.grid(True)
         
         pl.show()
+    return [fig1,fig2,fig3]
 
 def QWplot(result,figno=None):
     """QW representation"""
     xaxis = result.xaxis
-    pl.figure(figno,figsize=(10,8))
+    fig = pl.figure(figno,figsize=(10,8))
     pl.suptitle('Aestimo Results')
-    pl.subplot(1,1,1)
-    pl.plot(xaxis, result.fitot*J2meV,'k')
+    ax = pl.subplot(1,1,1)
+    ax.plot(xaxis, result.fitot*J2meV,'k')
     for level,state in zip(result.E_state,result.wfe): 
-        pl.axhline(level,0.1,0.9,color='g',ls='--')
-        pl.plot(xaxis, state*config.wavefunction_scalefactor+level,'b')
+        ax.axhline(level,0.1,0.9,color='g',ls='--')
+        ax.plot(xaxis, state*config.wavefunction_scalefactor+level,'b')
         #pl.plot(xaxis, state**2*1e-9/dx*200.0+level,'b')
-    pl.axhline(result.E_F,0.1,0.9,color='r',ls='--')
+    ax.axhline(result.E_F,0.1,0.9,color='r',ls='--')
     pl.xlabel('Position (m)')
     pl.ylabel('Energy (meV)')
-    pl.grid(True)
+    ax.grid(True)
     pl.show()
+    return fig
         
 def dispersionplot(result,figno=None):
     """subband dispersion plot"""
-    pl.figure(figsize=(10,8))
+    fig = pl.figure(figno,figsize=(10,8))
     pl.suptitle('Subband Dispersions')
     ax = pl.subplot(1,1,1)
     result.level_dispersions
@@ -1109,19 +1111,20 @@ def dispersionplot(result,figno=None):
     ka = np.linspace(0.0,kmax,50) #m**-1
     kax = ka*1e-9
     for Ei,meffi in zip(result.E_state,result.meff_state):
-        p1, = pl.plot(kax,Ei+J2meV*hbar**2*ka**2/(2*cb_meff0),'k')
-        p2, = pl.plot(kax,Ei+J2meV*hbar**2*ka**2/(2*meffi),'b')
+        p1, = ax.plot(kax,Ei+J2meV*hbar**2*ka**2/(2*cb_meff0),'k')
+        p2, = ax.plot(kax,Ei+J2meV*hbar**2*ka**2/(2*meffi),'b')
     if result.level_dispersions:
         for Ea,cb_meff_a,ka in result.level_dispersions:
-            p3, = pl.plot(ka*1e-9,Ea,'g')
+            p3, = ax.plot(ka*1e-9,Ea,'g')
         ax.legend([p1,p2,p3],['parabolic dispersions','parabolic dispersion (subband meff)','non-parabolic dispersions'])
     else:
         ax.legend([p1,p2],['parabolic dispersions','parabolic dispersion (subband meff)'])
-    pl.axhline(result.E_F,0.0,1.0,color='r',ls='--')
+    ax.axhline(result.E_F,0.0,1.0,color='r',ls='--')
     pl.xlabel('k-space (nm**-1)')
     pl.ylabel('Energy (meV)')
-    pl.grid(True)
+    ax.grid(True)
     pl.show()
+    return fig
 
 
 def load_results():
