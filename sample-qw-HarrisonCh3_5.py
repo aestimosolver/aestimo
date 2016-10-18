@@ -154,5 +154,5 @@ result= aestimo.Poisson_Schrodinger(model)
 
 #Plot QW representation
 config.wavefunction_scalefactor = 5000
-aestimo.QWplot(result)#,figno=None)
-    
+fig = aestimo.QWplot(result)#,figno=None)
+

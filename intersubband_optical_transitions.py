@@ -672,6 +672,9 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
     
     ax1.legend()
     if not pl.isinteractive(): pl.show()
+    
+    return f1
+    
 
 
 def eps_background_GaAs(model,eps_gaas,eps_algaas):

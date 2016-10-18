@@ -90,7 +90,7 @@ if __name__=="__main__":
         logger.info("total running time (exc. loading libraries) %g s",(time4 - aestimo.time1))
         
         # Write the simulation results in files
-        aestimo.save_and_plot(result,model)
+        fig1,fig2,fig3 = aestimo.save_and_plot(result,model)
         logger.info("Simulation is finished.")
     else: #load previously calculated results from output directory
         result = aestimo.load_results()
@@ -121,5 +121,5 @@ if __name__=="__main__":
     isbt.print_levels(result)
     isbt.print_transitions(transitions_table,hdr,units)
     
-    isbt.plotting_absorption(model,result,transitions_table,eps_b,eps_z,linewidth)
- 
+    fig4 = isbt.plotting_absorption(model,result,transitions_table,eps_b,eps_z,linewidth)
+
