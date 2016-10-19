@@ -24,7 +24,7 @@
 
 Theory Notes:
 Intersubband transitions (ISBTs) in a quantum well occur between the well's 
-different levels but staying within a single band. This is in contrast to
+different levels but stay within a single band. This is in contrast to
 interband transitions between the valence and conduction bands, those transitions
 mostly occur in the visible and near-infrared and are used for LEDs, lasers and 
 detectors. Intersubband transitions occur in the mid- to far- infrared and are 
@@ -35,7 +35,7 @@ calculate the dipole matrix elements of the transitions. However, ISBTs have som
 additional complications to a standard dipole transition. Firstly, they are 
 polarisation sensitive in that they can only couple to light polarised perpendicular
 to the quantum well plane. Secondly, there are complications since there are 
-many electrons in the quantum well layers; ones such complication is that we can
+many electrons in the quantum well layers; one such complication is that we can
 consider the transition as a plasma and the effect of the depolarisation field
 induced within the plasma when interacting with an electric field leads to a 
 shift of the peak's position (called the depolarisation shift). The plasma 
@@ -108,6 +108,9 @@ Important:
 To use the results from aestimo with these functions, we need to normalise the wavefunctions
     dx = results.dx #m
     wfe = results.wfe*dx**-0.5
+    
+Important:
+Keep track of whether you are dealing with real or natural frequencies.
 
 """
 import numpy as np
@@ -132,6 +135,7 @@ c = 299792458 #m/s
 
 J2meV=1e3/q #Joules to meV
 meV2J=1e-3*q #meV to Joules
+f2w = 1e12*2*pi #THz to Hz (natural)
 
 
 # Electromagnetism
@@ -367,7 +371,7 @@ def transitions(results,Lperiod,eps_z,linewidths):
         lw = linewidths
     else:
         lw = lambda freq: linewidths
-     
+    
     
     def transition(j,i,f): #Doing it this way would let me create a dielectric function for each transition using a function closure.
         """j - transition number (useful later)
@@ -464,7 +468,7 @@ def print_transitions(transitions_table,hdr,units):
         data = transitions_table[selection]
         for var,unit in zip(hdr,units):
             row = [var.rjust(var_w),unit.rjust(unit_w)]
-            row += [('%.3g' %tr[var]).rjust(data_w) for tr in data]
+            row += [('%.3g' %tr[var].real).rjust(data_w) for tr in data]
             print ''.join(row)
         print
 
@@ -478,7 +482,7 @@ def get_Leff_est(transitions_table):
 # Below we have some different models for intersubband transitions
 
 def inv_eps_zz_1(transitions_table,freqaxis,eps_z):
-    """calculates eps_b/eps_zz using the analytical result for a single transition.
+    """calculates eps_b/eps_zz using the analytically correct result for a single transition.
     If there are several active transitions that are close together then this will
     become increasingly incorrect. The dielectric constant is calculated for the 
     effective medium of QW + barrier. However, there is an assumption here that
@@ -493,12 +497,22 @@ def inv_eps_zz_1(transitions_table,freqaxis,eps_z):
     return inv_eps_zz
 
 def eps_classical(transitions_table,freqaxis,eps_b=1.0):
-    """calculates total dielectric constant epszz for QW by summing susceptibilities
-    of each transition. If you leave eps_b=1.0 then the result should be multiplied
-    by eps_b, if you use eps_b then you shouldn't need to do anything. In either 
-    case it should match the values used for calculating the transition plasma frequencies.
+    """Approximately calculates total dielectric constant epszz for QW by summing Lorentz 
+    oscillator susceptibilities for each transition. This assumes that all transitions 
+    share the same effective Length (which wasn't assumed when calculating the plasma 
+    frequency values (wp) contained in the transitions_table). The average effective length 
+    for all of the ISBTs of the QW will have to be used as a fitting parameter in order to
+    get the best fit.
     
-    WARNING: This shouldn't be used on its own for modelling ISBTs."""
+    If you leave eps_b=1.0 then the result should be multiplied by eps_b, if you use eps_b
+    then you shouldn't need to do anything. In either case it should match the values used 
+    for calculating the transition plasma frequencies.
+        
+    warning - This shouldn't be used on its own for modelling ISBTs using absorption_standard()
+    to calculate the absorption since this doesn't take into account the anisotropic nature
+    of the ISBTs and the resulting depolarisation shift.
+    
+    """
     eps = eps_b
     for trn in transitions_table: #nb. first row of table describes the units of each variable
         Xi = susceptibility_Losc(freqaxis,w0=trn['freq'],f=trn['f'],w_p=trn['wp'],y0=trn['y_if'],eps_b=eps_b)
@@ -528,6 +542,7 @@ def inv_eps_zz_classical(transitions_table,freqaxis,eps_z):
     return inv_eps_zz
 
 ## Advanced Multilevel Model #################
+## frequency independent dielectric constant
 
 def dipole_matrix_b(z,wfe1,wfe2,eps_z):
     """Calculates something similar to the dipole matrix element numerically. 
@@ -551,16 +566,10 @@ def calc_S_c(Psi0,Psi1,Psi2,Psi3,eps_z,zaxis):
         i3+=p2*p3*i2
     i3*=dz**3
     return -i3
-    
-def calc_wR_Ando(results,transitions_table,eps_z):
-    """Uses a multilevel version of the mathematical formalism given in Ando 1977
-    A matrix is constucted describing the transitions and the interactions between
-    them which can be diagonalised to give a description of the system as a simple
-    sequence of Lorentzian oscillators.
-    eps_z is an array of the dielectric constant wrt z for the media in the barrier+QW+barrier
-    structure.
-    """
-    ttunits = transitions_table[0]
+
+def calc_interaction_matrix(results,transitions_table,eps_z):
+    """calculates the matrix of describing collective interactions between the transitions
+    and also the d vector"""
     #number of transitions
     ntr = len(transitions_table) #or n*(n-1)/2 where n is the number of energy levels
     # Note that following arrays are indexed by transition rather than energy level.
@@ -570,7 +579,7 @@ def calc_wR_Ando(results,transitions_table,eps_z):
     wfe = results.wfe*dx**-0.5
     zaxis = results.xaxis #m
     # S matrix
-    S = np.zeros((ntr,ntr))
+    S = np.zeros((ntr,ntr),np.complex)
     for tra in transitions_table:
         a = tra['j']
         S[a,a] = calc_S_c(wfe[tra['ilevel']],wfe[tra['flevel']],wfe[tra['ilevel']],wfe[tra['flevel']],eps_z,zaxis)
@@ -579,54 +588,110 @@ def calc_wR_Ando(results,transitions_table,eps_z):
         b = trb['j']
         S[a,b] = S[b,a] = calc_S_c(wfe[tra['ilevel']],wfe[tra['flevel']],wfe[trb['ilevel']],wfe[trb['flevel']],eps_z,zaxis)
     #print 'S';print S
-    # B matrix
-    #B = 2*S_ab*e**2/(eps0) * sqrt((n_a - n_-a)*(n_b - n_b)*hbar*w_a*hbar*w_b) + delta_ab*hbar**2*w_a**2
+    # T matrix
     const = 2*q**2/eps0*meV2J*1e15 # 1e15 converts dN values into carriers/m**2
-    B = np.zeros((ntr,ntr))
+    R = np.zeros((ntr,ntr),np.complex)
     for tra in transitions_table:
         a = tra['j']
-        B[a,a] = const*S[a,a]*np.sqrt(tra['dN']*tra['dE']*tra['dN']*tra['dE']) + (tra['dE']*meV2J)**2
+        R[a,a] = const*S[a,a]*np.sqrt(tra['dN']*tra['dE']*tra['dN']*tra['dE'])
     for tra,trb in combinations(transitions_table,2):
         a = tra['j']
         b = trb['j']
-        B[a,b] = B[b,a] = const*S[a,b]*np.sqrt(tra['dN']*tra['dE']*trb['dN']*trb['dE'])
-    #print 'B'; print B
-    #diagonalise
-    if np.iscomplex(eps_z).any():
-        Bdiag,U = eigh(B, lower=True, eigvals_only=False, turbo=True, type=1)
-    else:
-        Bdiag,U = eig(B)
-    #final values of R,w0
-    rhs = np.zeros(ntr)
+        R[a,b] = R[b,a] = const*S[a,b]*np.sqrt(tra['dN']*tra['dE']*trb['dN']*trb['dE']) 
+    # d vector
+    d = np.zeros(ntr,np.complex)
     for tra in transitions_table:
         a = tra['j'] #find correct index
         i = tra['ilevel']
         f = tra['flevel']
         x_if = dipole_matrix_b(zaxis,wfe[i],wfe[f],eps_z)
-        rhs[a] = np.sqrt(tra['dN']*1e15*tra['dE']*meV2J)*q*x_if
-    Ry2a = np.dot(U.transpose(),rhs)**2 * 2.0/(eps0*tra['Lperiod']*1e-9)*(1e-12/h)**2#THz**2 (real)
+        d[a] = np.sqrt(tra['dN']*1e15*tra['dE']*meV2J)*q*x_if
+    return R,d
+
+def calc_wR_multiplasmon(results,transitions_table,eps_z):
+    """Uses a multilevel version of the mathematical formalism given in Ando 1977
+    A matrix is constucted describing the transitions and the interactions between
+    them which can be diagonalised to give a description of the system as a simple
+    sequence of Lorentzian oscillators.
+    eps_z is an array of the dielectric constant wrt z for the media in the barrier+QW+barrier
+    structure.
+    returns (w,R-squared) - (real frequency (THz), related to transition oscillator strength)
+    """
+    #Calculate transitions interactions matrix + rhs of system equation
+    R,d = calc_interaction_matrix(results,transitions_table,eps_z)
+    #Add transition energies to Transition interaction matrix
+    B = R
+    for tra in transitions_table:
+        a = tra['j']
+        B[a,a] += (tra['dE']*meV2J)**2
+    
+    #diagonalise
+    if np.iscomplex(eps_z).any():
+        Bdiag,U = eig(B,right=True) #matrix will be complex symmetric but not Hermitian, this may be a problem with the theory...
+    else:
+        Bdiag,U = eigh(B, lower=True, eigvals_only=False, turbo=True, type=1) #otherwise we can be sure that B is real symmetric
+    #final values of R,w0
+    Ry2a = np.dot(U.transpose(),d)**2 * 2.0/(eps0*tra['Lperiod']*1e-9)*(1e-12/h)**2#THz**2 (real)
     wya = np.sqrt(Bdiag)/h*1e-12 #THz (real)
     return wya,Ry2a
 
-def print_wR(wya,Rya2):
-    print 'w     R'
+def print_multiplasmon_transitions(wya,Ry2a):
+    """display the results from the multiplasmon matrix model of the intersubband
+    transitions. These results are 'more accurate' than the transition table results.
+        wya - transition frequencies (THz)
+        Ry2a - R-squared - related to transition strength - numerator of a Lorentz 
+               oscillator model of the transitions. 
+    
+    Ry2a = f*wp**2/(eps_b)*L_eff/L
+        f - oscillator strength
+        wp - plasma frequency
+        eps_b - background frequency
+        L_eff - effective width of the transition
+        L - width of QW / effective medium period.
+    """
+    print "Optical transitions from multiplasmon matrix model"
+    print "R^2 - related to oscillator strength of each transition (THz^2)."
+    print "Other columns give the transition frequencies in various units."
+    print '\t'.join(('R^2','(meV)','(THz)','(um)','(wavno - cm^-1)'))
     for wy,Ry2 in zip(wya,Ry2a):
-        print wy,np.sqrt(Ry2)   
+        gap=wy*1e12*h*J2meV
+        freq=wy
+        wav=c/(wy*1e12)*1e6
+        wavno=wy*1e12/c*1e-2
+        print '\t'.join('%.4g' %i for i in (np.sqrt(Ry2.real),gap,freq,wav,wavno))
 
-def inv_eps_zz_Ando(wya,Ry2a,transitions_table,linewidth,freqaxis,eps_z):
-    """calculate dielectric constant ratio - eps_b/eps_ISBT for results of matrix calculation"""
+def inv_eps_zz_multiplasmon(wya,Ry2a,transitions_table,linewidth,freqaxis,eps_z):
+    """calculate dielectric constant ratio - 1.0/eps_ISBT for results of matrix calculation.
+    linewidth is either a function depending upon a transition frequency or a constant value (THz?).
+    linewidths are calculated in an empirical fashion, currently using the undepolarisation shifted
+    frequency if linewidth is a function."""
     inveps = np.mean(1.0/eps_z)
     ff0 = transitions_table[0]['Leff']/transitions_table[0]['Lperiod']
-    for wy,Ry2 in zip(wya,Ry2a):
-        y_y = linewidth(np.sqrt(wy**2-Ry2/ff0)) if callable(linewidth) else linewidth #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
+    w_if = np.sort([tra['dE'] for tra in transitions_table])*meV2J/h*1e-12 #(THz) initial transition frequencies
+    for wy,Ry2,wi in zip(wya,Ry2a,w_if):
+        y_y = linewidth(wi) if callable(linewidth) else linewidth #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
+        #y_y = linewidth(np.sqrt(wy**2-Ry2/ff0)) if callable(linewidth) else linewidth #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
         Xi = susceptibility_Losc(freqaxis,w0=wy,f=Ry2,w_p=1.0,y0=y_y)
         inveps-= Xi
     return inveps
-    
+
+def inv_eps_zz_multiplasmon_helper(results,transitions_table,linewidth,freqaxis,eps_z):
+    """this calculates the dielectric constant ratio - 1.0/eps_ISBT for the ISBTs for a frequency independent
+    dielectric constant.
+    """
+    wya,Ry2a = calc_wR_multiplasmon(results,transitions_table,eps_z)
+    return inv_eps_zz_multiplasmon(wya,Ry2a,transitions_table,linewdith,freqaxis,eps_z)
+
+
+
+
+
 ## Making plots of absorption
 
 def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
-    """plots an approximation to the ISBT absorptions of a QW"""    
+    """plots an approximation to the ISBT absorptions of a QW.
+    This is really a demo function, add a customised version to your
+    script."""    
     f1 = pl.figure()
     ax1 = f1.add_subplot(111)
     ax1.set_xlabel('frequency (THz)')
@@ -645,7 +710,7 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
     
     #model 0 # the slightly niave model usng the 'standard' absorption calculation and Lorentz oscillator model
     # this is only for comparison.
-    eps_simple = eps_classical(transitions_table,freqaxis,eps_b)#.conjugate()
+    eps_simple = eps_classical(transitions_table,freqaxis,np.mean(eps_z))#.conjugate()
     Leff0 = get_Leff_est(transitions_table)*1e-9
     absorption_simple = absorption_standard(freqaxis*f2w,eps_simple,Leff0)
     #eps_b=1.0
@@ -664,8 +729,9 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
     #ax1.plot(freqaxis,absorption2,label='Classical Transitions Model')
     
     #model 3 # An accurate model for multiple transitions (neglecting non-parabolicity).  
-    wya,Ry2a = calc_wR_Ando(results,transitions_table,eps_z)
-    inv_eps_zz3 = inv_eps_zz_Ando(wya,Ry2a,transitions_table,linewidth,freqaxis,eps_z)
+    wya,Ry2a = calc_wR_multiplasmon(results,transitions_table,eps_z)
+    #print 'matrix method results'; print_multiplasmon_transitions(wya,Ry2a)
+    inv_eps_zz3 = inv_eps_zz_multiplasmon(wya,Ry2a,transitions_table,linewidth,freqaxis,eps_z)
     eps_ratio3 = eps_b*inv_eps_zz3
     absorption3 = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio3,nk,d)
     ax1.plot(freqaxis,absorption3,label='Matrix Model')
@@ -680,7 +746,7 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
 def eps_background_GaAs(model,eps_gaas,eps_algaas):
     """Helper function for calculating background dielectric constant
     array for GaAs/AlGaAs structures"""
-    eps_z = np.zeros(model.n_max)
+    eps_z = np.zeros(model.n_max,np.complex)
     
     position = 0.0 # keeping in nanometres (to minimise errors)
     for layer in model.material:
@@ -703,6 +769,8 @@ if __name__ == "__main__":
     import aestimo
     import os
     import time
+    
+    np.set_printoptions(precision=3,linewidth=180)
     
     logger = aestimo.logger
     
@@ -731,10 +799,10 @@ if __name__ == "__main__":
     Lperiod = sum([layer[0] for layer in model.material])*1e-9 #m
     
     # set dielectric constants
-    case = 1
+    case = 2
     if case==1: #scalar dielectric constants
         eps_b = 12.90
-        eps_z = 12.90
+        eps_z = 12.90 #+ 0.0j
     
     elif case==2: #z-dependent dielectric constants
         eps_b = 10.364
@@ -764,7 +832,7 @@ if __name__ == "__main__":
     # Linewidth
     def linewidth(freq): return 0.1*freq #define linewidth in THz
 
-    linewidth = 1.0 #THz
+    #linewidth = 1.0 #THz
     
     # Optical Intersubband Transitions
     transitions_table,(hdr,units) = transitions(result,Lperiod,eps_z,linewidth)
