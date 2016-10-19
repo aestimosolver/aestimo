@@ -649,16 +649,17 @@ def print_multiplasmon_transitions(wya,Ry2a):
         L_eff - effective width of the transition
         L - width of QW / effective medium period.
     """
+    col_width = 10
     print "Optical transitions from multiplasmon matrix model"
     print "R^2 - related to oscillator strength of each transition (THz^2)."
     print "Other columns give the transition frequencies in various units."
-    print '\t'.join(('R^2','(meV)','(THz)','(um)','(wavno - cm^-1)'))
+    print ''.join(s.rjust(col_width) for s in ('R^2','(meV)','(THz)','(um)','(wavno - cm^-1)'))
     for wy,Ry2 in zip(wya,Ry2a):
         gap=wy*1e12*h*J2meV
         freq=wy
         wav=c/(wy*1e12)*1e6
         wavno=wy*1e12/c*1e-2
-        print '\t'.join('%.4g' %i for i in (np.sqrt(Ry2.real),gap,freq,wav,wavno))
+        print ''.join(('%.4g' %i).rjust(col_width) for i in (np.sqrt(Ry2.real),gap,freq,wav,wavno))
 
 def inv_eps_zz_multiplasmon(wya,Ry2a,transitions_table,linewidth,freqaxis,eps_z):
     """calculate dielectric constant ratio - 1.0/eps_ISBT for results of matrix calculation.
