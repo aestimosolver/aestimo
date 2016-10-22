@@ -119,7 +119,7 @@ import matplotlib.pyplot as pl
 from itertools import combinations,permutations
 import types
 from scipy.linalg import eigh,eig
-from aestimo import round2int
+from aestimo import round2int,logger
 
 sin,cos,log,exp = np.sin,np.cos,np.log,np.exp
 
@@ -431,25 +431,22 @@ def transitions(results,Lperiod,eps_z,linewidths):
 
 
 def print_levels(results):
-    """prints out energy levels and their populations. Also
+    """prints out energy levels and their populations to the log. Also
     print out their gaps"""
-    print 'the energy levels\population are (meV)\t(m**-2):'
+    logger.info('the energy levels\population are (meV)\t(m**-2):')
     for Ei,Ni in zip(results.E_state,results.N_state): print Ei,'\t',Ni
-    print
-    print 'T = %gK' %results.T
-    print
-    print 'the energy levels gaps are'
-    print '\t'.join(('(meV)','(THz)','(um)','(wavno)'))
+    logger.info('T = %gK' %results.T)
+    logger.info('the energy levels gaps are')
+    logger.info('\t'.join(('(meV)','(THz)','(um)','(wavno)')))
     for leveli,levelj in transition_generator(results.E_state):
         gap=levelj-leveli
         freq=gap*1e-3*q/h/1e12
         wav=1e6*h*c/(gap*1e-3*q)
         wavno=gap*1e-3*q/h/c*1e-2
-        print '\t'.join('%.3g' %i for i in (gap,freq,wav,wavno))
-    #print
+        logger.info('\t'.join('%.3g' %i for i in (gap,freq,wav,wavno)))
     
 def print_transitions(transitions_table,hdr,units):
-    """print out summary of transition values""" 
+    """print out summary of transition values to the log""" 
     printwidth = np.get_printoptions()['linewidth']
     var_w = 8 #print width for variable names
     unit_w = 14 #print width for units
@@ -463,14 +460,13 @@ def print_transitions(transitions_table,hdr,units):
             yield slice(startindex,startindex+cols_per_repeat)
             startindex += cols_per_repeat
     
-    print "Summary of Intersubband Transitions"
+    logger.info( "Summary of Intersubband Transitions")
     for selection in repeat_generator(len(transitions_table),cols_per_repeat):
         data = transitions_table[selection]
         for var,unit in zip(hdr,units):
             row = [var.rjust(var_w),unit.rjust(unit_w)]
             row += [('%.3g' %tr[var].real).rjust(data_w) for tr in data]
-            print ''.join(row)
-        print
+            logger.info( ''.join(row))
 
 def get_Leff_est(transitions_table):
     """gets a value of Leff for the QW that will be applied to all transitions.
@@ -650,16 +646,16 @@ def print_multiplasmon_transitions(wya,Ry2a):
         L - width of QW / effective medium period.
     """
     col_width = 10
-    print "Optical transitions from multiplasmon matrix model"
-    print "R^2 - related to oscillator strength of each transition (THz^2)."
-    print "Other columns give the transition frequencies in various units."
-    print ''.join(s.rjust(col_width) for s in ('R^2','(meV)','(THz)','(um)','(wavno - cm^-1)'))
+    logger.info( "Optical transitions from multiplasmon matrix model")
+    logger.info( "R^2 - related to oscillator strength of each transition (THz^2).")
+    logger.info( "Other columns give the transition frequencies in various units.")
+    logger.info( ''.join(s.rjust(col_width) for s in ('R^2','(meV)','(THz)','(um)','(wavno - cm^-1)')))
     for wy,Ry2 in zip(wya,Ry2a):
         gap=wy*1e12*h*J2meV
         freq=wy
         wav=c/(wy*1e12)*1e6
         wavno=wy*1e12/c*1e-2
-        print ''.join(('%.4g' %i).rjust(col_width) for i in (np.sqrt(Ry2.real),gap,freq,wav,wavno))
+        logger.info( ''.join(('%.4g' %i).rjust(col_width) for i in (np.sqrt(Ry2.real),gap,freq,wav,wavno)))
 
 def inv_eps_zz_multiplasmon(wya,Ry2a,transitions_table,linewidth,freqaxis,eps_z):
     """calculate dielectric constant ratio - 1.0/eps_ISBT for results of matrix calculation.
