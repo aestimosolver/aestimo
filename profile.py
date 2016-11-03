@@ -1,3 +1,7 @@
+#!/bin/python
+# -*- coding: utf-8 -*-
+"""simple script for profiling aestimo using the cProfile module.
+"""
 """
  Aestimo 1D Schrodinger-Poisson Solver
  Copyright (C) 2013-2014 Sefer Bora Lisesivdin and Aestimo group
@@ -16,8 +20,6 @@
     along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
 
     For the list of contributors, see ~/AUTHORS
-
- Description:  cProfile file.
 """
 
 import cProfile

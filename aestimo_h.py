@@ -1,5 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""This is the 3x3 k.p aestimo calculator for valence band calculations 
+   (Numpy version, there is no classic version for valence band calculations).
+
+It can be used similarly to the aestimo.py module. aestimo_h.py can be used as 
+a script or a libary.
+
+To use as a script, define the simulation in a python file. See the following 
+sample files for examples on usage and the required parameters:
+    sample-qw-barrierdope-p.py
+    sample-qw-barrierdope-p_cdzno.py
+    sample-qw-barrierdope-p_ingran.py
+    sample-multi-qw-barrierdope-p.py
+    sample-multi-qw-barrierdope-p_ingran.py   
+and then run aestimo on the command line as 
+  ./aestimo.py -i <input file>
+Since we are abusing the python module system, the input 'file' needs to be 
+importable by the aestimo script. Alternatively, define the input file in the
+config module using the inputfilename parameter.
+
+To use aestimo_h.py as a library, first create an instance of the StructureFrom
+class which builds the arrays describing a structure from the same input 
+parameters that are found in the sample files. A simple list format is used to 
+describes the structure's layers.
+"""
 """
  Aestimo 1D Schrodinger-Poisson Solver
  Copyright (C) 2013-2014 Sefer Bora Lisesivdin and Aestimo group
@@ -18,10 +42,6 @@
     along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
 
     For the list of contributors, see ~/AUTHORS
-
-  Description: This is the 3x3 k.p aestimo calculator for valence band calculations 
-              (Numpy version, there is no classic version for valence band calculations).
-  
 """
 import time
 time0 = time.time() # timing audit

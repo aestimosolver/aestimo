@@ -1,28 +1,36 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
- Aestimo 1D Schrodinger-Poisson Solver
- Copyright (C) 2013-2014 Sefer Bora Lisesivdin and Aestimo group
+"""This module calculates the optical intersubband transitions (ISBTs) for the 
+conduction band levels.
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+The module can be run as a script, it will calculate the ISBTs for the inputfile
+defined in the config.py module.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+To learn how to apply the module to your needs, it is best to study the code for
+the plotting_absorption() function and the code within the 'if __name__=="main"'
+section at the bottom of the module. The module consists of a collection of 
+functions, each of which is commented and so it should be relatively easy to work
+out what each function does.
 
-    You should have received a copy of the GNU General Public License
-    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
+If you just want to calculate the intersubband absorption though, this is some 
+example code:
 
-    For the list of contributors, see ~/AUTHORS
+    results = aestimo.Poisson_Schrodinger(model) 
+    #see aestimo for defining the model object or the code at the bottom of the module
+    
+    transitions_table,(hdr,units)=transitions(results,Lperiod,eps_z,linewidths)
+    
+    wya,Ry2a = calc_wR_multiplasmon(results,transitions_table,eps_z)
+    #print 'matrix method results'; print_multiplasmon_transitions(wya,Ry2a)
+    
+    inv_eps_zz = inv_eps_zz_multiplasmon(wya,Ry2a,transitions_table,linewidth,freqaxis,eps_z)
+    eps_ratio = eps_b*inv_eps_zz
+    absorption = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio,nk,d)
 
- Description: This calculates the optical intersubband transitions for the conduction
-            band levels.
+
 
 Theory Notes:
+
 Intersubband transitions (ISBTs) in a quantum well occur between the well's 
 different levels but stay within a single band. This is in contrast to
 interband transitions between the valence and conduction bands, those transitions
@@ -112,6 +120,25 @@ To use the results from aestimo with these functions, we need to normalise the w
 Important:
 Keep track of whether you are dealing with real or natural frequencies.
 
+"""
+"""
+ Aestimo 1D Schrodinger-Poisson Solver
+ Copyright (C) 2013-2014 Sefer Bora Lisesivdin and Aestimo group
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
+
+    For the list of contributors, see ~/AUTHORS
 """
 import numpy as np
 from scipy.integrate import simps

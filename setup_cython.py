@@ -1,5 +1,17 @@
 #!/bin/python
 # -*- coding: utf-8 -*-
+"""This module compiles the cythonised version of the psi_at_inf function used
+by the aestimo.py shooting method (but not by aestimo_h.py). See 
+psi_at_inf_cython.pyx
+
+Compile the cythonised function with the command:
+   python setup_cython.py build_ext --inplace
+or on windows:
+   python setup_cython.py build_ext --inplace --compiler=mingw32
+
+aestimo.py will then automatically use this faster version as long as the 
+config.py module contains `use_cython = True`.
+"""
 """
  Aestimo 1D Schrodinger-Poisson Solver
  Copyright (C) 2013-2014 Sefer Bora Lisesivdin and Aestimo group
@@ -18,10 +30,6 @@
     along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
 
     For the list of contributors, see ~/AUTHORS
-
- Description:  Compile the cythonised version of the psi_at_inf function
-             with the command python setup_cython.py build_ext --inplace
-             or python setup_cython.py build_ext --inplace --compiler=mingw32 on windows
 """
 from distutils.core import setup
 from distutils.extension import Extension

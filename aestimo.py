@@ -1,5 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""This is the aestimo calculator of conduction band structure for quantum wells.
+
+aestimo.py can be used as a script or a libary.
+
+To use as a script, define the simulation in a python file (see the sample-*.py 
+files for examples of the parameters needed) and then run aestimo on the command
+line as 
+  ./aestimo.py -i <input file>
+Since we are abusing the python module system, the input 'file' needs to be 
+importable by the aestimo script. Alternatively, define the input file in the
+config module using the inputfilename parameter.
+
+To use aestimo as a library, first create an instance of the Structure class; 
+this can be more conveniently done using the StructureFrom class which builds 
+the arrays describing a structure from a simple list format that describes the
+structure's layers. See the class docstrings for details on the required 
+parameters.
+
+The simplest way to then calculate the structure is to use the Poisson_Schrodinger()
+function. See the run_aestimo() function's source code for details on presenting or 
+saving the results of this calculation using the returned object.
+
+Calculations can be sped up by compiling the cythonised version of the psi_at_inf*
+functions. This can be done using the setup_cython.py module.
+"""
 """
  Aestimo 1D Schrodinger-Poisson Solver
  Copyright (C) 2013-2014 Sefer Bora Lisesivdin and Aestimo group
@@ -17,10 +42,7 @@
     You should have received a copy of the GNU General Public License
     along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
 
-    For the list of contributors, see ~/AUTHORS
-
-  Description: This is the aestimo calculator conduction band calculations (Numpy version).
-  
+    For the list of contributors, see ~/AUTHORS 
 """
 import time
 time0 = time.time() # timing audit

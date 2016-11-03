@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""This script shows how we can simulate a design several times while varying a
+parameter over a range of values.
+"""
 """
  Aestimo 1D Schrodinger-Poisson Solver
  Copyright (C) 2013-2014 Sefer Bora Lisesivdin and Aestimo group
@@ -18,9 +21,6 @@
     along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
 
     For the list of contributors, see ~/AUTHORS
-
- Description:  This is an example script for simulating a design several 
-               times while varying a parameter over a range of values.
 """
 import matplotlib.pyplot as pl
 import numpy as np
