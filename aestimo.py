@@ -82,31 +82,29 @@ class Structure():
         """This class holds details on the structure to be simulated.
         database is the module containing the material properties. Then
         this class should have the following attributes set
-        Fapp - applied field (Vm**-1)
-        T - Temperature (K)
-        subnumber_e - number of subbands to look for.
-        comp_scheme - computing scheme
-        meff_method - choose effective mass function to model non-parabolicity
-        fermi_np_scheme - include nonparabolicity in calculation of Fermi level
+          Fapp - float - applied field (Vm**-1)
+          T - float - Temperature (K)
+          subnumber_e - int- number of subbands to look for.
+          comp_scheme - int - computing scheme (see below)
+          meff_method - int - choose effective mass function to model non-parabolicity (see below)
+          fermi_np_scheme - bool - include nonparabolicity in calculation of Fermi level
         
-        dx - grid step size (m)
-        n_max - number of grid points
+          dx - float - grid step size (m)
+          n_max - int - number of grid points
         
-        fi #Bandstructure potential (J) (array, len n_max)
-        eps #dielectric constant (including eps0) (array, len n_max)
-        dop #doping distribution (m**-3) (array, len n_max)
-        cb_meff #conduction band effective mass (kg) (array, len n_max)
+        #arrays - float/double (len = n_max)
+          fi - Bandstructure potential (J) 
+          eps - dielectric constant (including eps0)
+          dop - doping distribution (m**-3)
+          cb_meff - conduction band effective mass (kg)
         
-        #optional arrays
-        cb_meff_alpha - non-parabolicity constant. Used for Nelson's empirical 2-band model)
-        Eg - band gap energy (Used for k.p model found in Vurgaftman)
-        Ep - (Used for k.p model found in Vurgaftman)
-        F - (Used for k.p model found in Vurgaftman)
-        delta_S0 - spin split-off energy (Used for k.p model found in Vurgaftman)
-        
-        These last 4 can be created by using the method 
-        create_structure_arrays(material_list)
-        
+        #optional arrays - float/double (len = n_max)
+          cb_meff_alpha - non-parabolicity constant. Used for Nelson's empirical 2-band model)
+          Eg - band gap energy (Used for k.p model found in Vurgaftman)
+          Ep - (Used for k.p model found in Vurgaftman)
+          F - (Used for k.p model found in Vurgaftman)
+          delta_S0 - spin split-off energy (Used for k.p model found in Vurgaftman)
+                
         COMPUTATIONAL SCHEMES (comp_scheme)
         0: Schrodinger
         1: Schrodinger + nonparabolicity
@@ -116,7 +114,8 @@ class Structure():
         5: Schrodinger-Poisson + Exchange interaction
         6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
         
-        EFFECTIVE MASS MODELS (meff_method) - for when nonparabolicity is modelled (see comp_scheme)
+        EFFECTIVE MASS MODELS (meff_method) 
+                        - for when nonparabolicity is modelled (see comp_scheme)
         0: no energy dependence
         1: Nelson's effective 2-band model
         2: k.p model from Vurgaftman's 2001 paper
@@ -195,6 +194,55 @@ class AttrDict(dict):
 
 class StructureFrom(Structure):
     def __init__(self,inputfile,database):
+        """database is a module or object containing the semiconductor material
+        properties. Normally this is just aestimo's database.py module.
+        
+        inputfile is a dict or object with the following required parameters or
+        attributes. These are exactly the parameters normally defined in the 
+        input files (note that the parameter names are not exactly the same 
+        as those for the Structure class) :
+        
+          Fapplied - applied field (Vm**-1) (float)
+          T - Temperature (K) (float)
+          subnumber_e - number of subbands to look for. (int)
+          computation_scheme - computing scheme (see below) (int)
+          meff_method - choose effective mass function to model non-parabolicity (see below) (int)
+          fermi_np_scheme - include nonparabolicity in calculation of Fermi level (bool)
+
+          gridfactor - grid step size (m) (float)
+          maxgridpoints - number of grid points (int)
+        
+          material - a list describing a structure's layers. Each layer is a list
+                     containing the following fields:
+               thickness -  (nm)
+               material type - any defined in the database ie. {GaAs,AlAs,AlGaAs,InGaAs...}  
+               alloy fraction - value between 0.0 and 1.0
+               doping (cm^-3) - density of dopants in the layer
+               doping type - whether the dopants are n-type or p-type
+              i.e.
+              [[ 20.0, 'AlGaAs', 0.3, 1e17, 'n'],
+               [ 50.0,   'GaAs',   0,    0, 'n']]
+        
+
+        COMPUTATIONAL SCHEMES (comp_scheme)
+        0: Schrodinger
+        1: Schrodinger + nonparabolicity
+        2: Schrodinger-Poisson
+        3: Schrodinger-Poisson with nonparabolicity
+        4: Schrodinger-Exchange interaction
+        5: Schrodinger-Poisson + Exchange interaction
+        6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
+
+        EFFECTIVE MASS MODELS (meff_method) 
+                        - for when nonparabolicity is modelled (see comp_scheme)
+        0: no energy dependence
+        1: Nelson's effective 2-band model
+        2: k.p model from Vurgaftman's 2001 paper
+        
+        Nb. If changes are made to an instance's input parameters after 
+        initialisation, the method create_structure_arrays() should be run to
+        update the instance to the new parameters.
+        """
         if type(inputfile)==dict:
             inputfile=AttrDict(inputfile)            
         # Parameters for simulation
@@ -759,17 +807,17 @@ def calc_Vxc(sigma,dop,eps,cb_meff,dx):
 
 def Poisson_Schrodinger(model):
     """Performs a self-consistent Poisson-Schrodinger calculation of a 1d quantum well structure.
-    Model is an object with the following attributes:
-    fi - Bandstructure potential (J) (array, len n_max)
-    cb_meff - conduction band effective mass (kg)(array, len n_max)
-    eps - dielectric constant (including eps0) (array, len n_max)
-    dop - doping distribution (m**-3) ( array, len n_max)
-    Fapp - Applied field (Vm**-1)
-    T - Temperature (K)
-    comp_scheme - simulation scheme (currently unused)
-    subnumber_e - number of subbands for look for in the conduction band
-    dx - grid spacing (m)
-    n_max - number of points.
+    Model is an instance of the Structure class or an object with the following attributes:
+      fi - float - Bandstructure potential (J) (array, len n_max)
+      cb_meff - float - conduction band effective mass (kg)(array, len n_max)
+      eps - float - dielectric constant (including eps0) (array, len n_max)
+      dop - float - doping distribution (m**-3) ( array, len n_max)
+      Fapp - float - Applied field (Vm**-1)
+      T - float - Temperature (K)
+      comp_scheme - int - simulation scheme
+      subnumber_e - int - number of subbands for look for in the conduction band
+      dx - float - grid spacing (m)
+      n_max - int - number of points.
     """   
     fi = model.fi
     cb_meff = model.cb_meff # effective mass at band edge (effective mass with non-parabolicity is model.cb_meff_E(E,fi))
