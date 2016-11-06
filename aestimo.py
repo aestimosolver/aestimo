@@ -479,6 +479,7 @@ try:
         cb_meff_E = model.cb_meff_E(E,fis) # energy dependent mass
         return psi_at_inf_numpy(E,fis,cb_meff_E,n_max,dx)
         
+    logger.info("using psi_at_inf_cython module")
 except ImportError:
     logger.warning("psi_at_inf_cython module not found")
 
