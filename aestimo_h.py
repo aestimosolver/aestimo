@@ -26,7 +26,7 @@ describes the structure's layers.
 """
 """
  Aestimo 1D Schrodinger-Poisson Solver
- Copyright (C) 2013-2014 Sefer Bora Lisesivdin and Aestimo group
+ Copyright (C) 2013-2016 Sefer Bora Lisesivdin and Aestimo group
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,6 +43,7 @@ describes the structure's layers.
 
     For the list of contributors, see ~/AUTHORS
 """
+__version__='1.1.0'
 import time
 time0 = time.time() # timing audit
 #from scipy.optimize import fsolve

@@ -68,7 +68,7 @@ cmdclass.update({ 'build_ext': build_ext })
 
 
 setup(name='aestimo',
-        version='1.1',
+        version='1.1.0',
         description='A bandstructure simulator of semiconductor nanostructures called quantum wells.',
         long_description= read('README'),
         classifiers=[
