@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """setuptools script for aestimo project"""
 from setuptools import setup
-import os
+import os, sys
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
@@ -29,7 +29,7 @@ cmdclass['sdist'] = sdist
 
 # using cython if it is installed on the users distribution.
 try:
-    from Cython.Distutils import _build_ext
+    from Cython.Distutils import build_ext as _build_ext
     #raise ImportError
     use_cython = True
     ext = '.pyx'
@@ -53,10 +53,14 @@ class build_ext(_build_ext):
         try:
             import numpy
         except ImportError:
-            include_dirs = []
+            #guess
+            site_packages = [p for p in sys.path if sys.prefix in p and '-packages' in p][0]
+            include_dir = os.path.join(site_packages,'numpy','core','include')
+            #still see an error since bdist_wheel is attempted be built before numpy is installed.
+            #this would all work except that 'setup_requires' parameter doesn't seem to work with pip.
         else:
-            include_dirs = [numpy.get_include()]
-        self.include_dirs.append(include_dirs)
+            include_dir = numpy.get_include()
+        self.include_dirs.append(include_dir)
 
 cmdclass.update({ 'build_ext': build_ext })
 
