@@ -32,7 +32,7 @@ License
 
 Aestimo is Copyrighted by (C) 2013-2014 Sefer Bora Lisesivdin and Aestimo group. This software is distributed under the terms of the GNU General Public License v3, see ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt . This means that everyone is free to use, change, share and share the changes.
 
-For the list of contributors, see ~/AUTHORS 
+Sefer Bora Lisesivdin is the initiator of the project, large contributions have since been made by Robert J. Steed and Hamza Hebal. For the full list of contributors, see ~/AUTHORS.
 
 Get Help
 --------
@@ -46,10 +46,14 @@ Download and Installation
 
 The latest version of the program is available in zipped form from the website: https://bitbucket.org/sblisesivdin/aestimo/.
 
+Alternatively, aestimo can now be installed from PyPI via the command `pip install aestimo`. 
+
+(Note that if numpy is not installed before you install aestimo then there may be an compilation error for the cython extension but it seems that the extension gets compiled anyway, so that the error can be ignored.)
+
 Prerequisites
 -------------
 
-You will need to have a recent version of Python installed on your computer. For this, please refer to Python Website, where binary packages for most platforms can be found. Additionally, you need libraries called numpy and pylab. Both can be obtained from the Scipy Website.
+You will need to have a version of Python 2 installed on your computer, preferably python 2.6 - 2.7. For this, please refer to Python Website, where binary packages for most platforms can be found or search your distribution's package management system. Additionally, you need the following python libraries - numpy, scipy and matplotlib.
 
 For Macintosh, Python is preinstalled and related libraries can be found at Pythonmac Directory.
 

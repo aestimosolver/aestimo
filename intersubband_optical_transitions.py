@@ -16,7 +16,7 @@ If you just want to calculate the intersubband absorption though, this is some
 example code:
 
     results = aestimo.Poisson_Schrodinger(model) 
-    #see aestimo for defining the model object or the code at the bottom of the module
+    #see aestimo.py for defining the model object or the code at the bottom of this module
     
     transitions_table,(hdr,units)=transitions(results,Lperiod,eps_z,linewidths)
     
@@ -24,6 +24,7 @@ example code:
     #print 'matrix method results'; print_multiplasmon_transitions(wya,Ry2a)
     
     inv_eps_zz = inv_eps_zz_multiplasmon(wya,Ry2a,transitions_table,linewidth,freqaxis,eps_z)
+    #linewidth can be a value or a function dependent upon the transition frequency.
     eps_ratio = eps_b*inv_eps_zz
     absorption = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio,nk,d)
 
