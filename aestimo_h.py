@@ -1191,7 +1191,7 @@ def save_and_plot(result,model):
     # Resultviewer
         
     if config.resultviewer:
-        pl.figure(figsize=(10,8))
+        fig1 = pl.figure(figsize=(10,8))
         pl.suptitle('Aestimo Results')
         pl.subplots_adjust(hspace=0.4,wspace=0.4)
                             
@@ -1255,7 +1255,7 @@ def save_and_plot(result,model):
         #QW representation
         #figure(5)
         span=np.ones(10000)
-        pl.figure(figsize=(10,8))
+        fig2 = pl.figure(figsize=(10,8))
         pl.suptitle('Aestimo Results')
         pl.subplot(1,1,1)
         pl.plot(xaxis,result.fitot*J2meV,'k',xaxis,result.fitotc*J2meV,'k')
@@ -1279,11 +1279,12 @@ def save_and_plot(result,model):
         pl.ylabel('Energy (meV)')
         pl.grid(True)
         pl.show()
+    return [fig1,fig2]
 
 def QWplot(result,figno=None):
     #QW representation
     xaxis = result.xaxis
-    pl.figure(figno,figsize=(10,8))
+    fig = pl.figure(figno,figsize=(10,8))
     pl.suptitle('Aestimo Results')
     pl.subplot(1,1,1)
     pl.plot(xaxis,result.fitot*J2meV,'k',xaxis,result.fitotc*J2meV,'k')
@@ -1299,6 +1300,7 @@ def QWplot(result,figno=None):
     pl.ylabel('Energy (meV)')
     pl.grid(True)
     pl.show()
+    return fig
 
 
 def run_aestimo(input_obj):
