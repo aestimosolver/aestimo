@@ -67,7 +67,7 @@ cmdclass.update({ 'build_ext': build_ext })
 ################################################################################
 
 
-setup(name='aestimo',
+setup(  name='aestimo',
         version='1.1.0',
         description='A bandstructure simulator of semiconductor nanostructures called quantum wells.',
         long_description= read('README'),
@@ -89,7 +89,7 @@ setup(name='aestimo',
         package_dir = {'aestimo': ''},
         packages=['aestimo'],
         package_data={'aestimo':['README','README_OUTPUTS','AUTHORS','COPYING','psi_at_inf_cython.c','doc/*']},
-        #scripts=[],
+        scripts=['scripts/aestimo','scripts/aestimo_h'],
         install_requires=['numpy','matplotlib','scipy'],
         zip_safe=False, #we want users to be able to easily see and edit the scripts
         #setup_requires=['numpy'], #causes problems with pip?
