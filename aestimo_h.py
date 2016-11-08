@@ -1248,7 +1248,8 @@ def save_and_plot(result,model):
             pl.subplot(2,2,4)
             for j in range(1,result.N_wells_virtual-1):                
                 for i,state in enumerate(result.wfe_general[j,:,:]):
-                    pl.plot(xaxis[result.Well_boundary[j-1,1]:result.Well_boundary[j+1,0]], state[0:result.Well_boundary[j+1,0]-result.Well_boundary[j-1,1]], label='state %d' %i)
+                    pl.plot(xaxis[int(result.Well_boundary[j-1,1]):int(result.Well_boundary[j+1,0])], 
+                                  state[0:int(result.Well_boundary[j+1,0])-int(result.Well_boundary[j-1,1])], label='state %d' %i)
                     pl.xlabel('Position (m)')
                     pl.ylabel('Psi')
                     pl.title('First state')
