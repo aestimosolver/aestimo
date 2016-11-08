@@ -62,20 +62,20 @@ Running the Code
 ----------------
 Most of the code is written in Python, and thus is platform independent. After extracting the aestimo_x.y.zip file to a folder, user may point the files that are written below in the related folder. Here x.y is the version number.
 
-  main.py - The file that you need to run.
-  config.py - A simple configuration file. You must enter the input filename into this configuration file.
-  database.py - A database for materials properties.
-  aestimo.py - Main program which uses the Numpy library. Use this one for your conduction band calculations and gamma valley electrons.
-  aestimo_h.py - Calculator for valence band calculations and holes.
-  VBHM.py - A class file for 3x3 k.p method.
-  sample-X.py - Some samples files (X) are included in the package with prefix "sample-".
-  main_iterating.py - A script for simulating a design several times while varying a parameter over a range of values.
-  README - A readme file as you noticed.
-  README_OUTPUTS - A readme about the structure of output files.
-  COPYING - License of the software.
-  AUTHORS - List of the committers.
-  /outputs - Output folder.
-  /outputs_h - Output folder for aestimo_h.
+  * main.py - The file that you need to run.
+  * config.py - A simple configuration file. You must enter the input filename into this configuration file.
+  * database.py - A database for materials properties.
+  * aestimo.py - Main program which uses the Numpy library. Use this one for your conduction band calculations and gamma valley electrons.
+  * aestimo_h.py - Calculator for valence band calculations and holes.
+  * VBHM.py - A class file for 3x3 k.p method.
+  * sample-X.py - Some samples files (X) are included in the package with prefix "sample-".
+  * main_iterating.py - A script for simulating a design several times while varying a parameter over a range of values.
+  * README - A readme file as you noticed.
+  * README_OUTPUTS - A readme about the structure of output files.
+  * COPYING - License of the software.
+  * AUTHORS - List of the committers.
+  * /outputs - Output folder.
+  * /outputs_h - Output folder for aestimo_h.
 
 First of all, user must prepare or use an input file. This file must specified in config.py file. There are other options in config.py file like necessary output files and on/off options for result viewer and in-run messages. After specifiying an input file in config.py, user can run the aestimo easily with executing the command
 
