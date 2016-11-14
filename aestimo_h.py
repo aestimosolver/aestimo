@@ -994,8 +994,9 @@ def Poisson_Schrodinger(model):
         logger.info("Ntotal2d %g m**-2", Ntotal2d)
     
     #Applied Field
-    x0 = dx*n_max/2.0
-    Vapp = q*Fapp*(xaxis-x0)
+    Vapp = calc_potn(Fapp*eps0/eps,model)
+    Vapp -= Vapp[n_max//2] #Offsetting the applied field's potential so that it is zero in the centre of the structure.
+     
 
     # STARTING SELF CONSISTENT LOOP
     time2 = time.time() # timing audit
