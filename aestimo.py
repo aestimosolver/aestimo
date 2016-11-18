@@ -65,11 +65,13 @@ hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
 #stderr
 ch = logging.StreamHandler()
-formatter2 = logging.Formatter('%(message)s')
+formatter2 = logging.Formatter('%(levelname)s %(message)s')
 ch.setFormatter(formatter2)
 logger.addHandler(ch)
 # LOG level can be INFO, WARNING, ERROR
 logger.setLevel(logging.INFO)
+
+os.sys.stderr.write("WARNING aestimo logs automatically to aestimo.log in the current working directory.\n")
 # --------------------------------------
 
 #Defining constants and material parameters
@@ -777,7 +779,7 @@ def calc_field(sigma,eps):
     F0 = -np.sum(q*sigma)/(2.0) #CMP'deki i ve j yer değişebilir - de + olabilir
     # is the above necessary since the total field due to the structure should be zero.
     # Do running integral
-    tmp = np.hstack(([0.0],sigma[:-1])) + sigma
+    tmp = np.hstack(([0.0],sigma[:-1])) + sigma #using trapezium rule for integration (?).
     tmp*= q/2.0 # Note: sigma is a number density per unit area, needs to be converted to Couloumb per unit area
     tmp[0] = F0 
     F = np.cumsum(tmp)/eps

@@ -148,11 +148,12 @@ model = aestimo.Structure(**s0)
 
 ## -----------------------------------------------------------------------------
 
-#config.d_E = 1e-5*meV2J
-#config.Estate_convergence_test = 3e-10*meV2J
-result= aestimo.Poisson_Schrodinger(model)
+if __name__ == "__main__":
+    #config.d_E = 1e-5*meV2J
+    #config.Estate_convergence_test = 3e-10*meV2J
+    result= aestimo.Poisson_Schrodinger(model)
 
-#Plot QW representation
-config.wavefunction_scalefactor = 5000
-fig = aestimo.QWplot(result)#,figno=None)
+    #Plot QW representation
+    config.wavefunction_scalefactor = 5000
+    fig = aestimo.QWplot(result)#,figno=None)
 

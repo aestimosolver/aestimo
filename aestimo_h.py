@@ -58,18 +58,20 @@ from VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V
 import config,database
 # --------------------------------------
 import logging
-logger = logging.getLogger('aestimo')
+logger = logging.getLogger('aestimo_h')
 hdlr = logging.FileHandler(config.logfile)
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
 #stderr
 ch = logging.StreamHandler()
-formatter2 = logging.Formatter('%(message)s')
+formatter2 = logging.Formatter('%(levelname)s %(message)s')
 ch.setFormatter(formatter2)
 logger.addHandler(ch)
 # LOG level can be INFO, WARNING, ERROR
 logger.setLevel(logging.INFO)
+
+os.sys.stderr.write("WARNING aestimo_h logs automatically to aestimo.log in the current working directory.\n")
 # --------------------------------------
 
 #Defining constants and material parameters
