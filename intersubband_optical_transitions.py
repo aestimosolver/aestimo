@@ -677,7 +677,7 @@ def print_multiplasmon_transitions(wya,Ry2a):
     logger.info( "Optical transitions from multiplasmon matrix model")
     logger.info( "R^2 - related to oscillator strength of each transition (THz^2).")
     logger.info( "Other columns give the transition frequencies in various units.")
-    logger.info( ''.join(s.rjust(col_width) for s in ('R^2','(meV)','(THz)','(um)','(wavno - cm^-1)')))
+    logger.info( ''.join(s.rjust(col_width) for s in ('R','(meV)','(THz)','(um)','(wavno - cm^-1)')))
     for wy,Ry2 in zip(wya,Ry2a):
         gap=wy*1e12*h*J2meV
         freq=wy
@@ -707,7 +707,69 @@ def inv_eps_zz_multiplasmon_helper(results,transitions_table,linewidth,freqaxis,
     wya,Ry2a = calc_wR_multiplasmon(results,transitions_table,eps_z)
     return inv_eps_zz_multiplasmon(wya,Ry2a,transitions_table,linewdith,freqaxis,eps_z)
 
+## frequency dependent dielectric constant (but separable from position)
 
+def inv_eps_zz_multiplasmon2(results,transitions_table,linewidth,freqaxis,eps_z,eps_w):
+    """Uses a multilevel version of the mathematical formalism given in Ando 1977
+    A matrix is constucted describing the transitions and the interactions between
+    them which can be diagonalised to give a description of the system as a simple
+    sequence of Lorentzian oscillators.
+    
+    This calculates the dielectric constant ratio - 1.0/eps_ISBT for the ISBTs for
+    a background dielectric constant given by eps_z * eps_w where we can separate
+    out the frequency dependent part, eps_w, which is an array wrt the frequency axis.
+    eps_z is an array wrt z for the media in the barrier+QW+barrier structure.
+    
+    linewidth - either a function of the transition frequency or a value (THz)
+    freqaxis is an array of frequencies (THz) to calculate the dielectric constant for.
+    eps_zw is an array of dielectric constant values (exluding eps_0) for the frequencies
+        corresponding to freqaxis. It has no z-dependence, the dielectric constants of
+        the barrier and well layers are assumed to be the same
+    """
+    #Calculate transitions interactions matrix + rhs of system equation
+    R,d = calc_interaction_matrix(results,transitions_table,eps_z)
+    
+    #Calculate the inverse dielectric constant ############
+    
+    #background inverse dielectric constant
+    inveps_b = np.mean((1.0+0.0j)/eps_z)/eps_w
+    
+    #choose appropriate solver
+    if np.iscomplex(eps_z).any() or np.iscomplex(eps_w).any():
+        eigen = lambda B: eig(B,right=True) #matrix will be complex symmetric but not Hermitian, this may be a problem with the theory...
+    else:
+        eigen = lambda B: eigh(B, lower=True, eigvals_only=False, turbo=True, type=1) #otherwise we can be sure that B is real symmetric
+    
+    #linewidth
+    #ff0 = transitions_table[0]['Leff']/transitions_table[0]['Lperiod']
+    w_if = np.sort([tra['dE'] for tra in transitions_table])*meV2J/h*1e-12 #(THz) initial transition frequencies
+    y_y = linewidth(w_if) if callable(linewidth) else linewidth*np.ones_like(w_if)
+    #y_y = linewidth(w_i) if callable(linewidth) else linewidth #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
+    #y_y = linewidth(np.sqrt(wy**2-Ry2/ff0)) if callable(linewidth) else linewidth #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
+    
+    const_factor = 2.0/(eps0*tra['Lperiod']*1e-9)*(1e-12/h)**2
+    
+    for i,(freq,eps_w_i) in enumerate(zip(freqaxis,eps_w)):
+        
+        #Add transition energies to Transition interaction matrix
+        B = R.copy()
+        for tra in transitions_table:
+            a = tra['j']
+            B[a,a] += eps_w_i*(tra['dE']*meV2J)**2
+            
+        #diagonalise
+        Bdiag,U = eigen(B)
+        
+        #final values of R,w0
+        Ry2a = np.dot(U.transpose(),d)**2 * const_factor #THz**2 (real)
+        wya = np.sqrt(Bdiag)/h*1e-12 #THz (real)
+        
+        Xi = susceptibility_Losc(np.sqrt(eps_w_i)*freq,w0=wya,f=Ry2a,w_p=1.0,y0=eps_w_i*y_y)
+        inveps_b[i]-= np.sum(Xi)
+        
+        #import ipdb; ipdb.set_trace()
+        
+    return inveps_b
 
 
 
@@ -760,6 +822,15 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
     eps_ratio3 = eps_b*inv_eps_zz3
     absorption3 = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio3,nk,d)
     ax1.plot(freqaxis,absorption3,label='Matrix Model')
+    
+    #model 4 # An accurate model for multiple transitions with frequency dependant dielectric constant
+    #the frequency dependence is defined relative to the normal eps_z but needs to be the same for the
+    #whole structure.
+    eps_w = np.ones_like(freqaxis) #no actual frequency dependence here, this is just a demo.
+    inv_eps_zz4 = inv_eps_zz_multiplasmon2(results,transitions_table,linewidth,freqaxis,eps_z,eps_w)
+    eps_ratio4 = eps_b*inv_eps_zz4
+    absorption4 = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio4,nk,d)
+    ax1.plot(freqaxis,absorption4,label='Matrix Model with eps(w)')
     
     ax1.legend()
     if not pl.isinteractive(): pl.show()
