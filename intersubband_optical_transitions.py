@@ -728,9 +728,6 @@ def inv_eps_zz_multiplasmon2(results,transitions_table,linewidth,freqaxis,eps_z,
         corresponding to freqaxis. It has no z-dependence, the dielectric constants of
         the barrier and well layers are assumed to be the same
     """
-    eps_w = eps_w*(2.0+0.0j)
-    eps_z = eps_z/(2.0+0.0j)
-    
     #Calculate transitions interactions matrix + rhs of system equation
     R,d = calc_interaction_matrix(results,transitions_table,eps_z)
     
