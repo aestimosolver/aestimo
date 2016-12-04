@@ -79,5 +79,5 @@ for thickness in thicknesses:
                                             # which only plots the QW diagram and doesn't
                                             # save anything.
 
-print "Simulation is finished. All files are closed."
-print "Please control the related files."
+print("Simulation is finished. All files are closed.")
+print("Please control the related files.")

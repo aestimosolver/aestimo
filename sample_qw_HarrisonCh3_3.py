@@ -106,6 +106,8 @@ if __name__=="__main__":
     import aestimo
     import database
     
+    logger = aestimo.logger
+    
     # Initialise structure class
     model = aestimo.StructureFrom(globals(),database)
     model.create_structure_arrays()
@@ -121,8 +123,8 @@ if __name__=="__main__":
         result= aestimo.Poisson_Schrodinger(model)
         results.append(result.E_state[0]) #-np.min(model.fi)*aestimo.J2meV)
     
-    print 'gridfactor (nm),E[0]'
-    for gridfactor,E in zip(gridfactors,results): print gridfactor,E
+    logger.info('gridfactor (nm),E[0]')
+    for gridfactor,E in zip(gridfactors,results): logger.info('%g,%g',gridfactor,E)
     
     # Perform the calculation using different barrier widths
     results2 = []
@@ -134,8 +136,8 @@ if __name__=="__main__":
         result= aestimo.Poisson_Schrodinger(model)
         results2.append(result.E_state[0]) #-np.min(model.fi)*aestimo.J2meV)
     
-    print 'barrier (nm),E[0]'
-    for barrier,E in zip(barrier_widths,results2): print barrier,E
+    logger.info('barrier (nm),E[0]')
+    for barrier,E in zip(barrier_widths,results2): logger.info('%g,%g',barrier,E)
         
     f1 = pl.figure()
     ax1 = f1.add_subplot(111)

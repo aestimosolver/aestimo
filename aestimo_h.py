@@ -1154,12 +1154,10 @@ def save_and_plot(result,model):
     
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)
-    def saveoutput(fname,datatuple,header=None):
+    def saveoutput(fname,datatuple,header=''):
         fname2 = os.path.join(output_directory,fname)
-        fobj = file(fname2,'wb')
-        if header: fobj.write(header+'\n')
-        np.savetxt(fobj,np.column_stack(datatuple),fmt='%.6e', delimiter=' ')
-        fobj.close()
+        np.savetxt(fname2,np.column_stack(datatuple),fmt='%.6e', delimiter=' ',header=header)
+    
     if result.Ntotal2d<0:
         if config.sigma_out:
             saveoutput("sigma_h.dat",(xaxis,result.sigma_general))

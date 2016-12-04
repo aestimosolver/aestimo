@@ -462,7 +462,7 @@ def print_levels(results):
     """prints out energy levels and their populations to the log. Also
     print out their gaps"""
     logger.info('the energy levels\population are (meV)\t(m**-2):')
-    for Ei,Ni in zip(results.E_state,results.N_state): print Ei,'\t',Ni
+    for Ei,Ni in zip(results.E_state,results.N_state): logger.info('%.3g\t%.3g',Ei,Ni)
     logger.info('T = %gK' %results.T)
     logger.info('the energy levels gaps are')
     logger.info('\t'.join(('(meV)','(THz)','(um)','(wavno)')))

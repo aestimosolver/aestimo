@@ -23,7 +23,7 @@ class sdist(_sdist):
         from Cython.Build import cythonize
         cythonize(['psi_at_inf_cython.pyx'])
         _sdist.run(self)
-        #print 'compiling cython module into c source'
+        #print('compiling cython module into c source')
 
 cmdclass['sdist'] = sdist
 
@@ -90,7 +90,7 @@ setup(  name='aestimo',
         packages=['aestimo'],
         package_data={'aestimo':['README','README_OUTPUTS','AUTHORS','COPYING','psi_at_inf_cython.c','doc/*']},
         scripts=['scripts/aestimo','scripts/aestimo_h'],
-        install_requires=['numpy','matplotlib','scipy'],
+        install_requires=['numpy>1.7.0','matplotlib','scipy'],
         zip_safe=False, #we want users to be able to easily see and edit the scripts
         #setup_requires=['numpy'], #causes problems with pip?
         cmdclass = cmdclass,

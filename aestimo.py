@@ -1066,19 +1066,13 @@ def save_and_plot(result,model):
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)
         
-    def saveoutput(fname,datatuple,header=None):
+    def saveoutput(fname,datatuple,header=''):
         fname2 = os.path.join(output_directory,fname)
-        fobj = file(fname2,'wb')
-        if header: fobj.write(header+'\n')
-        np.savetxt(fobj,np.column_stack(datatuple),fmt='%.6e', delimiter=' ')
-        fobj.close()
+        np.savetxt(fname2,np.column_stack(datatuple),fmt='%.6e', delimiter=' ',header=header)
         
-    def saveoutput2(fname2,datatuple,header=None,fmt='%.6g',delimiter=', '):
+    def saveoutput2(fname2,datatuple,header='',fmt='%.6g',delimiter=', '):
         fname2 = os.path.join(output_directory,fname2)
-        fobj = file(fname2,'wb')
-        if header: fobj.write(header+'\n')
-        np.savetxt(fobj,np.column_stack(datatuple),fmt=fmt, delimiter=delimiter)
-        fobj.close()
+        np.savetxt(fname2,np.column_stack(datatuple),fmt=fmt, delimiter=delimiter,header=header)
     
     if config.parameters:
         saveoutput2("parameters.dat",header=('T (K), Fapp (V/m), E_F (meV)'),
@@ -1236,29 +1230,26 @@ def load_results():
             
     def loadoutput(fname,header=False,unpack=True):
         fname2 = os.path.join(output_directory,fname)
-        fobj = file(fname2,'rb')
-        if header: header = fobj.readline()
-        else: header = ''
-        data = np.loadtxt(fobj,delimiter=' ',unpack=unpack)
-        fobj.close()
-        return data,header
+        skiprows = 1 if header else 0
+        data = np.loadtxt(fname2,delimiter=' ',unpack=unpack,skiprows=skiprows)
+        return data
     
     if config.parameters:
         results.T,results.Fapp,results.E_F = np.loadtxt(
                       open(os.path.join(output_directory,"parameters.dat"),'rb'),
                       unpack=True,delimiter=',',skiprows=1)
     if config.sigma_out:
-        (results.xaxis,results.sigma),hdr = loadoutput("sigma.dat")
+        (results.xaxis,results.sigma) = loadoutput("sigma.dat")
     if config.electricfield_out:
-        (results.xaxis,results.F),hdr = loadoutput("efield.dat")
+        (results.xaxis,results.F) = loadoutput("efield.dat")
     if config.potential_out:
-        (results.xaxis,results.fitot),hdr = loadoutput("potn.dat")
+        (results.xaxis,results.fitot) = loadoutput("potn.dat")
     if config.states_out:
-        (states,results.E_state,results.N_state,rel_meff_state),hdr = loadoutput("states.dat", header=True)
+        (states,results.E_state,results.N_state,rel_meff_state) = loadoutput("states.dat", header=True)
         results.subnumber_e = max(states)
         results.meff_state = rel_meff_state*m_e
     if config.probability_out:
-        _wfe,hdr = loadoutput("wavefunctions.dat",unpack=False)
+        _wfe = loadoutput("wavefunctions.dat",unpack=False)
         results.xaxis = _wfe[:,0]
         results.wfe = _wfe[:,1:].transpose()
     

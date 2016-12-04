@@ -17,6 +17,8 @@ import aestimo
 meV2J = aestimo.meV2J # conversion factor
 q = aestimo.q # electron charge
 
+logger=aestimo.logger
+
 # Nb. Harrison's initial examples don't take account of different effective masses
 # in the different materials.
 
@@ -138,7 +140,7 @@ s0['eps'] = np.ones(n_max)*epsGaAs	#dielectric constant
 s0['dop'] = np.ones(n_max)*0.0          #doping
 s0['fi'] = bandstructure_profile(alloy_profile(z))   #Bandstructure potential
 
-print s0.keys()
+#logger.info(s0.items())
 #model = aestimo.Structure(T,Fapp,subnumber_e,dx,n_max, #parameters
                  #fi,eps,dop,cb_meff, #arrays
                  #comp_scheme,meff_scheme,fermi_np_scheme, #model choices
