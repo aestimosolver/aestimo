@@ -651,8 +651,10 @@ def calc_wR_multiplasmon(results,transitions_table,eps_z):
     
     #diagonalise
     if np.iscomplex(eps_z).any():
+        logger.info('calc_wR_multiplasmon: using eig() solver for complex symmetric or general matrix')
         Bdiag,U = eig(B,right=True) #matrix will be complex symmetric but not Hermitian, this may be a problem with the theory...
     else:
+        logger.info('calc_wR_multiplasmon: using eigh() solver for Hermitian matrix')
         Bdiag,U = eigh(B, lower=True, eigvals_only=False, turbo=True, type=1) #otherwise we can be sure that B is real symmetric
     #final values of R,w0
     Ry2a = np.dot(U.transpose(),d)**2 * 2.0/(eps0*tra['Lperiod']*1e-9)*(1e-12/h)**2#THz**2 (real)
@@ -726,18 +728,23 @@ def inv_eps_zz_multiplasmon2(results,transitions_table,linewidth,freqaxis,eps_z,
         corresponding to freqaxis. It has no z-dependence, the dielectric constants of
         the barrier and well layers are assumed to be the same
     """
+    eps_w = eps_w*(2.0+0.0j)
+    eps_z = eps_z/(2.0+0.0j)
+    
     #Calculate transitions interactions matrix + rhs of system equation
     R,d = calc_interaction_matrix(results,transitions_table,eps_z)
     
     #Calculate the inverse dielectric constant ############
     
     #background inverse dielectric constant
-    inveps_b = np.mean((1.0+0.0j)/eps_z)/eps_w
+    inveps_b = np.mean(1.0/eps_z)/eps_w
     
     #choose appropriate solver
     if np.iscomplex(eps_z).any() or np.iscomplex(eps_w).any():
+        logger.info('calc_wR_multiplasmon2: using eig() solver for complex symmetric or general matrix')
         eigen = lambda B: eig(B,right=True) #matrix will be complex symmetric but not Hermitian, this may be a problem with the theory...
     else:
+        logger.info('calc_wR_multiplasmon2: using eigh() solver for Hermitian matrix')
         eigen = lambda B: eigh(B, lower=True, eigvals_only=False, turbo=True, type=1) #otherwise we can be sure that B is real symmetric
     
     #linewidth
@@ -750,6 +757,7 @@ def inv_eps_zz_multiplasmon2(results,transitions_table,linewidth,freqaxis,eps_z,
     const_factor = 2.0/(eps0*tra['Lperiod']*1e-9)*(1e-12/h)**2
     
     for i,(freq,eps_w_i) in enumerate(zip(freqaxis,eps_w)):
+        inv_eps_w_i = 1.0/eps_w_i
         
         #Add transition energies to Transition interaction matrix
         B = R.copy()
@@ -762,10 +770,11 @@ def inv_eps_zz_multiplasmon2(results,transitions_table,linewidth,freqaxis,eps_z,
         
         #final values of R,w0
         Ry2a = np.dot(U.transpose(),d)**2 * const_factor #THz**2 (real)
-        wya = np.sqrt(Bdiag)/h*1e-12 #THz (real)
+        wya = np.sqrt(inv_eps_w_i*Bdiag)/h*1e-12 #THz (real)
         
-        Xi = susceptibility_Losc(np.sqrt(eps_w_i)*freq,w0=wya,f=Ry2a,w_p=1.0,y0=eps_w_i*y_y)
-        inveps_b[i]-= np.sum(Xi)
+        #calculate the dielectric constant at this frequency
+        Xi = susceptibility_Losc(freq,w0=wya,f=Ry2a,w_p=1.0,y0=y_y)
+        inveps_b[i]-= np.sum(Xi)*inv_eps_w_i**2
         
         #import ipdb; ipdb.set_trace()
         
@@ -794,6 +803,7 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
     nk = np.sqrt(np.mean(np.atleast_1d(eps_z),axis=0)) # should be eps_xx really
     d = transitions_table[0]['Lperiod']*1e-9
     f2w = 1e12*2*pi
+    eps_z = np.real_if_close(eps_z)
     
     #model 0 # the slightly niave model usng the 'standard' absorption calculation and Lorentz oscillator model
     # this is only for comparison.
@@ -855,6 +865,7 @@ def eps_background_GaAs(model,eps_gaas,eps_algaas):
             eps_z[startindex:finishindex] = eps_gaas
         elif matType == 'AlGaAs':
             eps_z[startindex:finishindex] = eps_algaas
+
     return eps_z    
 
 
@@ -905,6 +916,7 @@ if __name__ == "__main__":
         eps_gaas = 10.364 # @ 16um
         eps_algaas = 8.2067
         eps_z = eps_background_GaAs(model,eps_gaas,eps_algaas)
+        eps_z = np.real_if_close(eps_z)
     
     elif case==3: #w-dependent dielectric constants
         #because the zeroth axis is assumed to be the z-axis, our eps_z array must be 2d
