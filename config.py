@@ -41,10 +41,10 @@ meV2J=1e-3*q #meV to Joules
 #inputfilename = "sample_qw_barrierdope_p"
 #inputfilename = "sample_multi_qw_barrierdope_p"
 #inputfilename = "sample_double_qw"
-#inputfilename = "sample_qw_barrierdope_p_ingan"
+inputfilename = "sample_qw_barrierdope_p_ingan"
 #inputfilename = "sample_qw_barrierdope_p_cdzno"
 #inputfilename = "sample_multi_qw_barrierdope_p_ingan"
-inputfilename = "sample_qw_wide_isbt"
+#inputfilename = "sample_qw_wide_isbt"
 
 # Calculation
 # -----------
