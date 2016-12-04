@@ -34,17 +34,17 @@ meV2J=1e-3*q #meV to Joules
 
 # Default Input File(s)
 # -------------
-#inputfilename = "sample-qw-barrierdope"
-#inputfilename = "sample-qw-qwdope"
-#inputfilename = "sample-moddop"
-#inputfilename = "sample-qw-HarrisonCh3_3"
-#inputfilename = "sample-qw-barrierdope-p"
-#inputfilename = "sample-multi-qw-barrierdope-p"
-#inputfilename = "sample-double-qw"
-#inputfilename = "sample-qw-barrierdope-p_ingan"
-#inputfilename = "sample-qw-barrierdope-p_cdzno"
-#inputfilename = "sample-multi-qw-barrierdope-p_ingan"
-inputfilename = "sample-qw-wide-isbt"
+#inputfilename = "sample_qw_barrierdope"
+#inputfilename = "sample_qw_qwdope"
+#inputfilename = "sample_moddop"
+#inputfilename = "sample_qw_HarrisonCh3_3"
+#inputfilename = "sample_qw_barrierdope_p"
+#inputfilename = "sample_multi_qw_barrierdope_p"
+#inputfilename = "sample_double_qw"
+#inputfilename = "sample_qw_barrierdope_p_ingan"
+#inputfilename = "sample_qw_barrierdope_p_cdzno"
+#inputfilename = "sample_multi_qw_barrierdope_p_ingan"
+inputfilename = "sample_qw_wide_isbt"
 
 # Calculation
 # -----------
