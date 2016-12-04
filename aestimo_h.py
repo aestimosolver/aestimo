@@ -13,7 +13,7 @@ sample files for examples on usage and the required parameters:
     sample-qw-barrierdope-p_ingran.py
     sample-multi-qw-barrierdope-p.py
     sample-multi-qw-barrierdope-p_ingran.py   
-and then run aestimo on the command line as 
+and then run aestimo on the command line as
   ./aestimo.py -i <input file>
 Since we are abusing the python module system, the input 'file' needs to be 
 importable by the aestimo script. Alternatively, define the input file in the
@@ -204,10 +204,10 @@ class Structure():
         N_wells_real0=self.N_wells_real0
         N_wells_virtual=N_wells_real0+2
         N_wells_virtual2=N_wells_real0+2
-        Well_boundary=np.zeros((N_wells_virtual,2))
-        Well_boundary2=np.zeros((N_wells_virtual,2))
-        barrier_boundary=np.zeros((N_wells_virtual+1,2))
-        n_max_general=np.zeros(N_wells_virtual)
+        Well_boundary=np.zeros((N_wells_virtual,2),dtype=int)
+        Well_boundary2=np.zeros((N_wells_virtual,2),dtype=int)
+        barrier_boundary=np.zeros((N_wells_virtual+1,2),dtype=int)
+        n_max_general=np.zeros(N_wells_virtual,dtype=int)
         Well_boundary[N_wells_virtual-1,0]=n_max 
         Well_boundary[N_wells_virtual-1,1]=n_max
         Well_boundary2[N_wells_virtual-1,0]=n_max 
@@ -252,6 +252,7 @@ class Structure():
                     A4[startindex:finishindex] = matprops['A4']
                     A5[startindex:finishindex] = matprops['A5']
                     A6[startindex:finishindex] = matprops['A6']
+                    Ac[startindex:finishindex] = matprops['Ac']*q
                     D1[startindex:finishindex] = matprops['D1']*q
                     D2[startindex:finishindex] = matprops['D2']*q
                     D3[startindex:finishindex] = matprops['D3']*q
@@ -898,7 +899,7 @@ def Poisson_Schrodinger(model):
     V1=np.zeros((model.N_wells_virtual,n_max,n_max))
     KPV2=np.zeros((model.N_wells_virtual,subnumber_h))
     V2=np.zeros((model.N_wells_virtual,n_max*3,n_max*3))
-    n_max_general=np.zeros(model.N_wells_virtual)
+    n_max_general=np.zeros(model.N_wells_virtual,dtype=int)
     def calc_E_state_general(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary):
         n_max_general=np.zeros(model.N_wells_virtual)
         HUPMAT3=np.zeros((n_max*3, n_max*3))
@@ -910,8 +911,8 @@ def Poisson_Schrodinger(model):
         V1=np.zeros((model.N_wells_virtual,n_max,n_max))
         for J in range(1,model.N_wells_virtual-1):
             n_max_general[J]=Well_boundary[J+1,0]-Well_boundary[J-1,1]
-            I1=int(Well_boundary[J-1,1])
-            I2=int(Well_boundary[J+1,0])
+            I1=Well_boundary[J-1,1]
+            I2=Well_boundary[J+1,0]
             i1=I1-I1
             i2=I2-I1
             la1,v1= linalg.eigh(HUPMATC3[I1:I2,I1:I2])
@@ -926,8 +927,8 @@ def Poisson_Schrodinger(model):
         for k in range(1,model.N_wells_virtual-1):
             i_1=int(n_max_general[k])
             HUPMAT3_general=np.zeros((i_1*3,i_1*3))
-            I1=int(Well_boundary[k-1,1])
-            I2=int(Well_boundary[k+1,0])
+            I1=Well_boundary[k-1,1]
+            I2=Well_boundary[k+1,0]
             i1=I1-I1
             i2=I2-I1
             HUPMAT3_general[i1:i2,i1:i2]=HUPMAT3[I1:I2,I1:I2]
@@ -998,7 +999,7 @@ def Poisson_Schrodinger(model):
     #Applied Field
     Vapp = calc_potn(Fapp*eps0/eps,model)
     Vapp -= Vapp[n_max//2] #Offsetting the applied field's potential so that it is zero in the centre of the structure.
-     
+
 
     # STARTING SELF CONSISTENT LOOP
     time2 = time.time() # timing audit
@@ -1039,7 +1040,7 @@ def Poisson_Schrodinger(model):
                     conter_so+=1       
                     list[jj]='so%d'%conter_so
                     wfh_general[j,jj,0:n_max_general[j]]=wfh1s[jj,np.argmax(maxwfh[jj,:]),:]
-            meff_statec,meff_state = calc_meff_state_general(wfh_general[j,:,:],wfe_general[j,:,:],model,fitotc,E_statec_general[j,:],list,m_hh,m_lh,m_so,n_max_general[j],j,Well_boundary)
+            meff_statec,meff_state = calc_meff_state_general(wfh_general[j,:,:],wfe_general[j,:,:],model,fitotc,E_statec_general[j,:],list,m_hh,m_lh,m_so,int(n_max_general[j]),j,Well_boundary)
             meff_statec_general[j,:],meff_state_general[j,:] =meff_statec,meff_state
             E_F = fermilevel(Ntotal2d,model,E_state_general[j],E_statec_general[j],meff_state,meff_statec)
             E_F_general[j]=E_F
@@ -1156,7 +1157,7 @@ def save_and_plot(result,model):
         os.makedirs(output_directory)
     def saveoutput(fname,datatuple,header=None):
         fname2 = os.path.join(output_directory,fname)
-        fobj = file(fname2,'wb')
+        fobj = open(fname2,'wb')
         if header: fobj.write(header+'\n')
         np.savetxt(fobj,np.column_stack(datatuple),fmt='%.6e', delimiter=' ')
         fobj.close()
@@ -1233,7 +1234,7 @@ def save_and_plot(result,model):
             pl.subplot(2,2,4)
             for j in range(1,result.N_wells_virtual-1):                
                 for i,state in enumerate(result.wfh_general[j,:,:]):
-                    pl.plot(xaxis[result.Well_boundary[j-1,1]:result.Well_boundary[j+1,0]], state[0:result.Well_boundary[j+1,0]-result.Well_boundary[j-1,1]], label='state %d' %i)
+                    pl.plot(xaxis[int(result.Well_boundary[j-1,1]):int(result.Well_boundary[j+1,0])], state[0:int(result.Well_boundary[j+1,0])-int(result.Well_boundary[j-1,1])], label='state %d' %i)
                     pl.xlabel('Position (m)')
                     pl.ylabel('Psi')
                     pl.title('First state')
