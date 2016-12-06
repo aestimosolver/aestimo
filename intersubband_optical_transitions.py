@@ -734,7 +734,7 @@ def inv_eps_zz_multiplasmon2(results,transitions_table,linewidth,freqaxis,eps_z,
     #Calculate the inverse dielectric constant ############
     
     #background inverse dielectric constant
-    inveps_b = np.mean(1.0/eps_z)/eps_w
+    inveps_b = np.mean(1.0/eps_z)/eps_w + 0j
     
     #choose appropriate solver
     if np.iscomplex(eps_z).any() or np.iscomplex(eps_w).any():
@@ -806,7 +806,7 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
     # this is only for comparison.
     eps_simple = eps_classical(transitions_table,freqaxis,np.mean(eps_z))#.conjugate()
     Leff0 = get_Leff_est(transitions_table)*1e-9
-    absorption_simple = absorption_standard(freqaxis*f2w,eps_simple,Leff0)
+    absorption_simple = absorption_standard(freqaxis*f2w,eps_simple,Leff0).real
     #eps_b=1.0
     #ff = transitions_table[0]['Leff']/Lperiod
     #absorption_simple = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_b/eps_simple,nk,ff*d)
@@ -814,7 +814,7 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
     
     #model 1 # Uses the analytically correct result for a single transition but can be incorrect for multiple transitions
     eps_ratio1 = eps_b*inv_eps_zz_1(transitions_table,freqaxis,eps_z)
-    absorption1 = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio1,nk,d)
+    absorption1 = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio1,nk,d).real
     ax1.plot(freqaxis,absorption1,label='Independent Transitions Model')
     
     #model 2 # A classical approach to modelling multiple transitions. Not exact but accounts for coupling between transitions in a physically intuitive way.
@@ -827,7 +827,7 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
     #print 'matrix method results'; print_multiplasmon_transitions(wya,Ry2a)
     inv_eps_zz3 = inv_eps_zz_multiplasmon(wya,Ry2a,transitions_table,linewidth,freqaxis,eps_z)
     eps_ratio3 = eps_b*inv_eps_zz3
-    absorption3 = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio3,nk,d)
+    absorption3 = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio3,nk,d).real
     ax1.plot(freqaxis,absorption3,label='Matrix Model')
     
     #model 4 # An accurate model for multiple transitions with frequency dependant dielectric constant
@@ -836,7 +836,7 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
     eps_w = np.ones_like(freqaxis) #no actual frequency dependence here, this is just a demo.
     inv_eps_zz4 = inv_eps_zz_multiplasmon2(results,transitions_table,linewidth,freqaxis,eps_z,eps_w)
     eps_ratio4 = eps_b*inv_eps_zz4
-    absorption4 = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio4,nk,d)
+    absorption4 = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio4,nk,d).real
     ax1.plot(freqaxis,absorption4,label='Matrix Model with eps(w)')
     
     ax1.legend()
