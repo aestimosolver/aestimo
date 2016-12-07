@@ -70,7 +70,7 @@ cmdclass.update({ 'build_ext': build_ext })
 setup(  name='aestimo',
         version='1.1.0',
         description='A bandstructure simulator of semiconductor nanostructures called quantum wells.',
-        long_description= read('README'),
+        long_description= read('README.md'),
         classifiers=[
           "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
           "Programming Language :: Python :: 2",
@@ -88,7 +88,7 @@ setup(  name='aestimo',
         keywords='quantum well semiconductor nanostructure optical transitions',
         package_dir = {'aestimo': ''},
         packages=['aestimo'],
-        package_data={'aestimo':['README','README_OUTPUTS','AUTHORS','COPYING','psi_at_inf_cython.c','doc/*']},
+        package_data={'aestimo':['README.md','README_OUTPUTS','AUTHORS','COPYING','psi_at_inf_cython.c','doc/*']},
         scripts=['scripts/aestimo','scripts/aestimo_h'],
         install_requires=['numpy>1.7.0','matplotlib','scipy'],
         zip_safe=False, #we want users to be able to easily see and edit the scripts

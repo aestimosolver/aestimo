@@ -47,7 +47,7 @@ Download and Installation
 
 The latest version of the program is available in zipped form from the website: https://bitbucket.org/sblisesivdin/aestimo/.
 
-Alternatively, aestimo can now be installed from PyPI via the command `pip install aestimo`. 
+Alternatively, aestimo can now be installed from PyPI via the command `pip install aestimo`.
 
 (Note that if numpy is not installed before you install aestimo then there may be an compilation error for the cython extension but it seems that the extension gets compiled anyway, so that the error can be ignored.)
 
@@ -77,16 +77,16 @@ Most of the code is written in Python, and thus is platform independent. After e
   * /outputs - Output folder.
   * /outputs_h - Output folder for aestimo_h.
 
-First of all, user must prepare or use an input file. This file must specified in config.py file. There are other options in config.py file like necessary output files and on/off options for result viewer and in-run messages. After specifiying an input file in config.py, user can run the aestimo easily with executing the command
+First of all, user must prepare or use an input file. This file must specified in `config.py` file. There are other options in `config.py` file like necessary output files and on/off options for result viewer and in-run messages. After specifiying an input file in `config.py`, user can run the aestimo easily with executing the command
 
     ./aestimo.py
 
-for conduction band calculations. For valence band calculations, aestimo uses a 3x3 k.p model which includes strain. After editing config.py for input file, execute the command
+for conduction band calculations. For valence band calculations, aestimo uses a 3x3 k.p model which includes strain. After editing `config.py` for input file, execute the command
 
     ./aestimo_h.py
 
-For simulating a design several times while varying a parameter over a range of values, edit the main_iterating.py file for your needs, and then execute it as
+For simulating a design several times while varying a parameter over a range of values, edit the `main_iterating.py` file for your needs, and then execute it as
 
     ./main_iterating.py
 
-If the output file options are true in config.py file, results can be found in the outputs folder. For Output files, please read README_OUTPUTS file.
+If the output file options are true in ``config.py`` file, results can be found in the outputs folder. For Output files, please read README_OUTPUTS file.
