@@ -579,7 +579,7 @@ def calc_S_c(Psi0,Psi1,Psi2,Psi3,eps_z,zaxis):
     Psi0 - Psi3 are arrays describing the wavefunctions.
     zaxis is an array of z-values for the wavefunctions (needn't be uniform) (metres)
     """
-    eps_z *= np.ones_like(zaxis)
+    eps_z = eps_z*np.ones_like(zaxis)
     dz_axis = zaxis[1:]-zaxis[:-1]
     dz_axis = np.hstack((dz_axis[0],dz_axis)) #preprend a value so that all values get used in calculation
     i1=0.0; i2=0.0; i3=0.0
