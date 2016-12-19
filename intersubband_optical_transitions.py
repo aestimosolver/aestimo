@@ -165,6 +165,13 @@ J2meV=1e3/q #Joules to meV
 meV2J=1e-3*q #meV to Joules
 f2w = 1e12*2*pi #THz to Hz (natural)
 
+def eig_sorted(A):
+    """returns the results from scipy.eig eigenvalue solver sorted in
+    ascending eigenvalue order"""
+    Adiag,U = eig(A,right=True)
+    order = np.argsort(Adiag)
+    return Adiag[order],U[:,order]    
+
 
 # Electromagnetism
 # -------------------------
@@ -652,7 +659,7 @@ def calc_wR_multiplasmon(results,transitions_table,eps_z):
     #diagonalise
     if np.iscomplex(eps_z).any():
         logger.info('calc_wR_multiplasmon: using eig() solver for complex symmetric or general matrix')
-        Bdiag,U = eig(B,right=True) #matrix will be complex symmetric but not Hermitian, this may be a problem with the theory...
+        Bdiag,U = eig_sorted(B) #matrix will be complex symmetric but not Hermitian, this may be a problem with the theory...
     else:
         logger.info('calc_wR_multiplasmon: using eigh() solver for Hermitian matrix')
         Bdiag,U = eigh(B, lower=True, eigvals_only=False, turbo=True, type=1) #otherwise we can be sure that B is real symmetric
@@ -739,7 +746,7 @@ def inv_eps_zz_multiplasmon2(results,transitions_table,linewidth,freqaxis,eps_z,
     #choose appropriate solver
     if np.iscomplex(eps_z).any() or np.iscomplex(eps_w).any():
         logger.info('calc_wR_multiplasmon2: using eig() solver for complex symmetric or general matrix')
-        eigen = lambda B: eig(B,right=True) #matrix will be complex symmetric but not Hermitian, this may be a problem with the theory...
+        eigen = lambda B: eig_sorted(B) #matrix will be complex symmetric but not Hermitian, this may be a problem with the theory...
     else:
         logger.info('calc_wR_multiplasmon2: using eigh() solver for Hermitian matrix')
         eigen = lambda B: eigh(B, lower=True, eigvals_only=False, turbo=True, type=1) #otherwise we can be sure that B is real symmetric
