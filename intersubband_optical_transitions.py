@@ -586,7 +586,7 @@ def calc_S_c(Psi0,Psi1,Psi2,Psi3,eps_z,zaxis):
     Psi0 - Psi3 are arrays describing the wavefunctions.
     zaxis is an array of z-values for the wavefunctions (needn't be uniform) (metres)
     """
-    eps_z *= np.ones_like(zaxis)
+    eps_z = eps_z*np.ones_like(zaxis)
     dz_axis = zaxis[1:]-zaxis[:-1]
     dz_axis = np.hstack((dz_axis[0],dz_axis)) #preprend a value so that all values get used in calculation
     i1=0.0; i2=0.0; i3=0.0
@@ -702,6 +702,9 @@ def inv_eps_zz_multiplasmon(wya,Ry2a,transitions_table,linewidth,freqaxis,eps_z)
     inveps = np.mean(1.0/eps_z)
     ff0 = transitions_table[0]['Leff']/transitions_table[0]['Lperiod']
     w_if = np.sort([tra['dE'] for tra in transitions_table])*meV2J/h*1e-12 #(THz) initial transition frequencies
+    #w_if = np.zeros(len(transitions_table))
+    #for tra in transitions_table:
+    #    w_if[tra['j']] = tra['dE']*meV2J/h*1e-12 #(THz) initial transition frequencies
     for wy,Ry2,wi in zip(wya,Ry2a,w_if):
         y_y = linewidth(wi) if callable(linewidth) else linewidth #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
         #y_y = linewidth(np.sqrt(wy**2-Ry2/ff0)) if callable(linewidth) else linewidth #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
@@ -751,23 +754,30 @@ def inv_eps_zz_multiplasmon2(results,transitions_table,linewidth,freqaxis,eps_z,
         logger.info('calc_wR_multiplasmon2: using eigh() solver for Hermitian matrix')
         eigen = lambda B: eigh(B, lower=True, eigvals_only=False, turbo=True, type=1) #otherwise we can be sure that B is real symmetric
     
+    #transition energies
+    E_if = np.zeros(len(transitions_table))
+    for tra in transitions_table:
+        E_if[tra['j']] = tra['dE']*meV2J
+    E2_if = E_if**2 #transition energies squared
+    
+    diag_indices = np.diag_indices_from(R) # indices to access the diagonal of the transitions interaction matrix
+    
     #linewidth
     #ff0 = transitions_table[0]['Leff']/transitions_table[0]['Lperiod']
     w_if = np.sort([tra['dE'] for tra in transitions_table])*meV2J/h*1e-12 #(THz) initial transition frequencies
+    #w_if = E_if/h*1e-12 #(THz) initial transition frequencies
     y_y = linewidth(w_if) if callable(linewidth) else linewidth*np.ones_like(w_if)
     #y_y = linewidth(w_i) if callable(linewidth) else linewidth #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
     #y_y = linewidth(np.sqrt(wy**2-Ry2/ff0)) if callable(linewidth) else linewidth #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
     
     const_factor = 2.0/(eps0*tra['Lperiod']*1e-9)*(1e-12/h)**2
-    
+        
     for i,(freq,eps_w_i) in enumerate(zip(freqaxis,eps_w)):
         inv_eps_w_i = 1.0/eps_w_i
         
         #Add transition energies to Transition interaction matrix
         B = R.copy()
-        for tra in transitions_table:
-            a = tra['j']
-            B[a,a] += eps_w_i*(tra['dE']*meV2J)**2
+        B[diag_indices] += eps_w_i*E2_if
             
         #diagonalise
         Bdiag,U = eigen(B)
