@@ -960,9 +960,10 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
     #summing the pieces together.
     
     #eps_z -> pieces 
-    eps_values = set(eps_z)
+    eps_values = set(eps_z*np.ones(model.n_max))
     if len(eps_values) > 30: logger.warning('plotting_absorption:model5 eps_z has been than 10 pieces, calculation may be slow')
-    dielectric_masks = [(eps,(eps_z==eps)) for eps in eps_values]
+    dielectric_masks = [(eps,(eps_z*np.ones(model.n_max)==eps)) for eps in eps_values]
+    
     #normally might calculate the dielectric_masks sequence manually via
     #dielectric_masks = [(eps_w_AlGaAs,np.sum(model.layer_mask(i) for i in [0,1,2,5,6])),
     #                    (eps_w_GaAs,np.sum(model.layer_mask(i) for i in [3,4])),
