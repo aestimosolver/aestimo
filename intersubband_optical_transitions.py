@@ -790,10 +790,108 @@ def inv_eps_zz_multiplasmon2(results,transitions_table,linewidth,freqaxis,eps_z,
         Xi = susceptibility_Losc(freq,w0=wya,f=Ry2a,w_p=1.0,y0=y_y)
         inveps_b[i]-= np.sum(Xi)*inv_eps_w_i**2
         
-        #import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
         
     return inveps_b
 
+## frequency dependent dielectric constant by splitting structure into pieces
+
+
+def inv_eps_zz_multiplasmon3(results,transitions_table,linewidth,freqaxis,dielectric_masks):
+    """Uses a multilevel version of the mathematical formalism given in Ando 1977
+    A matrix is constucted describing the transitions and the interactions between
+    them which can be diagonalised to give a description of the system as a simple
+    sequence of Lorentzian oscillators.
+    
+    This calculates the dielectric constant ratio - 1.0/eps_ISBT for the ISBTs for
+    a background dielectric constant given by
+    
+    dielectric_masks - a sequence of (eps,mask_array) where
+        eps - an array or function of dielectric constants wrt the frequency axis. If it is
+              a function, it should accept an arguement for frequency in THz.
+        mask_array - a bool or integer array wrt the z axis indicating were the eps applies.
+    
+    linewidth - either a function of the transition frequency or a value (THz)
+    freqaxis is an array of frequencies (THz) to calculate the dielectric constant for.
+    """
+    #check dielectric_mask for completeness
+    mask_check = np.zeros_like(results.xaxis,dtype=int)
+    mask_check = np.sum((mask for eps,mask in dielectric_masks),mask_check)
+    if not all(mask_check == 1): 
+        logger.error('masks in dielectric_masks either overlap or do not cover entire structure')
+    
+    #split the model up in to pieced by material type
+    Rs = []
+    ds = []
+    Epsilons = []
+    for eps,mask in dielectric_masks:
+        with np.errstate(divide='ignore'):
+            maskB = 1.0/mask #infinite where mask==0 and unity where mask==1
+        #Calculate transitions interactions matrix + rhs of system equation
+        R,d = calc_interaction_matrix(results,transitions_table,eps_z=maskB)
+        epsilon = eps(freqaxis) if callable(eps) else eps*np.ones_like(freqaxis)
+        Rs.append(R)
+        ds.append(d)
+        Epsilons.append(epsilon)
+    Epsilons = np.column_stack(Epsilons) #array of freqaxis vs structure-pieces-wrt-eps_b
+    
+    #Calculate the inverse dielectric constant ############
+        
+    #choose appropriate solver
+    if np.iscomplex(Epsilons).any():
+        logger.info('calc_wR_multiplasmon3: using eig() solver for complex symmetric or general matrix')
+        eigen = lambda B: eig_sorted(B) #matrix will be complex symmetric but not Hermitian, this may be a problem with the theory...
+    else:
+        logger.info('calc_wR_multiplasmon3: using eigh() solver for Hermitian matrix')
+        eigen = lambda B: eigh(B, lower=True, eigvals_only=False, turbo=True, type=1) #otherwise we can be sure that B is real symmetric
+    
+    #transition energies
+    E_if = np.zeros(len(transitions_table))
+    for tra in transitions_table:
+        E_if[tra['j']] = tra['dE']*meV2J
+    E2_if = E_if**2 #transition energies squared
+    
+    diag_indices = np.diag_indices_from(R) # indices to access the diagonal of the transitions interaction matrix
+
+    #linewidth
+    #ff0 = transitions_table[0]['Leff']/transitions_table[0]['Lperiod']
+    w_if = np.sort([tra['dE'] for tra in transitions_table])*meV2J/h*1e-12 #(THz) initial transition frequencies
+    #w_if = E_if/h*1e-12 #(THz) initial transition frequencies
+    y_y = linewidth(w_if) if callable(linewidth) else linewidth*np.ones_like(w_if)
+    #y_y = linewidth(w_i) if callable(linewidth) else linewidth #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
+    #y_y = linewidth(np.sqrt(wy**2-Ry2/ff0)) if callable(linewidth) else linewidth #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
+    
+    const_factor = 2.0/(eps0*tra['Lperiod']*1e-9)*(1e-12/h)**2
+    
+    inveps_b = np.zeros_like(freqaxis) + 0j
+    
+    for i,freq in enumerate(freqaxis):
+        #find dielectric constants for each subsection of the structure
+        inv_eps_w_i = 1.0/Epsilons[i]
+        #background inverse dielectric constant
+        inveps_b[i] = np.mean(np.sum(mask*inve for inve,(_,mask) in zip(inv_eps_w_i,dielectric_masks)))
+        #Add the pieces of B together
+        B = np.sum(a*r for a,r in zip(inv_eps_w_i,Rs))
+        #Add the pieces of d together
+        d = np.sum(a*dl for a,dl in zip(inv_eps_w_i,ds))
+        
+        #Add transition energies to Transition interaction matrix
+        B[diag_indices] += E2_if
+            
+        #diagonalise
+        Bdiag,U = eigen(B)
+        
+        #final values of R,w0
+        Ry2a = np.dot(U.transpose(),d)**2 * const_factor #THz**2 (real)
+        wya = np.sqrt(Bdiag)/h*1e-12 #THz (real)
+        
+        #calculate the dielectric constant at this frequency
+        Xi = susceptibility_Losc(freq,w0=wya,f=Ry2a,w_p=1.0,y0=y_y)
+        inveps_b[i]-= np.sum(Xi)
+        
+    #import ipdb; ipdb.set_trace()
+    
+    return inveps_b
 
 
 ## Making plots of absorption
@@ -855,9 +953,31 @@ def plotting_absorption(model,results,transitions_table,eps_b,eps_z,linewidth):
     eps_ratio4 = eps_b*inv_eps_zz4
     absorption4 = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio4,nk,d).real
     ax1.plot(freqaxis,absorption4,label='Matrix Model with eps(w)')
+
+    #model 5 # An accurate model for multiple transitions with frequency dependant dielectric constant
+    #The structure is divided up into a few pieces with respect to shared background dielectric constants
+    #this enables a more rapid calculation of the relevant matrices at each frequency by appropriately
+    #summing the pieces together.
     
+    #eps_z -> pieces 
+    eps_values = set(eps_z)
+    if len(eps_values) > 30: logger.warning('plotting_absorption:model5 eps_z has been than 10 pieces, calculation may be slow')
+    dielectric_masks = [(eps,(eps_z==eps)) for eps in eps_values]
+    #normally might calculate the dielectric_masks sequence manually via
+    #dielectric_masks = [(eps_w_AlGaAs,np.sum(model.layer_mask(i) for i in [0,1,2,5,6])),
+    #                    (eps_w_GaAs,np.sum(model.layer_mask(i) for i in [3,4])),
+    #                    ...]
+    #where eps_w_AlGaAs could be a number, an array (wrt freq_axis) or a function (that takes freq_axis 
+    #as a parameter)
+    inv_eps_zz5 = inv_eps_zz_multiplasmon3(results,transitions_table,linewidth,freqaxis,dielectric_masks)
+    eps_ratio5 = eps_b*inv_eps_zz5
+    absorption5 = uniaxial_layer_absorption(theta,freqaxis*f2w,eps_ratio5,nk,d).real
+    ax1.plot(freqaxis,absorption5,label='Matrix Model with eps(z,w)')
+        
     ax1.legend()
     if not pl.isinteractive(): pl.show()
+    
+    #import ipdb; ipdb.set_trace()
     
     return f1
     
