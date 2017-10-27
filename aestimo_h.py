@@ -1165,7 +1165,7 @@ def save_and_plot(result,model):
         if config.electricfield_out:
             saveoutput("efield_h.dat",(xaxis,result.F_general))
         if config.potential_out:
-            saveoutput("potn_h.dat",(xaxis,result.fitot))
+            saveoutput("potn_h.dat",(xaxis,result.fitotc,result.fitot))
         if config.states_out:
             for j in range(1,result.N_wells_virtual-1):                
                 rel_meff_state = [meff/m_e for meff in result.meff_state_general[j]] #going to report relative effective mass.
@@ -1175,13 +1175,22 @@ def save_and_plot(result,model):
                 saveoutput("states_h_QWR%d.dat" %j,columns, header = header )
                 if config.probability_out:
                     saveoutput("wavefunctions_h_QWR%d.dat" %j,(xaxis,result.wfh_general[j].transpose()))
+        if config.states_out:
+            for j in range(1,result.N_wells_virtual-1):                
+                rel_meff_statec = [meff/m_e for meff in result.meff_statec_general[j]] #going to report relative effective mass.
+                columns = range(model.subnumber_e), result.E_statec_general[j], result.N_statec_general[j], rel_meff_statec
+                #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
+                header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+                saveoutput("states_e_QWR%d.dat" %j,columns, header = header )
+                if config.probability_out:
+                    saveoutput("wavefunctions_e_QWR%d.dat" %j,(xaxis,result.wfe_general[j].transpose()))
     else:
         if config.sigma_out:
             saveoutput("sigma.dat",(xaxis,result.sigma_general))
         if config.electricfield_out:
             saveoutput("efield.dat",(xaxis,result.F_general))
         if config.potential_out:
-            saveoutput("potn.dat",(xaxis,result.fitot))
+            saveoutput("potn.dat",(xaxis,result.fitotc,result.fitot))
         if config.states_out:                
             for j in range(1,result.N_wells_virtual-1):                
                 rel_meff_state = [meff/m_e for meff in result.meff_state_general[j]] #going to report relative effective mass.
@@ -1191,6 +1200,15 @@ def save_and_plot(result,model):
                 saveoutput("states_h_QW%d.dat" %j,columns, header = header )
                 if config.probability_out:
                     saveoutput("wavefunctions_h_QWR%d.dat" %j,(xaxis,result.wfh_general[j].transpose()))
+        if config.states_out:
+            for j in range(1,result.N_wells_virtual-1):                
+                rel_meff_statec = [meff/m_e for meff in result.meff_state_general[j]] #going to report relative effective mass.
+                columns = range(model.subnumber_e), result.E_statec_general[j], result.N_statec_general[j], rel_meff_statec
+                #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
+                header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+                saveoutput("states_e_QWR%d.dat" %j,columns, header = header )
+                if config.probability_out:
+                    saveoutput("wavefunctions_e_QWR%d.dat" %j,(xaxis,result.wfe_general[j].transpose()))
     # Resultviewer
         
     if config.resultviewer:
