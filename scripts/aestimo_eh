@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""This script is one method of running aestimo_h. If no input file is specified,
+"""This script is one method of running aestimo_eh. If no input file is specified,
 the input file defined in the aestimo.config module will be run as default.
 
 Alternatively, many of the example input files show how we can transform them
@@ -28,7 +28,7 @@ also allows us to tailor each simulation even more to our needs.
 """
 import sys,os
 import optparse
-import aestimo.aestimo_h as aestimo_h
+import aestimo.aestimo_eh as aestimo_eh
 import aestimo.config as config
 
 usage = """usage: %prog <aestimo input module name>
@@ -39,14 +39,14 @@ it."""
 parser = optparse.OptionParser(usage=usage) #overkill now but may add options in the future.
 (options, args) = parser.parse_args()   
 if len(args)==0:
-    sys.stderr.write('Missing input file\nUsage: aestimo_h <aestimo input module name>\n')
+    sys.stderr.write('Missing input file\nUsage: aestimo_eh <aestimo input module name>\n')
     sys.exit()
 inputfile = args[0]
 
 # Import input file
 sys.path.append(os.getcwd())
 inputparams = __import__(inputfile,fromlist=[None])
-aestimo_h.logger.info("inputfile is %s",inputfile)
+aestimo_eh.logger.info("inputfile is %s",inputfile)
 
 if __name__=="__main__":
-    aestimo_h.run_aestimo(inputparams)
+    aestimo_eh.run_aestimo(inputparams)
