@@ -3,8 +3,8 @@
 """This is the 3x3 k.p aestimo calculator for valence band calculations 
    (Numpy version, there is no classic version for valence band calculations).
 
-It can be used similarly to the aestimo.py module. aestimo_h.py can be used as 
-a script or a libary.
+It can be used similarly to the aestimo.py module. aestimo_eh.py can be used as 
+a script or a library.
 
 To use as a script, define the simulation in a python file. See the following 
 sample files for examples on usage and the required parameters:
@@ -19,7 +19,7 @@ Since we are abusing the python module system, the input 'file' needs to be
 importable by the aestimo script. Alternatively, define the input file in the
 config module using the inputfilename parameter.
 
-To use aestimo_h.py as a library, first create an instance of the StructureFrom
+To use aestimo_eh.py as a library, first create an instance of the StructureFrom
 class which builds the arrays describing a structure from the same input 
 parameters that are found in the sample files. A simple list format is used to 
 describes the structure's layers.
@@ -58,7 +58,7 @@ from VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V
 import config,database
 # --------------------------------------
 import logging
-logger = logging.getLogger('aestimo_h')
+logger = logging.getLogger('aestimo_eh')
 hdlr = logging.FileHandler(config.logfile)
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
 hdlr.setFormatter(formatter)
@@ -71,7 +71,7 @@ logger.addHandler(ch)
 # LOG level can be INFO, WARNING, ERROR
 logger.setLevel(logging.INFO)
 
-os.sys.stderr.write("WARNING aestimo_h logs automatically to aestimo.log in the current working directory.\n")
+os.sys.stderr.write("WARNING aestimo_eh logs automatically to aestimo.log in the current working directory.\n")
 # --------------------------------------
 
 #Defining constants and material parameters
@@ -750,11 +750,11 @@ def Poisson_Schrodinger(model):
     mat_type= model.mat_type
     
     if comp_scheme in (4,5,6):
-        logger.error("""aestimo_h doesn't currently include exchange interactions
+        logger.error("""aestimo_eh doesn't currently include exchange interactions
         in its valence band calculations.""")
         exit()
     if comp_scheme in (1,3,6):
-        logger.error("""aestimo_h doesn't currently include nonparabolicity effects in 
+        logger.error("""aestimo_eh doesn't currently include nonparabolicity effects in 
         its valence band calculations.""")
         exit()
     
@@ -1330,7 +1330,7 @@ def run_aestimo(input_obj):
     for 'normal' input files. Input_obj can be a dict, class, named tuple or 
     module with the attributes needed to create the StructureFrom class, see 
     the class implementation or some of the sample-*.py files for details."""
-    logger.info("Aestimo_h is starting...")
+    logger.info("Aestimo_eh is starting...")
         
     # Initialise structure class
     model = StructureFrom(input_obj,database)
