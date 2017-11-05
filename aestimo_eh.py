@@ -1435,11 +1435,12 @@ def save_and_plot(result,model):
 
     if result.Ntotal2d<0:
         if config.sigma_out:
-            saveoutput("sigma_h.dat",(xaxis,result.sigma_general))
+            saveoutput("sigma_eh.dat",(xaxis,result.sigma_general))
         if config.electricfield_out:
-            saveoutput("efield_h.dat",(xaxis,result.F_general))
+            saveoutput("efield_eh.dat",(xaxis,result.F_general))
         if config.potential_out:
-            saveoutput("potn_h.dat",(xaxis,result.fitotc,result.fitot))
+            saveoutput("potn_eh.dat",(xaxis,result.fitotc,result.fitot))
+
         if config.states_out:
             for j in range(1,result.N_wells_virtual-1):                
                 rel_meff_state = [meff/m_e for meff in result.meff_state_general[j]] #going to report relative effective mass.
@@ -1597,7 +1598,6 @@ def QWplot(result,figno=None):
     pl.grid(True)
     pl.show()
     return fig
-
 
 def run_aestimo(input_obj):
     """A utility function that performs the standard simulation run
