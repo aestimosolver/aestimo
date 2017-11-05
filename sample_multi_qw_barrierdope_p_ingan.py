@@ -45,21 +45,21 @@ mat_type='Wurtzite'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material =[[ 1.0, 'GaN', 0.0, 0.0, 'p','b'],
-            [ 2.0, 'GaN', 0.0, 0.0, 'p','b'],
-            [ 2.0, 'GaN', 0.0, 5e18, 'p','b'],
-            [ 3.0, 'InGaN', 0.15, 0,'p','w'],
-            [ 3.0, 'GaN', 0.0,0, 'p','b'],
-            [ 3.0, 'InGaN', 0.15, 0,'p','w'],
-            [ 5.0, 'GaN', 0.0,0, 'p','b'],
-            [ 3.0, 'InGaN', 0.15, 0,'p','w'],
-            [ 2.0, 'GaN', 0.0, 5e18,'p','b'],                           
-            [ 2.0, 'GaN', 0.0, 0.0, 'p','b'],
-            [ 1.0, 'GaN', 0.0, 0.0, 'p','b']]
+material =[[ 1.0, 'GaN', 0.0, 0.0, 0.0, 'p','b'],
+            [ 2.0, 'GaN', 0.0, 0.0, 0.0, 'p','b'],
+            [ 2.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
+            [ 3.0, 'InGaN', 0.15, 0.0, 0.0,'p','w'],
+            [ 3.0, 'GaN', 0.0,0.0, 0.0, 'p','b'],
+            [ 3.0, 'InGaN', 0.15, 0.0, 0.0,'p','w'],
+            [ 5.0, 'GaN', 0.0,0.0, 0.0, 'p','b'],
+            [ 3.0, 'InGaN', 0.15, 0.0, 0.0,'p','w'],
+            [ 2.0, 'GaN', 0.0, 0.0, 5e18,'p','b'],                           
+            [ 2.0, 'GaN', 0.0, 0.0, 0.0, 'p','b'],
+            [ 1.0, 'GaN', 0.0, 0.0, 0.0, 'p','b']]
 
 
  
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
-    import aestimo_h
-    aestimo_h.run_aestimo(input_obj)
+    import aestimo_eh
+    aestimo_eh.run_aestimo(input_obj)

@@ -45,19 +45,19 @@ mat_type='Zincblende'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material =[[ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
-            [ 2.0, 'AlGaAs', 0.3, 5e17, 'p','b'],
-            [ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
-            [ 3.0, 'GaAs', 0, 0, 'p','w'],
-            [ 8.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
-            [ 3.0, 'GaAs', 0, 0, 'p','w'],
-            [ 8.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
-            [ 3.0, 'GaAs', 0, 0, 'p','w'],
-            [ 8.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
-            [ 3.0, 'GaAs', 0, 0, 'p','w'],
-            [ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
-            [ 2.0, 'AlGaAs', 0.3, 5e17, 'p','b'],
-            [ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b']]
+material =[[ 2.0, 'AlGaAs', 0.3, 0.0, 0.0, 'p','b'],
+            [ 2.0, 'AlGaAs', 0.3, 0.0, 5e17, 'p','b'],
+            [ 2.0, 'AlGaAs', 0.3, 0.0, 0.0, 'p','b'],
+            [ 3.0, 'GaAs', 0.0, 0.0, 0.0, 'p','w'],
+            [ 8.0, 'AlGaAs', 0.3, 0.0, 0.0, 'p','b'],
+            [ 3.0, 'GaAs', 0.0, 0.0, 0.0, 'p','w'],
+            [ 8.0, 'AlGaAs', 0.3, 0.0, 0.0, 'p','b'],
+            [ 3.0, 'GaAs', 0.0, 0.0, 0.0, 'p','w'],
+            [ 8.0, 'AlGaAs', 0.3, 0.0, 0.0, 'p','b'],
+            [ 3.0, 'GaAs', 0.0, 0.0, 0.0, 'p','w'],
+            [ 2.0, 'AlGaAs', 0.3, 0.0, 0.0, 'p','b'],
+            [ 2.0, 'AlGaAs', 0.3, 0.0, 5e17, 'p','b'],
+            [ 2.0, 'AlGaAs', 0.3, 0.0, 0.0, 'p','b']]
  
 
 if __name__ == "__main__": #this code allows you to run the input file directly

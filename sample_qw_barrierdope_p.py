@@ -45,13 +45,13 @@ mat_type='Zincblende'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material =[[ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
-            [ 2.0, 'AlGaAs', 0.3, 5e17, 'p','b'],
-            [ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
-            [ 7.8, 'GaAs', 0, 0, 'p','w'],
-            [ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b'],
-            [ 2.0, 'AlGaAs', 0.3, 5e17, 'p','b'],
-            [ 2.0, 'AlGaAs', 0.3, 0.0, 'p','b']]
+material =[[ 2.0, 'AlGaAs', 0.3, 0.0, 0.0, 0.0, 'p','b'],
+            [ 2.0, 'AlGaAs', 0.3, 0.0, 5e17, 'p','b'],
+            [ 2.0, 'AlGaAs', 0.3, 0.0, 0.0, 'p','b'],
+            [ 7.8, 'GaAs', 0.0, 0.0, 0.0, 'p','w'],
+            [ 2.0, 'AlGaAs', 0.3, 0.0, 0.0, 'p','b'],
+            [ 2.0, 'AlGaAs', 0.3, 0.0, 5e17, 'p','b'],
+            [ 2.0, 'AlGaAs', 0.3, 0.0, 0.0, 'p','b']]
  
 
 
