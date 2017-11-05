@@ -589,10 +589,10 @@ class Structure():
                 barrier_boundary[J,1]=Well_boundary2[J,0]
                 barrier_len[J]=barrier_boundary[J,1]-barrier_boundary[J,0]
             #doping
-            if layer[4] == 'n':  
-                chargedensity = layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
-            elif layer[4] == 'p': 
-                chargedensity = -layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
+            if layer[5] == 'n':  
+                chargedensity = layer[4]*1e6 #charge density in m**-3 (conversion from cm**-3)
+            elif layer[5] == 'p': 
+                chargedensity = -layer[4]*1e6 #charge density in m**-3 (conversion from cm**-3)
             else:
                 chargedensity = 0.0
             dop[startindex:finishindex] = chargedensity
@@ -698,6 +698,9 @@ class StructureFrom(Structure):
         
         self.alloy_property = database.alloyproperty
         totalalloy = alen(self.alloy_property)
+
+        self.alloy_property_4 = database.alloyproperty4
+        totalalloy += alen(self.alloy_property_4)
         
         logger.info("Total number of materials in database: %d" %(totalmaterial+totalalloy))
         
@@ -1074,7 +1077,7 @@ def Poisson_Schrodinger(model):
     m_hh = np.zeros(n_max)
     m_lh = np.zeros(n_max)
     m_so = np.zeros(n_max)
-    x_max=dx*n_max
+    x_max=dx*n_max   
     if config.strain :
         if mat_type=='Zincblende' :
             EXX= (a0_sub-a0)/a0
@@ -1262,6 +1265,7 @@ def Poisson_Schrodinger(model):
     Vapp = calc_potn(Fapp*eps0/eps,model)
     Vapp -= Vapp[n_max//2] #Offsetting the applied field's potential so that it is zero in the centre of the structure.
 
+    #s 
 
     # STARTING SELF CONSISTENT LOOP
     time2 = time.time() # timing audit
@@ -1269,6 +1273,7 @@ def Poisson_Schrodinger(model):
     previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
     fitot = fi_h + Vapp #For initial iteration sum bandstructure and applied field
     fitotc = fi + Vapp
+    
     while True:
         if not(config.messagesoff) :
             logger.info("Iteration: %d", iteration)
@@ -1348,6 +1353,7 @@ def Poisson_Schrodinger(model):
         Vnew_general=calc_potn(F_general,model)#[Well_boundary[j-1,1]:Well_boundary[j+1,0]]=Vnew        
         #
         #
+
         if comp_scheme in (0,1): 
             #if we are not self-consistently including Poisson Effects then only do one loop
             break
@@ -1359,6 +1365,12 @@ def Poisson_Schrodinger(model):
         V+= damping*(Vnew_general - V)
         fitot = fi_h + V + Vapp
         fitotc = fi + V + Vapp
+        xaxis = np.arange(0,n_max)*dx
+        """
+        pl.plot(xaxis,fitotc*J2meV,'k',xaxis,fitot*J2meV,'k')
+        pl.grid(True)
+        pl.show()
+        """
         if abs(E_state_general[1,0]-previousE0) < convergence_test: #Convergence test
             break
         elif iteration >= max_iterations: #Iteration limit
