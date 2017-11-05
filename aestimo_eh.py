@@ -233,8 +233,8 @@ class Structure():
                 fi[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
                 if mat_type=='Zincblende' :
                     a0_sub[startindex:finishindex]=matprops['a0']*1e-10
-                    C11[startindex:finishindex] = matprops['C11'] 
-                    C12[startindex:finishindex] = matprops['C12']
+                    C11[startindex:finishindex] = matprops['C11']*1e10
+                    C12[startindex:finishindex] = matprops['C12']*1e10
                     GA1[startindex:finishindex] = matprops['GA1']
                     GA2[startindex:finishindex] = matprops['GA2']
                     GA3[startindex:finishindex] = matprops['GA3']
@@ -261,14 +261,16 @@ class Structure():
                     D1[startindex:finishindex] = matprops['D1']*q
                     D2[startindex:finishindex] = matprops['D2']*q
                     D3[startindex:finishindex] = matprops['D3']*q
-                    D4[startindex:finishindex] = matprops['D4']*q                  
+                    D4[startindex:finishindex] = matprops['D4']*q
+                    D31[startindex:finishindex] =matprops['D31']
+                    D33[startindex:finishindex] =matprops['D33']
                     a0_wz[startindex:finishindex] = matprops['a0_wz']*1e-10 
                     delta_so[startindex:finishindex] = matprops['delta_so']*q
                     delta_cr[startindex:finishindex] = matprops['delta_cr']*q
                     eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
                     fi_h[startindex:finishindex] =-(1-matprops['Band_offset'])*matprops['Eg']*q
                     Psp[startindex:finishindex]=matprops['Psp']
-            elif matType in alloy_property:
+            elif matType in alloy_property:               
                 alloyprops = alloy_property[matType]
                 mat1 = material_property[alloyprops['Material1']]
                 mat2 = material_property[alloyprops['Material2']]
@@ -279,8 +281,8 @@ class Structure():
                 fi[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule
                 a0_sub[startindex:finishindex]=alloyprops['a0_sub']*1e-10
                 if mat_type=='Zincblende':
-                    C11[startindex:finishindex] = x*mat1['C11'] + (1-x)* mat2['C11']
-                    C12[startindex:finishindex] = x*mat1['C12'] + (1-x)* mat2['C12']
+                    C11[startindex:finishindex] = (x*mat1['C11'] + (1-x)* mat2['C11'])*1e10
+                    C12[startindex:finishindex] = (x*mat1['C12'] + (1-x)* mat2['C12'])*1e10
                     GA1[startindex:finishindex] =x*mat1['GA1'] + (1-x)* mat2['GA1']
                     GA2[startindex:finishindex] = x*mat1['GA2'] + (1-x)* mat2['GA2']               
                     GA3[startindex:finishindex] = x*mat1['GA3'] + (1-x)* mat2['GA3']                
