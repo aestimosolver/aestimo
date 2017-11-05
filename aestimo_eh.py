@@ -98,7 +98,8 @@ def round2int(x):
     to the normal rules for rounding positive numbers."""
     # int(x + (x>0) -0.5) # round2int for positive and negative numbers
     return int(x+0.5)
-
+def vegard1(first,second,mole):
+    return first*mole+second*(1-mole)
 class Structure():
     def __init__(self,database,**kwargs):
         """This class holds details on the structure to be simulated.
