@@ -459,8 +459,42 @@ alloyproperty = {
 'Band_offset':0.65,
 'm_e_alpha':5.3782e18,
 'a0_sub':3.250,
+'c0_sub':4.982,
 'Material1':'CdO',
 'Material2':'ZnO'
+}
+}
+# ALLOY PROPERTIES
+# alloyproperties| Alloy : m_e_x=0 | m_e_b  | eps_x=0 | eps_b | Eg | Bowing_param | m_e_alpha
+alloyproperty4 = {
+#AxB(1-x)CyD(1-y)=InxGa(1-x)AsyP(1-y)
+'InGaAsP':{
+'Bowing_param_ABC':0.58,
+'Bowing_param_ABD':0.65,
+'Bowing_param_ACD':0.58,
+'Bowing_param_BCD':0.58,
+'Band_offset':0.4,
+'m_e_alpha':5.3782e18,
+'delta_bowing_param':0.0,
+'a0_sub':5.8688,
+'Material1':'InAs',
+'Material2':'GaAs',
+'Material3':'InP',
+'Material4':'GaP'
+},
+'AlGaInN':{
+#ABxCyD1-x-y=NGaxAlyIn1-x-y
+'Bowing_param_ABC':1.3,
+'Bowing_param_ABD':3.2,
+'Bowing_param_ACD':3.6,
+'Band_offset':0.7,
+'m_e_alpha':5.3782e18,
+'delta_bowing_param':0.0,
+'a0_sub':3.189,
+'c0_sub':4.982,
+'Material1':'AlN',
+'Material2':'InN',
+'Material3':'GaN'
 }
 }
 

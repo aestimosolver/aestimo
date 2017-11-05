@@ -131,12 +131,15 @@ class Structure():
         
         self.alloy_property = database.alloyproperty
         totalalloy = alen(self.alloy_property)
+		
+        self.alloy_property_4 = database.alloyproperty4
+        totalalloy += alen(self.alloy_property_4)		
         
         logger.info("Total material number in database: %d" ,(totalmaterial + totalalloy))
         
     def create_structure_arrays(self):
         """ initialise arrays/lists for structure"""
-        self.N_wells_real0=sum(sum(np.char.count(self.material, 'w')))
+        self.N_wells_real0=sum(sum(np.char.count(self.material,'w')))
         # Calculate the required number of grid points
         self.x_max = sum([layer[0] for layer in self.material])*1e-9 #total thickness (m)
         n_max = round2int(self.x_max/self.dx)
@@ -149,8 +152,9 @@ class Structure():
         #
         self.n_max = n_max
         dx =self.dx
-        material_property = self.material_property
+        material_property = self.material_property        
         alloy_property = self.alloy_property
+        alloy_property_4 = self.alloy_property_4
         cb_meff = np.zeros(n_max)	#conduction band effective mass
         cb_meff_alpha = np.zeros(n_max) #non-parabolicity constant.
         m_hh = np.zeros(n_max)
