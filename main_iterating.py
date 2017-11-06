@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""This script shows how we can simulate a design several times while varying a
-parameter over a range of values.
-"""
 """
  Aestimo 1D Schrodinger-Poisson Solver
- Copyright (C) 2013-2016 Sefer Bora Lisesivdin and Aestimo group
+ Copyright (C) 2013-2017 Sefer Bora Lisesivdin and Aestimo group
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +18,11 @@ parameter over a range of values.
     along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
 
     For the list of contributors, see ~/AUTHORS
+
+File Information:
+-----------------
+This script shows how we can simulate a design several times while varying a
+parameter over a range of values.
 """
 import matplotlib.pyplot as pl
 import numpy as np

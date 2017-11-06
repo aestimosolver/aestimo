@@ -1,3 +1,10 @@
+### v.1.2 (November 6th, 2017)
+
+*	Quaternary alloys (type A_{x}B_{1-x}C_{y}D_{1-y})
+*	Added an improved model for modelling conduction band intersubband transitions
+*	Added a periodic boundary condition for the Electric field for modelling repeating structures.
+*	Small changes were made like to get aestimo to work on python3.4, example files were renamed to be more pythonic etc ...
+* 	Code is moved to GitHub.
 
 ### v.1.1 (November 8th, 2016)
 

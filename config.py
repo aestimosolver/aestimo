@@ -1,16 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""This module contains aestimo's global configuration settings for aestimo.py
-and aestimo_h.py. It contains parameters for controlling the algorithms that are 
-used to calculate the bandstructures. 
-
-The 'inputfilename' variable defines the default input file used when aestimo.py
-or main.py is run directly as a script. There are also parameters that define the
-defaults for saving and presenting results; as well as for logging messages.
-"""
 """
  Aestimo 1D Schrodinger-Poisson Solver
- Copyright (C) 2013-2016 Sefer Bora Lisesivdin and Aestimo group
+ Copyright (C) 2013-2017 Sefer Bora Lisesivdin and Aestimo group
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +18,16 @@ defaults for saving and presenting results; as well as for logging messages.
     along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
 
     For the list of contributors, see ~/AUTHORS 
+
+File Information:
+-----------------
+This module contains aestimo's global configuration settings for aestimo.py
+and aestimo_h.py. It contains parameters for controlling the algorithms that are 
+used to calculate the bandstructures. 
+
+The 'inputfilename' variable defines the default input file used when aestimo.py
+or main.py is run directly as a script. There are also parameters that define the
+defaults for saving and presenting results; as well as for logging messages.
 """
 q = 1.602176e-19 #C
 meV2J=1e-3*q #meV to Joules

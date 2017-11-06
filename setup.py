@@ -1,6 +1,10 @@
 #!/bin/python
 # -*- coding: utf-8 -*-
-"""setuptools script for aestimo project"""
+"""
+File Information:
+-----------------
+setuptools script for aestimo project
+"""
 from setuptools import setup
 import os, sys
 
@@ -68,7 +72,7 @@ cmdclass.update({ 'build_ext': build_ext })
 
 
 setup(  name='aestimo',
-        version='1.1.0',
+        version='1.2.0',
         description='A bandstructure simulator of semiconductor nanostructures called quantum wells.',
         long_description= read('README.md'),
         classifiers=[

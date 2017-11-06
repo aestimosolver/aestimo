@@ -1,6 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""This module calculates the optical intersubband transitions (ISBTs) for the 
+"""
+ Aestimo 1D Schrodinger-Poisson Solver
+ Copyright (C) 2013-2017 Sefer Bora Lisesivdin and Aestimo group
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
+
+    For the list of contributors, see ~/AUTHORS
+
+File Information:
+-----------------
+This module calculates the optical intersubband transitions (ISBTs) for the 
 conduction band levels.
 
 The module can be run as a script, it will calculate the ISBTs for the inputfile
@@ -122,25 +143,7 @@ Important:
 Keep track of whether you are dealing with real or natural frequencies.
 
 """
-"""
- Aestimo 1D Schrodinger-Poisson Solver
- Copyright (C) 2013-2016 Sefer Bora Lisesivdin and Aestimo group
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
-
-    For the list of contributors, see ~/AUTHORS
-"""
 import numpy as np
 from scipy.integrate import simps
 import matplotlib.pyplot as pl

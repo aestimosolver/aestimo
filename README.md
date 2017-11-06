@@ -1,6 +1,6 @@
 AESTIMO 1-D SELF-CONSISTENT SCHRÖDINGER-POISSON SOLVER
 ======================================================
-Version 1.1.0
+Version 1.2.0
 -------------
 
 Overview
@@ -13,7 +13,7 @@ Hope that it also works for you. Please do not hesitate to contact us in case of
 Current features
 ----------------
 
-  * Material and alloys: GaAs, AlAs , InAs, InP, AlP, GaP, AlGaAs, InGaAs, InGaP and AlInP,
+  * Material and alloys: GaAs, AlAs , InAs, InP, AlP, GaP, GaN, AlN, InN, CdO, MgO, ZnO, AlGaAs, InGaAs, InGaP, AlInP, InGaN, AlGaN, AlInN, MgZnO, CdZnO, InGaAsP, AlGaInN
   * Band structure for gamma electrons and heavy, light and split-off holes,
   * Effective-mass method for electrons and 3x3 k.p method for holes,
   * Carrier concentrations for gamma electrons and heavy, light and split-off holes,
@@ -31,7 +31,7 @@ See the examples subdirectory of the distribution. Also, detailed information ca
 License
 -------
 
-Aestimo is Copyrighted by (C) 2013-2016 Sefer Bora Lisesivdin and Aestimo group. This software is distributed under the terms of the GNU General Public License v3, see ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt . This means that everyone is free to use, change, share and share the changes.
+Aestimo is Copyrighted by (C) 2013-2017 Sefer Bora Lisesivdin and Aestimo group. This software is distributed under the terms of the GNU General Public License v3, see ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt . This means that everyone is free to use, change, share and share the changes.
 
 Sefer Bora Lisesivdin is the initiator of the project, large contributions have since been made by Robert J. Steed and Hamza Hebal. For the full list of contributors, see ~/AUTHORS.
 
@@ -54,7 +54,7 @@ Alternatively, aestimo can now be installed from PyPI via the command `pip insta
 Prerequisites
 -------------
 
-You will need to have a version of Python 2 installed on your computer, preferably python 2.6 - 2.7. For this, please refer to Python Website, where binary packages for most platforms can be found or search your distribution's package management system. Additionally, you need the following python libraries - numpy, scipy and matplotlib.
+You will need to have a version of Python 3 installed on your computer. For this, please refer to Python Website, where binary packages for most platforms can be found or search your distribution's package management system. Additionally, you need the following python libraries - numpy, scipy and matplotlib.
 
 For Macintosh, Python is preinstalled and related libraries can be found at Pythonmac Directory.
 
