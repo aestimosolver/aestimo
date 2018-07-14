@@ -1428,7 +1428,7 @@ def Poisson_Schrodinger(model):
 def save_and_plot(result,model):
     xaxis = result.xaxis
     
-    output_directory = config.output_directory+"_h"
+    output_directory = config.output_directory+"_eh"
     
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)

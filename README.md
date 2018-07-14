@@ -75,7 +75,7 @@ Most of the code is written in Python, and thus is platform independent. After e
   * COPYING - License of the software.
   * AUTHORS - List of the committers.
   * /outputs - Output folder.
-  * /outputs_h - Output folder for aestimo_h.
+  * /outputs_eh - Output folder for aestimo_eh.
 
 First of all, user must prepare or use an input file. This file must specified in `config.py` file. There are other options in `config.py` file like necessary output files and on/off options for result viewer and in-run messages. After specifiying an input file in `config.py`, user can run the aestimo easily with executing the command
 
