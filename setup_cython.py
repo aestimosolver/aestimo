@@ -22,7 +22,7 @@
 File Information:
 -----------------
 This module compiles the cythonised version of the psi_at_inf function used
-by the aestimo.py shooting method (but not by aestimo_h.py). See 
+by the aestimo.py shooting method (but not by aestimo_eh.py). See 
 psi_at_inf_cython.pyx
 
 Compile the cythonised function with the command:

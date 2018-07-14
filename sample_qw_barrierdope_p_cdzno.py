@@ -57,5 +57,5 @@ material =[[ 1.0, 'ZnO', 0.0, 0.0, 0.0, 'p','b'],
 
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
-    import aestimo_h
-    aestimo_h.run_aestimo(input_obj)
+    import aestimo_eh
+    aestimo_eh.run_aestimo(input_obj)

@@ -22,7 +22,7 @@
 File Information:
 -----------------
 This module contains aestimo's global configuration settings for aestimo.py
-and aestimo_h.py. It contains parameters for controlling the algorithms that are 
+and aestimo_eh.py. It contains parameters for controlling the algorithms that are 
 used to calculate the bandstructures. 
 
 The 'inputfilename' variable defines the default input file used when aestimo.py

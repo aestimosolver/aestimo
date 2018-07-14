@@ -66,7 +66,7 @@ Most of the code is written in Python, and thus is platform independent. After e
   * config.py - A simple configuration file. You must enter the input filename into this configuration file.
   * database.py - A database for materials properties.
   * aestimo.py - Main program which uses the Numpy library. Use this one for your conduction band calculations and gamma valley electrons.
-  * aestimo_h.py - Calculator for valence band calculations and holes.
+  * aestimo_eh.py - Calculator for valence band calculations and holes.
   * VBHM.py - A class file for 3x3 k.p method.
   * sample-X.py - Some samples files (X) are included in the package with prefix "sample-".
   * main_iterating.py - A script for simulating a design several times while varying a parameter over a range of values.
@@ -83,7 +83,7 @@ First of all, user must prepare or use an input file. This file must specified i
 
 for conduction band calculations. For valence band calculations, aestimo uses a 3x3 k.p model which includes strain. After editing `config.py` for input file, execute the command
 
-    ./aestimo_h.py
+    ./aestimo_eh.py
 
 For simulating a design several times while varying a parameter over a range of values, edit the `main_iterating.py` file for your needs, and then execute it as
 
