@@ -1,4 +1,4 @@
-#!/bin/python
+#!/bin/env python
 # -*- coding: utf-8 -*-
 """
  Aestimo 1D Schrodinger-Poisson Solver

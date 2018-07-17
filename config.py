@@ -68,9 +68,9 @@ damping = 0.5    #averaging factor between iterations to smooth convergence.
 max_iterations=80 #maximum number of iterations.
 convergence_test=1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
 
-# Aestimo_numpy_h
+# Aestimo_eh
 anti_crossing_length=1 # the lower lenght limit to consider anti-crossing (nm)
-strain =True # for aestimo_numpy_h
+strain =True # for aestimo_eh
 piezo=True # directly calculationg the induced electric field.
 #--------------
 parameters=False
