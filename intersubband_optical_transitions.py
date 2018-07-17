@@ -754,7 +754,8 @@ def inv_eps_zz_multiplasmon2(results,transitions_table,linewidth,freqaxis,eps_z,
     #y_y = linewidth(w_i) if callable(linewidth) else linewidth #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
     #y_y = linewidth(np.sqrt(wy**2-Ry2/ff0)) if callable(linewidth) else linewidth #(THz real?) guesstimate of transition broadening (written to get result as close as possible to other models)
     
-    const_factor = 2.0/(eps0*tra['Lperiod']*1e-9)*(1e-12/h)**2
+    Lperiod = transitions_table[0]['Lperiod']
+    const_factor = 2.0/(eps0*Lperiod*1e-9)*(1e-12/h)**2
     
     for i,(freq,eps_w_i) in enumerate(zip(freqaxis,eps_w)):
         inv_eps_w_i = 1.0/eps_w_i
