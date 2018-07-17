@@ -6,7 +6,7 @@ Version 1.2.0
 Overview
 --------
 
-Aestimo 1-D Self-consistent Schrödinger-Poisson Solver (simply aestimo) is a simple 1-dimensional (1-D) simulator for semiconductor heterostructures. Aestimo is started as a hobby at the beginning of 2012, and become a usable tool which can be used as a co-tool in an educational and scientific work.
+Aestimo 1-D Self-consistent Schrödinger-Poisson Solver (simply aestimo) is a simple 1-dimensional (1-D) simulator for semiconductor heterostructures. Aestimo was started as a hobby at the beginning of 2012, and become a usable tool which can be used as a co-tool in an educational and scientific work.
 
 Hope that it also works for you. Please do not hesitate to contact us in case of any bugs found.
 
