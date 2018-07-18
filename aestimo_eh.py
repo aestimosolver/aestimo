@@ -55,10 +55,15 @@ import numpy as np
 alen = np.alen
 import os
 from math import log,exp,sqrt
-import VBHM
 from scipy import linalg
-from VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V
-import config,database
+
+if __package__: #explicit relative imports for using aestimo as a python package (in python3)
+    from . import config,database,VBHM
+    from .VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V
+else:
+    import config,database,VBHM
+    from VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V
+
 # --------------------------------------
 import logging
 logger = logging.getLogger('aestimo_eh')

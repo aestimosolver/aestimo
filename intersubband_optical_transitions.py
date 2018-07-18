@@ -150,7 +150,11 @@ import matplotlib.pyplot as pl
 from itertools import combinations,permutations
 import types
 from scipy.linalg import eigh,eig
-from aestimo import round2int,logger
+
+if __package__: #explicit relative imports for using aestimo as a package (in python3)
+    from .aestimo import round2int,logger
+else:
+    from aestimo import round2int,logger
 
 sin,cos,log,exp = np.sin,np.cos,np.log,np.exp
 
@@ -737,7 +741,7 @@ def inv_eps_zz_multiplasmon2(results,transitions_table,linewidth,freqaxis,eps_z,
     #Calculate the inverse dielectric constant ############
     
     #background inverse dielectric constant
-    inveps_b = np.mean(1.0/eps_z)/eps_w
+    inveps_b = np.mean(1.0/eps_z)/eps_w + 0j
     
     #choose appropriate solver
     if np.iscomplex(eps_z).any() or np.iscomplex(eps_w).any():

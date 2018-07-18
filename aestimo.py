@@ -55,8 +55,13 @@ import matplotlib.pyplot as pl
 import numpy as np
 alen = np.alen
 import os
-import config,database
 from math import log,exp
+
+if __package__: #explicit relative imports for using aestimo as a package (in python3)
+    from . import config,database
+else: 
+    import config,database
+
 # --------------------------------------
 import logging
 logger = logging.getLogger('aestimo')
@@ -490,7 +495,10 @@ def psi_at_inf2(E,fis,model,n_max,dx):
     return psi_at_inf(E,fis,cb_meff,n_max,dx)
 
 try:
-    from psi_at_inf_cython import psi_at_inf_numpy
+    if __package__: #explicit relative imports for using aestimo as a package (in python3)
+        from .psi_at_inf_cython import psi_at_inf_numpy
+    else:
+        from psi_at_inf_cython import psi_at_inf_numpy
     
     def psi_at_inf1_cython(E,fis,model,n_max,dx):
         return psi_at_inf_numpy(E,fis,model.cb_meff,n_max,dx)
