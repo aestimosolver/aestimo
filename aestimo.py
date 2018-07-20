@@ -429,6 +429,19 @@ class StructureFrom(Structure):
             self.Ep = Ep
 
         #return fi,cb_meff,eps,dop
+        
+    def layer_mask(self,idx):
+        """Return a binary array selecting the layer within the structure."""        
+        dx =self.dx
+        position = 0.0 # keeping in nanometres (to minimise errors)
+        for layer in self.material[:idx+1]:
+            startindex = round2int(position*1e-9/dx)
+            position += layer[0] # update position to end of the layer
+            finishindex = round2int(position*1e-9/dx)
+        mask = np.zeros(self.n_max,dtype=bool)
+        mask[startindex:finishindex] = True
+        return mask
+        
 
 # DO NOT EDIT UNDER HERE FOR PARAMETERS
 # --------------------------------------
