@@ -3,7 +3,7 @@
 
 """
  Aestimo 1D Schrodinger-Poisson Solver
- Copyright (C) 2013-2017 Sefer Bora Lisesivdin and Aestimo group
+ Copyright (C) 2013-2018 Sefer Bora Lisesivdin and Aestimo group
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ class which builds the arrays describing a structure from the same input
 parameters that are found in the sample files. A simple list format is used to 
 describes the structure's layers.
 """
-__version__='1.2.0'
+__version__='1.2.1'
 import time
 time0 = time.time() # timing audit
 #from scipy.optimize import fsolve

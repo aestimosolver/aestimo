@@ -2,6 +2,12 @@
 
 Contributors of Aestimo. Names are listed in alphabetic order. Name, Initials, Email, Institution and Country are given, respectively.
 
+## Version 1.2.1
+
+### Committers
+
+* Robert Steed, RS, robsteed0-AT-gmail.com
+
 ## Version 1.2 
 
 ### Committers 

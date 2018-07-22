@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
  Aestimo 1D Schrodinger-Poisson Solver
- Copyright (C) 2013-2017 Sefer Bora Lisesivdin and Aestimo group
+ Copyright (C) 2013-2018 Sefer Bora Lisesivdin and Aestimo group
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ saving the results of this calculation using the returned object.
 Calculations can be sped up by compiling the cythonised version of the psi_at_inf*
 functions. This can be done using the setup_cython.py module.
 """
-__version__='1.2.0'
+__version__='1.2.1'
 
 import time
 time0 = time.time() # timing audit
