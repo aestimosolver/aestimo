@@ -1118,7 +1118,7 @@ def save_and_plot(result,model):
     # Resultviewer
         
     if config.resultviewer:
-        fig1 = pl.figure(figsize=(10,8))
+        fig1 = pl.figure()
         pl.suptitle('Aestimo Results')
         pl.subplots_adjust(hspace=0.4,wspace=0.4)
                             
@@ -1161,7 +1161,7 @@ def save_and_plot(result,model):
         
         #QW representation
         #figure(5)
-        fig2 = pl.figure(figsize=(10,8))
+        fig2 = pl.figure()
         pl.suptitle('Aestimo Results')
         pl.subplot(1,1,1)
         pl.plot(xaxis, result.fitot*J2meV,'k')
@@ -1175,7 +1175,7 @@ def save_and_plot(result,model):
         pl.grid(True)
         
         #dispersion plot
-        fig3 = pl.figure(figsize=(10,8))
+        fig3 = pl.figure()
         pl.suptitle('Subband Dispersions')
         ax = pl.subplot(1,1,1)
         result.level_dispersions
@@ -1202,7 +1202,7 @@ def save_and_plot(result,model):
 def QWplot(result,figno=None):
     """QW representation"""
     xaxis = result.xaxis
-    fig = pl.figure(figno,figsize=(10,8))
+    fig = pl.figure(figno)
     pl.suptitle('Aestimo Results')
     ax = pl.subplot(1,1,1)
     ax.plot(xaxis, result.fitot*J2meV,'k')
@@ -1219,7 +1219,7 @@ def QWplot(result,figno=None):
         
 def dispersionplot(result,figno=None):
     """subband dispersion plot"""
-    fig = pl.figure(figno,figsize=(10,8))
+    fig = pl.figure(figno)
     pl.suptitle('Subband Dispersions')
     ax = pl.subplot(1,1,1)
     result.level_dispersions
