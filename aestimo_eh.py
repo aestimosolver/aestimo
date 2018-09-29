@@ -1098,14 +1098,296 @@ def calc_Vxc(sigma,eps,cb_meff,model):
     Vxc = -A*nz_3/eps * ( 1.0 + 0.0545 * r_s * np.log( 1.0 + 11.4/r_s) )
     return Vxc
 
+
+def wave_func_tri(j,Well_boundary,n_max,V1,V2,subnumber_h,subnumber_e,model):                    
+    # Envelope Function Wave Functions
+    wfh_general = np.zeros((model.N_wells_virtual,subnumber_h,n_max))
+    wfe_general = np.zeros((model.N_wells_virtual,subnumber_e,n_max))
+    n_max_general = np.zeros(model.N_wells_virtual,int)
+    n_max_general2 = np.zeros(model.N_wells_virtual,int)
+    I1,I2,I11,I22 =amort_wave(j,Well_boundary,n_max)
+    n_max_general2[j]=int(I2-I1)
+    n_max_general[j]=int(Well_boundary[j+1,0]-Well_boundary[j-1,1])
+    wfh1s2 = np.zeros((subnumber_h,3,n_max_general2[j]))
+    maxwfh = np.zeros((subnumber_h,3))
+    list = ['']*subnumber_h
+    for i in range(0,subnumber_e,1):
+        wfe_general[j,i,0:n_max_general2[j]] = V1[j,0:n_max_general2[j],i]+1e-20                     
+    wfh_pow=np.zeros(n_max)
+    conter_hh,conter_lh,conter_so=0,0,0
+    for jj in range(0,subnumber_h):
+        for i in range(0,3):
+            wfh1s2[jj,i,:] = V2[j,i*n_max_general2[j]:(i+1)*n_max_general2[j],jj]
+            wfh_pow=np.cumsum(wfh1s2[jj,i,:]*wfh1s2[jj,i,:])
+            maxwfh[jj,i]=wfh_pow[n_max_general2[j]-1]
+        if np.argmax(maxwfh[jj,:])==0 :
+            conter_hh+=1       
+            list[jj]='hh%d'%conter_hh                               
+            wfh_general[j,jj,0:n_max_general2[j]]=wfh1s2[jj,np.argmax(maxwfh[jj,:]),:]+1e-20
+        elif np.argmax(maxwfh[jj,:])==1:
+            conter_lh+=1       
+            list[jj]='lh%d'%conter_lh
+            wfh_general[j,jj,0:n_max_general2[j]]=wfh1s2[jj,np.argmax(maxwfh[jj,:]),:]+1e-20
+        else:
+            conter_so+=1       
+            list[jj]='so%d'%conter_so
+            wfh_general[j,jj,0:n_max_general2[j]]=wfh1s2[jj,np.argmax(maxwfh[jj,:]),:]+1e-20
+    return wfh_general,wfe_general,list,n_max_general2
 # -----------------------------------------------------------------------------
 
-# valence band effective-masses hh,lh
+def Strain_and_Masses(model):
+    n_max = model.n_max
+    EXX  = np.zeros(n_max)
+    EZZ  = np.zeros(n_max)
+    ZETA= np.zeros(n_max)
+    CNIT= np.zeros(n_max)
+    VNIT= np.zeros(n_max)
+    S= np.zeros(n_max)
+    k1= np.zeros(n_max)
+    k2= np.zeros(n_max)
+    k3= np.zeros(n_max)
+    fp= np.ones(n_max)
+    fm= np.ones(n_max)
+    EPC= np.zeros(n_max)
+    m_hh = np.zeros(n_max)
+    m_lh = np.zeros(n_max)
+    m_so = np.zeros(n_max)
+    Ppz= np.zeros(n_max)
+    Ppz_Psp= np.zeros(n_max)
+    x_max=model.dx*n_max
+    if config.strain :
+        if model.mat_type=='Zincblende' :
+            EXX= (model.a0_sub-model.a0)/model.a0
+            EZZ= -2.0*model.C12/model.C11*EXX
+            ZETA= -model.B/2.0*(EXX+EXX-2.0*EZZ)
+            CNIT= model.Ac*(EXX+EXX+EZZ)
+            VNIT= -model.Av*(EXX+EXX+EZZ)
+        if model.mat_type=='Wurtzite':
+            EXX= (model.a0_sub-model.a0_wz)/model.a0_wz
+            EZZ=-2.0*model.C13/model.C33*EXX
+            CNIT= model.Ac*(EXX+EXX+EZZ)
+            ZETA= (model.D2*(EXX+EXX)+model.D1*EZZ)
+            VNIT= (model.D4*(EXX+EXX)+model.D3*EZZ)
+            Ppz=((model.D31*(model.C11+model.C12)+model.D33*model.C13)*(EXX+EXX)+(2*model.D31*model.C13+model.D33*model.C33)*(EZZ))
+            """
+            E31=(C11+C12)*D31+C13*D33
+            E33=2*C13*D31+C33*D33
+            print('E31=',E31,'E33=',E33)
+            Ppz2=2*EXX*(E31-E33*C13/C33)
+            print('Pps2=',Ppz2)
+            """
+            dx=x_max/n_max            
+            sum_1=0.0
+            sum_2=0.0
+            if config.piezo and 1==2:
+                """ Spontaneous and piezoelectric polarization built-in field 
+                [1] F. Bernardini and V. Fiorentini phys. stat. sol. (b) 216, 391 (1999)
+                [2] Book 'Quantum Wells,Wires & Dots', Paul Harrison, pages 236-241"""
+                for J in range(1,model.N_wells_virtual2-1):
+                    BW=model.Well_boundary2[J,0]
+                    WB=model.Well_boundary2[J,1]                    
+                    Lw=(WB-BW)*dx
+                    lb1=(BW-model.Well_boundary2[J-1,1])*dx
+                    #lb2=(Well_boundary2[J+1,0]-WB)*dx
+                    sum_1+=(model.Psp[BW+1]+Ppz[BW+1])*Lw/model.eps[BW+1]+(model.Psp[BW-1]+Ppz[BW-1])*lb1/model.eps[BW-1]
+                    sum_2+=Lw/model.eps[BW+1]+lb1/model.eps[BW-1]
+                EPC=(sum_1-(model.Psp+Ppz)*sum_2)/(model.eps*sum_2)
+            if config.piezo1:
+                pol_surf_char=np.zeros(n_max)
+                for i in range(1,n_max-1):                    
+                    pol_surf_char[i]=((model.Psp[i-1]+Ppz[i-1])-(model.Psp[i+1]+Ppz[i+1]))/(q)                
+                for I in range(1,model.N_wells_virtual2-1):
+                    BW=model.Well_boundary2[I,0]
+                    WB=model.Well_boundary2[I,1]
 
+                    Ppz_Psp[WB-1] =(pol_surf_char[WB+1]-pol_surf_char[WB-1])/(2*dx)#((Psp[WB-1]+Ppz[WB-1])-(Psp[WB+1]+Ppz[WB+1]))/(q)
+                    Ppz_Psp[BW-1] =(pol_surf_char[BW+1]-pol_surf_char[BW-1])/(2*dx)#((Psp[BW-1]+Ppz[BW-1])-(Psp[BW+1]+Ppz[BW+1]))/(q)
+
+    if model.mat_type=='Zincblende' :
+        for i in range(0,n_max,1):
+            if  EXX[i]!=0: 
+                S[i]=ZETA[i]/model.delta[i]
+                k1[i]=sqrt(1+2*S[i]+9*S[i]**2)
+                k2[i]=S[i]-1+k1[i]
+                k3[i]=S[i]-1-k1[i]
+                fp[i]=(2*S[i]*(1+1.5*k2[i])+6*S[i]**2)/(0.75*k2[i]**2+k2[i]-3*S[i]**2)
+                fm[i]=(2*S[i]*(1+1.5*k3[i])+6*S[i]**2)/(0.75*k3[i]**2+k3[i]-3*S[i]**2)
+        m_hh = m_e/(model.GA1 -2*model.GA2 )
+        m_lh = m_e/(model.GA1 +2*fp*model.GA2 )
+        m_so = m_e/(model.GA1 +2*fm*model.GA2 )            
+    if model.mat_type=='Wurtzite' :
+        m_hh = -m_e/(model.A2 + model.A4 -model.A5)
+        m_lh = -m_e/(model.A2 + model.A4 +model.A5 )
+        m_so = -m_e/(model.A2)    
+    return m_hh,m_lh,m_so,VNIT,ZETA,CNIT,Ppz_Psp,EPC
+
+def calc_E_state_general(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO):
+    n_max=model.n_max
+    n_max_general=np.zeros(model.N_wells_virtual,dtype=int)
+    HUPMAT3=np.zeros((n_max*3, n_max*3))
+    HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)
+    HUPMATC3=CBMAT_V(HUPMATC1,fitotc,RATIO,n_max,UNIM)
+    #stop
+    tmp1=np.zeros((model.N_wells_virtual,n_max))
+    KPV1=np.zeros((model.N_wells_virtual,subnumber_e))
+    V1=np.zeros((model.N_wells_virtual,n_max,n_max))
+    V11=np.zeros((model.N_wells_virtual,n_max,n_max))
+    for J in range(1,model.N_wells_virtual-1):
+        n_max_general[J]=Well_boundary[J+1,0]-Well_boundary[J-1,1]
+        I1,I2,I11,I22 =amort_wave(J,Well_boundary,n_max)
+        i_1=I2-I1
+        i1=I1-I1
+        i2=I2-I1            
+        la1,v1= linalg.eigh(HUPMATC3[I1:I2,I1:I2])
+        tmp1[J,i1:i2]=la1/RATIO*J2meV
+        V1[J,i1:i2,i1:i2]=v1
+        if (max(tmp1[J,0:subnumber_e])>max(fitotc[I11:I22])*J2meV and 1==2):
+            logger.warning(":You may experience convergence problem due to unconfined states.")
+    """ 
+    for j in range(1,model.N_wells_virtual-1):            
+        for i in range(0,subnumber_e,1):
+            KPV1[j,i]=tmp1[j,i]
+    """
+    for j in range(1,model.N_wells_virtual-1):
+        I1,I2,I11,I22 =amort_wave(j,Well_boundary,n_max)
+        i_1=I2-I1
+        i1=I1-I1
+        i2=I2-I1
+        i11=I11-I1
+        i22=I22-I1
+        couter=0            
+        for i in range(i1,i2):
+            wfe_pow1=np.cumsum(V1[j,i11:i22,i]*V1[j,i11:i22,i])
+            if (tmp1[j,i]>min(fitotc[I11-1:I22+1])*J2meV and tmp1[j,i]<max(fitotc[I11-1:I22+1])*J2meV) and couter+1<=subnumber_e and (wfe_pow1[i22-i11-1]>1e-1) :
+                KPV1[j,couter]=tmp1[j,i]
+                V11[j,i1:i2,couter]+=V1[j,i1:i2,i]
+                couter+=1
+    
+    tmp=np.zeros((model.N_wells_virtual,n_max*3))
+    KPV2=np.zeros((model.N_wells_virtual,subnumber_h))
+    V2=np.zeros((model.N_wells_virtual,n_max*3,n_max*3))
+    V22=np.zeros((model.N_wells_virtual,n_max*3,n_max*3))
+    for k in range(1,model.N_wells_virtual-1):
+        I1,I2,I11,I22 =amort_wave(k,Well_boundary,n_max)
+        i_1=I2-I1
+        HUPMAT3_general=np.zeros((i_1*3,i_1*3))
+        i1=I1-I1
+        i2=I2-I1
+        HUPMAT3_general[i1:i2,i1:i2]=HUPMAT3[I1:I2,I1:I2]
+        HUPMAT3_general[i1+i_1:i2+i_1,i1:i2]=HUPMAT3[I1+n_max:I2+n_max,I1:I2]
+        HUPMAT3_general[i1:i2,i1+i_1:i2+i_1]=HUPMAT3[I1:I2,I1+n_max:I2+n_max]
+        HUPMAT3_general[i1+i_1:i2+i_1,i1+i_1:i2+i_1]=HUPMAT3[I1+n_max:I2+n_max,I1+n_max:I2+n_max]
+        HUPMAT3_general[i1+i_1*2:i2+i_1*2,i1:i2]=HUPMAT3[I1+n_max*2:I2+n_max*2,I1:I2]
+        HUPMAT3_general[i1:i2,i1+i_1*2:i2+i_1*2]=HUPMAT3[I1:I2,I1+n_max*2:I2+n_max*2]
+        HUPMAT3_general[i1+i_1*2:i2+i_1*2,i1+i_1*2:i2+i_1*2]=HUPMAT3[I1+n_max*2:I2+n_max*2,I1+n_max*2:I2+n_max*2]
+        HUPMAT3_general[i1+i_1:i2+i_1,i1+i_1*2:i2+i_1*2]=HUPMAT3[I1+n_max:I2+n_max,I1+n_max*2:I2+n_max*2]
+        HUPMAT3_general[i1+i_1*2:i2+i_1*2,i1+i_1:i2+i_1]=HUPMAT3[I1+n_max*2:I2+n_max*2,I1+n_max:I2+n_max]
+        la2,v2= linalg.eigh(HUPMAT3_general)     
+        tmp[k,i1:i2*3]=-la2/RATIO*J2meV
+        V2[k,i1:i2*3,i1:i2*3]=v2
+        if (max(tmp[k,0:subnumber_h])>max(fitot[I11:I22])*J2meV and 1==2):
+            logger.warning(":You may experience convergence problem due to unconfined states.")
+    """
+    for j in range(1,model.N_wells_virtual-1):
+        for i in range(0,subnumber_h,1):
+            KPV2[j,i]=tmp[j,i]
+    """
+    n_max_general3 = np.zeros(model.N_wells_virtual,int)
+    wfh_general3 = np.zeros((model.N_wells_virtual,i2,n_max))
+    for j in range(1,model.N_wells_virtual-1):
+        I1,I2,I11,I22 =amort_wave(j,Well_boundary,n_max)
+        i_1=I2-I1
+        i1=I1-I1
+        i2=I2-I1
+        i11=I11-I1
+        i22=I22-I1
+        n_max_general3[j]=int(I2-I1)
+        wfh1s3 = np.zeros((i2,3,n_max_general3[j]))
+        maxwfh = np.zeros((i2,3))        
+        couter1=0            
+        for i in range(i1,i2):
+            for k in range(0,3):
+                wfh1s3[i,k,:] = V2[j,k*n_max_general3[j]:(k+1)*n_max_general3[j],i]
+                wfh_pow=np.cumsum(wfh1s3[i,k,:]*wfh1s3[i,k,:])
+                maxwfh[i,k]=wfh_pow[n_max_general3[j]-1]
+            if np.argmax(maxwfh[i,:])==0 :
+                wfh_general3[j,i,0:n_max_general3[j]]=wfh1s3[i,np.argmax(maxwfh[i,:]),:]
+            elif np.argmax(maxwfh[i,:])==1:
+                wfh_general3[j,i,0:n_max_general3[j]]=wfh1s3[i,np.argmax(maxwfh[i,:]),:]
+            else:
+                wfh_general3[j,i,0:n_max_general3[j]]=wfh1s3[i,np.argmax(maxwfh[i,:]),:]                                
+            
+            wfh_pow1=np.cumsum(wfh_general3[j,i,i11:i22]*wfh_general3[j,i,i11:i22])
+            
+            if (tmp[j,i]<max(fitot[I11-1:I22+1])*J2meV and tmp[j,i]>min(fitot[I11-1:I22+1])*J2meV) and couter1+1<=subnumber_h and (wfh_pow1[i22-i11-1]>1e-1) :
+                #print(wfh_pow1[i22-i11-1],'!=0')
+                #print(max(fitot[I11-1:I22+1])*J2meV ,'>',tmp[j,i],'>',min(fitot[I11-1:I22+1])*J2meV) 
+                KPV2[j,couter1]=tmp[j,i]
+                V22[j,i1:i2*3,couter1]+=V2[j,i1:i2*3,i]
+                couter1+=1
+    return KPV1,V11,KPV2,V22
+
+def calc_E_state(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,UNIM,RATIO):#not used
+    n_max=model.n_max
+    HUPMAT3=np.zeros((n_max*3, n_max*3))
+    HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)
+    HUPMATC3=CBMAT_V(HUPMATC1,fitotc,RATIO,n_max,UNIM)
+    #stop
+    KPV1=[0.0]*subnumber_e
+    la1,v1= linalg.eigh(HUPMATC3)
+    tmp1=la1/RATIO*J2meV
+    tmp1=tmp1.tolist()
+    for i in range(0,subnumber_e,1):
+        KPV1[i]=tmp1[i]
+    KPV2=[0.0]*subnumber_h 
+    la2,v2= linalg.eigh(HUPMAT3) 
+    tmp=-la2/RATIO*J2meV
+    tmp=tmp.tolist()
+    for i in range(0,subnumber_h,1):
+        KPV2[i]=tmp[i]
+    return KPV1,v1,KPV2,v2
+
+def Main_Str_Array(model):
+    n_max=model.n_max
+    HUPMAT1=np.zeros((n_max*3, n_max*3))
+    HUPMATC1=np.zeros((n_max, n_max))
+    x_max=model.dx*n_max
+    m_hh,m_lh,m_so,VNIT,ZETA,CNIT,Ppz_Psp,EPC=Strain_and_Masses(model)
+    UNIM = np.identity(n_max)
+    RATIO=m_e/hbar**2*(x_max)**2    
+    AC1=(n_max+1)**2    
+    AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,Pce,GDELM,DEL3,DEL1,DEL2=qsv(model.GA1,model.GA2,model.GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,model.delta,model.A1,model.A2,model.A3,model.A4,model.A5,model.A6,model.delta_so,model.delta_cr,model.mat_type)
+    KP=0.0
+    KPINT=0.01
+    if model.mat_type=='Zincblende' and  (model.N_wells_virtual-2!=0) :        
+        HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT)
+        HUPMATC1=CBMAT(KP,Pce,model.cb_meff/m_e,x_max,n_max,AC1,UNIM,KPINT)
+    if model.mat_type=='Wurtzite' and  (model.N_wells_virtual-2!=0)  :
+        HUPMAT1=-VBMAT2(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,x_max,n_max,AC1,UNIM,KPINT,DEL3,DEL1,DEL2)
+        HUPMATC1=CBMAT(KP,Pce,model.cb_meff/m_e,x_max,n_max,AC1,UNIM,KPINT)
+    return HUPMAT1,HUPMATC1,m_hh,m_lh,m_so,Ppz_Psp
+def Schro(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max):
+    V1=np.zeros((model.N_wells_virtual,n_max,n_max))
+    V2=np.zeros((model.N_wells_virtual,n_max*3,n_max*3))
+    n_max_general=np.zeros(model.N_wells_virtual,dtype=int)
+    wfh_general = np.zeros((model.N_wells_virtual,subnumber_h,n_max))
+    wfe_general = np.zeros((model.N_wells_virtual,subnumber_e,n_max)) 
+    meff_statec_general= np.zeros((model.N_wells_virtual,subnumber_e))
+    meff_state_general= np.zeros((model.N_wells_virtual,subnumber_h))             
+    E_statec_general,V1,E_state_general,V2=calc_E_state_general(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO)
+    for j in range(1,model.N_wells_virtual-1):
+        wfh_general_tmp = np.zeros((model.N_wells_virtual,subnumber_h,n_max))
+        wfe_general_tmp = np.zeros((model.N_wells_virtual,subnumber_e,n_max))                   
+        wfh_general_tmp,wfe_general_tmp,list,n_max_general=wave_func_tri(j,Well_boundary,n_max,V1,V2,subnumber_h,subnumber_e,model)             
+        wfh_general[j,:,:]+=wfh_general_tmp[j,:,:]
+        wfe_general[j,:,:]+=wfe_general_tmp[j,:,:]
+        meff_statec,meff_state = calc_meff_state_general(wfh_general[j,:,:],wfe_general[j,:,:],model,fitotc,E_statec_general[j,:],list,m_hh,m_lh,m_so,int(n_max_general[j]),j,Well_boundary,n_max)
+        meff_statec_general[j,:],meff_state_general[j,:] =meff_statec,meff_state
+    return E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general
 def Poisson_Schrodinger(model):
     """Performs a self-consistent Poisson-Schrodinger calculation of a 1d quantum well structure.
     Model is an object with the following attributes:
-    fi - Bandstructure potential (J) (array, len n_max)
+    fi_e - Bandstructure potential (J) (array, len n_max)
     cb_meff - conduction band effective mass (kg)(array, len n_max)
     eps - dielectric constant (including eps0) (array, len n_max)
     dop - doping distribution (m**-3) ( array, len n_max)
