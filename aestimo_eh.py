@@ -808,10 +808,12 @@ class StructureFrom(Structure):
 # No Shooting method parameters for Schrödinger Equation solution since we use a 3x3 KP solver
 #delta_E = 1.0*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. #This can be included in config as a setting?
 #d_E = 1e-5*meV2J #Energy step (Joules) for Newton-Raphson method when improving the precision of the energy of a found level.
-damping = 0.4    #averaging factor between iterations to smooth convergence.
+"""damping:An adjustable parameter  (0 < damping < 1) is typically set to 0.5 at low carrier densities. With increasing
+carrier densities, a smaller value of it is needed for rapid convergence."""
+damping = 0.1   #averaging factor between iterations to smooth convergence.
 max_iterations=80 #maximum number of iterations.
-convergence_test=1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
-
+convergence_test=1e-4 #convergence is reached when the ground state energy (eV) is stable to within this number between iterations.
+convergence_test0=1e-4
 # DO NOT EDIT UNDER HERE FOR PARAMETERS
 # --------------------------------------
 
