@@ -41,11 +41,16 @@ meV2J=1e-3*q #meV to Joules
 #inputfilename = "sample_qw_barrierdope_p"
 #inputfilename = "sample_multi_qw_barrierdope_p"
 #inputfilename = "sample_double_qw"
-inputfilename = "sample_qw_barrierdope_p_ingan"
+#inputfilename = "sample_qw_barrierdope_p_ingan"
+inputfilename = "sample_qw_barrierdope_ingaas"
+#inputfilename = "sample_mqw_barrierdope_p_ingan"
 #inputfilename = "sample_qw_barrierdope_p_cdzno"
 #inputfilename = "sample_multi_qw_barrierdope_p_ingan"
 #inputfilename = "sample_qw_wide_isbt"
-
+#inputfilename = "sample_qw_barrierdope_p_InGaAsP"
+#inputfilename = "sample_qw_barrierdope_p_AlGaInN"
+#inputfilename = "sample_qw_barrierdope_p_AlGaInN_2"
+#inputfilename = "sample_pn"
 # Calculation
 # -----------
 # Aestimo
@@ -60,14 +65,20 @@ FD_d_E = 1e-9 #Initial and minimum Energy step (meV) for derivative calculation 
 FD_convergence_test = 1e-6 #meV
 np_d_E = 1.0 # Energy step (meV) for dispersion calculations
 # Poisson Loop
+"""damping:An adjustable parameter  (0 < damping < 1) is typically set to 0.5 at low carrier densities. With increasing
+carrier densities, a smaller value of it is needed for rapid convergence."""
 damping = 0.5    #averaging factor between iterations to smooth convergence.
 max_iterations=80 #maximum number of iterations.
-convergence_test=1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
+convergence_test=1e-4 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
 
 # Aestimo_numpy_h
-anti_crossing_length=6 # the lower lenght limit to consider anti-crossing (nm)
-strain =True # for aestimo_numpy_h
-piezo=True # directly calculationg the induced electric field.
+predic_correc=False
+anti_crossing_length=0.0001 # the lower lenght limit to consider anti-crossing (nm)
+amort_wave_0=1.5#ratio of half well's width for wavefunction  to penetration into the the left adjacent barrier
+amort_wave_1=1.5#ratio of half well's width for wavefunction to penetration into the the right adjacent barrier
+strain =True # for aestimo_numpy_eh
+piezo=True # directly calculationg the induced electric field,not tested with the new poisson solver.
+piezo1=False #indirectly using interface charges
 #--------------
 parameters=False
 
@@ -87,6 +98,6 @@ resultviewer = True
 wavefunction_scalefactor = 200 # scales wavefunctions when plotting QW diagrams
 # Messages
 # --------
-messagesoff = False
+messagesoff = True
 logfile = 'aestimo.log'
 
