@@ -833,27 +833,37 @@ def fd2(Ei,Ef,model):
     Ei [meV], Ef [meV], T [K]"""
     T= model.T
     return kb*T*log(exp(meV2J*(Ef-Ei)/(kb*T))+1)
-def calc_meff_state_general(wfh,wfe,model,fi,E_statec,list,m_hh,m_lh,m_so,n_max_general,j,Well_boundary):
+
+
+
+def fd3(Ei,Ef,model):
+    """integral of Fermi Dirac Equation for energy independent density of states.
+    Ei [meV], Ef [meV], T [K]"""
+    T= model.T
+    return kb*T*log(exp((Ef-Ei)/(kb*T))+1)
+def calc_meff_state_general(wfh,wfe,model,fi_e,E_statec,list,m_hh,m_lh,m_so,n_max_general,j,Well_boundary,n_max):
     vb_meff= np.zeros((model.subnumber_h,n_max_general))
     #
+    I1,I2,I11,I22 =amort_wave(j,Well_boundary,n_max)
+    i2=I2-I1
     for i in range(0,model.subnumber_h,1):
         if list[i]=='hh1'  or  list[i]=='hh2' or  list[i]=='hh3':
-           vb_meff[i]=m_hh[Well_boundary[j-1,1]:Well_boundary[j+1,0]]
+           vb_meff[i]=m_hh[I1:I2]
         elif list[i] =='lh1'or list[i] =='lh2'or list[i] =='lh3':
-           vb_meff[i]=m_lh[Well_boundary[j-1,1]:Well_boundary[j+1,0]]
+           vb_meff[i]=m_lh[I1:I2]
         else:
-           vb_meff[i]=m_so[Well_boundary[j-1,1]:Well_boundary[j+1,0]]
-    tmp =1.0/np.sum(wfh[:,0:n_max_general]**2/vb_meff,axis=1)  #vb_meff[:,int(n_max/2)]
+           vb_meff[i]=m_so[I1:I2]
+    tmp =1.0/np.sum(wfh[:,0:i2]**2/vb_meff,axis=1)  #vb_meff[:,int(n_max/2)]
     meff_state = tmp.tolist()
     """find subband effective masses including non-parabolicity
     (but stilling using a fixed effective mass for each subband dispersion)"""
     cb_meff = model.cb_meff # effective mass of conduction band across structure
     cb_meff_alpha = model.cb_meff_alpha # non-parabolicity constant across structure
-    cb_meff_states = np.array([cb_meff*(1.0 + cb_meff_alpha*(E*meV2J - fi)) for E in E_statec])
-    tmp1 = 1.0/np.sum(wfe**2/cb_meff_states,axis=1)
+    cb_meff_states = np.array([cb_meff*(1.0 + cb_meff_alpha*(E*meV2J - fi_e)) for E in E_statec])
+    tmp1 = 1.0/np.sum(wfe[:,0:i2]**2/cb_meff_states[:,I1:I2],axis=1)
     meff_statec = tmp1.tolist()
     return meff_statec,meff_state
-def calc_meff_state(wfh,wfe,subnumber_h,subnumber_e,list,m_hh,m_lh,m_so):
+def calc_meff_state(wfh,wfe,subnumber_h,subnumber_e,list,m_hh,m_lh,m_so,model):
     n_max=len(m_hh)
     vb_meff= np.zeros((subnumber_h,n_max))
     #
@@ -870,7 +880,7 @@ def calc_meff_state(wfh,wfe,subnumber_h,subnumber_e,list,m_hh,m_lh,m_so):
     (but stilling using a fixed effective mass for each subband dispersion)"""
     cb_meff = model.cb_meff # effective mass of conduction band across structure
     #cb_meff_alpha = model.cb_meff_alpha # non-parabolicity constant across structure
-    #cb_meff_states = np.array([cb_meff*(1.0 + cb_meff_alpha*(E*meV2J - fi)) for E in E_statec])
+    #cb_meff_states = np.array([cb_meff*(1.0 + cb_meff_alpha*(E*meV2J - fi_e)) for E in E_statec])
     #tmp1 = 1.0/np.sum(wfe**2/cb_meff_states,axis=1)
     tmp1 = 1.0/np.sum(wfe**2/cb_meff,axis=1)
     meff_statec = tmp1.tolist()
@@ -891,7 +901,8 @@ def fermilevel_0Kc(Ntotal2d,E_statec,meff_statec,model):#use
         else:
             break #we have found Ef and so we should break out of the loop
     else: #exception clause for 'for' loop.
-        logger.warning("Have processed all energy levels present and so can't be sure that Ef is below next higher energy level.")
+        if not(config.messagesoff):
+            logger.warning("Have processed all energy levels present and so can't be sure that Ef is below next higher energy level.")
 
     #Ef1=(sum(E_state*meff_state)-Ntotal2d*hbar**2*pi)/(sum(meff_state))
     N_statec=[0.0]*len(E_statec)
@@ -915,7 +926,8 @@ def fermilevel_0K(Ntotal2d,E_state,meff_state,model):#use
         else:
             break #we have found Ef and so we should break out of the loop
     else: #exception clause for 'for' loop.
-        logger.warning("Have processed all energy levels present and so can't be sure that Ef is below next higher energy level.")
+        if not(config.messagesoff):
+            logger.warning("Have processed all energy levels present and so can't be sure that Ef is below next higher energy level.")
     
     #Ef1=(sum(E_state*meff_state)-Ntotal2d*hbar**2*pi)/(sum(meff_state))    
     N_state=[0.0]*len(E_state)
@@ -949,7 +961,7 @@ def fermilevel(Ntotal2d,model,E_state,E_statec,meff_state,meff_statec):#use
     #implement Newton-Raphson method
     Ef =Ef_0K
     #itr=0
-    logger.info('Ef (at 0K)= %g',Ef)
+    #logger.info('Ef (at 0K)= %g',Ef)
     d_E = 1e-9 #Energy step (meV)
     while True:
         y = func(Ef,E_state,meff_state,E_statec,meff_statec,Ntotal2d,model)
@@ -973,7 +985,7 @@ def calc_N_state(Ef,model,E_state,meff_state,E_statec,meff_statec,Ntotal2d):#use
     else:
         N_state=[fd1(Ei,Ef,model)*vsb_meff/(hbar**2*pi) for Ei,vsb_meff in zip(E_state,meff_state)]
     return N_state,N_statec  # number of carriers in each subband
-    
+
 # FUNCTIONS for SELF-CONSISTENT POISSON--------------------------------
 
 def calc_sigma(wfh,wfe,N_state,N_statec,model,Ntotal2d): #use
