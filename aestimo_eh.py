@@ -2226,30 +2226,35 @@ def QWplot(result,figno=None):
     pl.show()
     return fig
 
-
 def run_aestimo(input_obj):
     """A utility function that performs the standard simulation run
     for 'normal' input files. Input_obj can be a dict, class, named tuple or 
     module with the attributes needed to create the StructureFrom class, see 
     the class implementation or some of the sample-*.py files for details."""
-    logger.info("Aestimo_eh is starting...")
+    if not(config.messagesoff):
+        logger.info("Aestimo_eh is starting...")
         
     # Initialise structure class
     model = StructureFrom(input_obj,database)
          
     # Perform the calculation
     result = Poisson_Schrodinger(model)
-    
+    if model.comp_scheme==7:
+        result_dd = Poisson_Schrodinger_DD(result,model)
     time4 = time.time() #timing audit
-    logger.info("total running time (inc. loading libraries) %g s",(time4 - time0))
-    logger.info("total running time (exc. loading libraries) %g s",(time4 - time1))
+    if not(config.messagesoff):
+        
+        logger.info("total running time (inc. loading libraries) %g s",(time4 - time0))
+        logger.info("total running time (exc. loading libraries) %g s",(time4 - time1))
 
     
     # Write the simulation results in files
     save_and_plot(result,model)
-    
-    logger.info("""Simulation is finished. All files are closed. Please control the related files.
------------------------------------------------------------------""")
+    if model.comp_scheme==7:
+        save_and_plot2(result_dd,model)
+    if not(config.messagesoff):        
+        logger.info("""Simulation is finished. All files are closed. Please control the related files.
+                    -----------------------------------------------------------------""")
     
     return input_obj, model, result
 
@@ -2264,6 +2269,7 @@ if __name__=="__main__":
     
     # Import from config file
     inputfile = __import__(options.inputfile)
-    logger.info("inputfile is %s",options.inputfile)
+    if not(config.messagesoff):         
+        logger.info("inputfile is %s",options.inputfile)
     
     run_aestimo(inputfile)
