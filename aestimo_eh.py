@@ -56,6 +56,8 @@ import VBHM
 from scipy import linalg
 from VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V
 import config,database
+from aestimo_poisson1d import Poisson_equi2,equi_np_fi,Write_results_equi2,equi_np_fi2,equi_np_fi3
+from aestimo_poisson1d import Poisson_equi1, Mobility2, Continuity2, Poisson_non_equi2, Current2,Write_results_non_equi2,Write_results_equi1,amort_wave
 # --------------------------------------
 import logging
 logger = logging.getLogger('aestimo_eh')
@@ -70,19 +72,21 @@ ch.setFormatter(formatter2)
 logger.addHandler(ch)
 # LOG level can be INFO, WARNING, ERROR
 logger.setLevel(logging.INFO)
-
-os.sys.stderr.write("WARNING aestimo_eh logs automatically to aestimo.log in the current working directory.\n")
+if not(config.messagesoff):    
+    os.sys.stderr.write("WARNING aestimo_eh logs automatically to aestimo.log in the current working directory.\n")
 # --------------------------------------
 
 #Defining constants and material parameters
 q = 1.602176e-19 #C
 kb = 1.3806504e-23 #J/K
 nii = 0.0
-hbar = 1.054588757e-34
+hbar = 1.054588757e-34#Js                   
 m_e= 9.1093826E-31 #kg
 pi=np.pi
 eps0= 8.8541878176e-12 #F/m
-
+# TEMPERATURE
+T = 300.0 #Kelvin
+Vt    = kb*T/q           # [eV]
 J2meV=1e3/q #Joules to meV
 meV2J=1e-3*q #meV to Joules
 
@@ -98,7 +102,8 @@ def round2int(x):
     to the normal rules for rounding positive numbers."""
     # int(x + (x>0) -0.5) # round2int for positive and negative numbers
     return int(x+0.5)
-
+def vegard1(first,second,mole):
+    return first*mole+second*(1-mole)
 class Structure():
     def __init__(self,database,**kwargs):
         """This class holds details on the structure to be simulated.
@@ -130,12 +135,16 @@ class Structure():
         
         self.alloy_property = database.alloyproperty
         totalalloy = alen(self.alloy_property)
+		
+        self.alloy_property_4 = database.alloyproperty4
+        totalalloy += alen(self.alloy_property_4)		
         
         logger.info("Total material number in database: %d" ,(totalmaterial + totalalloy))
         
     def create_structure_arrays(self):
         """ initialise arrays/lists for structure"""
-        self.N_wells_real0=sum(sum(np.char.count(self.material, 'w')))
+        #self.N_wells_real0=sum(sum(np.char.count(self.material,'w')))
+        self.N_wells_real0=sum(np.char.count([layer[6] for layer in self.material],'w'))
         # Calculate the required number of grid points
         self.x_max = sum([layer[0] for layer in self.material])*1e-9 #total thickness (m)
         n_max = round2int(self.x_max/self.dx)
@@ -148,8 +157,9 @@ class Structure():
         #
         self.n_max = n_max
         dx =self.dx
-        material_property = self.material_property
+        material_property = self.material_property        
         alloy_property = self.alloy_property
+        alloy_property_4 = self.alloy_property_4
         cb_meff = np.zeros(n_max)	#conduction band effective mass
         cb_meff_alpha = np.zeros(n_max) #non-parabolicity constant.
         m_hh = np.zeros(n_max)
@@ -196,9 +206,10 @@ class Structure():
         delta_cr = np.zeros(n_max) #delta Crystal-field split energy 
         # Strain related
         fi_h = np.zeros(n_max)    #Bandstructure potential
-        fi = np.zeros(n_max)		#Bandstructure potential
+        fi_e = np.zeros(n_max)		#Bandstructure potential
         eps =np.zeros(n_max)		#dielectric constant
         dop = np.zeros(n_max)           #doping
+        pol_surf_char = np.zeros(n_max)
         N_wells_real=0
         N_wells_real2=0
         N_wells_real0=self.N_wells_real0
@@ -214,6 +225,14 @@ class Structure():
         Well_boundary2[N_wells_virtual-1,1]=n_max
         barrier_boundary[N_wells_virtual,0]=n_max
         barrier_len=np.zeros(N_wells_virtual+1)
+        n=np.zeros(n_max)
+        p=np.zeros(n_max)
+        TAUN0=np.zeros(n_max)  
+        TAUP0=np.zeros(n_max)
+        mun0=np.zeros(n_max)
+        mup0=np.zeros(n_max)
+        BETAN=np.zeros(n_max)
+        BETAP=np.zeros(n_max)
         position = 0.0 # keeping in nanometres (to minimise errors)
         for layer in self.material:
             startindex = round2int(position*1e-9/dx)
@@ -225,11 +244,11 @@ class Structure():
                 matprops = material_property[matType]
                 cb_meff[startindex:finishindex] = matprops['m_e']*m_e
                 cb_meff_alpha[startindex:finishindex] = matprops['m_e_alpha']
-                fi[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
+                fi_e[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
                 if mat_type=='Zincblende' :
                     a0_sub[startindex:finishindex]=matprops['a0']*1e-10
-                    C11[startindex:finishindex] = matprops['C11'] 
-                    C12[startindex:finishindex] = matprops['C12']
+                    C11[startindex:finishindex] = matprops['C11']*1e10
+                    C12[startindex:finishindex] = matprops['C12']*1e10
                     GA1[startindex:finishindex] = matprops['GA1']
                     GA2[startindex:finishindex] = matprops['GA2']
                     GA3[startindex:finishindex] = matprops['GA3']
@@ -240,6 +259,12 @@ class Structure():
                     fi_h[startindex:finishindex] =-(1-matprops['Band_offset'])*matprops['Eg']*q #Joule  #-0.8*q-(1-matprops['Band_offset'])*matprops['Eg']*q #Joule
                     eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
                     a0[startindex:finishindex] = matprops['a0']*1e-10
+                    TAUN0[startindex:finishindex] = matprops['TAUN0']  
+                    TAUP0[startindex:finishindex] = matprops['TAUP0']
+                    mun0[startindex:finishindex] = matprops['mun0']
+                    mup0[startindex:finishindex] = matprops['mup0']
+                    BETAN[startindex:finishindex] = matprops['BETAN']
+                    BETAP[startindex:finishindex] = matprops['BETAP']                    
                 if mat_type=='Wurtzite' :
                     a0_sub[startindex:finishindex]=matprops['a0_wz']*1e-10
                     C11[startindex:finishindex] = matprops['C11']*1e10
@@ -256,14 +281,22 @@ class Structure():
                     D1[startindex:finishindex] = matprops['D1']*q
                     D2[startindex:finishindex] = matprops['D2']*q
                     D3[startindex:finishindex] = matprops['D3']*q
-                    D4[startindex:finishindex] = matprops['D4']*q                  
+                    D4[startindex:finishindex] = matprops['D4']*q
+                    D31[startindex:finishindex] =matprops['D31']
+                    D33[startindex:finishindex] =matprops['D33']
                     a0_wz[startindex:finishindex] = matprops['a0_wz']*1e-10 
                     delta_so[startindex:finishindex] = matprops['delta_so']*q
                     delta_cr[startindex:finishindex] = matprops['delta_cr']*q
                     eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
                     fi_h[startindex:finishindex] =-(1-matprops['Band_offset'])*matprops['Eg']*q
                     Psp[startindex:finishindex]=matprops['Psp']
-            elif matType in alloy_property:
+                    TAUN0[startindex:finishindex] = matprops['TAUN0']  
+                    TAUP0[startindex:finishindex] = matprops['TAUP0']
+                    mun0[startindex:finishindex] = matprops['mun0']
+                    mup0[startindex:finishindex] = matprops['mup0']
+                    BETAN[startindex:finishindex] = matprops['BETAN']
+                    BETAP[startindex:finishindex] = matprops['BETAP'] 
+            elif matType in alloy_property:               
                 alloyprops = alloy_property[matType]
                 mat1 = material_property[alloyprops['Material1']]
                 mat2 = material_property[alloyprops['Material2']]
@@ -271,11 +304,16 @@ class Structure():
                 cb_meff_alloy = x*mat1['m_e'] + (1-x)* mat2['m_e']
                 cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
                 Eg = x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x) #eV
-                fi[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule
+                fi_e[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule
                 a0_sub[startindex:finishindex]=alloyprops['a0_sub']*1e-10
+                TAUN0[startindex:finishindex] = alloyprops['TAUN0']  
+                TAUP0[startindex:finishindex] = alloyprops['TAUP0']
+
+                BETAN[startindex:finishindex] = alloyprops['BETAN']
+                BETAP[startindex:finishindex] = alloyprops['BETAP'] 
                 if mat_type=='Zincblende':
-                    C11[startindex:finishindex] = x*mat1['C11'] + (1-x)* mat2['C11']
-                    C12[startindex:finishindex] = x*mat1['C12'] + (1-x)* mat2['C12']
+                    C11[startindex:finishindex] = (x*mat1['C11'] + (1-x)* mat2['C11'])*1e10
+                    C12[startindex:finishindex] = (x*mat1['C12'] + (1-x)* mat2['C12'])*1e10
                     GA1[startindex:finishindex] =x*mat1['GA1'] + (1-x)* mat2['GA1']
                     GA2[startindex:finishindex] = x*mat1['GA2'] + (1-x)* mat2['GA2']               
                     GA3[startindex:finishindex] = x*mat1['GA3'] + (1-x)* mat2['GA3']                
@@ -291,52 +329,353 @@ class Structure():
                     eps[startindex:finishindex] = (x*mat1['epsilonStatic'] + (1-x)* mat2['epsilonStatic'] )*eps0
                     a0[startindex:finishindex] = ((1-x)*mat1['a0'] + x* mat2['a0'] )*1e-10
                     cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(mat2['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
+                
+                    mun0[startindex:finishindex] =x*mat1['mun0'] + (1-x)* mat2['mun0']
+                    mup0[startindex:finishindex] = x*mat1['mup0'] + (1-x)* mat2['mup0']                
                 if mat_type=='Wurtzite' :
-                    A1[startindex:finishindex] =x*material_property[alloyprops['Material1']]['A1'] + (1-x)* material_property[alloyprops['Material2']]['A1']
-                    A2[startindex:finishindex] =x*material_property[alloyprops['Material1']]['A2'] + (1-x)* material_property[alloyprops['Material2']]['A2']
-                    A3[startindex:finishindex] =x*material_property[alloyprops['Material1']]['A3'] + (1-x)* material_property[alloyprops['Material2']]['A3']
-                    A4[startindex:finishindex] =x*material_property[alloyprops['Material1']]['A4'] + (1-x)* material_property[alloyprops['Material2']]['A4']
-                    A5[startindex:finishindex] =x*material_property[alloyprops['Material1']]['A5'] + (1-x)* material_property[alloyprops['Material2']]['A5']
-                    A6[startindex:finishindex] =x*material_property[alloyprops['Material1']]['A6'] + (1-x)* material_property[alloyprops['Material2']]['A6']
-                    D1[startindex:finishindex] =(x*material_property[alloyprops['Material1']]['D1'] + (1-x)* material_property[alloyprops['Material2']]['D1'])*q
-                    D2[startindex:finishindex] =(x*material_property[alloyprops['Material1']]['D2'] + (1-x)* material_property[alloyprops['Material2']]['D2'])*q
-                    D3[startindex:finishindex] =(x*material_property[alloyprops['Material1']]['D3'] + (1-x)* material_property[alloyprops['Material2']]['D3'])*q
-                    D4[startindex:finishindex] =(x*material_property[alloyprops['Material1']]['D4'] + (1-x)* material_property[alloyprops['Material2']]['D4'])*q
-                    C13[startindex:finishindex] = (x*material_property[alloyprops['Material1']]['C13'] + (1-x)* material_property[alloyprops['Material2']]['C13'])*1e10# for newton/meter²
-                    C33[startindex:finishindex] = (x*material_property[alloyprops['Material1']]['C33'] + (1-x)* material_property[alloyprops['Material2']]['C33'])*1e10
-                    D31[startindex:finishindex] = x*material_property[alloyprops['Material1']]['D31'] + (1-x)* material_property[alloyprops['Material2']]['D31']
-                    D33[startindex:finishindex] = x*material_property[alloyprops['Material1']]['D33'] + (1-x)* material_property[alloyprops['Material2']]['D33']
-                    Psp[startindex:finishindex] = x*material_property[alloyprops['Material1']]['Psp'] + (1-x)* material_property[alloyprops['Material2']]['Psp']
-                    C11[startindex:finishindex] = (x*material_property[alloyprops['Material1']]['C11'] + (1-x)* material_property[alloyprops['Material2']]['C11'])*1e10
-                    C12[startindex:finishindex] = (x*material_property[alloyprops['Material1']]['C12'] + (1-x)* material_property[alloyprops['Material2']]['C12'])*1e10
-                    a0_wz[startindex:finishindex] = ( x*material_property[alloyprops['Material1']]['a0_wz'] +(1-x)* material_property[alloyprops['Material2']]['a0_wz'])*1e-10
-                    eps[startindex:finishindex] = (x*material_property[alloyprops['Material1']]['epsilonStatic'] + (1-x)* material_property[alloyprops['Material2']]['epsilonStatic'])*eps0
+                    A1[startindex:finishindex] =x*mat1['A1'] + (1-x)* mat2['A1']
+                    A2[startindex:finishindex] =x*mat1['A2'] + (1-x)* mat2['A2']
+                    A3[startindex:finishindex] =x*mat1['A3'] + (1-x)* mat2['A3']
+                    A4[startindex:finishindex] =x*mat1['A4'] + (1-x)* mat2['A4']
+                    A5[startindex:finishindex] =x*mat1['A5'] + (1-x)* mat2['A5']
+                    A6[startindex:finishindex] =x*mat1['A6'] + (1-x)* mat2['A6']
+                    D1[startindex:finishindex] =(x*mat1['D1'] + (1-x)* mat2['D1'])*q
+                    D2[startindex:finishindex] =(x*mat1['D2'] + (1-x)* mat2['D2'])*q
+                    D3[startindex:finishindex] =(x*mat1['D3'] + (1-x)* mat2['D3'])*q
+                    D4[startindex:finishindex] =(x*mat1['D4'] + (1-x)* mat2['D4'])*q
+                    C13[startindex:finishindex] = (x*mat1['C13'] + (1-x)* mat2['C13'])*1e10# for newton/meter²
+                    C33[startindex:finishindex] = (x*mat1['C33'] + (1-x)* mat2['C33'])*1e10
+                    D31[startindex:finishindex] = x*mat1['D31'] + (1-x)* mat2['D31']
+                    D33[startindex:finishindex] = x*mat1['D33'] + (1-x)* mat2['D33']
+                    Psp[startindex:finishindex] = x*mat1['Psp'] + (1-x)* mat2['Psp']
+                    C11[startindex:finishindex] = (x*mat1['C11'] + (1-x)* mat2['C11'])*1e10
+                    C12[startindex:finishindex] = (x*mat1['C12'] + (1-x)* mat2['C12'])*1e10
+                    a0_wz[startindex:finishindex] = ( x*mat1['a0_wz'] +(1-x)* mat2['a0_wz'])*1e-10
+                    eps[startindex:finishindex] = (x*mat1['epsilonStatic'] + (1-x)* mat2['epsilonStatic'])*eps0
                     fi_h[startindex:finishindex] =-(1-alloyprops['Band_offset'])*Eg*q
-                    delta_so[startindex:finishindex]  = (x*material_property[alloyprops['Material1']]['delta_so'] + (1-x)* material_property[alloyprops['Material2']]['delta_so'])*q
-                    delta_cr[startindex:finishindex]  = (x*material_property[alloyprops['Material1']]['delta_cr'] + (1-x)* material_property[alloyprops['Material2']]['delta_cr'])*q
-                    Ac_alloy = x*material_property[alloyprops['Material1']]['Ac'] + (1-x)* material_property[alloyprops['Material2']]['Ac']
+                    delta_so[startindex:finishindex]  = (x*mat1['delta_so'] + (1-x)* mat2['delta_so'])*q
+                    delta_cr[startindex:finishindex]  = (x*mat1['delta_cr'] + (1-x)* mat2['delta_cr'])*q
+                    Ac_alloy = x*mat1['Ac'] + (1-x)* mat2['Ac']
                     Ac[startindex:finishindex] = Ac_alloy*q
-            matRole= layer[5]
+                    mun0[startindex:finishindex] =x*mat1['mun0'] + (1-x)* mat2['mun0']
+                    mup0[startindex:finishindex] = x*mat1['mup0'] + (1-x)* mat2['mup0'] 
+                    #############################################
+            elif matType in alloy_property_4:
+                    alloyprops = alloy_property_4[matType]
+                    TAUN0[startindex:finishindex] = alloyprops['TAUN0']  
+                    TAUP0[startindex:finishindex] = alloyprops['TAUP0']
+                    BETAN[startindex:finishindex] = alloyprops['BETAN']
+                    BETAP[startindex:finishindex] = alloyprops['BETAP'] 
+                    if mat_type=='Zincblende':
+                        
+                        alloyprops = alloy_property_4[matType]
+                        mat1 = material_property[alloyprops['Material1']]
+                        mat2 = material_property[alloyprops['Material2']]
+                        mat3 = material_property[alloyprops['Material3']]
+                        mat4 = material_property[alloyprops['Material4']]
+                        #mat1:InAs
+                        #mat2:GaAs
+                        #mat3:InP
+                        #mat4:GaP
+                        #This is accourding to interpolated Vegard’s law for quaternary AxB(1-x)CyD(1-y)=InxGa(1-x)AsyP(1-y)
+                        x = layer[2] #alloy ratio x
+                        y = layer[3] #alloy ratio y
+                        cb_meff_alloy_ABC_x=x*mat1['m_e'] + (1-x)* mat2['m_e']
+                        cb_meff_alloy_ABD_x=x*mat3['m_e'] + (1-x)* mat4['m_e']
+                        cb_meff_alloy_ACD_y=y*mat1['m_e'] + (1-y)* mat3['m_e']
+                        cb_meff_alloy_BCD_y=y*mat2['m_e'] + (1-y)* mat4['m_e']
+                        cb_meff_alloy=(x*(1-x)*(y*cb_meff_alloy_ABC_x+(1-y)*cb_meff_alloy_ABD_x)+y*(1-y)*(x*cb_meff_alloy_ACD_y+(1-x)*cb_meff_alloy_BCD_y))/(x*(1-x)+y*(1-y))
+                        cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
+                        
+                        Eg_alloy_ABC_x=x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param_ABC']*x*(1-x)#eV InGaAs
+                        Eg_alloy_ABD_x=x*mat3['Eg'] + (1-x)* mat4['Eg']-alloyprops['Bowing_param_ABD']*x*(1-x) #eV InGaP
+                        Eg_alloy_ACD_y=y*mat1['Eg'] + (1-y)* mat3['Eg']-alloyprops['Bowing_param_ACD']*y*(1-y) #eV InAsP
+                        Eg_alloy_BCD_y=y*mat2['Eg'] + (1-y)* mat4['Eg']-alloyprops['Bowing_param_BCD']*y*(1-y) #eV GaAsP
+                        Eg=(x*(1-x)*(y*Eg_alloy_ABC_x+(1-y)*Eg_alloy_ABD_x)+y*(1-y)*(x*Eg_alloy_ACD_y+(1-x)*Eg_alloy_BCD_y))/(x*(1-x)+y*(1-y))
+                        
+                        fi_e[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule
+                        a0_sub[startindex:finishindex]=alloyprops['a0_sub']*1e-10
+                        C11_alloy_ABC_x=x*mat1['C11'] + (1-x)* mat2['C11']
+                        C11_alloy_ABD_x=x*mat3['C11'] + (1-x)* mat4['C11']
+                        C11_alloy_ACD_y=y*mat1['C11'] + (1-y)* mat3['C11']
+                        C11_alloy_BCD_y=y*mat2['C11'] + (1-y)* mat4['C11']
+                        C11[startindex:finishindex]=((x*(1-x)*(y*C11_alloy_ABC_x+(1-y)*C11_alloy_ABD_x)+y*(1-y)*(x*C11_alloy_ACD_y+(1-x)*C11_alloy_BCD_y))/(x*(1-x)+y*(1-y)))*1e10
+                        
+                        C12_alloy_ABC_x=x*mat1['C12'] + (1-x)* mat2['C12']
+                        C12_alloy_ABD_x=x*mat3['C12'] + (1-x)* mat4['C12']
+                        C12_alloy_ACD_y=y*mat1['C12'] + (1-y)* mat3['C12']
+                        C12_alloy_BCD_y=y*mat2['C12'] + (1-y)* mat4['C12']
+                        C12[startindex:finishindex]=((x*(1-x)*(y*C12_alloy_ABC_x+(1-y)*C12_alloy_ABD_x)+y*(1-y)*(x*C12_alloy_ACD_y+(1-x)*C12_alloy_BCD_y))/(x*(1-x)+y*(1-y)))*1e10
+
+                        
+                        GA1_alloy_ABC_x=x*mat1['GA1'] + (1-x)* mat2['GA1']
+                        GA1_alloy_ABD_x=x*mat3['GA1'] + (1-x)* mat4['GA1']
+                        GA1_alloy_ACD_y=y*mat1['GA1'] + (1-y)* mat3['GA1']
+                        GA1_alloy_BCD_y=y*mat2['GA1'] + (1-y)* mat4['GA1']
+                        GA1[startindex:finishindex]=(x*(1-x)*(y*GA1_alloy_ABC_x+(1-y)*GA1_alloy_ABD_x)+y*(1-y)*(x*GA1_alloy_ACD_y+(1-x)*GA1_alloy_BCD_y))/(x*(1-x)+y*(1-y))
+                        
+                        GA2_alloy_ABC_x=x*mat1['GA2'] + (1-x)* mat2['GA2']
+                        GA2_alloy_ABD_x=x*mat3['GA2'] + (1-x)* mat4['GA2']
+                        GA2_alloy_ACD_y=y*mat1['GA2'] + (1-y)* mat3['GA2']
+                        GA2_alloy_BCD_y=y*mat2['GA2'] + (1-y)* mat4['GA2']
+                        GA2[startindex:finishindex]=(x*(1-x)*(y*GA2_alloy_ABC_x+(1-y)*GA2_alloy_ABD_x)+y*(1-y)*(x*GA2_alloy_ACD_y+(1-x)*GA2_alloy_BCD_y))/(x*(1-x)+y*(1-y))
+                        
+                        GA3_alloy_ABC_x=x*mat1['GA3'] + (1-x)* mat2['GA3']
+                        GA3_alloy_ABD_x=x*mat3['GA3'] + (1-x)* mat4['GA3']
+                        GA3_alloy_ACD_y=y*mat1['GA3'] + (1-y)* mat3['GA3']
+                        GA3_alloy_BCD_y=y*mat2['GA3'] + (1-y)* mat4['GA3']
+                        GA3[startindex:finishindex]=(x*(1-x)*(y*GA3_alloy_ABC_x+(1-y)*GA3_alloy_ABD_x)+y*(1-y)*(x*GA3_alloy_ACD_y+(1-x)*GA3_alloy_BCD_y))/(x*(1-x)+y*(1-y))
+
+
+                        Ac_alloy_ABC_x=x*mat1['Ac'] + (1-x)* mat2['Ac']
+                        Ac_alloy_ABD_x=x*mat3['Ac'] + (1-x)* mat4['Ac']
+                        Ac_alloy_ACD_y=y*mat1['Ac'] + (1-y)* mat3['Ac']
+                        Ac_alloy_BCD_y=y*mat2['Ac'] + (1-y)* mat4['Ac']
+                        Ac_alloy=(x*(1-x)*(y*Ac_alloy_ABC_x+(1-y)*Ac_alloy_ABD_x)+y*(1-y)*(x*Ac_alloy_ACD_y+(1-x)*Ac_alloy_BCD_y))/(x*(1-x)+y*(1-y))                                                             
+                        Ac[startindex:finishindex] = Ac_alloy*q
+                        
+                        Av_alloy_ABC_x=x*mat1['Av'] + (1-x)* mat2['Av']
+                        Av_alloy_ABD_x=x*mat3['Av'] + (1-x)* mat4['Av']
+                        Av_alloy_ACD_y=y*mat1['Av'] + (1-y)* mat3['Av']
+                        Av_alloy_BCD_y=y*mat2['Av'] + (1-y)* mat4['Av']
+                        Av_alloy=(x*(1-x)*(y*Av_alloy_ABC_x+(1-y)*Av_alloy_ABD_x)+y*(1-y)*(x*Av_alloy_ACD_y+(1-x)*Av_alloy_BCD_y))/(x*(1-x)+y*(1-y))                                                             
+                        Av[startindex:finishindex] = Av_alloy*q                        
+                        
+                        B_alloy_ABC_x=x*mat1['B'] + (1-x)* mat2['B']
+                        B_alloy_ABD_x=x*mat3['B'] + (1-x)* mat4['B']
+                        B_alloy_ACD_y=y*mat1['B'] + (1-y)* mat3['B']
+                        B_alloy_BCD_y=y*mat2['B'] + (1-y)* mat4['B']
+                        B_alloy=(x*(1-x)*(y*B_alloy_ABC_x+(1-y)*B_alloy_ABD_x)+y*(1-y)*(x*B_alloy_ACD_y+(1-x)*B_alloy_BCD_y))/(x*(1-x)+y*(1-y))                                                             
+                        B[startindex:finishindex] = B_alloy*q
+                        
+                        delta_alloy_ABC_x=x*mat1['delta'] + (1-x)* mat2['delta']
+                        delta_alloy_ABD_x=x*mat3['delta'] + (1-x)* mat4['delta']
+                        delta_alloy_ACD_y=y*mat1['delta'] + (1-y)* mat3['delta']
+                        delta_alloy_BCD_y=y*mat2['delta'] + (1-y)* mat4['delta']
+                        delta_alloy=(x*(1-x)*(y*delta_alloy_ABC_x+(1-y)*delta_alloy_ABD_x)+y*(1-y)*(x*delta_alloy_ACD_y+(1-x)*delta_alloy_BCD_y))/(x*(1-x)+y*(1-y))                                                             
+                        delta[startindex:finishindex] = delta_alloy*q                        
+
+                        fi_h[startindex:finishindex] = -(1-alloyprops['Band_offset'])*Eg*q # -(-1.33*(1-x)-0.8*x)for electron. Joule-1.97793434e-20 #
+                        
+                        eps_alloy_ABC_x=x*mat1['epsilonStatic'] + (1-x)* mat2['epsilonStatic']
+                        eps_alloy_ABD_x=x*mat3['epsilonStatic'] + (1-x)* mat4['epsilonStatic']
+                        eps_alloy_ACD_y=y*mat1['epsilonStatic'] + (1-y)* mat3['epsilonStatic']
+                        eps_alloy_BCD_y=y*mat2['epsilonStatic'] + (1-y)* mat4['epsilonStatic']
+                        eps_alloy=(x*(1-x)*(y*eps_alloy_ABC_x+(1-y)*eps_alloy_ABD_x)+y*(1-y)*(x*eps_alloy_ACD_y+(1-x)*eps_alloy_BCD_y))/(x*(1-x)+y*(1-y))
+                        eps[startindex:finishindex] = eps_alloy*eps0
+                    
+                        a0_alloy_ABC_x=x*mat1['a0'] + (1-x)* mat2['a0']
+                        a0_alloy_ABD_x=x*mat3['a0'] + (1-x)* mat4['a0']
+                        a0_alloy_ACD_y=y*mat1['a0'] + (1-y)* mat3['a0']
+                        a0_alloy_BCD_y=y*mat2['a0'] + (1-y)* mat4['a0']
+                        a0_alloy=(x*(1-x)*(y*a0_alloy_ABC_x+(1-y)*a0_alloy_ABD_x)+y*(1-y)*(x*a0_alloy_ACD_y+(1-x)*a0_alloy_BCD_y))/(x*(1-x)+y*(1-y))
+                        a0[startindex:finishindex] = a0_alloy*1e-10
+                        
+                        mun0_alloy_ABC_x=x*mat1['mun0'] + (1-x)* mat2['mun0']
+                        mun0_alloy_ABD_x=x*mat3['mun0'] + (1-x)* mat4['mun0']
+                        mun0_alloy_ACD_y=y*mat1['mun0'] + (1-y)* mat3['mun0']
+                        mun0_alloy_BCD_y=y*mat2['mun0'] + (1-y)* mat4['mun0']                        
+                        mun0[startindex:finishindex] =(x*(1-x)*(y*mun0_alloy_ABC_x+(1-y)*mun0_alloy_ABD_x)+y*(1-y)*(x*mun0_alloy_ACD_y+(1-x)*mun0_alloy_BCD_y))/(x*(1-x)+y*(1-y))
+                        
+                        mup0_alloy_ABC_x=x*mat1['mup0'] + (1-x)* mat2['mup0']
+                        mup0_alloy_ABD_x=x*mat3['mup0'] + (1-x)* mat4['mup0']
+                        mup0_alloy_ACD_y=y*mat1['mup0'] + (1-y)* mat3['mup0']
+                        mup0_alloy_BCD_y=y*mat2['mup0'] + (1-y)* mat4['mup0']                        
+                        mup0[startindex:finishindex] =(x*(1-x)*(y*mup0_alloy_ABC_x+(1-y)*mup0_alloy_ABD_x)+y*(1-y)*(x*mup0_alloy_ACD_y+(1-x)*mup0_alloy_BCD_y))/(x*(1-x)+y*(1-y))
+                        
+                        cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(mat2['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
+                    if mat_type=='Wurtzite' :
+                        alloyprops = alloy_property_4[matType]
+                        mat1 = material_property[alloyprops['Material1']]#AlN
+                        mat2 = material_property[alloyprops['Material2']]#InN
+                        mat3 = material_property[alloyprops['Material3']]#GaN
+                        #This is accourding to interpolated Vegard’s law for quaternary ABxCyD1-x-y=NGaxAlyIn1-x-y
+                        x = layer[2] #alloy ratio x
+                        y = layer[3] #alloy ratio y
+                        u_4=(1-x+y)/2
+                        v_4=(2-x-2*y)/2
+                        w_4=(2-2*x-y)/2
+                        cb_meff_alloy_ABC=u_4*mat1['m_e'] + (1-u_4)* mat3['m_e']#AlxGa1-xN
+                        cb_meff_alloy_ABD=w_4*mat2['m_e'] + (1-w_4)* mat3['m_e']#InxGa1-xN
+                        cb_meff_alloy_ACD=v_4*mat1['m_e'] + (1-v_4)* mat2['m_e']#AlxIn1-xN
+                        cb_meff_alloy=(x*y*cb_meff_alloy_ABC+y*(1-x-y)*cb_meff_alloy_ACD+x*(1-x-y)*cb_meff_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
+                        
+                        Eg_alloy_ABC=u_4*mat1['Eg'] + (1-u_4)* mat3['Eg']-alloyprops['Bowing_param_ABC']*u_4*(1-u_4) #eV
+                        Eg_alloy_ABD=w_4*mat2['Eg'] + (1-w_4)* mat3['Eg']-alloyprops['Bowing_param_ABD']*w_4*(1-w_4) #eV
+                        Eg_alloy_ACD=v_4*mat1['Eg'] + (1-v_4)* mat2['Eg']-alloyprops['Bowing_param_ACD']*v_4*(1-v_4) #eV
+                        Eg=(x*y*Eg_alloy_ABC+y*(1-x-y)*Eg_alloy_ACD+x*(1-x-y)*Eg_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        
+                        fi_e[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule
+                        a0_sub[startindex:finishindex]=alloyprops['a0_sub']*1e-10
+                        A1_alloy_ABC=u_4*mat1['A1'] + (1-u_4)* mat3['A1']
+                        A1_alloy_ABD=w_4*mat2['A1'] + (1-w_4)* mat3['A1']
+                        A1_alloy_ACD=v_4*mat1['A1'] + (1-v_4)* mat2['A1']
+                        A1[startindex:finishindex]=(x*y*A1_alloy_ABC+y*(1-x-y)*A1_alloy_ACD+x*(1-x-y)*A1_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        
+                        A2_alloy_ABC=u_4*mat1['A2'] + (1-u_4)* mat3['A2']
+                        A2_alloy_ABD=w_4*mat2['A2'] + (1-w_4)* mat3['A2']
+                        A2_alloy_ACD=v_4*mat1['A2'] + (1-v_4)* mat2['A2']
+                        A2[startindex:finishindex]=(x*y*A2_alloy_ABC+y*(1-x-y)*A2_alloy_ACD+x*(1-x-y)*A2_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        
+                        A3_alloy_ABC=u_4*mat1['A3'] + (1-u_4)* mat3['A3']
+                        A3_alloy_ABD=w_4*mat2['A3'] + (1-w_4)* mat3['A3']
+                        A3_alloy_ACD=v_4*mat1['A3'] + (1-v_4)* mat2['A3']
+                        A3[startindex:finishindex]=(x*y*A3_alloy_ABC+y*(1-x-y)*A3_alloy_ACD+x*(1-x-y)*A3_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+
+                        A4_alloy_ABC=u_4*mat1['A4'] + (1-u_4)* mat3['A4']
+                        A4_alloy_ABD=w_4*mat2['A4'] + (1-w_4)* mat3['A4']
+                        A4_alloy_ACD=v_4*mat1['A4'] + (1-v_4)* mat2['A4']
+                        A4[startindex:finishindex]=(x*y*A4_alloy_ABC+y*(1-x-y)*A4_alloy_ACD+x*(1-x-y)*A4_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        
+                        A5_alloy_ABC=u_4*mat1['A5'] + (1-u_4)* mat3['A5']
+                        A5_alloy_ABD=w_4*mat2['A5'] + (1-w_4)* mat3['A5']
+                        A5_alloy_ACD=v_4*mat1['A5'] + (1-v_4)* mat2['A5']
+                        A5[startindex:finishindex]=(x*y*A5_alloy_ABC+y*(1-x-y)*A5_alloy_ACD+x*(1-x-y)*A5_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        
+                        A6_alloy_ABC=u_4*mat1['A6'] + (1-u_4)* mat3['A6']
+                        A6_alloy_ABD=w_4*mat2['A6'] + (1-w_4)* mat3['A6']
+                        A6_alloy_ACD=v_4*mat1['A6'] + (1-v_4)* mat2['A6']
+                        A6[startindex:finishindex]=(x*y*A6_alloy_ABC+y*(1-x-y)*A6_alloy_ACD+x*(1-x-y)*A6_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        
+
+                        D1_alloy_ABC=u_4*mat1['D1'] + (1-u_4)* mat3['D1']
+                        D1_alloy_ABD=w_4*mat2['D1'] + (1-w_4)* mat3['D1']
+                        D1_alloy_ACD=v_4*mat1['D1'] + (1-v_4)* mat2['D1']
+                        D1_alloy=(x*y*D1_alloy_ABC+y*(1-x-y)*D1_alloy_ACD+x*(1-x-y)*D1_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        D1[startindex:finishindex] = D1_alloy*q
+
+                        D2_alloy_ABC=u_4*mat1['D2'] + (1-u_4)* mat3['D2']
+                        D2_alloy_ABD=w_4*mat2['D2'] + (1-w_4)* mat3['D2']
+                        D2_alloy_ACD=v_4*mat1['D2'] + (1-v_4)* mat2['D2']
+                        D2_alloy=(x*y*D2_alloy_ABC+y*(1-x-y)*D2_alloy_ACD+x*(1-x-y)*D2_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        D2[startindex:finishindex] = D2_alloy*q
+
+                        D3_alloy_ABC=u_4*mat1['D3'] + (1-u_4)* mat3['D3']
+                        D3_alloy_ABD=w_4*mat2['D3'] + (1-w_4)* mat3['D3']
+                        D3_alloy_ACD=v_4*mat1['D3'] + (1-v_4)* mat2['D3']
+                        D3_alloy=(x*y*D3_alloy_ABC+y*(1-x-y)*D3_alloy_ACD+x*(1-x-y)*D3_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        D3[startindex:finishindex] = D3_alloy*q
+
+                        D4_alloy_ABC=u_4*mat1['D4'] + (1-u_4)* mat3['D4']
+                        D4_alloy_ABD=w_4*mat2['D4'] + (1-w_4)* mat3['D4']
+                        D4_alloy_ACD=v_4*mat1['D4'] + (1-v_4)* mat2['D4']
+                        D4_alloy=(x*y*D4_alloy_ABC+y*(1-x-y)*D4_alloy_ACD+x*(1-x-y)*D4_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        D4[startindex:finishindex] = D4_alloy*q
+
+                        D31_alloy_ABC=u_4*mat1['D31'] + (1-u_4)* mat3['D31']
+                        D31_alloy_ABD=w_4*mat2['D31'] + (1-w_4)* mat3['D31']
+                        D31_alloy_ACD=v_4*mat1['D31'] + (1-v_4)* mat2['D31']
+                        D31[startindex:finishindex]=(x*y*D31_alloy_ABC+y*(1-x-y)*D31_alloy_ACD+x*(1-x-y)*D31_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        
+                        D33_alloy_ABC=u_4*mat1['D33'] + (1-u_4)* mat3['D33']
+                        D33_alloy_ABD=w_4*mat2['D33'] + (1-w_4)* mat3['D33']
+                        D33_alloy_ACD=v_4*mat1['D33'] + (1-v_4)* mat2['D33']
+                        D33[startindex:finishindex]=(x*y*D33_alloy_ABC+y*(1-x-y)*D33_alloy_ACD+x*(1-x-y)*D33_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                         
+                        Psp_alloy_ABC=u_4*mat1['Psp'] + (1-u_4)* mat3['Psp']
+                        Psp_alloy_ABD=w_4*mat2['Psp'] + (1-w_4)* mat3['Psp']
+                        Psp_alloy_ACD=v_4*mat1['Psp'] + (1-v_4)* mat2['Psp']
+                        Psp[startindex:finishindex]=(x*y*Psp_alloy_ABC+y*(1-x-y)*Psp_alloy_ACD+x*(1-x-y)*Psp_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        
+                        C11_alloy_ABC=u_4*mat1['C11'] + (1-u_4)* mat3['C11']
+                        C11_alloy_ABD=w_4*mat2['C11'] + (1-w_4)* mat3['C11']
+                        C11_alloy_ACD=v_4*mat1['C11'] + (1-v_4)* mat2['C11']
+                        C11[startindex:finishindex]=(x*y*C11_alloy_ABC+y*(1-x-y)*C11_alloy_ACD+x*(1-x-y)*C11_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e10# for newton/meter²
+                        
+                        C12_alloy_ABC=u_4*mat1['C12'] + (1-u_4)* mat3['C12']
+                        C12_alloy_ABD=w_4*mat2['C12'] + (1-w_4)* mat3['C12']
+                        C12_alloy_ACD=v_4*mat1['C12'] + (1-v_4)* mat2['C12']
+                        C12[startindex:finishindex]=(x*y*C12_alloy_ABC+y*(1-x-y)*C12_alloy_ACD+x*(1-x-y)*C12_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e10
+
+                        C13_alloy_ABC=u_4*mat1['C13'] + (1-u_4)* mat3['C13']
+                        C13_alloy_ABD=w_4*mat2['C13'] + (1-w_4)* mat3['C13']
+                        C13_alloy_ACD=v_4*mat1['C13'] + (1-v_4)* mat2['C13']
+                        C13[startindex:finishindex]=(x*y*C13_alloy_ABC+y*(1-x-y)*C13_alloy_ACD+x*(1-x-y)*C13_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e10
+                        
+                        C33_alloy_ABC=u_4*mat1['C33'] + (1-u_4)* mat3['C33']
+                        C33_alloy_ABD=w_4*mat2['C33'] + (1-w_4)* mat3['C33']
+                        C33_alloy_ACD=v_4*mat1['C33'] + (1-v_4)* mat2['C33']
+                        C33[startindex:finishindex]=(x*y*C33_alloy_ABC+y*(1-x-y)*C33_alloy_ACD+x*(1-x-y)*C33_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e10
+
+                                              
+                        fi_h[startindex:finishindex] = -(1-alloyprops['Band_offset'])*Eg*q # -(-1.33*(1-x)-0.8*x)for electron. Joule-1.97793434e-20 #
+                        
+                        eps_alloy_ABC=u_4*mat1['epsilonStatic'] + (1-u_4)* mat3['epsilonStatic']
+                        eps_alloy_ABD=w_4*mat2['epsilonStatic'] + (1-w_4)* mat3['epsilonStatic']
+                        eps_alloy_ACD=v_4*mat1['epsilonStatic'] + (1-v_4)* mat2['epsilonStatic']
+                        eps_alloy=(x*y*eps_alloy_ABC+y*(1-x-y)*eps_alloy_ACD+x*(1-x-y)*eps_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        eps[startindex:finishindex] = eps_alloy*eps0
+                        
+                        a0_wz_alloy_ABC=u_4*mat1['a0_wz'] + (1-u_4)* mat3['a0_wz']
+                        a0_wz_alloy_ABD=w_4*mat2['a0_wz'] + (1-w_4)* mat3['a0_wz']
+                        a0_wz_alloy_ACD=v_4*mat1['a0_wz'] + (1-v_4)* mat2['a0_wz']
+                        a0_wz_alloy=(x*y*a0_wz_alloy_ABC+y*(1-x-y)*a0_wz_alloy_ACD+x*(1-x-y)*a0_wz_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        a0_wz[startindex:finishindex] = a0_wz_alloy*1e-10
+                                             
+                        delta_so_alloy_ABC=u_4*mat1['delta_so'] + (1-u_4)* mat3['delta_so']
+                        delta_so_alloy_ABD=w_4*mat2['delta_so'] + (1-w_4)* mat3['delta_so']
+                        delta_so_alloy_ACD=v_4*mat1['delta_so'] + (1-v_4)* mat2['delta_so']
+                        delta_so_alloy=(x*y*delta_so_alloy_ABC+y*(1-x-y)*delta_so_alloy_ACD+x*(1-x-y)*delta_so_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        delta_so[startindex:finishindex] = delta_so_alloy*q   
+                        
+                        delta_cr_alloy_ABC=u_4*mat1['delta_cr'] + (1-u_4)* mat3['delta_cr']
+                        delta_cr_alloy_ABD=w_4*mat2['delta_cr'] + (1-w_4)* mat3['delta_cr']
+                        delta_cr_alloy_ACD=v_4*mat1['delta_cr'] + (1-v_4)* mat2['delta_cr']
+                        delta_cr_alloy=(x*y*delta_cr_alloy_ABC+y*(1-x-y)*delta_cr_alloy_ACD+x*(1-x-y)*delta_cr_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        delta_cr[startindex:finishindex] = delta_cr_alloy*q
+                        
+                        Ac_alloy_ABC=u_4*mat1['Ac'] + (1-u_4)* mat3['Ac']
+                        Ac_alloy_ABD=w_4*mat2['Ac'] + (1-w_4)* mat3['Ac']
+                        Ac_alloy_ACD=v_4*mat1['Ac'] + (1-v_4)* mat2['Ac']
+                        Ac_alloy=(x*y*Ac_alloy_ABC+y*(1-x-y)*Ac_alloy_ACD+x*(1-x-y)*Ac_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        Ac[startindex:finishindex] = Ac_alloy*q
+
+                        mun0_alloy_ABC=u_4*mat1['mun0'] + (1-u_4)* mat3['mun0']
+                        mun0_alloy_ABD=w_4*mat2['mun0'] + (1-w_4)* mat3['mun0']
+                        mun0_alloy_ACD=v_4*mat1['mun0'] + (1-v_4)* mat2['mun0']
+                        mun0[startindex:finishindex]=(x*y*mun0_alloy_ABC+y*(1-x-y)*mun0_alloy_ACD+x*(1-x-y)*mun0_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e10
+
+                        mup0_alloy_ABC=u_4*mat1['mup0'] + (1-u_4)* mat3['mup0']
+                        mup0_alloy_ABD=w_4*mat2['mup0'] + (1-w_4)* mat3['mup0']
+                        mup0_alloy_ACD=v_4*mat1['mup0'] + (1-v_4)* mat2['mup0']
+                        mup0[startindex:finishindex]=(x*y*mup0_alloy_ABC+y*(1-x-y)*mup0_alloy_ACD+x*(1-x-y)*mup0_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e10
+
+
+            #wells and barriers boundaries
+            matRole= layer[6]
             if  matRole == 'w':
                 N_wells_real2+=1
                 Well_boundary2[N_wells_real2,0]=startindex 
                 Well_boundary2[N_wells_real2,1]=finishindex
-                
             for J in range(0,N_wells_virtual2):
                 barrier_boundary[J,0]=Well_boundary2[J-1,1]
                 barrier_boundary[J,1]=Well_boundary2[J,0]
-                barrier_len[J]=barrier_boundary[J,1]-barrier_boundary[J,0]
+                barrier_len[J]=barrier_boundary[J,1]-barrier_boundary[J,0]            
             #doping
-            if layer[4] == 'n':  
-                chargedensity = layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
-            elif layer[4] == 'p': 
-                chargedensity = -layer[3]*1e6 #charge density in m**-3 (conversion from cm**-3)
+            
+            dop_profile=self.dop_profile
+            if layer[5] == 'n':  
+                dop[startindex:finishindex] = layer[4]*1e6+dop_profile[startindex:finishindex]+1e-15  #charge density in m**-3 (conversion from cm**-3)
+            elif layer[5] == 'p': 
+                dop[startindex:finishindex] = -layer[4]*1e6+dop_profile[startindex:finishindex]+1e-15   #charge density in m**-3 (conversion from cm**-3)
             else:
-                chargedensity = 0.0
-            dop[startindex:finishindex] = chargedensity
-        #here we remove barriers who are less than anti_crossing_length
-        #so we can constructe the new well boundary using the resulted barrier boundary
-        brr=0
+                dop[startindex:finishindex]=dop_profile[startindex:finishindex]+1e-15
+        """
+        xaxis = np.arange(0,n_max)*dx
+        pl.plot(xaxis, abs(dop)*1e-6,'r')
+        pl.plot(xaxis, dop_profile*1e-6,'k')
+        pl.xlabel('Position (m)')
+        pl.ylabel('electrons  and and holes concentrations (cm-3)' )
+        pl.title('electrons (red) and holes (blue)')
+        pl.grid(True)
+        ssssss
+        
+        
+        Here we remove barriers that are less than the anti_crossing_length
+        so we can constructe the new well boundary using the resulted barrier boundary
+        """
+        brr=0        
         anti_crossing_length=config.anti_crossing_length*1e-9
         for J in range(2,N_wells_virtual2-1):
             if (barrier_len[J]*dx <= anti_crossing_length ) :
@@ -354,11 +693,13 @@ class Structure():
         for J in range(0,N_wells_virtual):
             Well_boundary[J-1,1]=barrier_boundary[J,0]
             Well_boundary[J,0]=barrier_boundary[J,1]
-        self.fi = fi
+        self.fi_e = fi_e
+        self.fi_h = fi_h
         self.cb_meff = cb_meff
         self.cb_meff_alpha = cb_meff_alpha
         self.dop = dop
-        #return fi,cb_meff,eps,dop
+        self.pol_surf_char=pol_surf_char
+        #return fi_e,cb_meff,eps,dop
         self.C11 = C11
         self.C12 = C12
         self.GA1 = GA1
@@ -367,9 +708,10 @@ class Structure():
         self.Ac = Ac
         self.Av = Av
         self.B = B
+        self.n = n
+        self.p = p
         self.a0 = a0
         self.delta = delta
-        self.fi_h = fi_h
         self.eps = eps
         self.A1 = A1
         self.A2 = A2
@@ -396,6 +738,12 @@ class Structure():
         self.Well_boundary=Well_boundary
         self.Well_boundary2=Well_boundary2
         self.barrier_boundary=barrier_boundary
+        self.TAUN0=TAUN0  
+        self.TAUP0=TAUP0
+        self.mun0=mun0
+        self.mup0=mup0
+        self.BETAN=BETAN
+        self.BETAP=BETAP
 class AttrDict(dict):
     """turns a dictionary into an object with attribute style lookups"""
     def __init__(self, *args, **kwargs):
@@ -408,6 +756,8 @@ class StructureFrom(Structure):
             inputfile=AttrDict(inputfile)            
         # Parameters for simulation
         self.Fapp = inputfile.Fapplied
+        self.Vapplied = inputfile.Vapplied
+        self.surface =inputfile.surface
         self.T = inputfile.T
         self.subnumber_h = inputfile.subnumber_h
         self.subnumber_e = inputfile.subnumber_e
@@ -417,15 +767,19 @@ class StructureFrom(Structure):
         self.mat_type = inputfile.mat_type
         # Loading material list
         self.material = inputfile.material
+        
+        
         totallayer = alen(self.material)
-        logger.info("Total layer number: %s",totallayer)
+        if not(config.messagesoff):
+            logger.info("Total layer number: %s",totallayer)
         
         # Calculate the required number of grid points
         self.x_max = sum([layer[0] for layer in self.material])*1e-9 #total thickness (m)
-        self.n_max = int(self.x_max/self.dx)
-        
-        # Check on n_max
+        self.n_max = int(self.x_max/self.dx)        
+        # Check on n_max  
         max_val = inputfile.maxgridpoints
+        
+        self.dop_profile=inputfile.dop_profile
         if self.n_max > max_val:
             logger.error(" Grid number is exceeding the max number of %d", max_val)
             exit()
@@ -436,13 +790,16 @@ class StructureFrom(Structure):
         
         self.alloy_property = database.alloyproperty
         totalalloy = alen(self.alloy_property)
-        
-        logger.info("Total number of materials in database: %d" %(totalmaterial+totalalloy))
+
+        self.alloy_property_4 = database.alloyproperty4
+        totalalloy += alen(self.alloy_property_4)
+        if not(config.messagesoff):            
+            logger.info("Total number of materials in database: %d" %(totalmaterial+totalalloy))
         
         # Initialise arrays
         
         #cb_meff #conduction band effective mass (array, len n_max)
-        #fi #Bandstructure potential (array, len n_max)
+        #fi_e #Bandstructure potential (array, len n_max)
         #eps #dielectric constant (array, len n_max)
         #dop #doping distribution (array, len n_max)
         self.create_structure_arrays()
