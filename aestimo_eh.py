@@ -1001,12 +1001,22 @@ def calc_sigma(wfh,wfe,N_state,N_statec,model,Ntotal2d): #use
         for i in range(0,model.subnumber_h,1): # The charges due to the electrons in the subbands
             sigma+= N_state[i]*(wfh[i])**2
     return sigma #charge per m**2 (units of electronic charge)
-def calc_sigma_general(wfh,wfe,N_state,N_statec,model,Ntotal2d,j,Well_boundary): #use
+def calc_sigma_general2(n_max,dopi,n,p): #use
+    """This function calculates `net' areal charge density
+    n-type dopants lead to -ve charge representing electrons, and additionally 
+    +ve ionised donors."""
+    sigma=np.zeros(len(dopi))
+    sigma=sigma+dopi # The charges due to the dopant ions
+    
+    for i in range(0,n_max): # The charges due to the electrons in the subbands
+        sigma[i]+=(p[i]-n[i])       
+    return sigma #charge per m**3 (units of electronic charge)
+def calc_sigma_general(pol_surf_char,wfh,wfe,N_state,N_statec,model,Ntotal2d,j,Well_boundary): #use
     """This function calculates `net' areal charge density
     n-type dopants lead to -ve charge representing electrons, and additionally 
     +ve ionised donors."""
     # note: model.dop is still a volume density, the delta_x converts it to an areal density
-    sigma= model.dop[Well_boundary[j-1,1]:Well_boundary[j+1,0]]*model.dx # The charges due to the dopant ions
+    sigma= model.dop[Well_boundary[j-1,1]:Well_boundary[j+1,0]]*model.dx#+pol_surf_char[Well_boundary[j-1,1]:Well_boundary[j+1,0]]  The charges due to the dopant ions
     if Ntotal2d>0 :
         for j in range(0,model.subnumber_e,1): # The charges due to the electrons in the subbands
             sigma-= N_statec[j]*(wfe[j])**2
@@ -1063,7 +1073,7 @@ def calc_potn(F,model):#use
 
 # FUNCTIONS FOR EXCHANGE INTERACTION-------------------------------------------
 
-def calc_Vxc(sigma,eps,cb_meff):
+def calc_Vxc(sigma,eps,cb_meff,model):
     """An effective field describing the exchange-interactions between the electrons
     derived from Kohn-Sham density functional theory. This formula is given in many
     papers, for example see Gunnarsson and Lundquist (1976), Ando, Taniyama, Ohtani 
