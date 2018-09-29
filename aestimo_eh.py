@@ -1398,20 +1398,19 @@ def Poisson_Schrodinger(model):
     dx - grid spacing (m)
     n_max - number of points.
     """   
-    fi = model.fi
+    fi_e = model.fi_e
     cb_meff = model.cb_meff
     eps = model.eps
     dop = model.dop
     Fapp = model.Fapp
+    Vapplied = model.Vapplied
+    surface= model.surface
     T = model.T
     comp_scheme = model.comp_scheme
     subnumber_h = model.subnumber_h
-    N_wells_real0=model.N_wells_real0
     subnumber_e = model.subnumber_e
     dx = model.dx
     n_max = model.n_max
-    mat_type= model.mat_type
-    
     if comp_scheme in (4,5,6):
         logger.error("""aestimo_eh doesn't currently include exchange interactions
         in its valence band calculations.""")
@@ -1420,198 +1419,18 @@ def Poisson_Schrodinger(model):
         logger.error("""aestimo_eh doesn't currently include nonparabolicity effects in 
         its valence band calculations.""")
         exit()
-    
-    C11 = model.C11
-    C12 = model.C12
-    GA1 = model.GA1
-    GA2 = model.GA2
-    GA3 = model.GA3
-    Ac = model.Ac
-    Av = model.Av
-    B = model.B
-    a0 = model.a0
-    delta = model.delta
     fi_h = model.fi_h
-    A1 = model.A1
-    A2 = model.A2
-    A3 = model.A3
-    A4 = model.A4
-    A5 = model.A5
-    A6 = model.A6
-    D1 = model.D1
-    D2 = model.D2
-    D3 = model.D3
-    D4 = model.D4
-    C13 = model.C13
-    C33 = model.C33
-    D31 = model.D31
-    D33 = model.D33
-    Psp = model.Psp
-    a0_wz = model.a0_wz
-    a0_sub = model.a0_sub
-    delta_so = model.delta_so
-    delta_cr = model.delta_cr
+    n = model.n
+    p = model.p
     N_wells_virtual = model.N_wells_virtual
-    N_wells_virtual2 = model.N_wells_virtual2
     Well_boundary=model.Well_boundary
-    Well_boundary2=model.Well_boundary2
-    barrier_boundary=model.barrier_boundary
-    Ppz= np.zeros(n_max)
+    Ppz_Psp= np.zeros(n_max)
     HUPMAT1=np.zeros((n_max*3, n_max*3))
     HUPMATC1=np.zeros((n_max, n_max))
     UNIM = np.identity(n_max)
-    EXX  = np.zeros(n_max)
-    EZZ  = np.zeros(n_max)
-    ZETA= np.zeros(n_max)
-    CNIT= np.zeros(n_max)
-    VNIT= np.zeros(n_max)
-    S= np.zeros(n_max)
-    k1= np.zeros(n_max)
-    k2= np.zeros(n_max)
-    k3= np.zeros(n_max)
-    fp= np.ones(n_max)
-    fm= np.ones(n_max)
-    EPC= np.zeros(n_max)
-    m_hh = np.zeros(n_max)
-    m_lh = np.zeros(n_max)
-    m_so = np.zeros(n_max)
     x_max=dx*n_max
-    if config.strain :
-        if mat_type=='Zincblende' :
-            EXX= (a0_sub-a0)/a0
-            EZZ= -2.0*C12/C11*EXX
-            ZETA= -B/2.0*(EXX+EXX-2.0*EZZ)
-            CNIT= Ac*(EXX+EXX+EZZ)
-            VNIT= -Av*(EXX+EXX+EZZ)           
-        if mat_type=='Wurtzite':
-            EXX= (a0_sub-a0_wz)/a0_wz
-            EZZ=-2.0*C13/C33*EXX
-            CNIT= Ac*(EXX+EXX+EZZ)
-            ZETA= (D2*(EXX+EXX)+D1*EZZ)
-            VNIT= (D4*(EXX+EXX)+D3*EZZ)
-            Ppz=((D31*(C11+C12)+D33*C13)*(EXX+EXX)+(2*D31*C13+D33*C33)*(EZZ))
-            dx=x_max/n_max
-            sum_1=0.0
-            sum_2=0.0
-            if config.piezo:
-                """ spontaneous and piezoelectric polarization built-in field 
-                [1] F. Bernardini and V. Fiorentini phys. stat. sol. (b) 216, 391 (1999)
-                [2] Book 'Quantum Wells,Wires & Dots', Paul Harrison, pages 236-241"""
-                for J in range(1,N_wells_virtual2-1):
-                    BW=Well_boundary2[J,0]
-                    WB=Well_boundary2[J,1]                    
-                    Lw=(WB-BW)*dx
-                    lb1=(BW-Well_boundary2[J-1,1])*dx
-                    lb2=(Well_boundary2[J+1,0]-WB)*dx
-                    sum_1+=(Psp[BW+1]+Ppz[BW+1])*Lw/eps[BW+1]+(Psp[BW-1]+Ppz[BW-1])*lb1/eps[BW-1]
-                    sum_2+=Lw/eps[BW+1]+lb1/eps[BW-1]
-                EPC=(sum_1-(Psp+Ppz)*sum_2)/(eps*sum_2)
-                """
-                sum_1=0.0
-                sum_2=0.0
-                sum_1=sum((Psp+Ppz)/eps)*dx
-                sum_2=sum(1/eps)*dx
-                EPC=(sum_1-(Psp+Ppz)*sum_2)/(eps*sum_2)
-                """
-
-    if mat_type=='Zincblende' :
-        for i in range(0,n_max,1):
-            if  EXX[i]!=0: 
-                S[i]=ZETA[i]/delta[i]
-                k1[i]=sqrt(1+2*S[i]+9*S[i]**2)
-                k2[i]=S[i]-1+k1[i]
-                k3[i]=S[i]-1-k1[i]
-                fp[i]=(2*S[i]*(1+1.5*k2[i])+6*S[i]**2)/(0.75*k2[i]**2+k2[i]-3*S[i]**2)
-                fm[i]=(2*S[i]*(1+1.5*k3[i])+6*S[i]**2)/(0.75*k3[i]**2+k3[i]-3*S[i]**2)
-        m_hh = m_e/(GA1 -2*GA2 )
-        m_lh = m_e/(GA1 +2*fp*GA2 )
-        m_so = m_e/(GA1 +2*fm*GA2 )            
-    if mat_type=='Wurtzite' :
-        m_hh = -m_e/(A2 + A4 -A5)
-        m_lh = -m_e/(A2 + A4 +A5 )
-        m_so = -m_e/(A2)    
-    RATIO=m_e/hbar**2*(x_max)**2
-    AC1=(n_max+1)**2    
-    AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,Pce,GDELM,DEL3,DEL1,DEL2=qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta,A1,A2,A3,A4,A5,A6,delta_so,delta_cr,mat_type)
-    KP=0.0
-    KPINT=0.01
-    if mat_type=='Zincblende' :        
-        HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT)
-    if mat_type=='Wurtzite' :
-        HUPMAT1=-VBMAT2(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,x_max,n_max,AC1,UNIM,KPINT,DEL3,DEL1,DEL2)
-    HUPMATC1=CBMAT(KP,Pce,cb_meff/m_e,x_max,n_max,AC1,UNIM,KPINT)
-    def calc_E_state(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc):
-        HUPMAT3=np.zeros((n_max*3, n_max*3))
-        HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)
-        HUPMATC3=CBMAT_V(HUPMATC1,fitotc,RATIO,n_max,UNIM)
-        #stop
-        KPV1=[0.0]*subnumber_e
-        la1,v1= linalg.eigh(HUPMATC3)
-        tmp1=la1/RATIO*J2meV
-        tmp1=tmp1.tolist()
-        for i in range(0,subnumber_e,1):
-            KPV1[i]=tmp1[i]
-        KPV2=[0.0]*subnumber_h 
-        la2,v2= linalg.eigh(HUPMAT3) 
-        tmp=-la2/RATIO*J2meV
-        tmp=tmp.tolist()
-        for i in range(0,subnumber_h,1):
-            KPV2[i]=tmp[i]
-        return KPV1,v1,KPV2,v2
-    KPV1=np.zeros((model.N_wells_virtual,subnumber_e))
-    V1=np.zeros((model.N_wells_virtual,n_max,n_max))
-    KPV2=np.zeros((model.N_wells_virtual,subnumber_h))
-    V2=np.zeros((model.N_wells_virtual,n_max*3,n_max*3))
-    n_max_general=np.zeros(model.N_wells_virtual,dtype=int)
-    def calc_E_state_general(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary):
-        n_max_general=np.zeros(model.N_wells_virtual)
-        HUPMAT3=np.zeros((n_max*3, n_max*3))
-        HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)
-        HUPMATC3=CBMAT_V(HUPMATC1,fitotc,RATIO,n_max,UNIM)
-        #stop
-        tmp1=np.zeros((model.N_wells_virtual,n_max))
-        KPV1=np.zeros((model.N_wells_virtual,subnumber_e))
-        V1=np.zeros((model.N_wells_virtual,n_max,n_max))
-        for J in range(1,model.N_wells_virtual-1):
-            n_max_general[J]=Well_boundary[J+1,0]-Well_boundary[J-1,1]
-            I1=Well_boundary[J-1,1]
-            I2=Well_boundary[J+1,0]
-            i1=I1-I1
-            i2=I2-I1
-            la1,v1= linalg.eigh(HUPMATC3[I1:I2,I1:I2])
-            tmp1[J,i1:i2]=la1/RATIO*J2meV
-            V1[J,i1:i2,i1:i2]=v1
-        for j in range(1,model.N_wells_virtual-1):            
-            for i in range(0,subnumber_e,1):
-                KPV1[j,i]=tmp1[j,i]
-        tmp=np.zeros((model.N_wells_virtual,n_max*3))
-        KPV2=np.zeros((model.N_wells_virtual,subnumber_h))
-        V2=np.zeros((model.N_wells_virtual,n_max*3,n_max*3))
-        for k in range(1,model.N_wells_virtual-1):
-            i_1=int(n_max_general[k])
-            HUPMAT3_general=np.zeros((i_1*3,i_1*3))
-            I1=Well_boundary[k-1,1]
-            I2=Well_boundary[k+1,0]
-            i1=I1-I1
-            i2=I2-I1
-            HUPMAT3_general[i1:i2,i1:i2]=HUPMAT3[I1:I2,I1:I2]
-            HUPMAT3_general[i1+i_1:i2+i_1,i1:i2]=HUPMAT3[I1+n_max:I2+n_max,I1:I2]
-            HUPMAT3_general[i1:i2,i1+i_1:i2+i_1]=HUPMAT3[I1:I2,I1+n_max:I2+n_max]
-            HUPMAT3_general[i1+i_1:i2+i_1,i1+i_1:i2+i_1]=HUPMAT3[I1+n_max:I2+n_max,I1+n_max:I2+n_max]
-            HUPMAT3_general[i1+i_1*2:i2+i_1*2,i1:i2]=HUPMAT3[I1+n_max*2:I2+n_max*2,I1:I2]
-            HUPMAT3_general[i1:i2,i1+i_1*2:i2+i_1*2]=HUPMAT3[I1:I2,I1+n_max*2:I2+n_max*2]
-            HUPMAT3_general[i1+i_1*2:i2+i_1*2,i1+i_1*2:i2+i_1*2]=HUPMAT3[I1+n_max*2:I2+n_max*2,I1+n_max*2:I2+n_max*2]
-            HUPMAT3_general[i1+i_1:i2+i_1,i1+i_1*2:i2+i_1*2]=HUPMAT3[I1+n_max:I2+n_max,I1+n_max*2:I2+n_max*2]
-            HUPMAT3_general[i1+i_1*2:i2+i_1*2,i1+i_1:i2+i_1]=HUPMAT3[I1+n_max*2:I2+n_max*2,I1+n_max:I2+n_max]
-            la2,v2= linalg.eigh(HUPMAT3_general) 
-            tmp[k,i1:i2*3]=-la2/RATIO*J2meV
-            V2[k,i1:i2*3,i1:i2*3]=v2
-        #tmp=tmp.tolist()
-        for j in range(1,model.N_wells_virtual-1):            
-            for i in range(0,subnumber_h,1):
-                KPV2[j,i]=tmp[j,i]
-        return KPV1,V1,KPV2,V2    
-    
+    RATIO=m_e/hbar**2*(x_max)**2  
+    HUPMAT1,HUPMATC1,m_hh,m_lh,m_so,Ppz_Psp=Main_Str_Array(model)
     # Check
     if comp_scheme ==6:
         logger.warning("""The calculation of Vxc depends upon m*, however when non-parabolicity is also 
@@ -1652,6 +1471,8 @@ def Poisson_Schrodinger(model):
     sigma_general = np.zeros(n_max)
     F_general = np.zeros(n_max)
     Vnew_general = np.zeros(n_max)
+    fi = np.zeros(n_max)
+    fi_old0=np.zeros(n_max)
     # Setup the doping
     Ntotal = sum(dop) # calculating total doping density m-3
     Ntotal2d = Ntotal*dx
