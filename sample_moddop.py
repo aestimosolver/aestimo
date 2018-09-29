@@ -32,7 +32,7 @@ fermi_np_scheme = True
 # QUANTUM
 # Total subband number to be calculated for electrons
 subnumber_e = 1
-
+subnumber_h = 1
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.0 # (V/m)
 
@@ -54,12 +54,17 @@ maxgridpoints = 200000 #for controlling the size
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material =[[ 20.0, 'AlGaAs', 0.3, 1e17, 'n'],
-           [ 50.0, 'GaAs', 0, 0, 'n']]
+material =[[ 20.0, 'AlGaAs', 0.3, 0.3,1e17, 'n','i'],
+           [ 50.0, 'GaAs', 0,0.3, 0, 'n','i']]
  
-
-
+contact=0.0
+import numpy as np
+x_max = sum([layer[0] for layer in material])
+def round2int(x):
+    return int(x+0.5)
+n_max=round2int(x_max/gridfactor)
+dop_profile=np.zeros(n_max) 
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
-    import aestimo
-    aestimo.run_aestimo(input_obj)
+    import aestimo_eh
+    aestimo_eh.run_aestimo(input_obj)

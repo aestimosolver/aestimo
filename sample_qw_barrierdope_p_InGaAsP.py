@@ -18,7 +18,7 @@ T = 300.0 #Kelvin
 # 4: Schrodinger-Exchange interaction
 # 5: Schrodinger-Poisson + Exchange interaction
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
-computation_scheme = 7
+computation_scheme = 2
 
 # QUANTUM
 # Total subband number to be calculated for electrons
@@ -33,33 +33,35 @@ Fapplied = 0.00#/50e-9 # (V/m)
 
 # GRID
 # For 1D, z-axis is choosen
-gridfactor = 1 #nm
+gridfactor = 0.5 #nm
 maxgridpoints = 200000 #for controlling the size
 mat_type='Zincblende'
 # REGIONS
 # Region input is a two-dimensional list input.
 # An example:
 # Si p-n diode. Firstly lets picturize the regional input.
-#         | Thickness (nm) | Material | Alloy fraction | Doping(cm^-3) | n or p type |
-# Layer 0 |      250.0     |   Si     |      0         |     1e16      |     n       |
-# Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
+#         | Thickness (nm) | Material | Alloy fraction x|Alloy fraction y| Doping(cm^-3) | n or p type |
+# Layer 0 |      250.0     |   Si     |      0         |      0         |      1e16      |     n       |
+# Layer 1 |      250.0     |   Si     |      0         |      0         |      1e16      |     p       |
 #
-dopp=5e17
 # To input this list in Gallium, we use lists as:
-material =[[ 100.0, 'AlGaAs', 0.3, 0.0, dopp, 'p','b'],
-            [ 40.0, 'AlGaAs', 0.3, 0.0, dopp, 'p','b'],
-            [ 20.0, 'GaAs', 0.0, 0.0, 0.0,'n','w'],
-            [ 40.0, 'AlGaAs', 0.3, 0.0, dopp, 'n','b'],
-            [ 100.0, 'AlGaAs', 0.3, 0.0, dopp, 'n','b']]
-
+material =[[ 200.0, 'InP', 0.0, 0.0, 5e17, 'p','b'],
+            [ 2.0, 'InGaAsP', 0.923, 0.325, 5e17, 'p','b'],
+            [ 2.0, 'InGaAsP', 0.485, 0.979, 0.0, 'p','w'],
+            [ 3.8, 'InGaAsP', 0.923, 0.325, 0.0, 'p','b'],
+            [ 2.0, 'InGaAsP', 0.485, 0.979, 0.0, 'n','w'],
+            [ 2.0, 'InGaAsP', 0.923, 0.325, 5e17, 'n','b'],
+            [ 200.0, 'InP', 0.0, 0.0, 5e17, 'n','b']]
+ 
 import numpy as np
 x_max = sum([layer[0] for layer in material])
-n_max=int(x_max/gridfactor)
-dop_profile=np.zeros(n_max) 
+def round2int(x):
+    return int(x+0.5)
+n_max=round2int(x_max/gridfactor)
+dop_profile=np.zeros(n_max)  
 surface=np.zeros(2) 
-
-
+#This is accourding to interpolated Vegard’s law for quaternary AxB(1-x)CyD(1-y)=InxGa(1-x)AsyP(1-y)
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
-    import aestimo_eh
-    aestimo_eh.run_aestimo(input_obj)
+    import aestimo_eh as aestimo
+    aestimo.run_aestimo(input_obj)

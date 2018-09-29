@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# -------------------------------------------------------------------
-# Input File Description:  Barrier doped AlGaAs/GaAs heterostructure.
-# -------------------------------------------------------------------
+# ----------------------------------------------------------------------
+# Input File Description:  Si p/n junction.
+# ----------------------------------------------------------------------
 # ----------------
 # GENERAL SETTINGS
 # ----------------
@@ -18,22 +18,31 @@ T = 300.0 #Kelvin
 # 4: Schrodinger-Exchange interaction
 # 5: Schrodinger-Poisson + Exchange interaction
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
-computation_scheme = 7
+computation_scheme = 2
+
+# Non-parabolic effective mass function
+# 0: no energy dependence
+# 1: Nelson's effective 2-band model
+# 2: k.p model from Vurgaftman's 2001 paper
+#meff_method = 0
+
+# Non-parabolic Dispersion Calculations for Fermi-Dirac
+fermi_np_scheme = True
 
 # QUANTUM
 # Total subband number to be calculated for electrons
-subnumber_h = 2
-subnumber_e = 2
+subnumber_e = 4
+subnumber_h = 4
 # APPLIED ELECTRIC FIELD
-Fapplied = 0.00#/50e-9 # (V/m)
-
+Fapplied =  0.0# (V/m)2.5e7/50e-9
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
-
-# GRID
+T     = 300              # [K]
+Na = 1E22             # [1/cm^3]
+Nd = 1E23             # [1/cm^3]
 # For 1D, z-axis is choosen
-gridfactor = 1 #nm
+gridfactor = 3
 maxgridpoints = 200000 #for controlling the size
 mat_type='Zincblende'
 # REGIONS
@@ -44,21 +53,18 @@ mat_type='Zincblende'
 # Layer 0 |      250.0     |   Si     |      0         |     1e16      |     n       |
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
-dopp=5e17
 # To input this list in Gallium, we use lists as:
-material =[[ 100.0, 'AlGaAs', 0.3, 0.0, dopp, 'p','b'],
-            [ 40.0, 'AlGaAs', 0.3, 0.0, dopp, 'p','b'],
-            [ 20.0, 'GaAs', 0.0, 0.0, 0.0,'n','w'],
-            [ 40.0, 'AlGaAs', 0.3, 0.0, dopp, 'n','b'],
-            [ 100.0, 'AlGaAs', 0.3, 0.0, dopp, 'n','b']]
-
+material =[[350, 'InGaAs', 0.1, 0.0, 1e+16, 'p','b'],
+            [15, 'InAs', 0.0, 0.0, 1e+16, 'n','w'],
+            [600, 'InGaAs', 0.1, 0.0, 1e+17, 'n','b']]
+ 
 import numpy as np
 x_max = sum([layer[0] for layer in material])
-n_max=int(x_max/gridfactor)
-dop_profile=np.zeros(n_max) 
-surface=np.zeros(2) 
-
-
+def round2int(x):
+    return int(x+0.5)
+n_max=round2int(x_max/gridfactor)
+dop_profile=np.zeros(n_max)  
+surface=np.zeros(2)  
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
     import aestimo_eh

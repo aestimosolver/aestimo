@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun May  6 00:14:09 2018
+
+@author: GAMING
+"""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # -------------------------------------------------------------------
@@ -18,7 +25,7 @@ T = 300.0 #Kelvin
 # 4: Schrodinger-Exchange interaction
 # 5: Schrodinger-Poisson + Exchange interaction
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
-computation_scheme = 7
+computation_scheme = 2
 
 # QUANTUM
 # Total subband number to be calculated for electrons
@@ -40,26 +47,23 @@ mat_type='Zincblende'
 # Region input is a two-dimensional list input.
 # An example:
 # Si p-n diode. Firstly lets picturize the regional input.
-#         | Thickness (nm) | Material | Alloy fraction | Doping(cm^-3) | n or p type |
-# Layer 0 |      250.0     |   Si     |      0         |     1e16      |     n       |
-# Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
+#         | Thickness (nm) | Material | Alloy fraction x|Alloy fraction y| Doping(cm^-3) | n or p type |
+# Layer 0 |      250.0     |   Si     |      0         |      0         |      1e16      |     n       |
+# Layer 1 |      250.0     |   Si     |      0         |      0         |      1e16      |     p       |
 #
-dopp=5e17
 # To input this list in Gallium, we use lists as:
-material =[[ 100.0, 'AlGaAs', 0.3, 0.0, dopp, 'p','b'],
-            [ 40.0, 'AlGaAs', 0.3, 0.0, dopp, 'p','b'],
-            [ 20.0, 'GaAs', 0.0, 0.0, 0.0,'n','w'],
-            [ 40.0, 'AlGaAs', 0.3, 0.0, dopp, 'n','b'],
-            [ 100.0, 'AlGaAs', 0.3, 0.0, dopp, 'n','b']]
-
+material =[[ 2500.0, 'Si', 0.0, 0.0, 1e18, 'p','b'],
+            [ 2500.0, 'Si', 0.0, 0.0, 1e18, 'n','b']]
+ 
 import numpy as np
 x_max = sum([layer[0] for layer in material])
-n_max=int(x_max/gridfactor)
-dop_profile=np.zeros(n_max) 
-surface=np.zeros(2) 
-
-
+def round2int(x):
+    return int(x+0.5)
+n_max=round2int(x_max/gridfactor)
+dop_profile=np.zeros(n_max)  
+surface=np.zeros(2)  
+#This is accourding to interpolated Vegard’s law for quaternary AxB(1-x)CyD(1-y)=InxGa(1-x)AsyP(1-y)
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
-    import aestimo_eh
-    aestimo_eh.run_aestimo(input_obj)
+    import aestimo_eh as aestimo
+    aestimo.run_aestimo(input_obj)

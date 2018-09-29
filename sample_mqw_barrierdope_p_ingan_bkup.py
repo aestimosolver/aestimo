@@ -23,9 +23,9 @@ computation_scheme = 7
 # QUANTUM
 # Total subband number to be calculated for electrons
 subnumber_h = 2
-subnumber_e = 2
+subnumber_e = 1
 # APPLIED ELECTRIC FIELD
-Fapplied = 0.00#/50e-9 # (V/m)
+Fapplied =  0.0# (V/m)2.5e7/50e-9
 
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
@@ -33,9 +33,9 @@ Fapplied = 0.00#/50e-9 # (V/m)
 
 # GRID
 # For 1D, z-axis is choosen
-gridfactor = 1 #nm
+gridfactor = 0.2#nm
 maxgridpoints = 200000 #for controlling the size
-mat_type='Zincblende'
+mat_type='Wurtzite'
 # REGIONS
 # Region input is a two-dimensional list input.
 # An example:
@@ -44,19 +44,22 @@ mat_type='Zincblende'
 # Layer 0 |      250.0     |   Si     |      0         |     1e16      |     n       |
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
-dopp=5e17
 # To input this list in Gallium, we use lists as:
-material =[[ 100.0, 'AlGaAs', 0.3, 0.0, dopp, 'p','b'],
-            [ 40.0, 'AlGaAs', 0.3, 0.0, dopp, 'p','b'],
-            [ 20.0, 'GaAs', 0.0, 0.0, 0.0,'n','w'],
-            [ 40.0, 'AlGaAs', 0.3, 0.0, dopp, 'n','b'],
-            [ 100.0, 'AlGaAs', 0.3, 0.0, dopp, 'n','b']]
+material =[[ 30.0, 'AlGaN', 0.05, 0.0, 1e-10, 'p','b'],
+            [ 2.0, 'AlGaN', 0.05, 0.0, 5e18, 'p','b'],
+            [ 2.0, 'InGaN', 0.2, 0.0, 1e-10,'n','w'],
+            [ 5.0, 'GaN', 0.0, 0.0, 1e-10, 'n','b'],
+            [ 2.0, 'InGaN', 0.2, 0.0, 1e-10,'n','w'],
+            [ 2.0, 'AlGaN', 0.05, 0.0, 5e18, 'n','b'],
+            [ 30.0, 'AlGaN', 0.05, 0.0, 1e-10, 'n','b']]
 
 import numpy as np
 x_max = sum([layer[0] for layer in material])
-n_max=int(x_max/gridfactor)
-dop_profile=np.zeros(n_max) 
-surface=np.zeros(2) 
+def round2int(x):
+    return int(x+0.5)
+n_max=round2int(x_max/gridfactor)
+dop_profile=np.zeros(n_max)  
+surface=np.zeros(2)  
 
 
 if __name__ == "__main__": #this code allows you to run the input file directly
