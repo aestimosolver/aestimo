@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Aestimo's database module. Contains a materialproperty dict containing 
+"""Aestimo 1D Schrodinger-Poisson Solver
+
+database module:
+----------------
+Aestimo's database module. Contains a materialproperty dict containing 
 sub-dicts of values for each material and similar alloyproperty dict for the
 alloys of the materials. See the source for details on the required keys for
 each material or alloy.
@@ -10,27 +14,12 @@ each material or alloy.
     Properties of Semiconductor Alloys: Group-IV, III-V and II-VI Semiconductors Sadao AdAchi?2009 John Wiley & Sons, Ltd.
     Basic Semiconductor Physics Second Edition,Prof. Chihiro Hamaguchi 2010 Springer
     Physics of Optoelectronic Devices ,S-L.CHUANG ,1995 by John Wiley & Sons. Inc
-  
 """
-"""
- Aestimo 1D Schrodinger-Poisson Solver
- Copyright (C) 2013-2016 Sefer Bora Lisesivdin and Aestimo group
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
-
-    For the list of contributors, see ~/AUTHORS
-"""
+__author__    = "For the list of contributors, see ~/AUTHORS.md"
+__copyright__ = "Copyright (C) 2013-2017 Sefer Bora Lisesivdin and Aestimo group"
+__license__   = "GPLv3+ WITHOUT ANY WARRANTY"
+__version__   = "1.2.0"
 
 # MATERIAL PROPERTIES
 # materialproperties| Material : m_e | m_hh | epsilonStatic | Eg | Bowing_param | m_e_alpha |  Luttinger Parameters γ1,2 & 3 |Elastic constants C11,12|Lattice constant a0| Deformation potentials ac,av & b| delta splitt off|
@@ -57,12 +46,14 @@ materialproperty = {
 'Ac':-7.17, # (eV) deformation potentials (Van de Walle formalism)
 'Av':1.16, # (eV) deformation potentials (Van de Walle formalism)
 'B':-1.7, # (eV) shear deformation potential (Van de Walle formalism)
-'TAUN0':0.1E-6,
-'TAUP0':0.1E-6,
-'mun0':0.15,
-'mup0':0.1,
-'BETAN':2.0,
-'BETAP':1.0
+'TAUN0':0.1E-7,# Electron SRH life time
+'TAUP0':0.1E-7,# Hole SRH life time
+'mun0':0.1,# Electron Mobility in m2/V-s
+'mup0':0.02,# Electron Mobility in m2/V-s
+'BETAN':2.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'VSATN':3e5,# Saturation Velocity of Electrons
+'VSATP':6e5 # Saturation Velocity of Holes
 },
 'AlAs':{
 'm_e':0.15,

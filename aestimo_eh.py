@@ -1,6 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""This is the 3x3 k.p aestimo calculator for valence band calculations 
+
+"""
+ Aestimo 1D Schrodinger-Poisson Solver
+ Copyright (C) 2013-2018 Sefer Bora Lisesivdin and Aestimo group
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
+
+    For the list of contributors, see ~/AUTHORS
+
+File Information:
+-----------------
+This is the 3x3 k.p aestimo calculator for valence band calculations 
    (Numpy version, there is no classic version for valence band calculations).
 
 It can be used similarly to the aestimo.py module. aestimo_eh.py can be used as 
@@ -24,26 +46,7 @@ class which builds the arrays describing a structure from the same input
 parameters that are found in the sample files. A simple list format is used to 
 describes the structure's layers.
 """
-"""
- Aestimo 1D Schrodinger-Poisson Solver
- Copyright (C) 2013-2016 Sefer Bora Lisesivdin and Aestimo group
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
-
-    For the list of contributors, see ~/AUTHORS
-"""
-__version__='1.1.0'
+__version__='1.2.1'
 import time
 time0 = time.time() # timing audit
 #from scipy.optimize import fsolve
@@ -52,12 +55,15 @@ import numpy as np
 alen = np.alen
 import os
 from math import log,exp,sqrt
-import VBHM
 from scipy import linalg
-from VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V
-import config,database
-from aestimo_poisson1d import Poisson_equi2,equi_np_fi,Write_results_equi2,equi_np_fi2,equi_np_fi3
-from aestimo_poisson1d import Poisson_equi1, Mobility2, Continuity2, Poisson_non_equi2, Current2,Write_results_non_equi2,Write_results_equi1,amort_wave
+
+if __package__: #explicit relative imports for using aestimo as a python package (in python3)
+    from . import config,database,VBHM
+    from .VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V
+else:
+    import config,database,VBHM
+    from VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V
+from aestimo_poisson1d import Poisson_equi2,Write_results_equi2,Mobility2, Continuity2, Poisson_non_equi2, Current2,Write_results_non_equi2,amort_wave
 # --------------------------------------
 import logging
 logger = logging.getLogger('aestimo_eh')
