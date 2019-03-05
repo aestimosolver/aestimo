@@ -1231,8 +1231,8 @@ def Strain_and_Masses(model):
                     BW=model.Well_boundary2[I,0]
                     WB=model.Well_boundary2[I,1]
 
-                    Ppz_Psp[WB-1] =(pol_surf_char[WB+1]-pol_surf_char[WB-1])/(2*dx)#((Psp[WB-1]+Ppz[WB-1])-(Psp[WB+1]+Ppz[WB+1]))/(q)
-                    Ppz_Psp[BW-1] =(pol_surf_char[BW+1]-pol_surf_char[BW-1])/(2*dx)#((Psp[BW-1]+Ppz[BW-1])-(Psp[BW+1]+Ppz[BW+1]))/(q)
+                    Ppz_Psp[WB-1] =(pol_surf_char[WB+1]-pol_surf_char[WB-1])/(dx)#((Psp[WB-1]+Ppz[WB-1])-(Psp[WB+1]+Ppz[WB+1]))/(q)
+                    Ppz_Psp[BW-1] =(pol_surf_char[BW+1]-pol_surf_char[BW-1])/(dx)#((Psp[BW-1]+Ppz[BW-1])-(Psp[BW+1]+Ppz[BW+1]))/(q)
 
     if model.mat_type=='Zincblende' :
         for i in range(0,n_max,1):
