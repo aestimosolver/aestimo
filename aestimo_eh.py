@@ -2046,11 +2046,12 @@ def Poisson_Schrodinger_DD(result,model):
     results.nf_result=nf_result
     results.pf_result=pf_result
     results.fi_result=fi_result
-    results.EF=EF            
+    results.EF=EF
+    results.Total_Steps=Total_Steps
     return results
 def save_and_plot2(result,model):
     xaxis = result.xaxis
-    output_directory = config.output_directory+"_h"
+    output_directory = config.output_directory+"_eh"
     
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)
@@ -2058,15 +2059,51 @@ def save_and_plot2(result,model):
         fname2 = os.path.join(output_directory,fname)
         np.savetxt(fname2,np.column_stack(datatuple),fmt='%.6e', delimiter=' ',header=header)    
     #Plotting results
-    """
+    if config.Drift_Diffusion_out:
+        saveoutput("av_curr.dat",(result.Va_t*Vt,result.av_curr*1e-4))    
+    for jjj in range(result.Total_Steps-1,result.Total_Steps):
+        vtt=result.Va_t[jjj]
+        vt=vtt*Vt
+        if config.Drift_Diffusion_out :
+            if config.sigma_out:
+                saveoutput("sigma_eh_%.2f.dat"%vt,(xaxis,result.ro_result))
+            if config.electricfield_out:
+                saveoutput("efield_eh_%.2f.dat"%vt,(xaxis,result.el_field1_result,result.el_field2_result))
+            if config.potential_out:
+                saveoutput("potn_eh_%.2f.dat"%vt,(xaxis*1e2,result.fitotc/q,result.fitot/q))
+                saveoutput("np_data0_%.2f.dat"%vt,(xaxis*1e2,result.nf_result*1e-6,result.pf_result*1e-6))
+            if config.states_out:
+                for j in range(1,result.N_wells_virtual-1):                
+                    rel_meff_state = [meff/m_e for meff in result.meff_state_general[j]] #going to report relative effective mass.
+                    columns = range(model.subnumber_h), result.E_state_general[j], result.N_state_general[j], rel_meff_state
+                    #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
+                    header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+                    saveoutput("states_h_QWR%d_%.2f.dat" %(j,vt),columns, header = header )
+                    if config.probability_out:
+                        saveoutput("wavefunctions_h_QWR%d_%.2f.dat"%(j,vt) ,(xaxis,result.wfh_general[j].transpose()))
+            if config.states_out:
+                for j in range(1,result.N_wells_virtual-1):                
+                    rel_meff_statec = [meff/m_e for meff in result.meff_statec_general[j]] #going to report relative effective mass.
+                    columns = range(model.subnumber_e), result.E_statec_general[j], result.N_statec_general[j], rel_meff_statec
+                    #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
+                    header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+                    saveoutput("states_e_QWR%d_%.2f.dat" %(j,vt),columns, header = header )
+                    if config.probability_out:
+                        saveoutput("wavefunctions_e_QWR%d_%.2f.dat"%(j,vt),(xaxis,result.wfe_general[j].transpose()))
+
     if config.resultviewer:
-        span=np.ones(10000)
+        
+        #span=np.ones(100000000)
+        
         fig1 = pl.figure(figsize=(10,8))
         pl.suptitle('Aestimo Results')
         pl.subplot(1,1,1)
-        pl.plot(xaxis,result.fitot*J2meV,'k',xaxis,result.fitotc*J2meV,'k')
+        
+        
+        pl.plot(xaxis*1e6,result.Ec_result,xaxis*1e6,result.Ev_result,xaxis*1e6,result.Ei_result,xaxis*1e6,result.Efn_result,'r',xaxis*1e6,result.Efp_result,'b')
+        """
         for j in range(1,result.N_wells_virtual-1):
-            I1,I2,I11,I22  = amort_wave(j,result.Well_boundary,n_max)
+            I1,I2,I11,I22  = amort_wave(j,result.Well_boundary,model.n_max)
             i1=I1-I1
             i2=I2-I1          
             for levelc,statec in zip(result.E_statec_general[j,:],result.wfe_general[j,:,:]):
@@ -2078,95 +2115,98 @@ def save_and_plot2(result,model):
                 pl.plot(xaxis[I1:I2], state[i1:i2]*config.wavefunction_scalefactor+level,'b')
                 pl.plot(xaxis[I1:I2],level*span[I1:I2],'g',ls='--')
             #pl.plot(xaxis, state**2*1e-9/dx*200.0+level,'b')
+        
         pl.plot(xaxis,result.EF*span[0:model.n_max],'r',ls='--')
+        """
         #pl.axhline(result.E_F,0.1,0.9,color='r',ls='--')
-        pl.xlabel('Position (m)')
-        pl.ylabel('Energy (meV)')
-        pl.grid(True)    
+        pl.xlabel('x [um]')
+        pl.ylabel('Energy [eV]')
+        pl.title('Quasi Fermi Levels (Efn (red) & Efp (bleu)) vs Position', fontsize=12)
+        pl.legend(('Ec','Ev','Ei','Efn','Efp'),loc='best',fontsize=12)
+        pl.grid(True)
+        
+        fig2 = pl.figure()    
+        pl.suptitle('1D Drift Diffusion Model for pn Diodes Results - at Applied Bias (%.2f)'%vt, fontsize=12)
+        pl.subplots_adjust(hspace=0.4,wspace=0.4)
     
-    """
-    fig1 = pl.figure(figsize=(10,8))    
-    pl.suptitle('1D Drift Diffusion Model for pn Diodes Results - at Applied Bias (0.625)', fontsize=12)
-    pl.subplots_adjust(hspace=0.4,wspace=0.4)
-
-    pl.subplot(2,2,1)
-    pl.plot(xaxis*1e6, result.ro_result*1e-6)
-    pl.xlabel('x [um]')
-    pl.ylabel('Total Charge Density [C/cm^3]')
-    pl.title('Total Charge Density vs Position ', fontsize=12)
-    pl.legend(('Total Charge'),loc='best',fontsize=12)
-    pl.grid(True)
-    #Plotting Efield
-    #figure(1)
-    pl.subplot(2,2,2)
-    pl.plot(xaxis*1e6, result.el_field1_result*1e-2,'r',xaxis*1e6,result.el_field2_result*1e-2,'b')
-    pl.xlabel('x [um]')
-    pl.ylabel('Electric Field 1(red) & 2 (bleu) [V/cm]')
-    pl.title('Field Profile vs Position ', fontsize=12)
-    pl.legend(('Electric Field 1','Electric Field 2'),loc='best',fontsize=12)
-    pl.grid(True)
-    #Plotting Potential
-    #figure(2)
-    pl.subplot(2,2,3)
-    pl.plot(xaxis*1e6, result.Ec_result)
-    pl.xlabel('x [um]')
-    pl.ylabel('Conduction Band Energy (eV)')
-    pl.title('Conduction Band vs Position ', fontsize=12)
-    pl.legend(('Conduction Band'),loc='best',fontsize=12)
-    pl.grid(True)
-    #Plotting State(s)
-    #figure(3)
-    pl.subplot(2,2,4)
-    pl.plot(result.Va_t*Vt,result.av_curr*1e-4)
-    pl.xlabel('Va [V]')
-    pl.ylabel('Total Current Density [Amp/cm^2]')
-    pl.title('I vs V Plot', fontsize=12)
-    pl.legend(('Total Current'),loc='best',fontsize=12)
-    pl.grid(True)
-    pl.show()
-    
-    fig2 = pl.figure(figsize=(10,8)) 
-    pl.suptitle('1D Drift Diffusion Model for pn Diodes Results - at Applied Bias (0.625)', fontsize=12)
-    pl.subplots_adjust(hspace=0.4,wspace=0.4)
-    pl.subplot(2,2,1)
-    pl.plot(xaxis*1e6,result.nf_result*1e-6,'r',xaxis*1e6,result.pf_result*1e-6,'b')
-    pl.xlabel('x [um]')
-    pl.ylabel('Electron  & Hole  Densities [1/cm^3]')
-    pl.title('Electron (red) & Hole (bleu) Densities vs Position ', fontsize=12)
-    pl.legend(('Electron','Hole'),loc='best',fontsize=12)
-    pl.grid(True)
-    
-    pl.subplot(2,2,2)
-    pl.plot(xaxis*1e6,result.Ec_result,xaxis*1e6,result.Ev_result,xaxis*1e6,result.Ei_result,xaxis*1e6,result.Efn_result,'r',xaxis*1e6,result.Efp_result,'b')
-    pl.xlabel('x [um]')
-    pl.ylabel('Energy [eV]')
-    pl.title('Quasi Fermi Levels (Efn (red) & Efp (bleu)) vs Position', fontsize=12)
-    pl.legend(('Ec','Ev','Ei','Efn','Efp'),loc='best',fontsize=12)
-    pl.grid(True)
-    
-    pl.subplot(2,2,3)
-    pl.plot(xaxis*1e6,Vt*result.fi_result)
-    pl.xlabel('x [um]')
-    pl.ylabel('Potential [eV]')
-    pl.title('Potential vs Position - at Applied Bias(0.625V)',fontsize=12)
-    pl.legend(('fi'),loc='best',fontsize=12)
-    pl.grid(True)
-    
-    pl.subplot(2,2,4)
-    pl.plot(xaxis*1e6,result.Efn_result,'r',xaxis*1e6,result.Efp_result,'b')
-    pl.xlabel('x [um]')
-    pl.ylabel('Energy [eV]')
-    pl.title('Quasi Fermi Levels (Efn (red) & Efp (bleu)) vs Position', fontsize=12)
-    pl.legend(('Efn','Efp'),loc='best',fontsize=12)
-    pl.grid(True)
-    pl.show()
-    return [fig1,fig2]
+        pl.subplot(2,2,1)
+        pl.plot(xaxis*1e6, result.ro_result*1e-6)
+        pl.xlabel('x [um]')
+        pl.ylabel('Total Charge Density [C/cm^3]')
+        pl.title('Total Charge Density vs Position ', fontsize=12)
+        pl.legend(('Total Charge'),loc='best',fontsize=12)
+        pl.grid(True)
+        #Plotting Efield
+        #figure(1)
+        pl.subplot(2,2,2)
+        pl.plot(xaxis*1e6, result.el_field1_result*1e-2,'r',xaxis*1e6,result.el_field2_result*1e-2,'b')
+        pl.xlabel('x [um]')
+        pl.ylabel('Electric Field 1(red) & 2 (bleu) [V/cm]')
+        pl.title('Field Profile vs Position ', fontsize=12)
+        pl.legend(('Electric Field 1','Electric Field 2'),loc='best',fontsize=12)
+        pl.grid(True)
+        #Plotting Potential
+        #figure(2)
+        pl.subplot(2,2,3)
+        pl.plot(xaxis*1e6, result.Ec_result)
+        pl.xlabel('x [um]')
+        pl.ylabel('Conduction Band Energy (eV)')
+        pl.title('Conduction Band vs Position ', fontsize=12)
+        pl.legend(('Conduction Band'),loc='best',fontsize=12)
+        pl.grid(True)
+        #Plotting State(s)
+        #figure(3)
+        pl.subplot(2,2,4)
+        pl.plot(result.Va_t*Vt,result.av_curr*1e-4)
+        pl.xlabel('Va [V]')
+        pl.ylabel('Total Current Density [Amp/cm^2]')
+        pl.title('I vs V Plot', fontsize=12)
+        pl.legend(('Total Current'),loc='best',fontsize=12)
+        pl.grid(True)
+        pl.show()
+        
+        fig3 = pl.figure() 
+        pl.suptitle('1D Drift Diffusion Model for pn Diodes Results - at Applied Bias (%.2f)'%vt, fontsize=12)
+        pl.subplots_adjust(hspace=0.4,wspace=0.4)
+        pl.subplot(2,2,1)
+        pl.plot(xaxis*1e6,result.nf_result*1e-6,'r',xaxis*1e6,result.pf_result*1e-6,'b')
+        pl.xlabel('x [um]')
+        pl.ylabel('Electron  & Hole  Densities [1/cm^3]')
+        pl.title('Electron (red) & Hole (bleu) Densities vs Position ', fontsize=12)
+        pl.legend(('Electron','Hole'),loc='best',fontsize=12)
+        pl.grid(True)
+        
+        pl.subplot(2,2,2)
+        pl.plot(xaxis*1e6,result.Ec_result,xaxis*1e6,result.Ev_result,xaxis*1e6,result.Ei_result,xaxis*1e6,result.Efn_result,'r',xaxis*1e6,result.Efp_result,'b')
+        pl.xlabel('x [um]')
+        pl.ylabel('Energy [eV]')
+        pl.title('Quasi Fermi Levels (Efn (red) & Efp (bleu)) vs Position', fontsize=12)
+        pl.legend(('Ec','Ev','Ei','Efn','Efp'),loc='best',fontsize=12)
+        pl.grid(True)
+        
+        pl.subplot(2,2,3)
+        pl.plot(xaxis*1e6,Vt*result.fi_result)
+        pl.xlabel('x [um]')
+        pl.ylabel('Potential [eV]')
+        pl.title('Potential vs Position Applied Bias(%d)'%vt,fontsize=12)
+        pl.legend(('fi'),loc='best',fontsize=12)
+        pl.grid(True)
+        
+        pl.subplot(2,2,4)
+        pl.plot(xaxis*1e6,result.Efn_result,'r',xaxis*1e6,result.Efp_result,'b')
+        pl.xlabel('x [um]')
+        pl.ylabel('Energy [eV]')
+        pl.title('Quasi Fermi Levels (Efn (red) & Efp (bleu)) vs Position', fontsize=12)
+        pl.legend(('Efn','Efp'),loc='best',fontsize=12)
+        pl.grid(True)
+        pl.show()
+    return [fig1,fig2,fig3]
 
 
 
 def save_and_plot(result,model):
     xaxis = result.xaxis    
-    output_directory = config.output_directory+"_h"    
+    output_directory = config.output_directory+"_eh"    
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)
     def saveoutput(fname,datatuple,header=''):
@@ -2177,8 +2217,8 @@ def save_and_plot(result,model):
     if config.electricfield_out:
         saveoutput("efield_eh.dat",(xaxis,result.el_field1_result,result.el_field2_result))
     if config.potential_out:
-        saveoutput("potn_eh.dat",(xaxis,result.fitotc,result.fitot))
-        saveoutput("np_data0.dat",(xaxis,result.nf_result,result.pf_result))
+        saveoutput("potn_eh.dat",(xaxis*1e2,result.fitotc/q,result.fitot/q))
+        saveoutput("np_data0.dat",(xaxis*1e2,result.nf_result*1e-6,result.pf_result*1e-6))
     if config.states_out:
         for j in range(1,result.N_wells_virtual-1):                
             rel_meff_state = [meff/m_e for meff in result.meff_state_general[j]] #going to report relative effective mass.
@@ -2203,7 +2243,7 @@ def save_and_plot(result,model):
         
         span=np.ones(100000000)
         
-        fig1 = pl.figure(figsize=(10,8))
+        fig1 = pl.figure()
         pl.suptitle('Aestimo Results')
         pl.subplot(1,1,1)
         pl.plot(xaxis,result.fitot*J2meV,'k',xaxis,result.fitotc*J2meV,'k')
@@ -2271,7 +2311,7 @@ def save_and_plot(result,model):
 def QWplot(result,figno=None):
     #QW representation
     xaxis = result.xaxis
-    fig = pl.figure(figno,figsize=(10,8))
+    fig = pl.figure(figno)
     pl.suptitle('Aestimo Results')
     pl.subplot(1,1,1)
     pl.plot(xaxis,result.fitot*J2meV,'k',xaxis,result.fitotc*J2meV,'k')
