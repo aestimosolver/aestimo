@@ -25,10 +25,10 @@ computation_scheme = 2
 # QUANTUM
 # Total subband number to be calculated for electrons
 subnumber_h = 1
-subnumber_e = 1
+subnumber_e = 3
 # APPLIED ELECTRIC FIELD
 Fapplied =  0.0# (V/m)-20e8
-Vapplied=3.8
+Vapplied=1.79
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
@@ -47,12 +47,10 @@ mat_type='Wurtzite'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-
-material =[[ 80.0, 'GaN', 0.3, 0.0,0.0, 'n','b'],
-            [ 20.0, 'GaN', 0.3, 0.0,0.0, 'n','b'],
-           [ 17.0, 'AlN', 0.3, 0.0,0.0, 'n','w'],
-            [ 20.0, 'GaN', 0.3, 0.0,  0.0, 'n','b'],
-            [ 80.0, 'GaN', 0.3, 0.0,  0.0, 'n','b']]
+material =[[ 500.0, 'AlGaN', 0.3, 0.0,5e17, 'p','b'],
+           [ 50.0, 'AlGaN', 0.3, 0.0,1e17, 'p','b'],
+            [ 50.0, 'InGaN', 0.3, 0.0, 0.0, 'p','w'],
+            [ 500.0, 'InGaN', 0.3, 0.0,  5e16, 'n','b']]
 
 import numpy as np
 x_max = sum([layer[0] for layer in material])

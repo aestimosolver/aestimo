@@ -26,7 +26,6 @@ subnumber_h = 4
 subnumber_e = 2
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.00#/50e-9 # (V/m)
-Vapplied=1.8# (V)
 
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
@@ -60,15 +59,7 @@ material =[[ 200.0, 'AlGaAs', 0.3, 0.0, 5e17, 'p','b'],
             [ 2.0, 'AlGaAs', 0.3, 0.0, 5e17, 'n','b'],
             [ 200.0, 'AlGaAs', 0.3, 0.0, 5e17, 'n','b']]
  
-import numpy as np
-x_max = sum([layer[0] for layer in material])
-def round2int(x):
-    return int(x+0.5)
-n_max=round2int(x_max/gridfactor)
-dop_profile=np.zeros(n_max)  
-surface=np.zeros(2)
-#surface[0]=-3.0
-#surface[1]=-0.3
+
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
     import aestimo_eh

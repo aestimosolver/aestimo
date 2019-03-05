@@ -21,8 +21,8 @@ T = 300.0 #Kelvin
 computation_scheme = 2
 # QUANTUM
 # Total subband number to be calculated for electrons
-subnumber_h = 2
-subnumber_e = 1
+subnumber_h = 4
+subnumber_e = 2
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.0 # (V/m)
 Vapplied=3.4 # (V)
@@ -44,7 +44,7 @@ mat_type='Wurtzite'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material1 =[[ 20.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
+material =[[ 20.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
             [ 2.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
             [ 2.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
             [ 3.0, 'InGaN', 0.15, 0.0, 0.0,'p','w'],
@@ -52,21 +52,9 @@ material1 =[[ 20.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
             [ 3.0, 'InGaN', 0.15, 0.0, 0.0,'p','w'],
             [ 5.0, 'GaN', 0.0,0.0, 0.0, 'p','b'],
             [ 3.0, 'InGaN', 0.15, 0.0, 0.0,'p','w'],
-            [ 2.0, 'GaN', 0.0, 0.0, 5e18,'p','b'],                           
-            [ 2.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
-            [ 20.0, 'GaN', 0.0, 0.0, 5e18, 'p','b']]
-
-material =[[ 20.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
-            [ 20.0, 'AlGaN', 0.18, 0.0, 5e18, 'p','b'],
-            [ 8.0, 'InGaN', 0.035, 0.0, 5e18, 'p','b'],
-            [ 4.0, 'InGaN', 0.1, 0.0, 0.0,'p','w'],
-            [ 8.0, 'InGaN', 0.035,0.0, 0.0, 'p','b'],
-            [ 4.0, 'InGaN', 0.1, 0.0, 0.0,'p','w'],
-            [ 8.0, 'InGaN', 0.035,0.0, 0.0, 'p','b'],
-            [ 4.0, 'InGaN', 0.1, 0.0, 0.0,'p','w'],
-            [ 8.0, 'InGaN', 0.035, 0.0, 5e18,'p','b'],                           
-            [ 20.0, 'AlGaN', 0.18, 0.0, 5e18, 'p','b'],
-            [ 20.0, 'GaN', 0.0, 0.0, 5e18, 'p','b']]
+            [ 2.0, 'GaN', 0.0, 0.0, 5e18,'n','b'],                           
+            [ 2.0, 'GaN', 0.0, 0.0, 5e18, 'n','b'],
+            [ 20.0, 'GaN', 0.0, 0.0, 5e18, 'n','b']]
 import numpy as np
 x_max = sum([layer[0] for layer in material])
 def round2int(x):
