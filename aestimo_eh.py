@@ -1621,9 +1621,9 @@ def Poisson_Schrodinger(model):
                 break
             else:
                 iteration += 1
-                previousfi0 = Vnew_general[n_max-20]
+                previousfi0 = V
         else:
-            print('error=',abs(E_state_general[1,0]-previousE0)/1e3)
+            print('error_energy_states=',abs(E_state_general[1,0]-previousE0),'meV')
             if abs(E_state_general[1,0]-previousE0)/1e3 < convergence_test: #Convergence test
                 break
             elif iteration >= max_iterations: #Iteration limit
@@ -1835,7 +1835,7 @@ def Poisson_Schrodinger_DD(result,model):
         fi_h[i]=-Half_Eg[i]-kb*T*log(Nv[i]/Nc[i])/2
     n=result.nf_result/ni
     p=result.pf_result/ni    
-    if dx>min(Ld_n_p[:]):
+    if dx>min(Ld_n_p[:]) and 1==2:
         logger.error("""You are setting the grid size %g nm greater than the extrinsic Debye lengths %g nm""",dx*1e9,min(Ld_n_p[:])*1e9)
         exit()
     dop+=Ppz_Psp
