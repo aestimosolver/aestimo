@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Aestimo 1D Schrodinger-Poisson Solver
-
-config module:
---------------
-This module contains aestimo's global configuration settings for aestimo.py
+"""This module contains aestimo's global configuration settings for aestimo.py
 and aestimo_eh.py. It contains parameters for controlling the algorithms that are 
 used to calculate the bandstructures. 
 
@@ -12,12 +8,25 @@ The 'inputfilename' variable defines the default input file used when aestimo.py
 or main.py is run directly as a script. There are also parameters that define the
 defaults for saving and presenting results; as well as for logging messages.
 """
+"""
+ Aestimo 1D Schrodinger-Poisson Solver
+ Copyright (C) 2013-2016 Sefer Bora Lisesivdin and Aestimo group
 
-__author__    = "For the list of contributors, see ~/AUTHORS.md"
-__copyright__ = "Copyright (C) 2013-2018 Sefer Bora Lisesivdin and Aestimo group"
-__license__   = "GPLv3+ WITHOUT ANY WARRANTY"
-__version__   = "1.2.1"
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
+
+    For the list of contributors, see ~/AUTHORS 
+"""
 q = 1.602176e-19 #C
 meV2J=1e-3*q #meV to Joules
 
@@ -62,17 +71,15 @@ carrier densities, a smaller value of it is needed for rapid convergence."""
 damping = 0.5    #averaging factor between iterations to smooth convergence.
 max_iterations=80 #maximum number of iterations.
 convergence_test=1e-4 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
+
+# Aestimo_numpy_h
 predic_correc=False#predictor corrector method
+anti_crossing_length=0.0001 # the lower lenght limit to consider anti-crossing (nm), works with old versions
 amort_wave_0=1.5#ratio of half well's width for wavefunction  to penetration into the the left adjacent barrier
 amort_wave_1=1.5#ratio of half well's width for wavefunction to penetration into the the right adjacent barrier
-
-
-
-# Aestimo_eh
-anti_crossing_length=0.0001 # the lower lenght limit to consider anti-crossing (nm), works with old versions
-strain =True # for aestimo_eh
+strain =True # for aestimo_numpy_eh
 piezo=False # directly calculationg the induced electric field,for old poisson solver, works with old versions
-piezo1=True #indirectly using interface charges.
+piezo1=False #indirectly using interface charges.
 quantum_effect=False#temporary
 #--------------
 parameters=False

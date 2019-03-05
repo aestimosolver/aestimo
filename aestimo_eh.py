@@ -1,28 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-"""
- Aestimo 1D Schrodinger-Poisson Solver
- Copyright (C) 2013-2018 Sefer Bora Lisesivdin and Aestimo group
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
-
-    For the list of contributors, see ~/AUTHORS
-
-File Information:
------------------
-This is the 3x3 k.p aestimo calculator for valence band calculations 
+"""This is the 3x3 k.p aestimo calculator for valence band calculations 
    (Numpy version, there is no classic version for valence band calculations).
 
 It can be used similarly to the aestimo.py module. aestimo_eh.py can be used as 
@@ -46,7 +24,26 @@ class which builds the arrays describing a structure from the same input
 parameters that are found in the sample files. A simple list format is used to 
 describes the structure's layers.
 """
-__version__='1.2.1'
+"""
+ Aestimo 1D Schrodinger-Poisson Solver
+ Copyright (C) 2013-2016 Sefer Bora Lisesivdin and Aestimo group
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
+
+    For the list of contributors, see ~/AUTHORS
+"""
+__version__='1.1.0'
 import time
 time0 = time.time() # timing audit
 #from scipy.optimize import fsolve
@@ -55,15 +52,12 @@ import numpy as np
 alen = np.alen
 import os
 from math import log,exp,sqrt
+import VBHM
 from scipy import linalg
-
-if __package__: #explicit relative imports for using aestimo as a python package (in python3)
-    from . import config,database,VBHM
-    from .VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V
-else:
-    import config,database,VBHM
-    from VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V
-
+from VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V
+import config,database
+from aestimo_poisson1d import Poisson_equi2,equi_np_fi,Write_results_equi2,equi_np_fi2,equi_np_fi3
+from aestimo_poisson1d import Poisson_equi1, Mobility2, Continuity2, Poisson_non_equi2, Current2,Write_results_non_equi2,Write_results_equi1,amort_wave
 # --------------------------------------
 import logging
 logger = logging.getLogger('aestimo_eh')
@@ -78,19 +72,21 @@ ch.setFormatter(formatter2)
 logger.addHandler(ch)
 # LOG level can be INFO, WARNING, ERROR
 logger.setLevel(logging.INFO)
-
-os.sys.stderr.write("WARNING aestimo_eh logs automatically to aestimo.log in the current working directory.\n")
+if not(config.messagesoff):    
+    os.sys.stderr.write("WARNING aestimo_eh logs automatically to aestimo.log in the current working directory.\n")
 # --------------------------------------
 
 #Defining constants and material parameters
 q = 1.602176e-19 #C
 kb = 1.3806504e-23 #J/K
 nii = 0.0
-hbar = 1.054588757e-34
+hbar = 1.054588757e-34#Js                   
 m_e= 9.1093826E-31 #kg
 pi=np.pi
 eps0= 8.8541878176e-12 #F/m
-
+# TEMPERATURE
+T = 300.0 #Kelvin
+Vt    = kb*T/q           # [eV]
 J2meV=1e3/q #Joules to meV
 meV2J=1e-3*q #meV to Joules
 
@@ -147,7 +143,10 @@ class Structure():
         
     def create_structure_arrays(self):
         """ initialise arrays/lists for structure"""
-        self.N_wells_real0=sum(sum(np.char.count(self.material,'w')))
+        #self.N_wells_real0=sum(sum(np.char.count(self.material,'w')))
+        self.N_wells_real0=sum(np.char.count([layer[6] for layer in self.material],'w'))
+        self.N_layers_real0=sum(np.char.count([layer[6] for layer in self.material],'w'))+sum(np.char.count([layer[6] for layer in self.material],'b'))
+
         # Calculate the required number of grid points
         self.x_max = sum([layer[0] for layer in self.material])*1e-9 #total thickness (m)
         n_max = round2int(self.x_max/self.dx)
@@ -209,17 +208,22 @@ class Structure():
         delta_cr = np.zeros(n_max) #delta Crystal-field split energy 
         # Strain related
         fi_h = np.zeros(n_max)    #Bandstructure potential
-        fi = np.zeros(n_max)		#Bandstructure potential
+        fi_e = np.zeros(n_max)		#Bandstructure potential
         eps =np.zeros(n_max)		#dielectric constant
         dop = np.zeros(n_max)           #doping
+        pol_surf_char = np.zeros(n_max)
         N_wells_real=0
         N_wells_real2=0
+        N_layers_real2=0
         N_wells_real0=self.N_wells_real0
+        N_layers_real0=self.N_layers_real0
         N_wells_virtual=N_wells_real0+2
         N_wells_virtual2=N_wells_real0+2
+        N_layers_virtual=N_layers_real0+2
         Well_boundary=np.zeros((N_wells_virtual,2),dtype=int)
         Well_boundary2=np.zeros((N_wells_virtual,2),dtype=int)
         barrier_boundary=np.zeros((N_wells_virtual+1,2),dtype=int)
+        layer_boundary=np.zeros((N_layers_virtual,2),dtype=int)
         n_max_general=np.zeros(N_wells_virtual,dtype=int)
         Well_boundary[N_wells_virtual-1,0]=n_max 
         Well_boundary[N_wells_virtual-1,1]=n_max
@@ -227,6 +231,16 @@ class Structure():
         Well_boundary2[N_wells_virtual-1,1]=n_max
         barrier_boundary[N_wells_virtual,0]=n_max
         barrier_len=np.zeros(N_wells_virtual+1)
+        n=np.zeros(n_max)
+        p=np.zeros(n_max)
+        TAUN0=np.zeros(n_max)  
+        TAUP0=np.zeros(n_max)
+        mun0=np.zeros(n_max)
+        mup0=np.zeros(n_max)
+        BETAN=np.zeros(n_max)
+        BETAP=np.zeros(n_max)
+        VSATN=np.zeros(n_max)
+        VSATP=np.zeros(n_max)
         position = 0.0 # keeping in nanometres (to minimise errors)
         for layer in self.material:
             startindex = round2int(position*1e-9/dx)
@@ -238,7 +252,7 @@ class Structure():
                 matprops = material_property[matType]
                 cb_meff[startindex:finishindex] = matprops['m_e']*m_e
                 cb_meff_alpha[startindex:finishindex] = matprops['m_e_alpha']
-                fi[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
+                fi_e[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
                 if mat_type=='Zincblende' :
                     a0_sub[startindex:finishindex]=matprops['a0']*1e-10
                     C11[startindex:finishindex] = matprops['C11']*1e10
@@ -253,6 +267,14 @@ class Structure():
                     fi_h[startindex:finishindex] =-(1-matprops['Band_offset'])*matprops['Eg']*q #Joule  #-0.8*q-(1-matprops['Band_offset'])*matprops['Eg']*q #Joule
                     eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
                     a0[startindex:finishindex] = matprops['a0']*1e-10
+                    TAUN0[startindex:finishindex] = matprops['TAUN0']  
+                    TAUP0[startindex:finishindex] = matprops['TAUP0']
+                    mun0[startindex:finishindex] = matprops['mun0']
+                    mup0[startindex:finishindex] = matprops['mup0']
+                    BETAN[startindex:finishindex] = matprops['BETAN']
+                    BETAP[startindex:finishindex] = matprops['BETAP']
+                    VSATN[startindex:finishindex] = matprops['VSATN']
+                    VSATP[startindex:finishindex] = matprops['VSATP']
                 if mat_type=='Wurtzite' :
                     a0_sub[startindex:finishindex]=matprops['a0_wz']*1e-10
                     C11[startindex:finishindex] = matprops['C11']*1e10
@@ -278,6 +300,14 @@ class Structure():
                     eps[startindex:finishindex] = matprops['epsilonStatic']*eps0
                     fi_h[startindex:finishindex] =-(1-matprops['Band_offset'])*matprops['Eg']*q
                     Psp[startindex:finishindex]=matprops['Psp']
+                    TAUN0[startindex:finishindex] = matprops['TAUN0']  
+                    TAUP0[startindex:finishindex] = matprops['TAUP0']
+                    mun0[startindex:finishindex] = matprops['mun0']
+                    mup0[startindex:finishindex] = matprops['mup0']
+                    BETAN[startindex:finishindex] = matprops['BETAN']
+                    BETAP[startindex:finishindex] = matprops['BETAP']
+                    VSATN[startindex:finishindex] = matprops['VSATN']
+                    VSATP[startindex:finishindex] = matprops['VSATP']
             elif matType in alloy_property:               
                 alloyprops = alloy_property[matType]
                 mat1 = material_property[alloyprops['Material1']]
@@ -286,8 +316,15 @@ class Structure():
                 cb_meff_alloy = x*mat1['m_e'] + (1-x)* mat2['m_e']
                 cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
                 Eg = x*mat1['Eg'] + (1-x)* mat2['Eg']-alloyprops['Bowing_param']*x*(1-x) #eV
-                fi[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule
+                fi_e[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule
                 a0_sub[startindex:finishindex]=alloyprops['a0_sub']*1e-10
+                TAUN0[startindex:finishindex] = alloyprops['TAUN0']  
+                TAUP0[startindex:finishindex] = alloyprops['TAUP0']
+
+                BETAN[startindex:finishindex] = alloyprops['BETAN']
+                BETAP[startindex:finishindex] = alloyprops['BETAP']
+                VSATN[startindex:finishindex] = alloyprops['VSATN']
+                VSATP[startindex:finishindex] = alloyprops['VSATP']
                 if mat_type=='Zincblende':
                     C11[startindex:finishindex] = (x*mat1['C11'] + (1-x)* mat2['C11'])*1e10
                     C12[startindex:finishindex] = (x*mat1['C12'] + (1-x)* mat2['C12'])*1e10
@@ -306,6 +343,9 @@ class Structure():
                     eps[startindex:finishindex] = (x*mat1['epsilonStatic'] + (1-x)* mat2['epsilonStatic'] )*eps0
                     a0[startindex:finishindex] = ((1-x)*mat1['a0'] + x* mat2['a0'] )*1e-10
                     cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(mat2['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
+                
+                    mun0[startindex:finishindex] =x*mat1['mun0'] + (1-x)* mat2['mun0']
+                    mup0[startindex:finishindex] = x*mat1['mup0'] + (1-x)* mat2['mup0']                
                 if mat_type=='Wurtzite' :
                     A1[startindex:finishindex] =x*mat1['A1'] + (1-x)* mat2['A1']
                     A2[startindex:finishindex] =x*mat1['A2'] + (1-x)* mat2['A2']
@@ -331,10 +371,19 @@ class Structure():
                     delta_cr[startindex:finishindex]  = (x*mat1['delta_cr'] + (1-x)* mat2['delta_cr'])*q
                     Ac_alloy = x*mat1['Ac'] + (1-x)* mat2['Ac']
                     Ac[startindex:finishindex] = Ac_alloy*q
+                    mun0[startindex:finishindex] =x*mat1['mun0'] + (1-x)* mat2['mun0']
+                    mup0[startindex:finishindex] = x*mat1['mup0'] + (1-x)* mat2['mup0'] 
                     #############################################
             elif matType in alloy_property_4:
-
+                    alloyprops = alloy_property_4[matType]
+                    TAUN0[startindex:finishindex] = alloyprops['TAUN0']  
+                    TAUP0[startindex:finishindex] = alloyprops['TAUP0']
+                    BETAN[startindex:finishindex] = alloyprops['BETAN']
+                    BETAP[startindex:finishindex] = alloyprops['BETAP']
+                    VSATN[startindex:finishindex] = alloyprops['VSATN']
+                    VSATP[startindex:finishindex] = alloyprops['VSATP']
                     if mat_type=='Zincblende':
+                        
                         alloyprops = alloy_property_4[matType]
                         mat1 = material_property[alloyprops['Material1']]
                         mat2 = material_property[alloyprops['Material2']]
@@ -360,7 +409,7 @@ class Structure():
                         Eg_alloy_BCD_y=y*mat2['Eg'] + (1-y)* mat4['Eg']-alloyprops['Bowing_param_BCD']*y*(1-y) #eV GaAsP
                         Eg=(x*(1-x)*(y*Eg_alloy_ABC_x+(1-y)*Eg_alloy_ABD_x)+y*(1-y)*(x*Eg_alloy_ACD_y+(1-x)*Eg_alloy_BCD_y))/(x*(1-x)+y*(1-y))
                         
-                        fi[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule
+                        fi_e[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule
                         a0_sub[startindex:finishindex]=alloyprops['a0_sub']*1e-10
                         C11_alloy_ABC_x=x*mat1['C11'] + (1-x)* mat2['C11']
                         C11_alloy_ABD_x=x*mat3['C11'] + (1-x)* mat4['C11']
@@ -437,176 +486,217 @@ class Structure():
                         a0_alloy_BCD_y=y*mat2['a0'] + (1-y)* mat4['a0']
                         a0_alloy=(x*(1-x)*(y*a0_alloy_ABC_x+(1-y)*a0_alloy_ABD_x)+y*(1-y)*(x*a0_alloy_ACD_y+(1-x)*a0_alloy_BCD_y))/(x*(1-x)+y*(1-y))
                         a0[startindex:finishindex] = a0_alloy*1e-10
-                                                
+                        
+                        mun0_alloy_ABC_x=x*mat1['mun0'] + (1-x)* mat2['mun0']
+                        mun0_alloy_ABD_x=x*mat3['mun0'] + (1-x)* mat4['mun0']
+                        mun0_alloy_ACD_y=y*mat1['mun0'] + (1-y)* mat3['mun0']
+                        mun0_alloy_BCD_y=y*mat2['mun0'] + (1-y)* mat4['mun0']                        
+                        mun0[startindex:finishindex] =(x*(1-x)*(y*mun0_alloy_ABC_x+(1-y)*mun0_alloy_ABD_x)+y*(1-y)*(x*mun0_alloy_ACD_y+(1-x)*mun0_alloy_BCD_y))/(x*(1-x)+y*(1-y))
+                        
+                        mup0_alloy_ABC_x=x*mat1['mup0'] + (1-x)* mat2['mup0']
+                        mup0_alloy_ABD_x=x*mat3['mup0'] + (1-x)* mat4['mup0']
+                        mup0_alloy_ACD_y=y*mat1['mup0'] + (1-y)* mat3['mup0']
+                        mup0_alloy_BCD_y=y*mat2['mup0'] + (1-y)* mat4['mup0']                        
+                        mup0[startindex:finishindex] =(x*(1-x)*(y*mup0_alloy_ABC_x+(1-y)*mup0_alloy_ABD_x)+y*(1-y)*(x*mup0_alloy_ACD_y+(1-x)*mup0_alloy_BCD_y))/(x*(1-x)+y*(1-y))
+                        
                         cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(mat2['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
                     if mat_type=='Wurtzite' :
                         alloyprops = alloy_property_4[matType]
-                        mat1 = material_property[alloyprops['Material1']]#AlN
+                        mat1 = material_property[alloyprops['Material1']]#GaN
                         mat2 = material_property[alloyprops['Material2']]#InN
-                        mat3 = material_property[alloyprops['Material3']]#GaN
-                        #This is accourding to interpolated Vegard’s law for quaternary ABxCyD1-x-y=NGaxAlyIn1-x-y
+                        mat3 = material_property[alloyprops['Material3']]#AlN
+                        #This is accourding to interpolated Vegard’s law for quaternary BxCyD1-x-yA=AlxInyGa1-x-yN
+                        """
+                        I. Vurgaftman, J.R. Meyer, L.R. RamMohan, J. Appl. Phys. 89 (2001) 5815.
+                        C. K. Williams, T. H. Glisson, J. R. Hauser, and M. A. Littlejohn, J. Electron. Mater. 7, 639 (1978).                       
+                        """                      
                         x = layer[2] #alloy ratio x
                         y = layer[3] #alloy ratio y
                         u_4=(1-x+y)/2
                         v_4=(2-x-2*y)/2
                         w_4=(2-2*x-y)/2
-                        cb_meff_alloy_ABC=u_4*mat1['m_e'] + (1-u_4)* mat3['m_e']#AlxGa1-xN
-                        cb_meff_alloy_ABD=w_4*mat2['m_e'] + (1-w_4)* mat3['m_e']#InxGa1-xN
-                        cb_meff_alloy_ACD=v_4*mat1['m_e'] + (1-v_4)* mat2['m_e']#AlxIn1-xN
+                        cb_meff_alloy_ABC=u_4*mat2['m_e'] + (1-u_4)* mat3['m_e']#AlInN
+                        cb_meff_alloy_ACD=v_4*mat1['m_e'] + (1-v_4)* mat2['m_e']#InGaN                        
+                        cb_meff_alloy_ABD=w_4*mat1['m_e'] + (1-w_4)* mat3['m_e']#AlGaN
                         cb_meff_alloy=(x*y*cb_meff_alloy_ABC+y*(1-x-y)*cb_meff_alloy_ACD+x*(1-x-y)*cb_meff_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         cb_meff[startindex:finishindex] = cb_meff_alloy*m_e
                         
-                        Eg_alloy_ABC=u_4*mat1['Eg'] + (1-u_4)* mat3['Eg']-alloyprops['Bowing_param_ABC']*u_4*(1-u_4) #eV
-                        Eg_alloy_ABD=w_4*mat2['Eg'] + (1-w_4)* mat3['Eg']-alloyprops['Bowing_param_ABD']*w_4*(1-w_4) #eV
-                        Eg_alloy_ACD=v_4*mat1['Eg'] + (1-v_4)* mat2['Eg']-alloyprops['Bowing_param_ACD']*v_4*(1-v_4) #eV
+                        Eg_alloy_ABC=u_4*mat2['Eg'] + (1-u_4)* mat3['Eg']-alloyprops['Bowing_param_ABC']*u_4*(1-u_4) #eV AlInN
+                        Eg_alloy_ACD=v_4*mat1['Eg'] + (1-v_4)* mat2['Eg']-alloyprops['Bowing_param_ACD']*v_4*(1-v_4) #eV InGaN                       
+                        Eg_alloy_ABD=w_4*mat1['Eg'] + (1-w_4)* mat3['Eg']-alloyprops['Bowing_param_ABD']*w_4*(1-w_4) #eV AlGaN                    
                         Eg=(x*y*Eg_alloy_ABC+y*(1-x-y)*Eg_alloy_ACD+x*(1-x-y)*Eg_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         
-                        fi[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule
+                        fi_e[startindex:finishindex] = alloyprops['Band_offset']*Eg*q # for electron. Joule
                         a0_sub[startindex:finishindex]=alloyprops['a0_sub']*1e-10
-                        A1_alloy_ABC=u_4*mat1['A1'] + (1-u_4)* mat3['A1']
-                        A1_alloy_ABD=w_4*mat2['A1'] + (1-w_4)* mat3['A1']
+                        A1_alloy_ABC=u_4*mat2['A1'] + (1-u_4)* mat3['A1']
                         A1_alloy_ACD=v_4*mat1['A1'] + (1-v_4)* mat2['A1']
+                        A1_alloy_ABD=w_4*mat1['A1'] + (1-w_4)* mat3['A1']
                         A1[startindex:finishindex]=(x*y*A1_alloy_ABC+y*(1-x-y)*A1_alloy_ACD+x*(1-x-y)*A1_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         
-                        A2_alloy_ABC=u_4*mat1['A2'] + (1-u_4)* mat3['A2']
-                        A2_alloy_ABD=w_4*mat2['A2'] + (1-w_4)* mat3['A2']
+                        A2_alloy_ABC=u_4*mat2['A2'] + (1-u_4)* mat3['A2']
                         A2_alloy_ACD=v_4*mat1['A2'] + (1-v_4)* mat2['A2']
+                        A2_alloy_ABD=w_4*mat1['A2'] + (1-w_4)* mat3['A2']
                         A2[startindex:finishindex]=(x*y*A2_alloy_ABC+y*(1-x-y)*A2_alloy_ACD+x*(1-x-y)*A2_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         
-                        A3_alloy_ABC=u_4*mat1['A3'] + (1-u_4)* mat3['A3']
-                        A3_alloy_ABD=w_4*mat2['A3'] + (1-w_4)* mat3['A3']
+                        A3_alloy_ABC=u_4*mat2['A3'] + (1-u_4)* mat3['A3']
                         A3_alloy_ACD=v_4*mat1['A3'] + (1-v_4)* mat2['A3']
+                        A3_alloy_ABD=w_4*mat1['A3'] + (1-w_4)* mat3['A3']                        
                         A3[startindex:finishindex]=(x*y*A3_alloy_ABC+y*(1-x-y)*A3_alloy_ACD+x*(1-x-y)*A3_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
 
-                        A4_alloy_ABC=u_4*mat1['A4'] + (1-u_4)* mat3['A4']
-                        A4_alloy_ABD=w_4*mat2['A4'] + (1-w_4)* mat3['A4']
+                        A4_alloy_ABC=u_4*mat2['A4'] + (1-u_4)* mat3['A4']
                         A4_alloy_ACD=v_4*mat1['A4'] + (1-v_4)* mat2['A4']
+                        A4_alloy_ABD=w_4*mat1['A4'] + (1-w_4)* mat3['A4']                        
                         A4[startindex:finishindex]=(x*y*A4_alloy_ABC+y*(1-x-y)*A4_alloy_ACD+x*(1-x-y)*A4_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         
-                        A5_alloy_ABC=u_4*mat1['A5'] + (1-u_4)* mat3['A5']
-                        A5_alloy_ABD=w_4*mat2['A5'] + (1-w_4)* mat3['A5']
+                        A5_alloy_ABC=u_4*mat2['A5'] + (1-u_4)* mat3['A5']
                         A5_alloy_ACD=v_4*mat1['A5'] + (1-v_4)* mat2['A5']
+                        A5_alloy_ABD=w_4*mat1['A5'] + (1-w_4)* mat3['A5']                        
                         A5[startindex:finishindex]=(x*y*A5_alloy_ABC+y*(1-x-y)*A5_alloy_ACD+x*(1-x-y)*A5_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         
-                        A6_alloy_ABC=u_4*mat1['A6'] + (1-u_4)* mat3['A6']
-                        A6_alloy_ABD=w_4*mat2['A6'] + (1-w_4)* mat3['A6']
+                        A6_alloy_ABC=u_4*mat2['A6'] + (1-u_4)* mat3['A6']
                         A6_alloy_ACD=v_4*mat1['A6'] + (1-v_4)* mat2['A6']
+                        A6_alloy_ABD=w_4*mat1['A6'] + (1-w_4)* mat3['A6']                        
                         A6[startindex:finishindex]=(x*y*A6_alloy_ABC+y*(1-x-y)*A6_alloy_ACD+x*(1-x-y)*A6_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         
-
-                        D1_alloy_ABC=u_4*mat1['D1'] + (1-u_4)* mat3['D1']
-                        D1_alloy_ABD=w_4*mat2['D1'] + (1-w_4)* mat3['D1']
+                        D1_alloy_ABC=u_4*mat2['D1'] + (1-u_4)* mat3['D1']
                         D1_alloy_ACD=v_4*mat1['D1'] + (1-v_4)* mat2['D1']
+                        D1_alloy_ABD=w_4*mat1['D1'] + (1-w_4)* mat3['D1']                        
                         D1_alloy=(x*y*D1_alloy_ABC+y*(1-x-y)*D1_alloy_ACD+x*(1-x-y)*D1_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         D1[startindex:finishindex] = D1_alloy*q
 
-                        D2_alloy_ABC=u_4*mat1['D2'] + (1-u_4)* mat3['D2']
-                        D2_alloy_ABD=w_4*mat2['D2'] + (1-w_4)* mat3['D2']
+                        D2_alloy_ABC=u_4*mat2['D2'] + (1-u_4)* mat3['D2']
                         D2_alloy_ACD=v_4*mat1['D2'] + (1-v_4)* mat2['D2']
+                        D2_alloy_ABD=w_4*mat1['D2'] + (1-w_4)* mat3['D2']                        
                         D2_alloy=(x*y*D2_alloy_ABC+y*(1-x-y)*D2_alloy_ACD+x*(1-x-y)*D2_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         D2[startindex:finishindex] = D2_alloy*q
 
-                        D3_alloy_ABC=u_4*mat1['D3'] + (1-u_4)* mat3['D3']
-                        D3_alloy_ABD=w_4*mat2['D3'] + (1-w_4)* mat3['D3']
+                        D3_alloy_ABC=u_4*mat2['D3'] + (1-u_4)* mat3['D3']
                         D3_alloy_ACD=v_4*mat1['D3'] + (1-v_4)* mat2['D3']
+                        D3_alloy_ABD=w_4*mat1['D3'] + (1-w_4)* mat3['D3']                        
                         D3_alloy=(x*y*D3_alloy_ABC+y*(1-x-y)*D3_alloy_ACD+x*(1-x-y)*D3_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         D3[startindex:finishindex] = D3_alloy*q
 
-                        D4_alloy_ABC=u_4*mat1['D4'] + (1-u_4)* mat3['D4']
-                        D4_alloy_ABD=w_4*mat2['D4'] + (1-w_4)* mat3['D4']
+                        D4_alloy_ABC=u_4*mat2['D4'] + (1-u_4)* mat3['D4']
                         D4_alloy_ACD=v_4*mat1['D4'] + (1-v_4)* mat2['D4']
+                        D4_alloy_ABD=w_4*mat1['D4'] + (1-w_4)* mat3['D4']                        
                         D4_alloy=(x*y*D4_alloy_ABC+y*(1-x-y)*D4_alloy_ACD+x*(1-x-y)*D4_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         D4[startindex:finishindex] = D4_alloy*q
 
-                        D31_alloy_ABC=u_4*mat1['D31'] + (1-u_4)* mat3['D31']
-                        D31_alloy_ABD=w_4*mat2['D31'] + (1-w_4)* mat3['D31']
+                        D31_alloy_ABC=u_4*mat2['D31'] + (1-u_4)* mat3['D31']
                         D31_alloy_ACD=v_4*mat1['D31'] + (1-v_4)* mat2['D31']
+                        D31_alloy_ABD=w_4*mat1['D31'] + (1-w_4)* mat3['D31']                        
                         D31[startindex:finishindex]=(x*y*D31_alloy_ABC+y*(1-x-y)*D31_alloy_ACD+x*(1-x-y)*D31_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         
-                        D33_alloy_ABC=u_4*mat1['D33'] + (1-u_4)* mat3['D33']
-                        D33_alloy_ABD=w_4*mat2['D33'] + (1-w_4)* mat3['D33']
+                        D33_alloy_ABC=u_4*mat2['D33'] + (1-u_4)* mat3['D33']
                         D33_alloy_ACD=v_4*mat1['D33'] + (1-v_4)* mat2['D33']
+                        D33_alloy_ABD=w_4*mat1['D33'] + (1-w_4)* mat3['D33']                        
                         D33[startindex:finishindex]=(x*y*D33_alloy_ABC+y*(1-x-y)*D33_alloy_ACD+x*(1-x-y)*D33_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                          
-                        Psp_alloy_ABC=u_4*mat1['Psp'] + (1-u_4)* mat3['Psp']
-                        Psp_alloy_ABD=w_4*mat2['Psp'] + (1-w_4)* mat3['Psp']
+                        Psp_alloy_ABC=u_4*mat2['Psp'] + (1-u_4)* mat3['Psp']
                         Psp_alloy_ACD=v_4*mat1['Psp'] + (1-v_4)* mat2['Psp']
+                        Psp_alloy_ABD=w_4*mat1['Psp'] + (1-w_4)* mat3['Psp']                        
                         Psp[startindex:finishindex]=(x*y*Psp_alloy_ABC+y*(1-x-y)*Psp_alloy_ACD+x*(1-x-y)*Psp_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         
-                        C11_alloy_ABC=u_4*mat1['C11'] + (1-u_4)* mat3['C11']
-                        C11_alloy_ABD=w_4*mat2['C11'] + (1-w_4)* mat3['C11']
+                        C11_alloy_ABC=u_4*mat2['C11'] + (1-u_4)* mat3['C11']
                         C11_alloy_ACD=v_4*mat1['C11'] + (1-v_4)* mat2['C11']
+                        C11_alloy_ABD=w_4*mat1['C11'] + (1-w_4)* mat3['C11']                        
                         C11[startindex:finishindex]=(x*y*C11_alloy_ABC+y*(1-x-y)*C11_alloy_ACD+x*(1-x-y)*C11_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e10# for newton/meter²
                         
-                        C12_alloy_ABC=u_4*mat1['C12'] + (1-u_4)* mat3['C12']
-                        C12_alloy_ABD=w_4*mat2['C12'] + (1-w_4)* mat3['C12']
+                        C12_alloy_ABC=u_4*mat2['C12'] + (1-u_4)* mat3['C12']
                         C12_alloy_ACD=v_4*mat1['C12'] + (1-v_4)* mat2['C12']
+                        C12_alloy_ABD=w_4*mat1['C12'] + (1-w_4)* mat3['C12']                        
                         C12[startindex:finishindex]=(x*y*C12_alloy_ABC+y*(1-x-y)*C12_alloy_ACD+x*(1-x-y)*C12_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e10
 
-                        C13_alloy_ABC=u_4*mat1['C13'] + (1-u_4)* mat3['C13']
-                        C13_alloy_ABD=w_4*mat2['C13'] + (1-w_4)* mat3['C13']
+                        C13_alloy_ABC=u_4*mat2['C13'] + (1-u_4)* mat3['C13']
                         C13_alloy_ACD=v_4*mat1['C13'] + (1-v_4)* mat2['C13']
+                        C13_alloy_ABD=w_4*mat1['C13'] + (1-w_4)* mat3['C13']                        
                         C13[startindex:finishindex]=(x*y*C13_alloy_ABC+y*(1-x-y)*C13_alloy_ACD+x*(1-x-y)*C13_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e10
                         
-                        C33_alloy_ABC=u_4*mat1['C33'] + (1-u_4)* mat3['C33']
-                        C33_alloy_ABD=w_4*mat2['C33'] + (1-w_4)* mat3['C33']
+                        C33_alloy_ABC=u_4*mat2['C33'] + (1-u_4)* mat3['C33']
                         C33_alloy_ACD=v_4*mat1['C33'] + (1-v_4)* mat2['C33']
+                        C33_alloy_ABD=w_4*mat1['C33'] + (1-w_4)* mat3['C33']                        
                         C33[startindex:finishindex]=(x*y*C33_alloy_ABC+y*(1-x-y)*C33_alloy_ACD+x*(1-x-y)*C33_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e10
-
-                                              
+                                             
                         fi_h[startindex:finishindex] = -(1-alloyprops['Band_offset'])*Eg*q # -(-1.33*(1-x)-0.8*x)for electron. Joule-1.97793434e-20 #
                         
-                        eps_alloy_ABC=u_4*mat1['epsilonStatic'] + (1-u_4)* mat3['epsilonStatic']
-                        eps_alloy_ABD=w_4*mat2['epsilonStatic'] + (1-w_4)* mat3['epsilonStatic']
+                        eps_alloy_ABC=u_4*mat2['epsilonStatic'] + (1-u_4)* mat3['epsilonStatic']
                         eps_alloy_ACD=v_4*mat1['epsilonStatic'] + (1-v_4)* mat2['epsilonStatic']
+                        eps_alloy_ABD=w_4*mat1['epsilonStatic'] + (1-w_4)* mat3['epsilonStatic']                        
                         eps_alloy=(x*y*eps_alloy_ABC+y*(1-x-y)*eps_alloy_ACD+x*(1-x-y)*eps_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         eps[startindex:finishindex] = eps_alloy*eps0
                         
-                        a0_wz_alloy_ABC=u_4*mat1['a0_wz'] + (1-u_4)* mat3['a0_wz']
-                        a0_wz_alloy_ABD=w_4*mat2['a0_wz'] + (1-w_4)* mat3['a0_wz']
+                        a0_wz_alloy_ABC=u_4*mat2['a0_wz'] + (1-u_4)* mat3['a0_wz']
                         a0_wz_alloy_ACD=v_4*mat1['a0_wz'] + (1-v_4)* mat2['a0_wz']
+                        a0_wz_alloy_ABD=w_4*mat1['a0_wz'] + (1-w_4)* mat3['a0_wz']                        
                         a0_wz_alloy=(x*y*a0_wz_alloy_ABC+y*(1-x-y)*a0_wz_alloy_ACD+x*(1-x-y)*a0_wz_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         a0_wz[startindex:finishindex] = a0_wz_alloy*1e-10
                                              
-                        delta_so_alloy_ABC=u_4*mat1['delta_so'] + (1-u_4)* mat3['delta_so']
-                        delta_so_alloy_ABD=w_4*mat2['delta_so'] + (1-w_4)* mat3['delta_so']
+                        delta_so_alloy_ABC=u_4*mat2['delta_so'] + (1-u_4)* mat3['delta_so']
                         delta_so_alloy_ACD=v_4*mat1['delta_so'] + (1-v_4)* mat2['delta_so']
+                        delta_so_alloy_ABD=w_4*mat1['delta_so'] + (1-w_4)* mat3['delta_so']                        
                         delta_so_alloy=(x*y*delta_so_alloy_ABC+y*(1-x-y)*delta_so_alloy_ACD+x*(1-x-y)*delta_so_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         delta_so[startindex:finishindex] = delta_so_alloy*q   
                         
-                        delta_cr_alloy_ABC=u_4*mat1['delta_cr'] + (1-u_4)* mat3['delta_cr']
-                        delta_cr_alloy_ABD=w_4*mat2['delta_cr'] + (1-w_4)* mat3['delta_cr']
+                        delta_cr_alloy_ABC=u_4*mat2['delta_cr'] + (1-u_4)* mat3['delta_cr']
                         delta_cr_alloy_ACD=v_4*mat1['delta_cr'] + (1-v_4)* mat2['delta_cr']
+                        delta_cr_alloy_ABD=w_4*mat1['delta_cr'] + (1-w_4)* mat3['delta_cr']                        
                         delta_cr_alloy=(x*y*delta_cr_alloy_ABC+y*(1-x-y)*delta_cr_alloy_ACD+x*(1-x-y)*delta_cr_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         delta_cr[startindex:finishindex] = delta_cr_alloy*q
                         
-                        Ac_alloy_ABC=u_4*mat1['Ac'] + (1-u_4)* mat3['Ac']
-                        Ac_alloy_ABD=w_4*mat2['Ac'] + (1-w_4)* mat3['Ac']
+                        Ac_alloy_ABC=u_4*mat2['Ac'] + (1-u_4)* mat3['Ac']
                         Ac_alloy_ACD=v_4*mat1['Ac'] + (1-v_4)* mat2['Ac']
+                        Ac_alloy_ABD=w_4*mat1['Ac'] + (1-w_4)* mat3['Ac']                        
                         Ac_alloy=(x*y*Ac_alloy_ABC+y*(1-x-y)*Ac_alloy_ACD+x*(1-x-y)*Ac_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
                         Ac[startindex:finishindex] = Ac_alloy*q
-				    #########################################
+
+                        mun0_alloy_ABC=u_4*mat2['mun0'] + (1-u_4)* mat3['mun0']
+                        mun0_alloy_ACD=v_4*mat1['mun0'] + (1-v_4)* mat2['mun0']
+                        mun0_alloy_ABD=w_4*mat1['mun0'] + (1-w_4)* mat3['mun0']                        
+                        mun0[startindex:finishindex]=(x*y*mun0_alloy_ABC+y*(1-x-y)*mun0_alloy_ACD+x*(1-x-y)*mun0_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e10
+
+                        mup0_alloy_ABC=u_4*mat2['mup0'] + (1-u_4)* mat3['mup0']
+                        mup0_alloy_ACD=v_4*mat1['mup0'] + (1-v_4)* mat2['mup0']
+                        mup0_alloy_ABD=w_4*mat1['mup0'] + (1-w_4)* mat3['mup0']                        
+                        mup0[startindex:finishindex]=(x*y*mup0_alloy_ABC+y*(1-x-y)*mup0_alloy_ACD+x*(1-x-y)*mup0_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e10
+
+
+            #wells and barriers boundaries
             matRole= layer[6]
             if  matRole == 'w':
                 N_wells_real2+=1
                 Well_boundary2[N_wells_real2,0]=startindex 
                 Well_boundary2[N_wells_real2,1]=finishindex
-                
+            N_layers_real2+=1
+            layer_boundary[N_layers_real2,0]=startindex 
+            layer_boundary[N_layers_real2,1]=finishindex
             for J in range(0,N_wells_virtual2):
                 barrier_boundary[J,0]=Well_boundary2[J-1,1]
                 barrier_boundary[J,1]=Well_boundary2[J,0]
-                barrier_len[J]=barrier_boundary[J,1]-barrier_boundary[J,0]
+                barrier_len[J]=barrier_boundary[J,1]-barrier_boundary[J,0]            
             #doping
+            
+            dop_profile=self.dop_profile
             if layer[5] == 'n':  
-                chargedensity = layer[4]*1e6 #charge density in m**-3 (conversion from cm**-3)
+                dop[startindex:finishindex] = layer[4]*1e6+dop_profile[startindex:finishindex]+1e-15  #charge density in m**-3 (conversion from cm**-3)
             elif layer[5] == 'p': 
-                chargedensity = -layer[4]*1e6 #charge density in m**-3 (conversion from cm**-3)
+                dop[startindex:finishindex] = -layer[4]*1e6+dop_profile[startindex:finishindex]+1e-15   #charge density in m**-3 (conversion from cm**-3)
             else:
-                chargedensity = 0.0
-            dop[startindex:finishindex] = chargedensity
-        #here we remove barriers who are less than anti_crossing_length
-        #so we can constructe the new well boundary using the resulted barrier boundary
-        brr=0
+                dop[startindex:finishindex]=dop_profile[startindex:finishindex]+1e-15
+        """
+        xaxis = np.arange(0,n_max)*dx
+        pl.plot(xaxis, abs(dop)*1e-6,'r')
+        pl.plot(xaxis, dop_profile*1e-6,'k')
+        pl.xlabel('Position (m)')
+        pl.ylabel('electrons  and and holes concentrations (cm-3)' )
+        pl.title('electrons (red) and holes (blue)')
+        pl.grid(True)
+        ssssss
+        
+        
+        Here we remove barriers that are less than the anti_crossing_length
+        so we can constructe the new well boundary using the resulted barrier boundary
+        """
+        brr=0        
         anti_crossing_length=config.anti_crossing_length*1e-9
         for J in range(2,N_wells_virtual2-1):
             if (barrier_len[J]*dx <= anti_crossing_length ) :
@@ -624,11 +714,13 @@ class Structure():
         for J in range(0,N_wells_virtual):
             Well_boundary[J-1,1]=barrier_boundary[J,0]
             Well_boundary[J,0]=barrier_boundary[J,1]
-        self.fi = fi
+        self.fi_e = fi_e
+        self.fi_h = fi_h
         self.cb_meff = cb_meff
         self.cb_meff_alpha = cb_meff_alpha
         self.dop = dop
-        #return fi,cb_meff,eps,dop
+        self.pol_surf_char=pol_surf_char
+        #return fi_e,cb_meff,eps,dop
         self.C11 = C11
         self.C12 = C12
         self.GA1 = GA1
@@ -637,9 +729,10 @@ class Structure():
         self.Ac = Ac
         self.Av = Av
         self.B = B
+        self.n = n
+        self.p = p
         self.a0 = a0
         self.delta = delta
-        self.fi_h = fi_h
         self.eps = eps
         self.A1 = A1
         self.A2 = A2
@@ -666,6 +759,16 @@ class Structure():
         self.Well_boundary=Well_boundary
         self.Well_boundary2=Well_boundary2
         self.barrier_boundary=barrier_boundary
+        self.N_layers_real2=N_layers_real2
+        self.layer_boundary=layer_boundary
+        self.TAUN0=TAUN0  
+        self.TAUP0=TAUP0
+        self.mun0=mun0
+        self.mup0=mup0
+        self.BETAN=BETAN
+        self.BETAP=BETAP
+        self.VSATN=VSATN
+        self.VSATP=VSATP
 class AttrDict(dict):
     """turns a dictionary into an object with attribute style lookups"""
     def __init__(self, *args, **kwargs):
@@ -678,6 +781,8 @@ class StructureFrom(Structure):
             inputfile=AttrDict(inputfile)            
         # Parameters for simulation
         self.Fapp = inputfile.Fapplied
+        self.Vapplied = inputfile.Vapplied
+        self.surface =inputfile.surface
         self.T = inputfile.T
         self.subnumber_h = inputfile.subnumber_h
         self.subnumber_e = inputfile.subnumber_e
@@ -687,15 +792,19 @@ class StructureFrom(Structure):
         self.mat_type = inputfile.mat_type
         # Loading material list
         self.material = inputfile.material
+        
+        
         totallayer = alen(self.material)
-        logger.info("Total layer number: %s",totallayer)
+        if not(config.messagesoff):
+            logger.info("Total layer number: %s",totallayer)
         
         # Calculate the required number of grid points
         self.x_max = sum([layer[0] for layer in self.material])*1e-9 #total thickness (m)
-        self.n_max = int(self.x_max/self.dx)
-        
-        # Check on n_max
+        self.n_max = int(self.x_max/self.dx)        
+        # Check on n_max  
         max_val = inputfile.maxgridpoints
+        
+        self.dop_profile=inputfile.dop_profile
         if self.n_max > max_val:
             logger.error(" Grid number is exceeding the max number of %d", max_val)
             exit()
@@ -709,13 +818,13 @@ class StructureFrom(Structure):
 
         self.alloy_property_4 = database.alloyproperty4
         totalalloy += alen(self.alloy_property_4)
-        
-        logger.info("Total number of materials in database: %d" %(totalmaterial+totalalloy))
+        if not(config.messagesoff):            
+            logger.info("Total number of materials in database: %d" %(totalmaterial+totalalloy))
         
         # Initialise arrays
         
         #cb_meff #conduction band effective mass (array, len n_max)
-        #fi #Bandstructure potential (array, len n_max)
+        #fi_e #Bandstructure potential (array, len n_max)
         #eps #dielectric constant (array, len n_max)
         #dop #doping distribution (array, len n_max)
         self.create_structure_arrays()
@@ -724,10 +833,12 @@ class StructureFrom(Structure):
 # No Shooting method parameters for Schrödinger Equation solution since we use a 3x3 KP solver
 #delta_E = 1.0*meV2J #Energy step (Joules) for initial search. Initial delta_E is 1 meV. #This can be included in config as a setting?
 #d_E = 1e-5*meV2J #Energy step (Joules) for Newton-Raphson method when improving the precision of the energy of a found level.
-damping = 0.4    #averaging factor between iterations to smooth convergence.
-max_iterations=80 #maximum number of iterations.
-convergence_test=1e-6 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
-
+"""damping:An adjustable parameter  (0 < damping < 1) is typically set to 0.5 at low carrier densities. With increasing
+carrier densities, a smaller value of it is needed for rapid convergence."""
+damping = 0.1   #averaging factor between iterations to smooth convergence.
+max_iterations=120 #maximum number of iterations.
+convergence_test=1e-5 #convergence is reached when the ground state energy (eV) is stable to within this number between iterations.
+convergence_test0=1e-5
 # DO NOT EDIT UNDER HERE FOR PARAMETERS
 # --------------------------------------
 
@@ -747,27 +858,37 @@ def fd2(Ei,Ef,model):
     Ei [meV], Ef [meV], T [K]"""
     T= model.T
     return kb*T*log(exp(meV2J*(Ef-Ei)/(kb*T))+1)
-def calc_meff_state_general(wfh,wfe,model,fi,E_statec,list,m_hh,m_lh,m_so,n_max_general,j,Well_boundary):
+
+
+
+def fd3(Ei,Ef,model):
+    """integral of Fermi Dirac Equation for energy independent density of states.
+    Ei [meV], Ef [meV], T [K]"""
+    T= model.T
+    return kb*T*log(exp((Ef-Ei)/(kb*T))+1)
+def calc_meff_state_general(wfh,wfe,model,fi_e,E_statec,list,m_hh,m_lh,m_so,n_max_general,j,Well_boundary,n_max):
     vb_meff= np.zeros((model.subnumber_h,n_max_general))
     #
+    I1,I2,I11,I22 =amort_wave(j,Well_boundary,n_max)
+    i2=I2-I1
     for i in range(0,model.subnumber_h,1):
         if list[i]=='hh1'  or  list[i]=='hh2' or  list[i]=='hh3':
-           vb_meff[i]=m_hh[Well_boundary[j-1,1]:Well_boundary[j+1,0]]
+           vb_meff[i]=m_hh[I1:I2]
         elif list[i] =='lh1'or list[i] =='lh2'or list[i] =='lh3':
-           vb_meff[i]=m_lh[Well_boundary[j-1,1]:Well_boundary[j+1,0]]
+           vb_meff[i]=m_lh[I1:I2]
         else:
-           vb_meff[i]=m_so[Well_boundary[j-1,1]:Well_boundary[j+1,0]]
-    tmp =1.0/np.sum(wfh[:,0:n_max_general]**2/vb_meff,axis=1)  #vb_meff[:,int(n_max/2)]
+           vb_meff[i]=m_so[I1:I2]
+    tmp =1.0/np.sum(wfh[:,0:i2]**2/vb_meff,axis=1)  #vb_meff[:,int(n_max/2)]
     meff_state = tmp.tolist()
     """find subband effective masses including non-parabolicity
     (but stilling using a fixed effective mass for each subband dispersion)"""
     cb_meff = model.cb_meff # effective mass of conduction band across structure
     cb_meff_alpha = model.cb_meff_alpha # non-parabolicity constant across structure
-    cb_meff_states = np.array([cb_meff*(1.0 + cb_meff_alpha*(E*meV2J - fi)) for E in E_statec])
-    tmp1 = 1.0/np.sum(wfe**2/cb_meff_states,axis=1)
+    cb_meff_states = np.array([cb_meff*(1.0 + cb_meff_alpha*(E*meV2J - fi_e)) for E in E_statec])
+    tmp1 = 1.0/np.sum(wfe[:,0:i2]**2/cb_meff_states[:,I1:I2],axis=1)
     meff_statec = tmp1.tolist()
     return meff_statec,meff_state
-def calc_meff_state(wfh,wfe,subnumber_h,subnumber_e,list,m_hh,m_lh,m_so):
+def calc_meff_state(wfh,wfe,subnumber_h,subnumber_e,list,m_hh,m_lh,m_so,model):
     n_max=len(m_hh)
     vb_meff= np.zeros((subnumber_h,n_max))
     #
@@ -784,7 +905,7 @@ def calc_meff_state(wfh,wfe,subnumber_h,subnumber_e,list,m_hh,m_lh,m_so):
     (but stilling using a fixed effective mass for each subband dispersion)"""
     cb_meff = model.cb_meff # effective mass of conduction band across structure
     #cb_meff_alpha = model.cb_meff_alpha # non-parabolicity constant across structure
-    #cb_meff_states = np.array([cb_meff*(1.0 + cb_meff_alpha*(E*meV2J - fi)) for E in E_statec])
+    #cb_meff_states = np.array([cb_meff*(1.0 + cb_meff_alpha*(E*meV2J - fi_e)) for E in E_statec])
     #tmp1 = 1.0/np.sum(wfe**2/cb_meff_states,axis=1)
     tmp1 = 1.0/np.sum(wfe**2/cb_meff,axis=1)
     meff_statec = tmp1.tolist()
@@ -805,7 +926,8 @@ def fermilevel_0Kc(Ntotal2d,E_statec,meff_statec,model):#use
         else:
             break #we have found Ef and so we should break out of the loop
     else: #exception clause for 'for' loop.
-        logger.warning("Have processed all energy levels present and so can't be sure that Ef is below next higher energy level.")
+        if not(config.messagesoff):
+            logger.warning("Have processed all energy levels present and so can't be sure that Ef is below next higher energy level.")
 
     #Ef1=(sum(E_state*meff_state)-Ntotal2d*hbar**2*pi)/(sum(meff_state))
     N_statec=[0.0]*len(E_statec)
@@ -829,7 +951,8 @@ def fermilevel_0K(Ntotal2d,E_state,meff_state,model):#use
         else:
             break #we have found Ef and so we should break out of the loop
     else: #exception clause for 'for' loop.
-        logger.warning("Have processed all energy levels present and so can't be sure that Ef is below next higher energy level.")
+        if not(config.messagesoff):
+            logger.warning("Have processed all energy levels present and so can't be sure that Ef is below next higher energy level.")
     
     #Ef1=(sum(E_state*meff_state)-Ntotal2d*hbar**2*pi)/(sum(meff_state))    
     N_state=[0.0]*len(E_state)
@@ -863,7 +986,7 @@ def fermilevel(Ntotal2d,model,E_state,E_statec,meff_state,meff_statec):#use
     #implement Newton-Raphson method
     Ef =Ef_0K
     #itr=0
-    logger.info('Ef (at 0K)= %g',Ef)
+    #logger.info('Ef (at 0K)= %g',Ef)
     d_E = 1e-9 #Energy step (meV)
     while True:
         y = func(Ef,E_state,meff_state,E_statec,meff_statec,Ntotal2d,model)
@@ -887,7 +1010,7 @@ def calc_N_state(Ef,model,E_state,meff_state,E_statec,meff_statec,Ntotal2d):#use
     else:
         N_state=[fd1(Ei,Ef,model)*vsb_meff/(hbar**2*pi) for Ei,vsb_meff in zip(E_state,meff_state)]
     return N_state,N_statec  # number of carriers in each subband
-    
+
 # FUNCTIONS for SELF-CONSISTENT POISSON--------------------------------
 
 def calc_sigma(wfh,wfe,N_state,N_statec,model,Ntotal2d): #use
@@ -903,12 +1026,22 @@ def calc_sigma(wfh,wfe,N_state,N_statec,model,Ntotal2d): #use
         for i in range(0,model.subnumber_h,1): # The charges due to the electrons in the subbands
             sigma+= N_state[i]*(wfh[i])**2
     return sigma #charge per m**2 (units of electronic charge)
-def calc_sigma_general(wfh,wfe,N_state,N_statec,model,Ntotal2d,j,Well_boundary): #use
+def calc_sigma_general2(n_max,dopi,n,p): #use
+    """This function calculates `net' areal charge density
+    n-type dopants lead to -ve charge representing electrons, and additionally 
+    +ve ionised donors."""
+    sigma=np.zeros(len(dopi))
+    sigma=sigma+dopi # The charges due to the dopant ions
+    
+    for i in range(0,n_max): # The charges due to the electrons in the subbands
+        sigma[i]+=(p[i]-n[i])       
+    return sigma #charge per m**3 (units of electronic charge)
+def calc_sigma_general(pol_surf_char,wfh,wfe,N_state,N_statec,model,Ntotal2d,j,Well_boundary): #use
     """This function calculates `net' areal charge density
     n-type dopants lead to -ve charge representing electrons, and additionally 
     +ve ionised donors."""
     # note: model.dop is still a volume density, the delta_x converts it to an areal density
-    sigma= model.dop[Well_boundary[j-1,1]:Well_boundary[j+1,0]]*model.dx # The charges due to the dopant ions
+    sigma= model.dop[Well_boundary[j-1,1]:Well_boundary[j+1,0]]*model.dx#+pol_surf_char[Well_boundary[j-1,1]:Well_boundary[j+1,0]]  The charges due to the dopant ions
     if Ntotal2d>0 :
         for j in range(0,model.subnumber_e,1): # The charges due to the electrons in the subbands
             sigma-= N_statec[j]*(wfe[j])**2
@@ -965,7 +1098,7 @@ def calc_potn(F,model):#use
 
 # FUNCTIONS FOR EXCHANGE INTERACTION-------------------------------------------
 
-def calc_Vxc(sigma,eps,cb_meff):
+def calc_Vxc(sigma,eps,cb_meff,model):
     """An effective field describing the exchange-interactions between the electrons
     derived from Kohn-Sham density functional theory. This formula is given in many
     papers, for example see Gunnarsson and Lundquist (1976), Ando, Taniyama, Ohtani 
@@ -990,86 +1123,45 @@ def calc_Vxc(sigma,eps,cb_meff):
     Vxc = -A*nz_3/eps * ( 1.0 + 0.0545 * r_s * np.log( 1.0 + 11.4/r_s) )
     return Vxc
 
+
+def wave_func_tri(j,Well_boundary,n_max,V1,V2,subnumber_h,subnumber_e,model):                    
+    # Envelope Function Wave Functions
+    wfh_general = np.zeros((model.N_wells_virtual,subnumber_h,n_max))
+    wfe_general = np.zeros((model.N_wells_virtual,subnumber_e,n_max))
+    n_max_general = np.zeros(model.N_wells_virtual,int)
+    n_max_general2 = np.zeros(model.N_wells_virtual,int)
+    I1,I2,I11,I22 =amort_wave(j,Well_boundary,n_max)
+    n_max_general2[j]=int(I2-I1)
+    n_max_general[j]=int(Well_boundary[j+1,0]-Well_boundary[j-1,1])
+    wfh1s2 = np.zeros((subnumber_h,3,n_max_general2[j]))
+    maxwfh = np.zeros((subnumber_h,3))
+    list = ['']*subnumber_h
+    for i in range(0,subnumber_e,1):
+        wfe_general[j,i,0:n_max_general2[j]] = V1[j,0:n_max_general2[j],i]+1e-20                     
+    wfh_pow=np.zeros(n_max)
+    conter_hh,conter_lh,conter_so=0,0,0
+    for jj in range(0,subnumber_h):
+        for i in range(0,3):
+            wfh1s2[jj,i,:] = V2[j,i*n_max_general2[j]:(i+1)*n_max_general2[j],jj]
+            wfh_pow=np.cumsum(wfh1s2[jj,i,:]*wfh1s2[jj,i,:])
+            maxwfh[jj,i]=wfh_pow[n_max_general2[j]-1]
+        if np.argmax(maxwfh[jj,:])==0 :
+            conter_hh+=1       
+            list[jj]='hh%d'%conter_hh                               
+            wfh_general[j,jj,0:n_max_general2[j]]=wfh1s2[jj,np.argmax(maxwfh[jj,:]),:]+1e-20
+        elif np.argmax(maxwfh[jj,:])==1:
+            conter_lh+=1       
+            list[jj]='lh%d'%conter_lh
+            wfh_general[j,jj,0:n_max_general2[j]]=wfh1s2[jj,np.argmax(maxwfh[jj,:]),:]+1e-20
+        else:
+            conter_so+=1       
+            list[jj]='so%d'%conter_so
+            wfh_general[j,jj,0:n_max_general2[j]]=wfh1s2[jj,np.argmax(maxwfh[jj,:]),:]+1e-20
+    return wfh_general,wfe_general,list,n_max_general2
 # -----------------------------------------------------------------------------
 
-# valence band effective-masses hh,lh
-
-def Poisson_Schrodinger(model):
-    """Performs a self-consistent Poisson-Schrodinger calculation of a 1d quantum well structure.
-    Model is an object with the following attributes:
-    fi - Bandstructure potential (J) (array, len n_max)
-    cb_meff - conduction band effective mass (kg)(array, len n_max)
-    eps - dielectric constant (including eps0) (array, len n_max)
-    dop - doping distribution (m**-3) ( array, len n_max)
-    Fapp - Applied field (Vm**-1)
-    T - Temperature (K)
-    comp_scheme - simulation scheme (currently unused)
-    subnumber_e - number of subbands for look for in the conduction band
-    dx - grid spacing (m)
-    n_max - number of points.
-    """   
-    fi = model.fi
-    cb_meff = model.cb_meff
-    eps = model.eps
-    dop = model.dop
-    Fapp = model.Fapp
-    T = model.T
-    comp_scheme = model.comp_scheme
-    subnumber_h = model.subnumber_h
-    N_wells_real0=model.N_wells_real0
-    subnumber_e = model.subnumber_e
-    dx = model.dx
+def Strain_and_Masses(model):
     n_max = model.n_max
-    mat_type= model.mat_type
-    
-    if comp_scheme in (4,5,6):
-        logger.error("""aestimo_eh doesn't currently include exchange interactions
-        in its valence band calculations.""")
-        exit()
-    if comp_scheme in (1,3,6):
-        logger.error("""aestimo_eh doesn't currently include nonparabolicity effects in 
-        its valence band calculations.""")
-        exit()
-    
-    C11 = model.C11
-    C12 = model.C12
-    GA1 = model.GA1
-    GA2 = model.GA2
-    GA3 = model.GA3
-    Ac = model.Ac
-    Av = model.Av
-    B = model.B
-    a0 = model.a0
-    delta = model.delta
-    fi_h = model.fi_h
-    A1 = model.A1
-    A2 = model.A2
-    A3 = model.A3
-    A4 = model.A4
-    A5 = model.A5
-    A6 = model.A6
-    D1 = model.D1
-    D2 = model.D2
-    D3 = model.D3
-    D4 = model.D4
-    C13 = model.C13
-    C33 = model.C33
-    D31 = model.D31
-    D33 = model.D33
-    Psp = model.Psp
-    a0_wz = model.a0_wz
-    a0_sub = model.a0_sub
-    delta_so = model.delta_so
-    delta_cr = model.delta_cr
-    N_wells_virtual = model.N_wells_virtual
-    N_wells_virtual2 = model.N_wells_virtual2
-    Well_boundary=model.Well_boundary
-    Well_boundary2=model.Well_boundary2
-    barrier_boundary=model.barrier_boundary
-    Ppz= np.zeros(n_max)
-    HUPMAT1=np.zeros((n_max*3, n_max*3))
-    HUPMATC1=np.zeros((n_max, n_max))
-    UNIM = np.identity(n_max)
     EXX  = np.zeros(n_max)
     EZZ  = np.zeros(n_max)
     ZETA= np.zeros(n_max)
@@ -1085,143 +1177,289 @@ def Poisson_Schrodinger(model):
     m_hh = np.zeros(n_max)
     m_lh = np.zeros(n_max)
     m_so = np.zeros(n_max)
-    x_max=dx*n_max   
+    Ppz= np.zeros(n_max)
+    Ppz_Psp= np.zeros(n_max)
+    x_max=model.dx*n_max
     if config.strain :
-        if mat_type=='Zincblende' :
-            EXX= (a0_sub-a0)/a0
-            EZZ= -2.0*C12/C11*EXX
-            ZETA= -B/2.0*(EXX+EXX-2.0*EZZ)
-            CNIT= Ac*(EXX+EXX+EZZ)
-            VNIT= -Av*(EXX+EXX+EZZ)           
-        if mat_type=='Wurtzite':
-            EXX= (a0_sub-a0_wz)/a0_wz
-            EZZ=-2.0*C13/C33*EXX
-            CNIT= Ac*(EXX+EXX+EZZ)
-            ZETA= (D2*(EXX+EXX)+D1*EZZ)
-            VNIT= (D4*(EXX+EXX)+D3*EZZ)
-            Ppz=((D31*(C11+C12)+D33*C13)*(EXX+EXX)+(2*D31*C13+D33*C33)*(EZZ))
-            dx=x_max/n_max
+        if model.mat_type=='Zincblende' :
+            EXX= (model.a0_sub-model.a0)/model.a0
+            EZZ= -2.0*model.C12/model.C11*EXX
+            ZETA= -model.B/2.0*(EXX+EXX-2.0*EZZ)
+            CNIT= model.Ac*(EXX+EXX+EZZ)
+            VNIT= -model.Av*(EXX+EXX+EZZ)
+        if model.mat_type=='Wurtzite':
+            EXX= (model.a0_sub-model.a0_wz)/model.a0_wz
+            EZZ=-2.0*model.C13/model.C33*EXX
+            CNIT= model.Ac*(EXX+EXX+EZZ)
+            ZETA= (model.D2*(EXX+EXX)+model.D1*EZZ)
+            VNIT= (model.D4*(EXX+EXX)+model.D3*EZZ)
+            Ppz=((model.D31*(model.C11+model.C12)+model.D33*model.C13)*(EXX+EXX)+(2*model.D31*model.C13+model.D33*model.C33)*(EZZ))
+            """
+            E31=(C11+C12)*D31+C13*D33
+            E33=2*C13*D31+C33*D33
+            print('E31=',E31,'E33=',E33)
+            Ppz2=2*EXX*(E31-E33*C13/C33)
+            print('Pps2=',Ppz2)
+            """
+            dx=x_max/n_max            
             sum_1=0.0
             sum_2=0.0
             if config.piezo:
-                """ spontaneous and piezoelectric polarization built-in field 
+                """ Spontaneous and piezoelectric polarization built-in field 
                 [1] F. Bernardini and V. Fiorentini phys. stat. sol. (b) 216, 391 (1999)
                 [2] Book 'Quantum Wells,Wires & Dots', Paul Harrison, pages 236-241"""
-                for J in range(1,N_wells_virtual2-1):
-                    BW=Well_boundary2[J,0]
-                    WB=Well_boundary2[J,1]                    
+                for J in range(1,model.N_wells_virtual2-1):
+                    BW=model.Well_boundary2[J,0]
+                    WB=model.Well_boundary2[J,1]                    
                     Lw=(WB-BW)*dx
-                    lb1=(BW-Well_boundary2[J-1,1])*dx
-                    lb2=(Well_boundary2[J+1,0]-WB)*dx
-                    sum_1+=(Psp[BW+1]+Ppz[BW+1])*Lw/eps[BW+1]+(Psp[BW-1]+Ppz[BW-1])*lb1/eps[BW-1]
-                    sum_2+=Lw/eps[BW+1]+lb1/eps[BW-1]
-                EPC=(sum_1-(Psp+Ppz)*sum_2)/(eps*sum_2)
-                """
-                sum_1=0.0
-                sum_2=0.0
-                sum_1=sum((Psp+Ppz)/eps)*dx
-                sum_2=sum(1/eps)*dx
-                EPC=(sum_1-(Psp+Ppz)*sum_2)/(eps*sum_2)
-                """
+                    lb1=(BW-model.Well_boundary2[J-1,1])*dx
+                    #lb2=(Well_boundary2[J+1,0]-WB)*dx
+                    sum_1+=(model.Psp[BW+1]+Ppz[BW+1])*Lw/model.eps[BW+1]+(model.Psp[BW-1]+Ppz[BW-1])*lb1/model.eps[BW-1]
+                    sum_2+=Lw/model.eps[BW+1]+lb1/model.eps[BW-1]
+                EPC=(sum_1-(model.Psp+Ppz)*sum_2)/(model.eps*sum_2)
+            if config.piezo1:
+                pol_surf_char=np.zeros(n_max)
+                for i in range(1,n_max-1):                    
+                    pol_surf_char[i]=((model.Psp[i-1]+Ppz[i-1])-(model.Psp[i+1]+Ppz[i+1]))/(q)                
+                for I in range(1,model.N_wells_virtual2-1):
+                    BW=model.Well_boundary2[I,0]
+                    WB=model.Well_boundary2[I,1]
 
-    if mat_type=='Zincblende' :
+                    Ppz_Psp[WB-1] =(pol_surf_char[WB+1]-pol_surf_char[WB-1])/(dx)#((Psp[WB-1]+Ppz[WB-1])-(Psp[WB+1]+Ppz[WB+1]))/(q)
+                    Ppz_Psp[BW-1] =(pol_surf_char[BW+1]-pol_surf_char[BW-1])/(dx)#((Psp[BW-1]+Ppz[BW-1])-(Psp[BW+1]+Ppz[BW+1]))/(q)
+
+    if model.mat_type=='Zincblende' :
         for i in range(0,n_max,1):
             if  EXX[i]!=0: 
-                S[i]=ZETA[i]/delta[i]
+                S[i]=ZETA[i]/model.delta[i]
                 k1[i]=sqrt(1+2*S[i]+9*S[i]**2)
                 k2[i]=S[i]-1+k1[i]
                 k3[i]=S[i]-1-k1[i]
                 fp[i]=(2*S[i]*(1+1.5*k2[i])+6*S[i]**2)/(0.75*k2[i]**2+k2[i]-3*S[i]**2)
                 fm[i]=(2*S[i]*(1+1.5*k3[i])+6*S[i]**2)/(0.75*k3[i]**2+k3[i]-3*S[i]**2)
-        m_hh = m_e/(GA1 -2*GA2 )
-        m_lh = m_e/(GA1 +2*fp*GA2 )
-        m_so = m_e/(GA1 +2*fm*GA2 )            
-    if mat_type=='Wurtzite' :
-        m_hh = -m_e/(A2 + A4 -A5)
-        m_lh = -m_e/(A2 + A4 +A5 )
-        m_so = -m_e/(A2)    
-    RATIO=m_e/hbar**2*(x_max)**2
-    AC1=(n_max+1)**2    
-    AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,Pce,GDELM,DEL3,DEL1,DEL2=qsv(GA1,GA2,GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,delta,A1,A2,A3,A4,A5,A6,delta_so,delta_cr,mat_type)
-    KP=0.0
-    KPINT=0.01
-    if mat_type=='Zincblende' :        
-        HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT)
-    if mat_type=='Wurtzite' :
-        HUPMAT1=-VBMAT2(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,x_max,n_max,AC1,UNIM,KPINT,DEL3,DEL1,DEL2)
-    HUPMATC1=CBMAT(KP,Pce,cb_meff/m_e,x_max,n_max,AC1,UNIM,KPINT)
-    def calc_E_state(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc):
-        HUPMAT3=np.zeros((n_max*3, n_max*3))
-        HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)
-        HUPMATC3=CBMAT_V(HUPMATC1,fitotc,RATIO,n_max,UNIM)
-        #stop
-        KPV1=[0.0]*subnumber_e
-        la1,v1= linalg.eigh(HUPMATC3)
-        tmp1=la1/RATIO*J2meV
-        tmp1=tmp1.tolist()
-        for i in range(0,subnumber_e,1):
-            KPV1[i]=tmp1[i]
-        KPV2=[0.0]*subnumber_h 
-        la2,v2= linalg.eigh(HUPMAT3) 
-        tmp=-la2/RATIO*J2meV
-        tmp=tmp.tolist()
-        for i in range(0,subnumber_h,1):
-            KPV2[i]=tmp[i]
-        return KPV1,v1,KPV2,v2
+        m_hh = m_e/(model.GA1 -2*model.GA2 )
+        m_lh = m_e/(model.GA1 +2*fp*model.GA2 )
+        m_so = m_e/(model.GA1 +2*fm*model.GA2 )            
+    if model.mat_type=='Wurtzite' :
+        m_hh = -m_e/(model.A2 + model.A4 -model.A5)
+        m_lh = -m_e/(model.A2 + model.A4 +model.A5 )
+        m_so = -m_e/(model.A2)    
+    return m_hh,m_lh,m_so,VNIT,ZETA,CNIT,Ppz_Psp,EPC
+
+def calc_E_state_general(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO):
+    n_max=model.n_max
+    n_max_general=np.zeros(model.N_wells_virtual,dtype=int)
+    HUPMAT3=np.zeros((n_max*3, n_max*3))
+    HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)
+    HUPMATC3=CBMAT_V(HUPMATC1,fitotc,RATIO,n_max,UNIM)
+    #stop
+    tmp1=np.zeros((model.N_wells_virtual,n_max))
     KPV1=np.zeros((model.N_wells_virtual,subnumber_e))
     V1=np.zeros((model.N_wells_virtual,n_max,n_max))
+    V11=np.zeros((model.N_wells_virtual,n_max,n_max))
+    for J in range(1,model.N_wells_virtual-1):
+        n_max_general[J]=Well_boundary[J+1,0]-Well_boundary[J-1,1]
+        I1,I2,I11,I22 =amort_wave(J,Well_boundary,n_max)
+        i_1=I2-I1
+        i1=I1-I1
+        i2=I2-I1            
+        la1,v1= linalg.eigh(HUPMATC3[I1:I2,I1:I2])
+        tmp1[J,i1:i2]=la1/RATIO*J2meV
+        V1[J,i1:i2,i1:i2]=v1
+        if (max(tmp1[J,0:subnumber_e])>max(fitotc[I11:I22])*J2meV and 1==2):
+            logger.warning(":You may experience convergence problem due to unconfined states.")
+    """ 
+    for j in range(1,model.N_wells_virtual-1):            
+        for i in range(0,subnumber_e,1):
+            KPV1[j,i]=tmp1[j,i]
+    """
+    for j in range(1,model.N_wells_virtual-1):
+        I1,I2,I11,I22 =amort_wave(j,Well_boundary,n_max)
+        i_1=I2-I1
+        i1=I1-I1
+        i2=I2-I1
+        i11=I11-I1
+        i22=I22-I1
+        couter=0            
+        for i in range(i1,i2):
+            wfe_pow1=np.cumsum(V1[j,i11:i22,i]*V1[j,i11:i22,i])
+            if (tmp1[j,i]>min(fitotc[I11-1:I22+1])*J2meV and tmp1[j,i]<max(fitotc[I11-1:I22+1])*J2meV) and couter+1<=subnumber_e and (wfe_pow1[i22-i11-1]>1e-1) :
+                KPV1[j,couter]=tmp1[j,i]
+                V11[j,i1:i2,couter]+=V1[j,i1:i2,i]
+                couter+=1
+        if (couter>subnumber_e):
+            print("For this QW, the number confined states of e-levels is: ",couter)    
+    tmp=np.zeros((model.N_wells_virtual,n_max*3))
     KPV2=np.zeros((model.N_wells_virtual,subnumber_h))
     V2=np.zeros((model.N_wells_virtual,n_max*3,n_max*3))
+    V22=np.zeros((model.N_wells_virtual,n_max*3,n_max*3))
+    for k in range(1,model.N_wells_virtual-1):
+        I1,I2,I11,I22 =amort_wave(k,Well_boundary,n_max)
+        i_1=I2-I1
+        HUPMAT3_general=np.zeros((i_1*3,i_1*3))
+        i1=I1-I1
+        i2=I2-I1
+        HUPMAT3_general[i1:i2,i1:i2]=HUPMAT3[I1:I2,I1:I2]
+        HUPMAT3_general[i1+i_1:i2+i_1,i1:i2]=HUPMAT3[I1+n_max:I2+n_max,I1:I2]
+        HUPMAT3_general[i1:i2,i1+i_1:i2+i_1]=HUPMAT3[I1:I2,I1+n_max:I2+n_max]
+        HUPMAT3_general[i1+i_1:i2+i_1,i1+i_1:i2+i_1]=HUPMAT3[I1+n_max:I2+n_max,I1+n_max:I2+n_max]
+        HUPMAT3_general[i1+i_1*2:i2+i_1*2,i1:i2]=HUPMAT3[I1+n_max*2:I2+n_max*2,I1:I2]
+        HUPMAT3_general[i1:i2,i1+i_1*2:i2+i_1*2]=HUPMAT3[I1:I2,I1+n_max*2:I2+n_max*2]
+        HUPMAT3_general[i1+i_1*2:i2+i_1*2,i1+i_1*2:i2+i_1*2]=HUPMAT3[I1+n_max*2:I2+n_max*2,I1+n_max*2:I2+n_max*2]
+        HUPMAT3_general[i1+i_1:i2+i_1,i1+i_1*2:i2+i_1*2]=HUPMAT3[I1+n_max:I2+n_max,I1+n_max*2:I2+n_max*2]
+        HUPMAT3_general[i1+i_1*2:i2+i_1*2,i1+i_1:i2+i_1]=HUPMAT3[I1+n_max*2:I2+n_max*2,I1+n_max:I2+n_max]
+        la2,v2= linalg.eigh(HUPMAT3_general)     
+        tmp[k,i1:i2*3]=-la2/RATIO*J2meV
+        V2[k,i1:i2*3,i1:i2*3]=v2
+
+        if (max(tmp[k,0:subnumber_h])>max(fitot[I11:I22])*J2meV and 1==2):
+            logger.warning(":You may experience convergence problem due to unconfined states.")
+    """
+    for j in range(1,model.N_wells_virtual-1):
+        for i in range(0,subnumber_h,1):
+            KPV2[j,i]=tmp[j,i]
+    """
+    n_max_general3 = np.zeros(model.N_wells_virtual,int)
+    wfh_general3 = np.zeros((model.N_wells_virtual,i2,n_max))
+    for j in range(1,model.N_wells_virtual-1):
+        I1,I2,I11,I22 =amort_wave(j,Well_boundary,n_max)
+        i_1=I2-I1
+        i1=I1-I1
+        i2=I2-I1
+        i11=I11-I1
+        i22=I22-I1
+        n_max_general3[j]=int(I2-I1)
+        wfh1s3 = np.zeros((i2,3,n_max_general3[j]))
+        maxwfh = np.zeros((i2,3))        
+        couter1=0            
+        for i in range(i1,i2):
+            for k in range(0,3):
+                wfh1s3[i,k,:] = V2[j,k*n_max_general3[j]:(k+1)*n_max_general3[j],i]
+                wfh_pow=np.cumsum(wfh1s3[i,k,:]*wfh1s3[i,k,:])
+                maxwfh[i,k]=wfh_pow[n_max_general3[j]-1]
+            if np.argmax(maxwfh[i,:])==0 :
+                wfh_general3[j,i,0:n_max_general3[j]]=wfh1s3[i,np.argmax(maxwfh[i,:]),:]
+            elif np.argmax(maxwfh[i,:])==1:
+                wfh_general3[j,i,0:n_max_general3[j]]=wfh1s3[i,np.argmax(maxwfh[i,:]),:]
+            else:
+                wfh_general3[j,i,0:n_max_general3[j]]=wfh1s3[i,np.argmax(maxwfh[i,:]),:]                                
+            
+            wfh_pow1=np.cumsum(wfh_general3[j,i,i11:i22]*wfh_general3[j,i,i11:i22])
+            
+            if (tmp[j,i]<max(fitot[I11-1:I22+1])*J2meV and tmp[j,i]>min(fitot[I11-1:I22+1])*J2meV) and couter1+1<=subnumber_h and (wfh_pow1[i22-i11-1]>1e-1) :
+                #print(wfh_pow1[i22-i11-1],'!=0')
+                #print(max(fitot[I11-1:I22+1])*J2meV ,'>',tmp[j,i],'>',min(fitot[I11-1:I22+1])*J2meV) 
+                KPV2[j,couter1]=tmp[j,i]
+                V22[j,i1:i2*3,couter1]+=V2[j,i1:i2*3,i]
+                couter1+=1
+        if (couter1>subnumber_h):
+            print("For this QW, the number confined states of h-levels is: ",couter1 )            
+    return KPV1,V11,KPV2,V22
+
+def calc_E_state(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,UNIM,RATIO):#not used
+    n_max=model.n_max
+    HUPMAT3=np.zeros((n_max*3, n_max*3))
+    HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)
+    HUPMATC3=CBMAT_V(HUPMATC1,fitotc,RATIO,n_max,UNIM)
+    #stop
+    KPV1=[0.0]*subnumber_e
+    la1,v1= linalg.eigh(HUPMATC3)
+    tmp1=la1/RATIO*J2meV
+    tmp1=tmp1.tolist()
+    for i in range(0,subnumber_e,1):
+        KPV1[i]=tmp1[i]
+    KPV2=[0.0]*subnumber_h 
+    la2,v2= linalg.eigh(HUPMAT3) 
+    tmp=-la2/RATIO*J2meV
+    tmp=tmp.tolist()
+    for i in range(0,subnumber_h,1):
+        KPV2[i]=tmp[i]
+    return KPV1,v1,KPV2,v2
+
+def Main_Str_Array(model):
+    n_max=model.n_max
+    HUPMAT1=np.zeros((n_max*3, n_max*3))
+    HUPMATC1=np.zeros((n_max, n_max))
+    x_max=model.dx*n_max
+    m_hh,m_lh,m_so,VNIT,ZETA,CNIT,Ppz_Psp,EPC=Strain_and_Masses(model)
+    UNIM = np.identity(n_max)
+    RATIO=m_e/hbar**2*(x_max)**2    
+    AC1=(n_max+1)**2    
+    AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,Pce,GDELM,DEL3,DEL1,DEL2=qsv(model.GA1,model.GA2,model.GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,model.delta,model.A1,model.A2,model.A3,model.A4,model.A5,model.A6,model.delta_so,model.delta_cr,model.mat_type)
+    KP=0.0
+    KPINT=0.01
+    if model.mat_type=='Zincblende' and  (model.N_wells_virtual-2!=0) :        
+        HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT)
+        HUPMATC1=CBMAT(KP,Pce,model.cb_meff/m_e,x_max,n_max,AC1,UNIM,KPINT)
+    if model.mat_type=='Wurtzite' and  (model.N_wells_virtual-2!=0)  :
+        HUPMAT1=-VBMAT2(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,x_max,n_max,AC1,UNIM,KPINT,DEL3,DEL1,DEL2)
+        HUPMATC1=CBMAT(KP,Pce,model.cb_meff/m_e,x_max,n_max,AC1,UNIM,KPINT)
+    return HUPMAT1,HUPMATC1,m_hh,m_lh,m_so,Ppz_Psp
+def Schro(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max):
+    V1=np.zeros((model.N_wells_virtual,n_max,n_max))
+    V2=np.zeros((model.N_wells_virtual,n_max*3,n_max*3))
     n_max_general=np.zeros(model.N_wells_virtual,dtype=int)
-    def calc_E_state_general(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary):
-        n_max_general=np.zeros(model.N_wells_virtual)
-        HUPMAT3=np.zeros((n_max*3, n_max*3))
-        HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)
-        HUPMATC3=CBMAT_V(HUPMATC1,fitotc,RATIO,n_max,UNIM)
-        #stop
-        tmp1=np.zeros((model.N_wells_virtual,n_max))
-        KPV1=np.zeros((model.N_wells_virtual,subnumber_e))
-        V1=np.zeros((model.N_wells_virtual,n_max,n_max))
-        for J in range(1,model.N_wells_virtual-1):
-            n_max_general[J]=Well_boundary[J+1,0]-Well_boundary[J-1,1]
-            I1=Well_boundary[J-1,1]
-            I2=Well_boundary[J+1,0]
-            i1=I1-I1
-            i2=I2-I1
-            la1,v1= linalg.eigh(HUPMATC3[I1:I2,I1:I2])
-            tmp1[J,i1:i2]=la1/RATIO*J2meV
-            V1[J,i1:i2,i1:i2]=v1
-        for j in range(1,model.N_wells_virtual-1):            
-            for i in range(0,subnumber_e,1):
-                KPV1[j,i]=tmp1[j,i]
-        tmp=np.zeros((model.N_wells_virtual,n_max*3))
-        KPV2=np.zeros((model.N_wells_virtual,subnumber_h))
-        V2=np.zeros((model.N_wells_virtual,n_max*3,n_max*3))
-        for k in range(1,model.N_wells_virtual-1):
-            i_1=int(n_max_general[k])
-            HUPMAT3_general=np.zeros((i_1*3,i_1*3))
-            I1=Well_boundary[k-1,1]
-            I2=Well_boundary[k+1,0]
-            i1=I1-I1
-            i2=I2-I1
-            HUPMAT3_general[i1:i2,i1:i2]=HUPMAT3[I1:I2,I1:I2]
-            HUPMAT3_general[i1+i_1:i2+i_1,i1:i2]=HUPMAT3[I1+n_max:I2+n_max,I1:I2]
-            HUPMAT3_general[i1:i2,i1+i_1:i2+i_1]=HUPMAT3[I1:I2,I1+n_max:I2+n_max]
-            HUPMAT3_general[i1+i_1:i2+i_1,i1+i_1:i2+i_1]=HUPMAT3[I1+n_max:I2+n_max,I1+n_max:I2+n_max]
-            HUPMAT3_general[i1+i_1*2:i2+i_1*2,i1:i2]=HUPMAT3[I1+n_max*2:I2+n_max*2,I1:I2]
-            HUPMAT3_general[i1:i2,i1+i_1*2:i2+i_1*2]=HUPMAT3[I1:I2,I1+n_max*2:I2+n_max*2]
-            HUPMAT3_general[i1+i_1*2:i2+i_1*2,i1+i_1*2:i2+i_1*2]=HUPMAT3[I1+n_max*2:I2+n_max*2,I1+n_max*2:I2+n_max*2]
-            HUPMAT3_general[i1+i_1:i2+i_1,i1+i_1*2:i2+i_1*2]=HUPMAT3[I1+n_max:I2+n_max,I1+n_max*2:I2+n_max*2]
-            HUPMAT3_general[i1+i_1*2:i2+i_1*2,i1+i_1:i2+i_1]=HUPMAT3[I1+n_max*2:I2+n_max*2,I1+n_max:I2+n_max]
-            la2,v2= linalg.eigh(HUPMAT3_general) 
-            tmp[k,i1:i2*3]=-la2/RATIO*J2meV
-            V2[k,i1:i2*3,i1:i2*3]=v2
-        #tmp=tmp.tolist()
-        for j in range(1,model.N_wells_virtual-1):            
-            for i in range(0,subnumber_h,1):
-                KPV2[j,i]=tmp[j,i]
-        return KPV1,V1,KPV2,V2    
-    
+    wfh_general = np.zeros((model.N_wells_virtual,subnumber_h,n_max))
+    wfe_general = np.zeros((model.N_wells_virtual,subnumber_e,n_max)) 
+    meff_statec_general= np.zeros((model.N_wells_virtual,subnumber_e))
+    meff_state_general= np.zeros((model.N_wells_virtual,subnumber_h))             
+    E_statec_general,V1,E_state_general,V2=calc_E_state_general(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO)
+    for j in range(1,model.N_wells_virtual-1):
+        wfh_general_tmp = np.zeros((model.N_wells_virtual,subnumber_h,n_max))
+        wfe_general_tmp = np.zeros((model.N_wells_virtual,subnumber_e,n_max))                   
+        wfh_general_tmp,wfe_general_tmp,list,n_max_general=wave_func_tri(j,Well_boundary,n_max,V1,V2,subnumber_h,subnumber_e,model)             
+        wfh_general[j,:,:]+=wfh_general_tmp[j,:,:]
+        wfe_general[j,:,:]+=wfe_general_tmp[j,:,:]
+        meff_statec,meff_state = calc_meff_state_general(wfh_general[j,:,:],wfe_general[j,:,:],model,fitotc,E_statec_general[j,:],list,m_hh,m_lh,m_so,int(n_max_general[j]),j,Well_boundary,n_max)
+        meff_statec_general[j,:],meff_state_general[j,:] =meff_statec,meff_state
+    return E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general
+def Poisson_Schrodinger(model):
+    """Performs a self-consistent Poisson-Schrodinger calculation of a 1d quantum well structure.
+    Model is an object with the following attributes:
+    fi_e - Bandstructure potential (J) (array, len n_max)
+    cb_meff - conduction band effective mass (kg)(array, len n_max)
+    eps - dielectric constant (including eps0) (array, len n_max)
+    dop - doping distribution (m**-3) ( array, len n_max)
+    Fapp - Applied field (Vm**-1)
+    T - Temperature (K)
+    comp_scheme - simulation scheme (currently unused)
+    subnumber_e - number of subbands for look for in the conduction band
+    dx - grid spacing (m)
+    n_max - number of points.
+    """   
+    fi_e = model.fi_e
+    cb_meff = model.cb_meff
+    eps = model.eps
+    dop = model.dop
+    Fapp = model.Fapp
+    Vapplied = model.Vapplied
+    surface= model.surface
+    T = model.T
+    comp_scheme = model.comp_scheme
+    subnumber_h = model.subnumber_h
+    subnumber_e = model.subnumber_e
+    dx = model.dx
+    n_max = model.n_max
+    if comp_scheme in (4,5,6):
+        logger.error("""aestimo_eh doesn't currently include exchange interactions
+        in its valence band calculations.""")
+        exit()
+    if comp_scheme in (1,3,6):
+        logger.error("""aestimo_eh doesn't currently include nonparabolicity effects in 
+        its valence band calculations.""")
+        exit()
+    fi_h = model.fi_h
+    n = model.n
+    p = model.p
+    N_wells_virtual = model.N_wells_virtual
+    Well_boundary=model.Well_boundary
+    Ppz_Psp= np.zeros(n_max)
+    HUPMAT1=np.zeros((n_max*3, n_max*3))
+    HUPMATC1=np.zeros((n_max, n_max))
+    UNIM = np.identity(n_max)
+    x_max=dx*n_max
+    RATIO=m_e/hbar**2*(x_max)**2  
+    HUPMAT1,HUPMATC1,m_hh,m_lh,m_so,Ppz_Psp=Main_Str_Array(model)
     # Check
     if comp_scheme ==6:
         logger.warning("""The calculation of Vxc depends upon m*, however when non-parabolicity is also 
@@ -1262,6 +1500,8 @@ def Poisson_Schrodinger(model):
     sigma_general = np.zeros(n_max)
     F_general = np.zeros(n_max)
     Vnew_general = np.zeros(n_max)
+    fi = np.zeros(n_max)
+    fi_old0=np.zeros(n_max)
     # Setup the doping
     Ntotal = sum(dop) # calculating total doping density m-3
     Ntotal2d = Ntotal*dx
@@ -1271,97 +1511,65 @@ def Poisson_Schrodinger(model):
     
     #Applied Field
     Vapp = calc_potn(Fapp*eps0/eps,model)
-    Vapp -= Vapp[n_max//2] #Offsetting the applied field's potential so that it is zero in the centre of the structure.
-
+    Vapp[n_max-1] -= Vapp[n_max//2] #Offsetting the applied field's potential so that it is zero in the centre of the structure.
     #s 
-
+    #setting up Ldi and Ld p and n
+    Ld_n_p= np.zeros(n_max)
+    Ldi= np.zeros(n_max)
+    Nc= np.zeros(n_max)
+    Nv= np.zeros(n_max)
+    m_v= np.zeros(n_max)
+    ni= np.zeros(n_max)
+    hbark=hbar*2*pi
+    for i in range(n_max): 
+        m_v[i]=(m_hh[i]**(3/2)+m_lh[i]**(3/2))**(2/3)
+    Nc=2*(2*pi*cb_meff*kb*T/hbark**2)**(3/2)
+    Nv=2*(2*pi*m_v*kb*T/hbark**2)**(3/2)  
+    Half_Eg=np.zeros(n_max)
+    for i in range(n_max):       
+        ni[i]= sqrt(Nc[i]*Nv[i]*exp(-(fi_e[i]-fi_h[i])/(kb*T)))#Intrinsic carrier concentration [1/m^3] kb*T/q
+        #print("%.3E" % (ni[i]*1e-6))
+        #print(fi_e[i]-fi_h[i])
+        Ld_n_p[i] = sqrt(eps[i]*Vt/(q*abs(dop[i])))
+        Ldi[i] = sqrt(eps[i]*Vt/(q*ni[i]))        
+        Half_Eg[i]=(fi_e[i]-fi_h[i])/2                
+        fi_e[i]=Half_Eg[i]-kb*T*log(Nv[i]/Nc[i])/2
+        fi_h[i]=-Half_Eg[i]-kb*T*log(Nv[i]/Nc[i])/2    
+    if dx>min(Ld_n_p[:]) and 1==2 :
+        logger.error("""You are setting the grid size %g nm greater than the extrinsic Debye lengths %g nm""",dx*1e9,min(Ld_n_p[:])*1e9)
+        exit()
+    dop+=Ppz_Psp
     # STARTING SELF CONSISTENT LOOP
     time2 = time.time() # timing audit
     iteration = 1   #iteration counter
     previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
+    previousfi0= 0   #(meV) energy of  for previous iteration(for testing convergence)
     fitot = fi_h + Vapp #For initial iteration sum bandstructure and applied field
-    fitotc = fi + Vapp
-    
+    fitotc = fi_e + Vapp
+    r=0.0
+    w_n_minus_max=1.0
+    w_n_max=0.0
+    w_n= np.zeros(n_max)
+    damping_n_plus = 0.1
+    damping_n=0.1
+    if config.predic_correc:
+        print("Predictor–corrector method is activated")
     while True:
+        print("Iteration:", iteration)
         if not(config.messagesoff) :
-            logger.info("Iteration: %d", iteration)
-        #HUPMAT2=np.zeros((n_max*3, n_max*3))
-        E_statec_general,V1,E_state_general,V2=calc_E_state_general(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary)
-        for j in range(1,model.N_wells_virtual-1):
-            #
-            # Envelope Function Wave Functions
-            n_max_general[j]=Well_boundary[j+1,0]-Well_boundary[j-1,1]
-            wfh1s = np.zeros((subnumber_h,3,n_max_general[j]))
-            maxwfh = np.zeros((subnumber_h,3))
-            list = ['']*subnumber_h
-            for i in range(0,subnumber_e,1):
-                wfe_general[j,i,0:n_max_general[j]] = V1[j,0:n_max_general[j],i]                     
-            wfh_pow=np.zeros(n_max)
-            conter_hh,conter_lh,conter_so=0,0,0
-            for jj in range(0,subnumber_h):
-                for i in range(0,3):
-                    wfh1s[jj,i,:] = V2[j,i*n_max_general[j]:(i+1)*n_max_general[j],jj]
-                    wfh_pow=np.cumsum(wfh1s[jj,i,:]*wfh1s[jj,i,:])
-                    maxwfh[jj,i]=wfh_pow[n_max_general[j]-1]
-                if np.argmax(maxwfh[jj,:])==0 :
-                    conter_hh+=1       
-                    list[jj]='hh%d'%conter_hh                               
-                    wfh_general[j,jj,0:n_max_general[j]]=wfh1s[jj,np.argmax(maxwfh[jj,:]),:]
-                elif np.argmax(maxwfh[jj,:])==1:
-                    conter_lh+=1       
-                    list[jj]='lh%d'%conter_lh
-                    wfh_general[j,jj,0:n_max_general[j]]=wfh1s[jj,np.argmax(maxwfh[jj,:]),:]
-                else:
-                    conter_so+=1       
-                    list[jj]='so%d'%conter_so
-                    wfh_general[j,jj,0:n_max_general[j]]=wfh1s[jj,np.argmax(maxwfh[jj,:]),:]
-            meff_statec,meff_state = calc_meff_state_general(wfh_general[j,:,:],wfe_general[j,:,:],model,fitotc,E_statec_general[j,:],list,m_hh,m_lh,m_so,int(n_max_general[j]),j,Well_boundary)
-            meff_statec_general[j,:],meff_state_general[j,:] =meff_statec,meff_state
-            E_F = fermilevel(Ntotal2d,model,E_state_general[j],E_statec_general[j],meff_state,meff_statec)
-            E_F_general[j]=E_F
-            # Calculate the subband populations at the temperature T (K)
-            N_state,N_statec=calc_N_state(E_F,model,E_state_general[j,:],meff_state,E_statec_general[j,:],meff_statec,Ntotal2d)
-            N_state_general[j,:],N_statec_general[j,:]=N_state,N_statec
-            # Calculate `net' areal charge density
-            sigma=calc_sigma_general(wfh_general[j,:,0:n_max_general[j]],wfe_general[j,:,0:n_max_general[j]],N_state,N_statec,model,Ntotal2d,j,Well_boundary) #one more instead of subnumber_h
-            sigma_general[Well_boundary[j-1,1]:Well_boundary[j+1,0]]=sigma            
-            #status
-            if not(config.messagesoff):
-                logger.info("-----------Starting calculation for Quantum Region number %d ------------------",j)
-                for i,level in enumerate(E_state_general[j]):
-                    logger.info("E[%d]= %f meV",i,level)
-                for i,meff in enumerate(meff_state):
-                    logger.info("meff[%d]= %f",i,meff/m_e)
-                if Ntotal2d<0:
-                    for i,Ni in enumerate(N_state):
-                        logger.info("N[%d]= %g m**-2",i,Ni)
-                for i,level in enumerate(E_statec_general[j]):
-                    logger.info("Ec[%d]= %f meV"%(i,level))
-                for i,meff in enumerate(meff_statec):
-                    logger.info("meff[%d]= %f"%(i,meff/m_e))
-                if Ntotal2d>0:
-                    for i,Ni in enumerate(N_statec):
-                        logger.info("N[%d]= %g m**-2"%(i,Ni))
-                #print 'Efermi (at 0K) = ',E_F_0K,' meV'
-                #for i,Ni in enumerate(N_state_0K):
-                #    print 'N[',i,']= ',Ni
-                logger.info('Efermi (at %gK) = %g meV',T, E_F)
-                logger.info("total donor charge = %g m**-2",sum(dop)*dx)
-                if Ntotal2d>0:
-                    logger.info("total level chargec = %g m**-2" %(sum(N_statec)))
-                else:
-                    logger.info("total level charge = %g m**-2" %(sum(N_state)))
-                logger.info("total system charge = %g m**-2" %(sum(sigma)))
-        # Calculate electric field (Poisson/Hartree Effects)
-        #F=calc_field(sigma,eps[Well_boundary[j-1,1]:Well_boundary[j+1,0]])
-        #print EPC
-        F_general=calc_field(sigma_general,eps)+EPC#[Well_boundary[j-1,1]:Well_boundary[j+1,0]]=F+EPC[Well_boundary[j-1,1]:Well_boundary[j+1,0]]
-        # Calculate potential due to charge distribution
-        #Vnew=calc_potn(F+EPC[Well_boundary[j-1,1]:Well_boundary[j+1,0]],model)
-        Vnew_general=calc_potn(F_general,model)#[Well_boundary[j-1,1]:Well_boundary[j+1,0]]=Vnew        
-        #
-        #
-
+            logger.info("Iteration: %d", iteration)         
+        if model.N_wells_virtual-2!=0:
+            if config.predic_correc:
+                if iteration==1: 
+                    E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
+                damping=0.15   
+            else:
+                E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
+                damping=0.15#0.1 works between high and low doping
+            n,p,fi,EF,fi_old0 =Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,ni,n_max,iteration,fi,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface,fi_old0)             
+        else:
+            n,p,fi,EF,fi_old0 =Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,ni,n_max,iteration,fi,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface,fi_old0)
+            damping=1            
         if comp_scheme in (0,1): 
             #if we are not self-consistently including Poisson Effects then only do one loop
             break
@@ -1369,28 +1577,416 @@ def Poisson_Schrodinger(model):
         # Combine band edge potential with potential due to charge distribution
         # To increase convergence, we calculate a moving average of electric potential 
         #with previous iterations. By dampening the corrective term, we avoid oscillations.
-        #fi_h=np.resize(fi_h,n_max)
-        V+= damping*(Vnew_general - V)
+        #tryng new dmping method 
+        """F. Stern, J. Computational Physics 6, 56 (1970)."""
+        #the extrapolated-convergence-factor method instead of the fixed-convergence-factor method
+        Vnew_general=-Vt*q*fi
+        w_n=Vnew_general - V
+        w_n_max=max(abs(w_n[:]))*J2meV
+        r=w_n_max/w_n_minus_max        
+        w_n_minus_max=w_n_max
+        damping_n_plus=damping_n/(1-abs(r))       
+        damping_n=damping_n_plus                
+        #V+= damping_n_plus*(w_n)
+        V+= damping*(w_n)
         fitot = fi_h + V + Vapp
-        fitotc = fi + V + Vapp
-        xaxis = np.arange(0,n_max)*dx
-        """
-        pl.plot(xaxis,fitotc*J2meV,'k',xaxis,fitot*J2meV,'k')
-        pl.grid(True)
-        pl.show()
-        """
-        if abs(E_state_general[1,0]-previousE0) < convergence_test: #Convergence test
-            break
-        elif iteration >= max_iterations: #Iteration limit
-            logger.warning("Have reached maximum number of iterations")
-            break
+        fitotc = fi_e + V + Vapp
+        xaxis = np.arange(0,n_max)*dx        
+        delta0=V-Vnew_general
+        delta_max0=max(abs(delta0[:]))
+        #print('w_n_max=',w_n_max)
+        #print('r=',r)
+        #print('damping_n=',damping_n)
+        #print('damping_n_plus=',damping_n_plus)
+        #print('w_n_minus_max=',w_n_minus_max)
+        print('error_potential=',delta_max0*J2meV,'meV')
+        if config.predic_correc:
+            delta1=Vnew_general-previousfi0
+            delta_max1=max(abs(delta1[:]))
+            print('error_potential=',delta_max0*J2meV,'meV')
+            if delta_max1/q < convergence_test0: #Convergence test
+            #print('error=',abs(E_state_general[1,0]-previousE0)/1e3)
+            #if abs(E_state_general[1,0]-previousE0)/1e3 < convergence_test: #Convergence test
+                if model.N_wells_virtual-2!=0:                    
+                    E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
+                break
+            elif iteration >= max_iterations: #Iteration limit
+                logger.warning("Have reached maximum number of iterations")
+                break
+            else:
+                iteration += 1
+                previousfi0 = V
         else:
-            iteration += 1
-            previousE0 = E_state_general[1,0]
-            
-    # END OF SELF-CONSISTENT LOOP
+            print('error_energy_states=',abs(E_state_general[1,0]-previousE0),'meV')
+            if abs(E_state_general[1,0]-previousE0)/1e3 < convergence_test: #Convergence test
+                break
+            elif iteration >= max_iterations: #Iteration limit
+                logger.warning("Have reached maximum number of iterations")
+                break
+            else:
+                iteration += 1
+                previousE0 = E_state_general[1,0]
+                # END OF SELF-CONSISTENT LOOP
+    Ec_result,Ev_result,ro_result,el_field1_result,el_field2_result,nf_result,pf_result,fi_result=Write_results_equi2(fitotc,fitot,Vt,q,ni,n,p,dop,dx,Ldi,fi,n_max)
     time3 = time.time() # timing audit
-    logger.info("calculation time  %g s",(time3 - time2))
+    if not(config.messagesoff):        
+        logger.info("calculation time  %g s",(time3 - time2))
+    
+    class Results(): pass
+    results = Results()
+    results.N_wells_virtual=N_wells_virtual
+    results.Well_boundary=Well_boundary
+    results.xaxis = xaxis
+    results.wfh = wfh
+    results.wfe = wfe
+    results.fitot = fitot
+    results.fitotc = fitotc
+    results.fi_e = fi_e
+    results.fi_h = fi_h
+    #results.sigma = sigma
+    results.sigma_general = sigma_general
+    #results.F = F
+    results.V = V
+    results.E_state = E_state
+    results.N_state = N_state
+    #results.meff_state = meff_state
+    results.E_statec = E_statec
+    results.N_statec = N_statec
+    #results.meff_statec = meff_statec
+    results.F_general = F_general
+    results.E_state_general = E_state_general
+    results.N_state_general = N_state_general
+    results.meff_state_general = meff_state_general
+    results.E_statec_general = E_statec_general
+    results.N_statec_general = N_statec_general
+    results.meff_statec_general = meff_statec_general
+    results.wfh_general = wfh_general
+    results.wfe_general = wfe_general
+    results.Fapp = Fapp
+    results.T = T
+    #results.E_F = E_F
+    results.E_F_general = E_F_general
+    results.dx = dx
+    results.subnumber_h = subnumber_h
+    results.subnumber_e = subnumber_e
+    results.Ntotal2d = Ntotal2d
+    ########################
+    results.Ec_result=Ec_result
+    results.Ev_result=Ev_result
+    results.ro_result=ro_result
+    results.el_field1_result=el_field1_result
+    results.el_field2_result=el_field2_result
+    results.nf_result=nf_result
+    results.pf_result=pf_result
+    results.fi_result=fi_result
+    results.EF=EF
+    ##########################    
+    return results
+def Poisson_Schrodinger_DD(result,model):
+    fi=result.fi_result
+    E_state_general= result.E_state_general 
+    meff_state_general= result.meff_state_general
+    E_statec_general=result.E_statec_general 
+    meff_statec_general= result.meff_statec_general
+    wfh_general= result.wfh_general
+    wfe_general= result.wfe_general
+    n_max=model.n_max
+    dx=model.dx
+    """Performs a self-consistent Poisson-Schrodinger calculation of a 1d quantum well structure.
+    Model is an object with the following attributes:
+    fi_e - Bandstructure potential (J) (array, len n_max)
+    cb_meff - conduction band effective mass (kg)(array, len n_max)
+    eps - dielectric constant (including eps0) (array, len n_max)
+    dop - doping distribution (m**-3) ( array, len n_max)
+    Fapp - Applied field (Vm**-1)
+    T - Temperature (K)
+    comp_scheme - simulation scheme (currently unused)
+    subnumber_e - number of subbands for look for in the conduction band
+    dx - grid spacing (m)
+    n_max - number of points.
+    """   
+    fi_e = model.fi_e
+    cb_meff = model.cb_meff
+    eps = model.eps
+    dop = model.dop
+    Fapp = model.Fapp
+    Vapplied = model.Vapplied
+    surface= model.surface
+    T = model.T
+    comp_scheme = model.comp_scheme
+    subnumber_h = model.subnumber_h
+    subnumber_e = model.subnumber_e
+    dx = model.dx
+    n_max = model.n_max
+    TAUN0 = model.TAUN0  
+    TAUP0 = model.TAUP0
+    mun0 = model.mun0
+    mup0 = model.mup0
+    BETAN = model.BETAN
+    BETAP = model.BETAP
+    VSATN= model.VSATN
+    VSATP= model.VSATP
+    if comp_scheme in (4,5,6):
+        logger.error("""aestimo_eh doesn't currently include exchange interactions
+        in its valence band calculations.""")
+        exit()
+    if comp_scheme in (1,3,6):
+        logger.error("""aestimo_eh doesn't currently include nonparabolicity effects in 
+        its valence band calculations.""")
+        exit()
+    fi_h = model.fi_h
+    #n = model.n
+    #p = model.p
+    N_wells_virtual = model.N_wells_virtual
+    Well_boundary=model.Well_boundary
+    Ppz_Psp= np.zeros(n_max)
+    HUPMAT1=np.zeros((n_max*3, n_max*3))
+    HUPMATC1=np.zeros((n_max, n_max))
+    UNIM = np.identity(n_max)
+    x_max=dx*n_max
+    RATIO=m_e/hbar**2*(x_max)**2  
+    HUPMAT1,HUPMATC1,m_hh,m_lh,m_so,Ppz_Psp=Main_Str_Array(model)
+    # Check
+    if comp_scheme ==6:
+        logger.warning("""The calculation of Vxc depends upon m*, however when non-parabolicity is also 
+                 considered m* becomes energy dependent which would make Vxc energy dependent.
+                 Currently this effect is ignored and Vxc uses the effective masses from the 
+                 bottom of the conduction bands even when non-parabolicity is considered 
+                 elsewhere.""")
+    
+    # Preparing empty subband energy lists.
+    E_state = [0.0]*subnumber_h     # Energies of subbands/levels (meV)
+    N_state = [0.0]*subnumber_h     # Number of carriers in subbands  
+    E_statec = [0.0]*subnumber_e     # Energies of subbands/levels (meV)
+    N_statec = [0.0]*subnumber_e     # Number of carriers in subbands
+    # Preparing empty subband energy arrays for multiquantum wells.
+    """
+    E_state_general = np.zeros((model.N_wells_virtual,subnumber_h))     # Energies of subbands/levels (meV)
+    E_statec_general = np.zeros((model.N_wells_virtual,subnumber_e))     # Energies of subbands/levels (meV)
+    meff_statec_general= np.zeros((model.N_wells_virtual,subnumber_e))
+    meff_state_general= np.zeros((model.N_wells_virtual,subnumber_h))
+    """
+    N_state_general = np.zeros((model.N_wells_virtual,subnumber_h))     # Number of carriers in subbands  
+    N_statec_general = np.zeros((model.N_wells_virtual,subnumber_e))     # Number of carriers in subbands
+    
+    # Creating and Filling material arrays
+    xaxis = np.arange(0,n_max)*dx   #metres
+    fitot = np.zeros(n_max)         #Energy potential = Bandstructure + Coulombic potential
+    fitotc = np.zeros(n_max)         #Energy potential = Bandstructure + Coulombic potentia
+    #eps = np.zeros(n_max+2)	    #dielectric constant
+    #dop = np.zeros(n_max+2)	    #doping distribution
+    #sigma = np.zeros(n_max+2)      #charge distribution (donors + free charges)
+    #F = np.zeros(n_max+2)          #Electric Field
+    #Vapp = np.zeros(n_max+2)       #Applied Electric Potential
+    V = np.zeros(n_max)             #Electric Potential
+
+    # Subband wavefunction for holes list. 2-dimensional: [i][j] i:stateno, j:wavefunc
+    
+    wfh = np.zeros((subnumber_h,n_max))
+    wfe = np.zeros((subnumber_e,n_max))
+    """
+    wfh_general = np.zeros((model.N_wells_virtual,subnumber_h,n_max))
+    wfe_general = np.zeros((model.N_wells_virtual,subnumber_e,n_max))
+    """
+    E_F_general= np.zeros(model.N_wells_virtual)
+    sigma_general = np.zeros(n_max)
+    F_general = np.zeros(n_max)
+    Vnew_general = np.zeros(n_max)
+    #fi = np.zeros(n_max)
+    # Setup the doping
+    Ntotal = sum(dop) # calculating total doping density m-3
+    Ntotal2d = Ntotal*dx
+    if not(config.messagesoff):
+        #print "Ntotal ",Ntotal,"m**-3"
+        logger.info("Ntotal2d %g m**-2", Ntotal2d)
+    
+    #Applied Field
+    Vapp = calc_potn(Fapp*eps0/eps,model)
+    Vapp[n_max-1] -= Vapp[n_max//2] #Offsetting the applied field's potential so that it is zero in the centre of the structure.
+    #s 
+    #setting up Ldi and Ld p and n
+    Ld_n_p= np.zeros(n_max)
+    Ldi= np.zeros(n_max)
+    Nc= np.zeros(n_max)
+    Nv= np.zeros(n_max)
+    m_v= np.zeros(n_max)
+    ni= np.zeros(n_max)
+    hbark=hbar*2*pi
+    for i in range(n_max): 
+        m_v[i]=(m_hh[i]**(3/2)+m_lh[i]**(3/2)+m_so[i]**(3/2))**(2/3)
+    Nc=2*(2*pi*cb_meff*kb*T/hbark**2)**(3/2)
+    Nv=2*(2*pi*m_v*kb*T/hbark**2)**(3/2)  
+    Half_Eg=np.zeros(n_max)
+    for i in range(n_max):       
+        ni[i]= sqrt(Nc[i]*Nv[i]*exp(-(fi_e[i]-fi_h[i])/(kb*T)))#Intrinsic carrier concentration [1/m^3] kb*T/q
+        #print("%.3E" % (ni[i]*1e-6))
+        #print(fi_e[i]-fi_h[i])
+        Ld_n_p[i] = sqrt(eps[i]*Vt/(q*abs(dop[i])))
+        Ldi[i] = sqrt(eps[i]*Vt/(q*ni[i]))
+        
+        Half_Eg[i]=(fi_e[i]-fi_h[i])/2       
+        fi_e[i]=Half_Eg[i]-kb*T*log(Nv[i]/Nc[i])/2
+        fi_h[i]=-Half_Eg[i]-kb*T*log(Nv[i]/Nc[i])/2
+    n=result.nf_result/ni
+    p=result.pf_result/ni    
+    if dx>min(Ld_n_p[:]) and 1==2:
+        logger.error("""You are setting the grid size %g nm greater than the extrinsic Debye lengths %g nm""",dx*1e9,min(Ld_n_p[:])*1e9)
+        exit()
+    dop+=Ppz_Psp
+    # STARTING SELF CONSISTENT LOOP
+    time2 = time.time() # timing audit
+    iteration = 1   #iteration counter
+    previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
+    fitot = fi_h + Vapp #For initial iteration sum bandstructure and applied field
+    fitotc = fi_e + Vapp     
+    Va_max=Vapplied#1.8#input()0.625
+    #Va_max=0.625#input()0.625    
+    dVa=0.33*Vt#input()0.01
+    #dVa=0.05*Vt
+    dVa=dVa/Vt
+    Each_Step = dVa
+    Total_Steps = int((Va_max/Vt)/(Each_Step))
+    xaxis = np.arange(0,n_max)*dx   #metres
+    mup=np.zeros(n_max)
+    mun=np.zeros(n_max)
+    EF=0.0
+    av_curr=np.zeros(Total_Steps)
+    Va_t=np.zeros(Total_Steps) 
+    Jnim1by2=np.zeros((Total_Steps,n_max))
+    Jnip1by2=np.zeros((Total_Steps,n_max))    
+    Jelec=np.zeros((Total_Steps,n_max))
+    Jpim1by2=np.zeros((Total_Steps,n_max)) 
+    Jpip1by2=np.zeros((Total_Steps,n_max)) 
+    Jhole=np.zeros((Total_Steps,n_max)) 
+    Jtotal=np.zeros((Total_Steps,n_max))
+    
+    """
+    # . . . . . . . . . Define some material constants:
+    Ncn=1.432e17
+    rmu_1n=88.e0
+    rmu_2n=1252.e0
+    Ncp=2.67e17
+    rmu_1p=54.3e0
+    rmu_2p=407.e0
+    tau_n0=1.e-7
+    tau_p0=1.e-7
+    Nsrh_n=5.e16
+    Nsrh_p=5.e16    
+    
+    MU1N_CAUG   = 55.24         # cm2/(V.s)
+    MU2N_CAUG   = 1429.23       # cm2/(V.s)
+    ALPHAN_CAUG = 0.0           # unitless
+    BETAN_CAUG  = -2.3          # unitless
+    GAMMAN_CAUG = -3.8          # unitless
+    DELTAN_CAUG = 0.73          # unitless
+    NCRITN_CAUG = 1.072e17   # cm-3
+    MU1P_CAUG   = 49.7          # cm2/(V.s)
+    MU2P_CAUG   = 479.37        # cm2/(V.s)
+    ALPHAP_CAUG = 0.0           # unitless
+    BETAP_CAUG  = -2.2          # unitless
+    GAMMAP_CAUG = 13.7          # unitless
+    DELTAP_CAUG = 0.70          # unitless
+    NCRITP_CAUG = 1.606e17   # cm-3
+    
+    #RNc   = 2.8E19           # This is 2.8e20 in the FORTRAN file
+    TAUN0 = 0.1E-6           # Electron SRH life time
+    TAUP0 = 0.1E-6           # Hole SRH life time
+    mun0   = 0.15            # Electron Mobility in m2/V-s
+    mup0   = 0.1           # Hole Mobility in m2/V-s
+    #dEc = Vt*log(RNc/ni)
+    BETAN = 2.0
+    BETAP = 1.0
+    """
+    # #     mun0 = ( MU1N_CAUG*((TL/300)**ALPHAN_CAUG) ) ...
+    # #       + (( (MU2N_CAUG*((TL/300)**BETAN_CAUG)) - (MU1N_CAUG*((TL/300)**ALPHAN_CAUG)) ) ... 
+    # #            / ( 1 + ((TL/300)**GAMMAN_CAUG) * ((N/NCRITN_CAUG)**DELTAN_CAUG) ))
+    # #     
+    # #     
+    # #     mup0 = ( MU1P_CAUG*((TL/300)**ALPHAP_CAUG) ) ... 
+    # #       + (( (MU2P_CAUG*((TL/300)**BETAP_CAUG)) - (MU1P_CAUG*((TL/300)**ALPHAP_CAUG)) ) ... 
+    # #            / ( 1 + ((TL/300)**GAMMAP_CAUG) * ((N/NCRITP_CAUG)**DELTAP_CAUG) ))
+    #VSATN = (2.4e5) / (1 + 0.8*exp(T/600))  # Saturation Velocity of Electrons
+    #VSATP = VSATN                               # Saturation Velocity of Holes
+    #################### END of Low Field Mobility Calculation ################
+    fi_old0=fi    
+    if(Va_max==0):        
+        print ('Va_max=0')
+    else:
+        print ('Convergence of the Gummel cycles')
+        vindex=0
+        for vindex in range(0,Total_Steps):
+            # Start Va increment loop 
+            Va=Each_Step*vindex
+            if vindex==0:                
+                fi[0]+=0.   # Apply potential to Anode (1st node)
+            else:
+                fi[0]+=Each_Step
+            flag_conv_2 = True		           # Convergence of the Poisson loop            
+            #% Initialize the First and Last Node for Poisson's eqn
+
+            Va_t[vindex]=Va
+            print ('Va_t[',vindex,']=',Va_t[vindex]*Vt)
+            print ('vindex=',vindex)
+            #previousE0= 2   #(meV) energy of zeroth state for previous iteration(for testing convergence)            
+            while(flag_conv_2):
+                fi,flag_conv_2=Poisson_non_equi2(fi_old0,n,p,dop,n_max,dx,fi,flag_conv_2,Ldi,ni,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general)
+                #print'inside while loop'
+                mun,mup=Mobility2(mun0,mup0,fi,Vt,Ldi,VSATN,VSATP,BETAN,BETAP,n_max,dx)
+                ########### END of FIELD Dependant Mobility Calculation ###########
+                n,p=Continuity2(n,p,mun,mup,fi,Vt,Ldi,n_max,dx,TAUN0,TAUP0)
+                ####################### END of HOLE Continuty Solver ###########
+                """
+                while True:
+                    print("Iteration:", iteration)                    
+                    if not(config.messagesoff) :
+                        logger.info("Iteration: %d", iteration)         
+                    if model.N_wells_virtual-2!=0:
+                        E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
+                        n,p,fi,EF =Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,ni,n_max,iteration,fi,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface)
+                        damping=0.5 
+                    else:
+                        #fi,flag_conv_2=Poisson_non_equi2(n,p,dop,n_max,dx,fi,flag_conv_2,Ldi,ni)
+                        n,p,fi,EF =Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,ni,n_max,iteration,fi,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface)
+                        damping=1            
+                    if comp_scheme in (0,1): 
+                        #if we are not self-consistently including Poisson Effects then only do one loop
+                        break
+                    
+                    # Combine band edge potential with potential due to charge distribution
+                    # To increase convergence, we calculate a moving average of electric potential 
+                    #with previous iterations. By dampening the corrective term, we avoid oscillations.
+                    Vnew_general=-Vt*q*fi
+                    V+= damping*(Vnew_general - V)
+                    fitot = fi_h + V + Vapp
+                    fitotc = fi_e + V + Vapp
+                    print('error=',abs(E_state_general[1,0]-previousE0)/1e3)
+                    if abs(E_state_general[1,0]-previousE0)/1e3 < convergence_test: #Convergence test
+                        flag_conv_2=False
+                        break
+                    elif iteration >= max_iterations: #Iteration limit
+                        logger.warning("Have reached maximum number of iterations")
+                        break
+                    else:
+                        iteration += 1
+                        previousE0 = E_state_general[1,0]
+                        # END OF SELF-CONSISTENT LOOP
+                        """
+                #fi,flag_conv_2=Poisson_non_equi2(fi_old0,n,p,dop,n_max,dx,fi,flag_conv_2,Ldi,ni,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general)
+                #n,p,fi,EF =Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,ni,n_max,iteration,fi,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface)
+                # End of WHILE Loop for Poisson's eqn solver
+            Jnip1by2,Jnim1by2,Jelec,Jpip1by2,Jpim1by2,Jhole=Current2(vindex,n,p,mun,mup,fi,Vt,n_max,Total_Steps,q,dx,ni,Ldi,
+                                                                     Jnip1by2,Jnim1by2,Jelec,Jpip1by2,Jpim1by2,Jhole)            
+            # End of main FOR loop for Va increment.
+            Jtotal = Jelec + Jhole
+        ##########################################################################
+        ##                 END OF NON-EQUILIBRIUM  SOLUTION PART                ##
+        ##########################################################################
+        # Write the results of the simulation in files #
+        fi_result,Efn_result,Efp_result,ro_result,el_field1_result,el_field2_result,nf_result,pf_result,Ec_result,Ev_result,Ei_result,axis,av_curr=Write_results_non_equi2(fi_e,fi_h,Vt,q,ni,n,p,dop,dx,Ldi,fi,n_max,
+                                                                                               Jnip1by2,Jnim1by2,Jelec,Jpip1by2,Jpim1by2,Jhole,Jtotal,Total_Steps)
+    time3 = time.time() # timing audit
+    if not(config.messagesoff):        
+        logger.info("calculation time  %g s",(time3 - time2))
     
     class Results(): pass
     results = Results()
@@ -1403,16 +1999,18 @@ def Poisson_Schrodinger(model):
     results.wfe_general = wfe_general
     results.fitot = fitot
     results.fitotc = fitotc
-    results.sigma = sigma
+    results.fi_e = fi_e
+    results.fi_h = fi_h
+    #results.sigma = sigma
     results.sigma_general = sigma_general
     #results.F = F
     results.V = V
     results.E_state = E_state
     results.N_state = N_state
-    results.meff_state = meff_state
+    #results.meff_state = meff_state
     results.E_statec = E_statec
     results.N_statec = N_statec
-    results.meff_statec = meff_statec
+    #results.meff_statec = meff_statec
     results.F_general = F_general
     results.E_state_general = E_state_general
     results.N_state_general = N_state_general
@@ -1422,174 +2020,292 @@ def Poisson_Schrodinger(model):
     results.meff_statec_general = meff_statec_general
     results.Fapp = Fapp
     results.T = T
-    results.E_F = E_F
+    #results.E_F = E_F
     results.E_F_general = E_F_general
     results.dx = dx
     results.subnumber_h = subnumber_h
     results.subnumber_e = subnumber_e
     results.Ntotal2d = Ntotal2d
+    ########################
+    results.Va_t=Va_t
+    results.Efn_result=Efn_result
+    results.Efp_result=Efp_result
+    results.Ei_result=Ei_result
+    results.av_curr=av_curr
+    results.Ec_result=Ec_result
+    results.Ev_result=Ev_result
+    results.ro_result=ro_result
+    results.el_field1_result=el_field1_result
+    results.el_field2_result=el_field2_result
+    results.nf_result=nf_result
+    results.pf_result=pf_result
+    results.fi_result=fi_result
+    results.EF=EF
+    results.Total_Steps=Total_Steps
     return results
-
-def save_and_plot(result,model):
+def save_and_plot2(result,model):
     xaxis = result.xaxis
-    
     output_directory = config.output_directory+"_eh"
     
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)
     def saveoutput(fname,datatuple,header=''):
         fname2 = os.path.join(output_directory,fname)
-        np.savetxt(fname2,np.column_stack(datatuple),fmt='%.6e', delimiter=' ',header=header)
+        np.savetxt(fname2,np.column_stack(datatuple),fmt='%.6e', delimiter=' ',header=header)    
+    #Plotting results
+    if config.Drift_Diffusion_out:
+        saveoutput("av_curr.dat",(result.Va_t*Vt,result.av_curr*1e-4))    
+    for jjj in range(result.Total_Steps-1,result.Total_Steps):
+        vtt=result.Va_t[jjj]
+        vt=vtt*Vt
+        if config.Drift_Diffusion_out :
+            if config.sigma_out:
+                saveoutput("sigma_eh_%.2f.dat"%vt,(xaxis,result.ro_result))
+            if config.electricfield_out:
+                saveoutput("efield_eh_%.2f.dat"%vt,(xaxis,result.el_field1_result,result.el_field2_result))
+            if config.potential_out:
+                saveoutput("potn_eh_%.2f.dat"%vt,(xaxis*1e2,result.fitotc/q,result.fitot/q))
+                saveoutput("np_data0_%.2f.dat"%vt,(xaxis*1e2,result.nf_result*1e-6,result.pf_result*1e-6))
+            if config.states_out:
+                for j in range(1,result.N_wells_virtual-1):                
+                    rel_meff_state = [meff/m_e for meff in result.meff_state_general[j]] #going to report relative effective mass.
+                    columns = range(model.subnumber_h), result.E_state_general[j], result.N_state_general[j], rel_meff_state
+                    #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
+                    header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+                    saveoutput("states_h_QWR%d_%.2f.dat" %(j,vt),columns, header = header )
+                    if config.probability_out:
+                        saveoutput("wavefunctions_h_QWR%d_%.2f.dat"%(j,vt) ,(xaxis,result.wfh_general[j].transpose()))
+            if config.states_out:
+                for j in range(1,result.N_wells_virtual-1):                
+                    rel_meff_statec = [meff/m_e for meff in result.meff_statec_general[j]] #going to report relative effective mass.
+                    columns = range(model.subnumber_e), result.E_statec_general[j], result.N_statec_general[j], rel_meff_statec
+                    #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
+                    header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+                    saveoutput("states_e_QWR%d_%.2f.dat" %(j,vt),columns, header = header )
+                    if config.probability_out:
+                        saveoutput("wavefunctions_e_QWR%d_%.2f.dat"%(j,vt),(xaxis,result.wfe_general[j].transpose()))
 
-    if result.Ntotal2d<0:
-        if config.sigma_out:
-            saveoutput("sigma_eh.dat",(xaxis,result.sigma_general))
-        if config.electricfield_out:
-            saveoutput("efield_eh.dat",(xaxis,result.F_general))
-        if config.potential_out:
-            saveoutput("potn_eh.dat",(xaxis,result.fitotc,result.fitot))
-
-        if config.states_out:
-            for j in range(1,result.N_wells_virtual-1):                
-                rel_meff_state = [meff/m_e for meff in result.meff_state_general[j]] #going to report relative effective mass.
-                columns = range(model.subnumber_h), result.E_state_general[j], result.N_state_general[j], rel_meff_state
-                #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
-                header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
-                saveoutput("states_h_QWR%d.dat" %j,columns, header = header )
-                if config.probability_out:
-                    saveoutput("wavefunctions_h_QWR%d.dat" %j,(xaxis,result.wfh_general[j].transpose()))
-        if config.states_out:
-            for j in range(1,result.N_wells_virtual-1):                
-                rel_meff_statec = [meff/m_e for meff in result.meff_statec_general[j]] #going to report relative effective mass.
-                columns = range(model.subnumber_e), result.E_statec_general[j], result.N_statec_general[j], rel_meff_statec
-                #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
-                header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
-                saveoutput("states_e_QWR%d.dat" %j,columns, header = header )
-                if config.probability_out:
-                    saveoutput("wavefunctions_e_QWR%d.dat" %j,(xaxis,result.wfe_general[j].transpose()))
-    else:
-        if config.sigma_out:
-            saveoutput("sigma.dat",(xaxis,result.sigma_general))
-        if config.electricfield_out:
-            saveoutput("efield.dat",(xaxis,result.F_general))
-        if config.potential_out:
-            saveoutput("potn.dat",(xaxis,result.fitotc,result.fitot))
-        if config.states_out:                
-            for j in range(1,result.N_wells_virtual-1):                
-                rel_meff_state = [meff/m_e for meff in result.meff_state_general[j]] #going to report relative effective mass.
-                columns = range(model.subnumber_h), result.E_state_general[j], result.N_state_general[j], rel_meff_state
-                #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
-                header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
-                saveoutput("states_h_QW%d.dat" %j,columns, header = header )
-                if config.probability_out:
-                    saveoutput("wavefunctions_h_QWR%d.dat" %j,(xaxis,result.wfh_general[j].transpose()))
-        if config.states_out:
-            for j in range(1,result.N_wells_virtual-1):                
-                rel_meff_statec = [meff/m_e for meff in result.meff_state_general[j]] #going to report relative effective mass.
-                columns = range(model.subnumber_e), result.E_statec_general[j], result.N_statec_general[j], rel_meff_statec
-                #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
-                header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
-                saveoutput("states_e_QWR%d.dat" %j,columns, header = header )
-                if config.probability_out:
-                    saveoutput("wavefunctions_e_QWR%d.dat" %j,(xaxis,result.wfe_general[j].transpose()))
-    # Resultviewer
-        
     if config.resultviewer:
-        fig1 = pl.figure()
-        pl.suptitle('Aestimo Results')
-        pl.subplots_adjust(hspace=0.4,wspace=0.4)
-                            
-        #Plotting Sigma
-        #figure(0)
-        pl.subplot(2,2,1)
-        pl.plot(xaxis, result.sigma_general)
-        pl.xlabel('Position (m)')
-        pl.ylabel('Sigma (e/m^2)')
-        pl.title('Sigma')
-        pl.grid(True)
-    
-        #Plotting Efield
-        #figure(1)
-        pl.subplot(2,2,2)
-        pl.plot(xaxis, result.F_general)
-        pl.xlabel('Position (m)')
-        pl.ylabel('Electric Field strength (V/m)')
-        pl.title('Electric Field')
-        pl.grid(True)
-    
-        #Plotting Potential
-        #figure(2)
-        if result.Ntotal2d<0:
-
-            pl.subplot(2,2,3)
-            pl.plot(xaxis, result.fitot)
-            pl.xlabel('Position (m)')
-            pl.ylabel('E_c (J)')
-            pl.title('Potential')
-            pl.grid(True)
-
-            #Plotting State(s)
-            #figure(3)
-            pl.subplot(2,2,4)
-            for j in range(1,result.N_wells_virtual-1):                
-                for i,state in enumerate(result.wfh_general[j,:,:]):
-                    pl.plot(xaxis[int(result.Well_boundary[j-1,1]):int(result.Well_boundary[j+1,0])], state[0:int(result.Well_boundary[j+1,0])-int(result.Well_boundary[j-1,1])], label='state %d' %i)
-                    pl.xlabel('Position (m)')
-                    pl.ylabel('Psi')
-                    pl.title('First state')
-                    pl.grid(True)
-        else:
-            pl.subplot(2,2,3)
-            pl.plot(xaxis, result.fitotc)
-            pl.xlabel('Position (m)')
-            pl.ylabel('E_c (J)')
-            pl.title('Potential')
-            pl.grid(True)
-
-            #Plotting State(s)
-            #figure(3)
-            pl.subplot(2,2,4)
-            for j in range(1,result.N_wells_virtual-1):                
-                for i,state in enumerate(result.wfe_general[j,:,:]):
-                    pl.plot(xaxis[int(result.Well_boundary[j-1,1]):int(result.Well_boundary[j+1,0])], 
-                                  state[0:int(result.Well_boundary[j+1,0])-int(result.Well_boundary[j-1,1])], label='state %d' %i)
-                    pl.xlabel('Position (m)')
-                    pl.ylabel('Psi')
-                    pl.title('First state')
-                    pl.grid(True)
-        #QW representation
-        #figure(5)
-        span=np.ones(10000)
-        fig2 = pl.figure()
+        
+        #span=np.ones(100000000)
+        
+        fig1 = pl.figure(figsize=(10,8))
         pl.suptitle('Aestimo Results')
         pl.subplot(1,1,1)
-        pl.plot(xaxis,result.fitot*J2meV,'k',xaxis,result.fitotc*J2meV,'k')
+        
+        
+        pl.plot(xaxis*1e6,result.Ec_result,xaxis*1e6,result.Ev_result,xaxis*1e6,result.Ei_result,xaxis*1e6,result.Efn_result,'r',xaxis*1e6,result.Efp_result,'b')
+        """
         for j in range(1,result.N_wells_virtual-1):
-            I1=int(result.Well_boundary[j-1,1])
-            I2=int(result.Well_boundary[j+1,0])
+            I1,I2,I11,I22  = amort_wave(j,result.Well_boundary,model.n_max)
             i1=I1-I1
-            i2=I2-I1            
+            i2=I2-I1          
             for levelc,statec in zip(result.E_statec_general[j,:],result.wfe_general[j,:,:]):
                 #pl.axhline(levelc,0.1,0.9, hold=True,color='g',ls='--')
-                pl.plot(xaxis[I1:I2], statec[i1:i2]*200.0+levelc,'b')
+                pl.plot(xaxis[I1:I2], statec[i1:i2]*config.wavefunction_scalefactor+levelc,'b')
                 pl.plot(xaxis[I1:I2],levelc*span[I1:I2],'g',ls='--')
             for level,state in zip(result.E_state_general[j,:],result.wfh_general[j,:,:]):
                 #pl.axhline(level,0.1,0.9,color='g',ls='--')
                 pl.plot(xaxis[I1:I2], state[i1:i2]*config.wavefunction_scalefactor+level,'b')
                 pl.plot(xaxis[I1:I2],level*span[I1:I2],'g',ls='--')
             #pl.plot(xaxis, state**2*1e-9/dx*200.0+level,'b')
-            pl.plot(xaxis[I1:I2],result.E_F_general[j]*span[I1:I2],'r',ls='--')
+        
+        pl.plot(xaxis,result.EF*span[0:model.n_max],'r',ls='--')
+        """
+        #pl.axhline(result.E_F,0.1,0.9,color='r',ls='--')
+        pl.xlabel('x [um]')
+        pl.ylabel('Energy [eV]')
+        pl.title('Quasi Fermi Levels (Efn (red) & Efp (bleu)) vs Position', fontsize=12)
+        pl.legend(('Ec','Ev','Ei','Efn','Efp'),loc='best',fontsize=12)
+        pl.grid(True)
+        
+        fig2 = pl.figure(figsize=(10,8))    
+        pl.suptitle('1D Drift Diffusion Model for pn Diodes Results - at Applied Bias (%.2f)'%vt, fontsize=12)
+        pl.subplots_adjust(hspace=0.4,wspace=0.4)
+    
+        pl.subplot(2,2,1)
+        pl.plot(xaxis*1e6, result.ro_result*1e-6)
+        pl.xlabel('x [um]')
+        pl.ylabel('Total Charge Density [C/cm^3]')
+        pl.title('Total Charge Density vs Position ', fontsize=12)
+        pl.legend(('Total Charge'),loc='best',fontsize=12)
+        pl.grid(True)
+        #Plotting Efield
+        #figure(1)
+        pl.subplot(2,2,2)
+        pl.plot(xaxis*1e6, result.el_field1_result*1e-2,'r',xaxis*1e6,result.el_field2_result*1e-2,'b')
+        pl.xlabel('x [um]')
+        pl.ylabel('Electric Field 1(red) & 2 (bleu) [V/cm]')
+        pl.title('Field Profile vs Position ', fontsize=12)
+        pl.legend(('Electric Field 1','Electric Field 2'),loc='best',fontsize=12)
+        pl.grid(True)
+        #Plotting Potential
+        #figure(2)
+        pl.subplot(2,2,3)
+        pl.plot(xaxis*1e6, result.Ec_result)
+        pl.xlabel('x [um]')
+        pl.ylabel('Conduction Band Energy (eV)')
+        pl.title('Conduction Band vs Position ', fontsize=12)
+        pl.legend(('Conduction Band'),loc='best',fontsize=12)
+        pl.grid(True)
+        #Plotting State(s)
+        #figure(3)
+        pl.subplot(2,2,4)
+        pl.plot(result.Va_t*Vt,result.av_curr*1e-4)
+        pl.xlabel('Va [V]')
+        pl.ylabel('Total Current Density [Amp/cm^2]')
+        pl.title('I vs V Plot', fontsize=12)
+        pl.legend(('Total Current'),loc='best',fontsize=12)
+        pl.grid(True)
+        pl.show()
+        
+        fig3 = pl.figure(figsize=(10,8)) 
+        pl.suptitle('1D Drift Diffusion Model for pn Diodes Results - at Applied Bias (%.2f)'%vt, fontsize=12)
+        pl.subplots_adjust(hspace=0.4,wspace=0.4)
+        pl.subplot(2,2,1)
+        pl.plot(xaxis*1e6,result.nf_result*1e-6,'r',xaxis*1e6,result.pf_result*1e-6,'b')
+        pl.xlabel('x [um]')
+        pl.ylabel('Electron  & Hole  Densities [1/cm^3]')
+        pl.title('Electron (red) & Hole (bleu) Densities vs Position ', fontsize=12)
+        pl.legend(('Electron','Hole'),loc='best',fontsize=12)
+        pl.grid(True)
+        
+        pl.subplot(2,2,2)
+        pl.plot(xaxis*1e6,result.Ec_result,xaxis*1e6,result.Ev_result,xaxis*1e6,result.Ei_result,xaxis*1e6,result.Efn_result,'r',xaxis*1e6,result.Efp_result,'b')
+        pl.xlabel('x [um]')
+        pl.ylabel('Energy [eV]')
+        pl.title('Quasi Fermi Levels (Efn (red) & Efp (bleu)) vs Position', fontsize=12)
+        pl.legend(('Ec','Ev','Ei','Efn','Efp'),loc='best',fontsize=12)
+        pl.grid(True)
+        
+        pl.subplot(2,2,3)
+        pl.plot(xaxis*1e6,Vt*result.fi_result)
+        pl.xlabel('x [um]')
+        pl.ylabel('Potential [eV]')
+        pl.title('Potential vs Position Applied Bias(%d)'%vt,fontsize=12)
+        pl.legend(('fi'),loc='best',fontsize=12)
+        pl.grid(True)
+        
+        pl.subplot(2,2,4)
+        pl.plot(xaxis*1e6,result.Efn_result,'r',xaxis*1e6,result.Efp_result,'b')
+        pl.xlabel('x [um]')
+        pl.ylabel('Energy [eV]')
+        pl.title('Quasi Fermi Levels (Efn (red) & Efp (bleu)) vs Position', fontsize=12)
+        pl.legend(('Efn','Efp'),loc='best',fontsize=12)
+        pl.grid(True)
+        pl.show()
+    return [fig1,fig2,fig3]
+
+
+
+def save_and_plot(result,model):
+    xaxis = result.xaxis    
+    output_directory = config.output_directory+"_eh"    
+    if not os.path.isdir(output_directory):
+        os.makedirs(output_directory)
+    def saveoutput(fname,datatuple,header=''):
+        fname2 = os.path.join(output_directory,fname)
+        np.savetxt(fname2,np.column_stack(datatuple),fmt='%.6e', delimiter=' ',header=header)
+    if config.sigma_out:
+        saveoutput("sigma_eh.dat",(xaxis,result.ro_result))
+    if config.electricfield_out:
+        saveoutput("efield_eh.dat",(xaxis,result.el_field1_result,result.el_field2_result))
+    if config.potential_out:
+        saveoutput("potn_eh.dat",(xaxis*1e2,result.fitotc/q,result.fitot/q))
+        saveoutput("np_data0.dat",(xaxis*1e2,result.nf_result*1e-6,result.pf_result*1e-6))
+    if config.states_out:
+        for j in range(1,result.N_wells_virtual-1):                
+            rel_meff_state = [meff/m_e for meff in result.meff_state_general[j]] #going to report relative effective mass.
+            columns = range(model.subnumber_h), result.E_state_general[j], result.N_state_general[j], rel_meff_state
+            #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
+            header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+            saveoutput("states_h_QWR%d.dat" %j,columns, header = header )
+            if config.probability_out:
+                saveoutput("wavefunctions_h_QWR%d.dat" %j,(xaxis,result.wfh_general[j].transpose()))
+    if config.states_out:
+        for j in range(1,result.N_wells_virtual-1):                
+            rel_meff_statec = [meff/m_e for meff in result.meff_statec_general[j]] #going to report relative effective mass.
+            columns = range(model.subnumber_e), result.E_statec_general[j], result.N_statec_general[j], rel_meff_statec
+            #header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
+            header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+            saveoutput("states_e_QWR%d.dat" %j,columns, header = header )
+            if config.probability_out:
+                saveoutput("wavefunctions_e_QWR%d.dat" %j,(xaxis,result.wfe_general[j].transpose()))
+    # Resultviewer
+        
+    if config.resultviewer:
+        
+        span=np.ones(100000000)
+        
+        fig1 = pl.figure(figsize=(10,8))
+        pl.suptitle('Aestimo Results')
+        pl.subplot(1,1,1)
+        pl.plot(xaxis,result.fitot*J2meV,'k',xaxis,result.fitotc*J2meV,'k')
+        for j in range(1,result.N_wells_virtual-1):
+            I1,I2,I11,I22  = amort_wave(j,result.Well_boundary,model.n_max)
+            i1=I1-I1
+            i2=I2-I1          
+            for levelc,statec in zip(result.E_statec_general[j,:],result.wfe_general[j,:,:]):
+                #pl.axhline(levelc,0.1,0.9, hold=True,color='g',ls='--')
+                pl.plot(xaxis[I1:I2], statec[i1:i2]*config.wavefunction_scalefactor+levelc,'b')
+                pl.plot(xaxis[I1:I2],levelc*span[I1:I2],'g',ls='--')
+            for level,state in zip(result.E_state_general[j,:],result.wfh_general[j,:,:]):
+                #pl.axhline(level,0.1,0.9,color='g',ls='--')
+                pl.plot(xaxis[I1:I2], state[i1:i2]*config.wavefunction_scalefactor+level,'b')
+                pl.plot(xaxis[I1:I2],level*span[I1:I2],'g',ls='--')
+            #pl.plot(xaxis, state**2*1e-9/dx*200.0+level,'b')
+        pl.plot(xaxis,result.EF*span[0:model.n_max],'r',ls='--')
         #pl.axhline(result.E_F,0.1,0.9,color='r',ls='--')
         pl.xlabel('Position (m)')
         pl.ylabel('Energy (meV)')
         pl.grid(True)
+                
+        
+        fig2 = pl.figure(figsize=(10,8))
+        pl.suptitle('1D Drift Diffusion Model for pn Diodes Results - at Equilibrium Condition ', fontsize=12)
+        pl.subplots_adjust(hspace=0.4,wspace=0.4)
+                            
+        #Plotting Sigma
+        #figure(0)
+        pl.subplot(2,2,1)
+        pl.plot(xaxis*1e6, result.ro_result*1e-6)
+        pl.xlabel('x [um]')
+        pl.ylabel('Total Charge Density [C/cm^3]')
+        pl.title('Total Charge Density vs Position ', fontsize=10)
+        pl.grid(True)
+    
+        #Plotting Efield
+        #figure(1)
+        pl.subplot(2,2,2)
+        pl.plot(xaxis*1e6, result.el_field1_result*1e-2,'r',xaxis*1e6,result.el_field2_result*1e-2,'b')
+        pl.xlabel('x [um]')
+        pl.ylabel('Electric Field  [V/cm]')
+        pl.title('Field Profile 1(red) & 2 (bleu) vs Position ', fontsize=10)
+        pl.grid(True)
+    
+        #Plotting Potential
+        #figure(2)
+        pl.subplot(2,2,3)
+        pl.plot(xaxis*1e6, result.Ec_result/q,'r',xaxis*1e6,result.Ev_result/q,'b')
+        pl.plot(xaxis*1e6,result.EF*span[0:model.n_max],'k',ls='--')
+        pl.xlabel('x [um]')
+        pl.ylabel('Conduction Band Energy (red) & Potential (bleu) (eV)')
+        pl.title('Conduction Band & Potential vs Position ', fontsize=10)
+        pl.grid(True)
+        
+        pl.subplot(2,2,4)
+        pl.plot(xaxis*1e6,result.nf_result*1e-6,'r',xaxis*1e6,result.pf_result*1e-6,'b')
+        pl.xlabel('x [um]')
+        pl.ylabel('Electron  & Hole  Densities [1/cm^3]')
+        pl.title('Electron (red)& Hole (bleu) Densities vs Position ', fontsize=10)
+        pl.grid(True)        
         pl.show()
     return [fig1,fig2]
 
 def QWplot(result,figno=None):
     #QW representation
     xaxis = result.xaxis
-    fig = pl.figure(figno)
+    fig = pl.figure(figno,figsize=(10,8))
     pl.suptitle('Aestimo Results')
     pl.subplot(1,1,1)
     pl.plot(xaxis,result.fitot*J2meV,'k',xaxis,result.fitotc*J2meV,'k')
@@ -1612,24 +2328,30 @@ def run_aestimo(input_obj):
     for 'normal' input files. Input_obj can be a dict, class, named tuple or 
     module with the attributes needed to create the StructureFrom class, see 
     the class implementation or some of the sample-*.py files for details."""
-    logger.info("Aestimo_eh is starting...")
+    if not(config.messagesoff):
+        logger.info("Aestimo_eh is starting...")
         
     # Initialise structure class
     model = StructureFrom(input_obj,database)
          
     # Perform the calculation
     result = Poisson_Schrodinger(model)
-    
+    if model.comp_scheme==7:
+        result_dd = Poisson_Schrodinger_DD(result,model)
     time4 = time.time() #timing audit
-    logger.info("total running time (inc. loading libraries) %g s",(time4 - time0))
-    logger.info("total running time (exc. loading libraries) %g s",(time4 - time1))
+    if not(config.messagesoff):
+        
+        logger.info("total running time (inc. loading libraries) %g s",(time4 - time0))
+        logger.info("total running time (exc. loading libraries) %g s",(time4 - time1))
 
     
     # Write the simulation results in files
     save_and_plot(result,model)
-    
-    logger.info("""Simulation is finished. All files are closed. Please control the related files.
------------------------------------------------------------------""")
+    if model.comp_scheme==7:
+        save_and_plot2(result_dd,model)
+    if not(config.messagesoff):        
+        logger.info("""Simulation is finished. All files are closed. Please control the related files.
+                    -----------------------------------------------------------------""")
     
     return input_obj, model, result
 
@@ -1644,6 +2366,7 @@ if __name__=="__main__":
     
     # Import from config file
     inputfile = __import__(options.inputfile)
-    logger.info("inputfile is %s",options.inputfile)
+    if not(config.messagesoff):         
+        logger.info("inputfile is %s",options.inputfile)
     
     run_aestimo(inputfile)

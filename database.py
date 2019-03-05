@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Aestimo 1D Schrodinger-Poisson Solver
-
-database module:
-----------------
-Aestimo's database module. Contains a materialproperty dict containing 
+"""Aestimo's database module. Contains a materialproperty dict containing 
 sub-dicts of values for each material and similar alloyproperty dict for the
 alloys of the materials. See the source for details on the required keys for
 each material or alloy.
@@ -14,12 +10,27 @@ each material or alloy.
     Properties of Semiconductor Alloys: Group-IV, III-V and II-VI Semiconductors Sadao AdAchi?2009 John Wiley & Sons, Ltd.
     Basic Semiconductor Physics Second Edition,Prof. Chihiro Hamaguchi 2010 Springer
     Physics of Optoelectronic Devices ,S-L.CHUANG ,1995 by John Wiley & Sons. Inc
+  
 """
+"""
+ Aestimo 1D Schrodinger-Poisson Solver
+ Copyright (C) 2013-2016 Sefer Bora Lisesivdin and Aestimo group
 
-__author__    = "For the list of contributors, see ~/AUTHORS.md"
-__copyright__ = "Copyright (C) 2013-2017 Sefer Bora Lisesivdin and Aestimo group"
-__license__   = "GPLv3+ WITHOUT ANY WARRANTY"
-__version__   = "1.2.0"
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
+
+    For the list of contributors, see ~/AUTHORS
+"""
 
 # MATERIAL PROPERTIES
 # materialproperties| Material : m_e | m_hh | epsilonStatic | Eg | Bowing_param | m_e_alpha |  Luttinger Parameters γ1,2 & 3 |Elastic constants C11,12|Lattice constant a0| Deformation potentials ac,av & b| delta splitt off|

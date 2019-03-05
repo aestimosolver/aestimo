@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Aestimo 1D Schrodinger-Poisson Solver
-
-VBHM module:
-------------
+"""
 We consider the upper 3 × 3 Hamiltonian for a (001)-oriented
 zinc blende (ZB) crystal see ref [1], after block diagonalization 
 the KP-FDM (k.P theory + Finite Difference Method ) method is explained
@@ -16,12 +13,25 @@ were applied [1].
 [2]:P.Harrison 'QUANTUM WELLS, WIRES AND DOTS' P 357-362
 [3]: S-L.CHUANG 'physics of Optoelectronic Devices' P 183
 """
+"""
+ Aestimo 1D Schrodinger-Poisson Solver
+ Copyright (C) 2013-2016 Sefer Bora Lisesivdin and Aestimo group
 
-__author__    = "For the list of contributors, see ~/AUTHORS.md"
-__copyright__ = "Copyright (C) 2013-2017 Sefer Bora Lisesivdin and Aestimo group"
-__license__   = "GPLv3+ WITHOUT ANY WARRANTY"
-__version__   = "1.2.0"
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
+
+    For the list of contributors, see ~/AUTHORS
+"""
 #from scipy.optimize import fsolve
 import numpy as np
 from math import *
