@@ -1935,7 +1935,7 @@ def Poisson_Schrodinger_DD(result,model):
             print ('vindex=',vindex)
             #previousE0= 2   #(meV) energy of zeroth state for previous iteration(for testing convergence)            
             while(flag_conv_2):
-                
+                fi,flag_conv_2=Poisson_non_equi2(fi_old0,n,p,dop,n_max,dx,fi,flag_conv_2,Ldi,ni,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general)
                 #print'inside while loop'
                 mun,mup=Mobility2(mun0,mup0,fi,Vt,Ldi,VSATN,VSATP,BETAN,BETAP,n_max,dx)
                 ########### END of FIELD Dependant Mobility Calculation ###########
@@ -1977,7 +1977,7 @@ def Poisson_Schrodinger_DD(result,model):
                         previousE0 = E_state_general[1,0]
                         # END OF SELF-CONSISTENT LOOP
                         """
-                fi,flag_conv_2=Poisson_non_equi2(fi_old0,n,p,dop,n_max,dx,fi,flag_conv_2,Ldi,ni,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general)
+                #fi,flag_conv_2=Poisson_non_equi2(fi_old0,n,p,dop,n_max,dx,fi,flag_conv_2,Ldi,ni,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general)
                 #n,p,fi,EF =Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,ni,n_max,iteration,fi,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface)
                 # End of WHILE Loop for Poisson's eqn solver
             Jnip1by2,Jnim1by2,Jelec,Jpip1by2,Jpim1by2,Jhole=Current2(vindex,n,p,mun,mup,fi,Vt,n_max,Total_Steps,q,dx,ni,Ldi,
