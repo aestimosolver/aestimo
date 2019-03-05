@@ -151,6 +151,8 @@ class Structure():
         """ initialise arrays/lists for structure"""
         #self.N_wells_real0=sum(sum(np.char.count(self.material,'w')))
         self.N_wells_real0=sum(np.char.count([layer[6] for layer in self.material],'w'))
+        self.N_layers_real0=sum(np.char.count([layer[6] for layer in self.material],'w'))+sum(np.char.count([layer[6] for layer in self.material],'b'))
+
         # Calculate the required number of grid points
         self.x_max = sum([layer[0] for layer in self.material])*1e-9 #total thickness (m)
         n_max = round2int(self.x_max/self.dx)
@@ -218,12 +220,16 @@ class Structure():
         pol_surf_char = np.zeros(n_max)
         N_wells_real=0
         N_wells_real2=0
+        N_layers_real2=0
         N_wells_real0=self.N_wells_real0
+        N_layers_real0=self.N_layers_real0
         N_wells_virtual=N_wells_real0+2
         N_wells_virtual2=N_wells_real0+2
+        N_layers_virtual=N_layers_real0+2
         Well_boundary=np.zeros((N_wells_virtual,2),dtype=int)
         Well_boundary2=np.zeros((N_wells_virtual,2),dtype=int)
         barrier_boundary=np.zeros((N_wells_virtual+1,2),dtype=int)
+        layer_boundary=np.zeros((N_layers_virtual,2),dtype=int)
         n_max_general=np.zeros(N_wells_virtual,dtype=int)
         Well_boundary[N_wells_virtual-1,0]=n_max 
         Well_boundary[N_wells_virtual-1,1]=n_max
@@ -239,6 +245,8 @@ class Structure():
         mup0=np.zeros(n_max)
         BETAN=np.zeros(n_max)
         BETAP=np.zeros(n_max)
+        VSATN=np.zeros(n_max)
+        VSATP=np.zeros(n_max)
         position = 0.0 # keeping in nanometres (to minimise errors)
         for layer in self.material:
             startindex = round2int(position*1e-9/dx)
@@ -270,7 +278,9 @@ class Structure():
                     mun0[startindex:finishindex] = matprops['mun0']
                     mup0[startindex:finishindex] = matprops['mup0']
                     BETAN[startindex:finishindex] = matprops['BETAN']
-                    BETAP[startindex:finishindex] = matprops['BETAP']                    
+                    BETAP[startindex:finishindex] = matprops['BETAP']
+                    VSATN[startindex:finishindex] = matprops['VSATN']
+                    VSATP[startindex:finishindex] = matprops['VSATP']
                 if mat_type=='Wurtzite' :
                     a0_sub[startindex:finishindex]=matprops['a0_wz']*1e-10
                     C11[startindex:finishindex] = matprops['C11']*1e10
@@ -301,7 +311,9 @@ class Structure():
                     mun0[startindex:finishindex] = matprops['mun0']
                     mup0[startindex:finishindex] = matprops['mup0']
                     BETAN[startindex:finishindex] = matprops['BETAN']
-                    BETAP[startindex:finishindex] = matprops['BETAP'] 
+                    BETAP[startindex:finishindex] = matprops['BETAP']
+                    VSATN[startindex:finishindex] = matprops['VSATN']
+                    VSATP[startindex:finishindex] = matprops['VSATP']
             elif matType in alloy_property:               
                 alloyprops = alloy_property[matType]
                 mat1 = material_property[alloyprops['Material1']]
@@ -316,7 +328,9 @@ class Structure():
                 TAUP0[startindex:finishindex] = alloyprops['TAUP0']
 
                 BETAN[startindex:finishindex] = alloyprops['BETAN']
-                BETAP[startindex:finishindex] = alloyprops['BETAP'] 
+                BETAP[startindex:finishindex] = alloyprops['BETAP']
+                VSATN[startindex:finishindex] = alloyprops['VSATN']
+                VSATP[startindex:finishindex] = alloyprops['VSATP']
                 if mat_type=='Zincblende':
                     C11[startindex:finishindex] = (x*mat1['C11'] + (1-x)* mat2['C11'])*1e10
                     C12[startindex:finishindex] = (x*mat1['C12'] + (1-x)* mat2['C12'])*1e10
@@ -371,7 +385,9 @@ class Structure():
                     TAUN0[startindex:finishindex] = alloyprops['TAUN0']  
                     TAUP0[startindex:finishindex] = alloyprops['TAUP0']
                     BETAN[startindex:finishindex] = alloyprops['BETAN']
-                    BETAP[startindex:finishindex] = alloyprops['BETAP'] 
+                    BETAP[startindex:finishindex] = alloyprops['BETAP']
+                    VSATN[startindex:finishindex] = alloyprops['VSATN']
+                    VSATP[startindex:finishindex] = alloyprops['VSATP']
                     if mat_type=='Zincblende':
                         
                         alloyprops = alloy_property_4[matType]
@@ -654,6 +670,9 @@ class Structure():
                 N_wells_real2+=1
                 Well_boundary2[N_wells_real2,0]=startindex 
                 Well_boundary2[N_wells_real2,1]=finishindex
+            N_layers_real2+=1
+            layer_boundary[N_layers_real2,0]=startindex 
+            layer_boundary[N_layers_real2,1]=finishindex
             for J in range(0,N_wells_virtual2):
                 barrier_boundary[J,0]=Well_boundary2[J-1,1]
                 barrier_boundary[J,1]=Well_boundary2[J,0]
@@ -744,12 +763,16 @@ class Structure():
         self.Well_boundary=Well_boundary
         self.Well_boundary2=Well_boundary2
         self.barrier_boundary=barrier_boundary
+        self.N_layers_real2=N_layers_real2
+        self.layer_boundary=layer_boundary
         self.TAUN0=TAUN0  
         self.TAUP0=TAUP0
         self.mun0=mun0
         self.mup0=mup0
         self.BETAN=BETAN
         self.BETAP=BETAP
+        self.VSATN=VSATN
+        self.VSATP=VSATP
 class AttrDict(dict):
     """turns a dictionary into an object with attribute style lookups"""
     def __init__(self, *args, **kwargs):
@@ -1291,6 +1314,7 @@ def calc_E_state_general(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,m
         la2,v2= linalg.eigh(HUPMAT3_general)     
         tmp[k,i1:i2*3]=-la2/RATIO*J2meV
         V2[k,i1:i2*3,i1:i2*3]=v2
+
         if (max(tmp[k,0:subnumber_h])>max(fitot[I11:I22])*J2meV and 1==2):
             logger.warning(":You may experience convergence problem due to unconfined states.")
     """
@@ -1674,7 +1698,9 @@ def Poisson_Schrodinger_DD(result,model):
     mun0 = model.mun0
     mup0 = model.mup0
     BETAN = model.BETAN
-    BETAP = model.BETAP    
+    BETAP = model.BETAP
+    VSATN= model.VSATN
+    VSATP= model.VSATP
     if comp_scheme in (4,5,6):
         logger.error("""aestimo_eh doesn't currently include exchange interactions
         in its valence band calculations.""")
@@ -1854,8 +1880,8 @@ def Poisson_Schrodinger_DD(result,model):
     # #     mup0 = ( MU1P_CAUG*((TL/300)**ALPHAP_CAUG) ) ... 
     # #       + (( (MU2P_CAUG*((TL/300)**BETAP_CAUG)) - (MU1P_CAUG*((TL/300)**ALPHAP_CAUG)) ) ... 
     # #            / ( 1 + ((TL/300)**GAMMAP_CAUG) * ((N/NCRITP_CAUG)**DELTAP_CAUG) ))
-    VSATN = (2.4e5) / (1 + 0.8*exp(T/600))  # Saturation Velocity of Electrons
-    VSATP = VSATN                               # Saturation Velocity of Holes
+    #VSATN = (2.4e5) / (1 + 0.8*exp(T/600))  # Saturation Velocity of Electrons
+    #VSATP = VSATN                               # Saturation Velocity of Holes
     #################### END of Low Field Mobility Calculation ################
     fi_old0=fi    
     if(Va_max==0):        

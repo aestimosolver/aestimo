@@ -5,6 +5,7 @@ Computational electronics : semiclassical and quantum device modeling and simula
     [Dragica Vasileska; Stephen M Goodnick; Gerhard Klimeck]
 """
 import numpy as np
+import matplotlib.pyplot as pl
 from math import exp, log, sqrt
 import config
 #Defining constants and material parameters
@@ -46,7 +47,7 @@ def Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,ni,n_max,iteration
     else:
         n=np.zeros(n_max)
         p=np.zeros(n_max)
-        if config.predic_correc:
+        if config.predic_correc:#(check high concentrations)
             n,p,fi_non,EF =equi_np_fi3(fi_old0,n,p,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_out,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,dop,n_max,ni)
         else:    
             n,p,fi_non,EF =equi_np_fi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_out,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,dop,n_max,ni)
@@ -165,25 +166,26 @@ def equi_np_fi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_old,Vt,wfh_general,wfe
     n_cl=np.zeros(n_max)
     n_qw=np.zeros(n_max)
     p=np.zeros(n_max)
+    p_cl=np.zeros(n_max)
+    p_qw=np.zeros(n_max)
     Ef_Ec=np.zeros(n_max)
     Ev_Ef=np.zeros(n_max)
     E3kbT=np.zeros(n_max)
     #Determination of the Fermi Level
     EF=0.0
-    for i1 in range(0,n_max):
+    for i1 in range(0,n_max):      
         Ef_Ec[i1]=(EF-(fi_e[i1]-Vt*q*fi_old[i1]))/(kb*T)#*J2meV
         Ev_Ef[i1]=((fi_h[i1]-Vt*q*fi_old[i1])-EF)/(kb*T)#*J2meV
         E3kbT[i1]=-3*kb*T/(kb*T)#*J2meV
-        if (EF*meV2J-(fi_e[i1]-Vt*q*fi_old[i1])>-3*kb*T  ) :#-3*kb*T 
+        if (EF*meV2J-(fi_e[i1]-Vt*q*fi_old[i1])>-3*kb*T) :#-3*kb*T 
             n_cl[i1]=Nc[i1]*fd3((EF*meV2J-(fi_e[i1]-Vt*q*fi_old[i1]))/(kb*T))/ni[i1]
         else:
             n_cl[i1]=Nc[i1]*exp((EF*meV2J-(fi_e[i1]-Vt*q*fi_old[i1]))/(kb*T))/ni[i1]
             #print(n[i1])
-        if ((fi_h[i1]-Vt*q*fi_old[i1])-EF*meV2J>-3*kb*T ):#-3*kb*T 
-            
-            p[i1]=Nv[i1]*fd3(((fi_h[i1]-Vt*q*fi_old[i1])-EF*meV2J)/(kb*T))/ni[i1]
+        if ((fi_h[i1]-Vt*q*fi_old[i1])-EF*meV2J>-3*kb*T ) :#-3*kb*T             
+            p_cl[i1]=Nv[i1]*fd3(((fi_h[i1]-Vt*q*fi_old[i1])-EF*meV2J)/(kb*T))/ni[i1]
         else:
-            p[i1]=Nv[i1]*exp(((fi_h[i1]-Vt*q*fi_old[i1])-EF*meV2J)/(kb*T))/ni[i1]
+            p_cl[i1]=Nv[i1]*exp(((fi_h[i1]-Vt*q*fi_old[i1])-EF*meV2J)/(kb*T))/ni[i1]
     for k in range(1,model.N_wells_virtual-1):
         I1,I2,I11,I22 =amort_wave(k,model.Well_boundary,n_max)
         i1=I1-I1
@@ -192,7 +194,7 @@ def equi_np_fi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_old,Vt,wfh_general,wfe
         the jump discontinuity in the electron density n across the interface
         """
         n_cl[I1:I2]=0.0
-        p[I1:I2]=0.0
+        p_cl[I1:I2]=0.0
         
         #couter=0
         for j in range(0,model.subnumber_e,1):
@@ -208,8 +210,65 @@ def equi_np_fi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_old,Vt,wfh_general,wfe
                 """
         for jj in range(0,model.subnumber_h,1):          
             for ii in range(I1,I2):
-                p[ii]+= (fd1(E_state_general[k,jj],EF,model)*meff_state_general[k,jj]/(hbar**2*pi))*(wfh_general[k,jj,ii-I1])**2/(ni[ii]*model.dx)    
+                p_qw[ii]+= (fd1(E_state_general[k,jj],EF,model)*meff_state_general[k,jj]/(hbar**2*pi))*(wfh_general[k,jj,ii-I1])**2/(ni[ii]*model.dx)    
     n=n_cl+n_qw
+    p=p_cl+p_qw
+    return n,p,fi_old,EF  # density of carriers
+def equi_np_fi4(fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_old,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,dop,n_max,ni):#use    
+    n=np.zeros(n_max)
+    n_cl=np.zeros(n_max)
+    n_qw=np.zeros(n_max)
+    p=np.zeros(n_max)
+    p_cl=np.zeros(n_max)
+    p_qw=np.zeros(n_max)
+    Ef_Ec=np.zeros(n_max)
+    Ev_Ef=np.zeros(n_max)
+    E3kbT=np.zeros(n_max)
+    #Determination of the Fermi Level
+    EF=0.0
+    for i1 in range(0,n_max):      
+        Ef_Ec[i1]=(EF-(fi_e[i1]-Vt*q*fi_old[i1]))/(kb*T)#*J2meV
+        Ev_Ef[i1]=((fi_h[i1]-Vt*q*fi_old[i1])-EF)/(kb*T)#*J2meV
+        E3kbT[i1]=-3*kb*T/(kb*T)#*J2meV
+        if (EF*meV2J-(fi_e[i1]-Vt*q*fi_old[i1])>-3*kb*T) :#-3*kb*T 
+            n_cl[i1]=Nc[i1]*fd3((EF*meV2J-(fi_e[i1]-Vt*q*fi_old[i1]))/(kb*T))/ni[i1]
+        else:
+            n_cl[i1]=Nc[i1]*exp((EF*meV2J-(fi_e[i1]-Vt*q*fi_old[i1]))/(kb*T))/ni[i1]
+            #print(n[i1])
+        if ((fi_h[i1]-Vt*q*fi_old[i1])-EF*meV2J>-3*kb*T ) :#-3*kb*T             
+            p_cl[i1]=Nv[i1]*fd3(((fi_h[i1]-Vt*q*fi_old[i1])-EF*meV2J)/(kb*T))/ni[i1]
+        else:
+            p_cl[i1]=Nv[i1]*exp(((fi_h[i1]-Vt*q*fi_old[i1])-EF*meV2J)/(kb*T))/ni[i1]
+    if config.quantum_effect:
+        
+        for k in range(1,model.N_wells_virtual-1):
+            I1,I2,I11,I22 =amort_wave(k,model.Well_boundary,n_max)
+            i1=I1-I1
+            """
+            See C. de Faco et al. / Journal of Computational Physics 204 (2005) page 538 for 
+            the jump discontinuity in the electron density n across the interface
+            """
+            n_cl[I1:I2]=0.0
+            p_cl[I1:I2]=0.0
+            
+            #couter=0
+            for j in range(0,model.subnumber_e,1):
+                for i in range(I1,I2):
+                    n_qw[i]+= (fd2(E_statec_general[k,j],EF,model)*meff_statec_general[k,j]/(hbar**2*pi))*(wfe_general[k,j,i-I1])**2/(ni[i]*model.dx)
+                    """
+                    if (fi_e[i]-Vt*q*fi_old[i])*J2meV<E_statec_general[k,j] and couter==0:                    
+                        n_cl[i]+=Nc[i]*fd4((EF*meV2J-(fi_e[i]-Vt*q*fi_old[i]))/(kb*T))*(max(wfe_general[k,j,0:I2])**2)/ni[i]
+                        couter+=1
+                    elif couter!=0:
+                        if (fi_e[i]-Vt*q*fi_old[i])*J2meV<E_statec_general[k,j] and (fi_e[i]-Vt*q*fi_old[i])*J2meV>E_statec_general[k,j-1]:
+                            n_cl[i]+=Nc[i]*fd4((EF*meV2J-(fi_e[i]-Vt*q*fi_old[i]))/(kb*T))*(max(wfe_general[k,j,0:I2])**2)/ni[i]
+                    """
+            for jj in range(0,model.subnumber_h,1):          
+                for ii in range(I1,I2):
+                    p_qw[ii]+= (fd1(E_state_general[k,jj],EF,model)*meff_state_general[k,jj]/(hbar**2*pi))*(wfh_general[k,jj,ii-I1])**2/(ni[ii]*model.dx)    
+    
+    n=n_cl+n_qw
+    p=p_cl+p_qw
     return n,p,fi_old,EF  # density of carriers
 def equi_np_fi3(fi_old0,n,p,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_old,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,dop,n_max,ni):#use
     EF=0.0
@@ -549,7 +608,7 @@ def Poisson_non_equi1(n,p,dop,n_max,dx,fi,flag_conv_2):
     # the applied potential
     print ('delta_max= ',delta_max)
     if(delta_max < delta_acc):
-        flag_conv_2 = False                
+        flag_conv_2 = False              
     else:                                
         for i in  range(1,n_max-1):
             b[i] = -(2/(dx2) + n[i] + p[i])
@@ -811,9 +870,9 @@ def Mobility2(mun0,mup0,fi,Vt,Ldi,VSATN,VSATP,BETAN,BETAP,n_max,dx):
     Efield[n_max-1]=Efield[n_max-2]
     ## Calculate the Field Dependant Mobility at each Node
     for i in range(0,n_max):
-        pdeno=(mup0[i]*Efield[i]/VSATP)**BETAP[i]
+        pdeno=(mup0[i]*Efield[i]/VSATP[i])**BETAP[i]
         mup[i]=mup0[i]*( (1/(1 + pdeno))**(1/BETAP[i])) 
-        ndeno=(mun0[i]*Efield[i]/VSATN)**BETAN[i]
+        ndeno=(mun0[i]*Efield[i]/VSATN[i])**BETAN[i]
         mun[i]=mun0[i]*((1/(1+ndeno))**(1/BETAN[i]))                
     mup[0]=mup[1]
     mup[n_max-1] = mup[n_max-2]                
@@ -979,14 +1038,15 @@ def Poisson_non_equi2(fi_old0,n,p,dop,n_max,dx,fi,flag_conv_2,Ldi,ni,fitotc,fito
     # the applied potential
     print ('delta_max= ',delta_max)
     if(delta_max < delta_acc):
-        flag_conv_2 = False                
+        flag_conv_2 = False
+    """             
     else:
         if model.N_wells_virtual-2!=0 and 1==2:                    
             n,p,fi_non,EF =equi_np_fi3(fi_old0,n,p,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_out,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,dop,n_max,ni)                           
-        for i in  range(1,n_max-1):
-            
+        for i in  range(1,n_max-1):            
             b[i] = -(2*Ldi2[i]/(dx2) + n[i] + p[i])
             f[i] = n[i] - p[i] - dop_out[i] - (fi_out[i]*(n[i] + p[i]))
+    """
     return fi_out,flag_conv_2
 
 
