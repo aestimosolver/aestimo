@@ -1552,6 +1552,12 @@ def Poisson_Schrodinger(model):
     previousfi0= 0   #(meV) energy of  for previous iteration(for testing convergence)
     fitot = fi_h + Vapp #For initial iteration sum bandstructure and applied field
     fitotc = fi_e + Vapp
+    r=0.0
+    w_n_minus_max=1.0
+    w_n_max=0.0
+    w_n= np.zeros(n_max)
+    damping_n_plus = 0.1
+    damping_n=0.1
     if config.predic_correc:
         print("Predictor–corrector method is activated")
     while True:
@@ -1562,13 +1568,11 @@ def Poisson_Schrodinger(model):
             if config.predic_correc:
                 if iteration==1: 
                     E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
-                damping=1   
+                damping=0.15   
             else:
                 E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
-                damping=0.1
-
-            n,p,fi,EF,fi_old0 =Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,ni,n_max,iteration,fi,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface,fi_old0)
-             
+                damping=0.15#0.1 works between high and low doping
+            n,p,fi,EF,fi_old0 =Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,ni,n_max,iteration,fi,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface,fi_old0)             
         else:
             n,p,fi,EF,fi_old0 =Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,ni,n_max,iteration,fi,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface,fi_old0)
             damping=1            
@@ -1579,14 +1583,36 @@ def Poisson_Schrodinger(model):
         # Combine band edge potential with potential due to charge distribution
         # To increase convergence, we calculate a moving average of electric potential 
         #with previous iterations. By dampening the corrective term, we avoid oscillations.
+        #tryng new dmping method 
+        """F. Stern, J. Computational Physics 6, 56 (1970)."""
+        #the extrapolated-convergence-factor method instead of the fixed-convergence-factor method
         Vnew_general=-Vt*q*fi
-        V+= damping*(Vnew_general - V)
+        w_n=Vnew_general - V
+        w_n_max=max(abs(w_n[:]))*J2meV
+        r=w_n_max/w_n_minus_max        
+        w_n_minus_max=w_n_max
+        damping_n_plus=damping_n/(1-abs(r))       
+        damping_n=damping_n_plus                
+        #V+= damping_n_plus*(w_n)
+        V+= damping*(w_n)
         fitot = fi_h + V + Vapp
         fitotc = fi_e + V + Vapp
-        xaxis = np.arange(0,n_max)*dx
+        xaxis = np.arange(0,n_max)*dx        
+        delta0=V-Vnew_general
+        delta_max0=max(abs(delta0[:]))
+        #print('w_n_max=',w_n_max)
+        #print('r=',r)
+        #print('damping_n=',damping_n)
+        #print('damping_n_plus=',damping_n_plus)
+        #print('w_n_minus_max=',w_n_minus_max)
+        print('error_potential=',delta_max0*J2meV,'meV')
         if config.predic_correc:
-            print('error=',abs(Vnew_general[n_max-20]-previousfi0)/q)
-            if abs(Vnew_general[n_max-20]-previousfi0)/q < convergence_test0: #Convergence test
+            delta1=Vnew_general-previousfi0
+            delta_max1=max(abs(delta1[:]))
+            print('error_potential=',delta_max0*J2meV,'meV')
+            if delta_max1/q < convergence_test0: #Convergence test
+            #print('error=',abs(E_state_general[1,0]-previousE0)/1e3)
+            #if abs(E_state_general[1,0]-previousE0)/1e3 < convergence_test: #Convergence test
                 if model.N_wells_virtual-2!=0:                    
                     E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
                 break
