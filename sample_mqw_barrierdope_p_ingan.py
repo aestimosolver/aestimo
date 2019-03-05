@@ -26,7 +26,7 @@ subnumber_h = 2
 subnumber_e = 1
 # APPLIED ELECTRIC FIELD
 Fapplied =  0.0# (V/m)2.5e7/50e-9
-
+Vapplied=3.4 # (V)
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
@@ -45,15 +45,32 @@ mat_type='Wurtzite'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material =[[ 2.0, 'GaN', 0.05, 0.0, 0.0, 'n','b'],
+material1 =[[ 2.0, 'GaN', 0.05, 0.0, 0.0, 'n','b'],
             [ 2.0, 'GaN', 0.05, 0.0, 1.5e18, 'n','b'],
             [ 2.0, 'InGaN', 0.2, 0.0, 0,'n','w'],
             [ 2.0, 'GaN', 0.0, 0.0, 0.0, 'n','b'],
-            [ 2.0, 'InGaN', 0.2, 0.0, 0,'n','w'],
+            [ 2.0, 'InGaN', 0.1, 0.0, 0,'n','w'],
             [ 2.0, 'GaN', 0.05, 0.0, 1.5e18, 'n','b'],
             [ 2.0, 'GaN', 0.05, 0.0, 0.0, 'n','b']]
 
- 
+material =[ [ 20.0, 'AlGaN', 0.05, 0.0, 0.0, 'n','b'],
+            [ 2.0, 'InGaN', 0.2, 0.0, 0,'n','w'],
+            [ 5.0, 'GaN', 0.0, 0.0, 0.0, 'n','b'],
+            [ 2.0, 'InGaN', 0.1, 0.0, 0,'n','w'],
+            [ 20.0, 'GaN', 0.05, 0.0, 0.0, 'n','b']]
+
+material2 =[ [ 500.0, 'GaN', 0.0, 0.0, 3e18, 'n','b'],
+            [ 3.5, 'InGaN', 0.2, 0.0, 0.0,'i','w'],
+            [ 100.0, 'AlGaN', 0.1, 0.0, 7e19, 'p','b'],
+            [ 200.0, 'GaN', 0.0, 0.0, 7e19, 'p','b']]
+
+import numpy as np
+x_max = sum([layer[0] for layer in material])
+def round2int(x):
+    return int(x+0.5)
+n_max=round2int(x_max/gridfactor)
+dop_profile=np.zeros(n_max)  
+surface=np.zeros(2)   
 
 
 if __name__ == "__main__": #this code allows you to run the input file directly
