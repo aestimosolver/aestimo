@@ -1,6 +1,10 @@
-#!/bin/python
+#!/bin/env python
 # -*- coding: utf-8 -*-
-"""setuptools script for aestimo project"""
+"""
+File Information:
+-----------------
+setuptools script for aestimo project
+"""
 from setuptools import setup
 import os, sys
 
@@ -68,7 +72,7 @@ cmdclass.update({ 'build_ext': build_ext })
 
 
 setup(  name='aestimo',
-        version='1.1.0',
+        version='1.2.1',
         description='A bandstructure simulator of semiconductor nanostructures called quantum wells.',
         long_description= read('README.md'),
         classifiers=[
@@ -88,8 +92,8 @@ setup(  name='aestimo',
         keywords='quantum well semiconductor nanostructure optical transitions',
         package_dir = {'aestimo': ''},
         packages=['aestimo'],
-        package_data={'aestimo':['README.md','README_OUTPUTS','AUTHORS','COPYING','psi_at_inf_cython.c','doc/*']},
-        scripts=['scripts/aestimo','scripts/aestimo_h'],
+        package_data={'aestimo':['README.md','README_OUTPUTS','AUTHORS.md','COPYING','CHANGELOG.md','psi_at_inf_cython.c','doc/*']},
+        scripts=['scripts/aestimo','scripts/aestimo_eh'],
         install_requires=['numpy>1.7.0','matplotlib','scipy'],
         zip_safe=False, #we want users to be able to easily see and edit the scripts
         #setup_requires=['numpy'], #causes problems with pip?

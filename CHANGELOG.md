@@ -1,3 +1,17 @@
+### v.1.2.1 (July 22nd, 2018)
+
+*   intersubband\_optical\_transitions module now has model handling wavelength dependent dielectric constants - reliability of the results is unproven though.
+*   intersubband\_optical\_transitions module has made some small changes to improve handling of absorbing background dielectric constant - reliability of the results is unproven though.
+*   Fixed issues related to using aestimo as a package in python3.6
+*   Removing figsize from aestimo and aestimo_eh plots so that it can be configured via matplotlib configuration.
+
+### v.1.2 (November 6th, 2017)
+
+*	Quaternary alloys (type A_{x}B_{1-x}C_{y}D_{1-y})
+*	Added an improved model for modelling conduction band intersubband transitions
+*	Added a periodic boundary condition for the Electric field for modelling repeating structures.
+*	Small changes were made like to get aestimo to work on python3.4, example files were renamed to be more pythonic etc ...
+* 	Code is moved to GitHub.
 
 ### v.1.1 (November 8th, 2016)
 

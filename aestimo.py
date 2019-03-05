@@ -1,8 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""This is the aestimo calculator of conduction band structure for quantum wells.
+"""
+ Aestimo 1D Schrodinger-Poisson Solver
+ Copyright (C) 2013-2018 Sefer Bora Lisesivdin and Aestimo group
 
-aestimo.py can be used as a script or a libary.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
+
+    For the list of contributors, see ~/AUTHORS 
+
+File Information:
+-----------------
+This is the aestimo calculator of conduction band structure for quantum wells.
+
+aestimo.py can be used as a script or a library.
 
 To use as a script, define the simulation in a python file (see the sample-*.py 
 files for examples of the parameters needed) and then run aestimo on the command
@@ -25,26 +46,7 @@ saving the results of this calculation using the returned object.
 Calculations can be sped up by compiling the cythonised version of the psi_at_inf*
 functions. This can be done using the setup_cython.py module.
 """
-"""
- Aestimo 1D Schrodinger-Poisson Solver
- Copyright (C) 2013-2016 Sefer Bora Lisesivdin and Aestimo group
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
-
-    For the list of contributors, see ~/AUTHORS 
-"""
-__version__='1.1.0'
+__version__='1.2.1'
 
 import time
 time0 = time.time() # timing audit
@@ -53,8 +55,13 @@ import matplotlib.pyplot as pl
 import numpy as np
 alen = np.alen
 import os
-import config,database
 from math import log,exp
+
+if __package__: #explicit relative imports for using aestimo as a package (in python3)
+    from . import config,database
+else: 
+    import config,database
+
 # --------------------------------------
 import logging
 logger = logging.getLogger('aestimo')
@@ -422,6 +429,19 @@ class StructureFrom(Structure):
             self.Ep = Ep
 
         #return fi,cb_meff,eps,dop
+        
+    def layer_mask(self,idx):
+        """Return a binary array selecting the layer within the structure."""        
+        dx =self.dx
+        position = 0.0 # keeping in nanometres (to minimise errors)
+        for layer in self.material[:idx+1]:
+            startindex = round2int(position*1e-9/dx)
+            position += layer[0] # update position to end of the layer
+            finishindex = round2int(position*1e-9/dx)
+        mask = np.zeros(self.n_max,dtype=bool)
+        mask[startindex:finishindex] = True
+        return mask
+        
 
 # DO NOT EDIT UNDER HERE FOR PARAMETERS
 # --------------------------------------
@@ -488,7 +508,10 @@ def psi_at_inf2(E,fis,model,n_max,dx):
     return psi_at_inf(E,fis,cb_meff,n_max,dx)
 
 try:
-    from psi_at_inf_cython import psi_at_inf_numpy
+    if __package__: #explicit relative imports for using aestimo as a package (in python3)
+        from .psi_at_inf_cython import psi_at_inf_numpy
+    else:
+        from psi_at_inf_cython import psi_at_inf_numpy
     
     def psi_at_inf1_cython(E,fis,model,n_max,dx):
         return psi_at_inf_numpy(E,fis,model.cb_meff,n_max,dx)
@@ -1095,7 +1118,7 @@ def save_and_plot(result,model):
     # Resultviewer
         
     if config.resultviewer:
-        fig1 = pl.figure(figsize=(10,8))
+        fig1 = pl.figure()
         pl.suptitle('Aestimo Results')
         pl.subplots_adjust(hspace=0.4,wspace=0.4)
                             
@@ -1138,7 +1161,7 @@ def save_and_plot(result,model):
         
         #QW representation
         #figure(5)
-        fig2 = pl.figure(figsize=(10,8))
+        fig2 = pl.figure()
         pl.suptitle('Aestimo Results')
         pl.subplot(1,1,1)
         pl.plot(xaxis, result.fitot*J2meV,'k')
@@ -1152,7 +1175,7 @@ def save_and_plot(result,model):
         pl.grid(True)
         
         #dispersion plot
-        fig3 = pl.figure(figsize=(10,8))
+        fig3 = pl.figure()
         pl.suptitle('Subband Dispersions')
         ax = pl.subplot(1,1,1)
         result.level_dispersions
@@ -1179,7 +1202,7 @@ def save_and_plot(result,model):
 def QWplot(result,figno=None):
     """QW representation"""
     xaxis = result.xaxis
-    fig = pl.figure(figno,figsize=(10,8))
+    fig = pl.figure(figno)
     pl.suptitle('Aestimo Results')
     ax = pl.subplot(1,1,1)
     ax.plot(xaxis, result.fitot*J2meV,'k')
@@ -1196,7 +1219,7 @@ def QWplot(result,figno=None):
         
 def dispersionplot(result,figno=None):
     """subband dispersion plot"""
-    fig = pl.figure(figno,figsize=(10,8))
+    fig = pl.figure(figno)
     pl.suptitle('Subband Dispersions')
     ax = pl.subplot(1,1,1)
     result.level_dispersions
