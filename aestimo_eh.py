@@ -54,7 +54,7 @@ import os
 from math import log,exp,sqrt
 import VBHM
 from scipy import linalg
-from VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V
+from VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V,VBMAT_V_2
 import config,database
 from aestimo_poisson1d import Poisson_equi2,equi_np_fi,Write_results_equi2,equi_np_fi2,equi_np_fi3
 from aestimo_poisson1d import Poisson_equi1, Mobility2, Continuity2, Poisson_non_equi2, Current2,Write_results_non_equi2,Write_results_equi1,amort_wave
@@ -1128,35 +1128,36 @@ def wave_func_tri(j,Well_boundary,n_max,V1,V2,subnumber_h,subnumber_e,model):
     # Envelope Function Wave Functions
     wfh_general = np.zeros((model.N_wells_virtual,subnumber_h,n_max))
     wfe_general = np.zeros((model.N_wells_virtual,subnumber_e,n_max))
-    n_max_general = np.zeros(model.N_wells_virtual,int)
+    #n_max_general = np.zeros(model.N_wells_virtual,int)
     n_max_general2 = np.zeros(model.N_wells_virtual,int)
     I1,I2,I11,I22 =amort_wave(j,Well_boundary,n_max)
+    i_1=I2-I1
     n_max_general2[j]=int(I2-I1)
-    n_max_general[j]=int(Well_boundary[j+1,0]-Well_boundary[j-1,1])
-    wfh1s2 = np.zeros((subnumber_h,3,n_max_general2[j]))
+    #n_max_general[j]=int(Well_boundary[j+1,0]-Well_boundary[j-1,1])
+    wfh1s2 = np.zeros((subnumber_h,3,i_1))
     maxwfh = np.zeros((subnumber_h,3))
     list = ['']*subnumber_h
     for i in range(0,subnumber_e,1):
-        wfe_general[j,i,0:n_max_general2[j]] = V1[j,0:n_max_general2[j],i]+1e-20                     
+        wfe_general[j,i,0:i_1] = V1[j,0:i_1,i]+1e-20                     
     wfh_pow=np.zeros(n_max)
     conter_hh,conter_lh,conter_so=0,0,0
     for jj in range(0,subnumber_h):
         for i in range(0,3):
-            wfh1s2[jj,i,:] = V2[j,i*n_max_general2[j]:(i+1)*n_max_general2[j],jj]
+            wfh1s2[jj,i,:] = V2[j,i*i_1:(i+1)*i_1,jj]
             wfh_pow=np.cumsum(wfh1s2[jj,i,:]*wfh1s2[jj,i,:])
-            maxwfh[jj,i]=wfh_pow[n_max_general2[j]-1]
+            maxwfh[jj,i]=wfh_pow[i_1-1]
         if np.argmax(maxwfh[jj,:])==0 :
             conter_hh+=1       
             list[jj]='hh%d'%conter_hh                               
-            wfh_general[j,jj,0:n_max_general2[j]]=wfh1s2[jj,np.argmax(maxwfh[jj,:]),:]+1e-20
+            wfh_general[j,jj,0:i_1]=wfh1s2[jj,np.argmax(maxwfh[jj,:]),:]+1e-20
         elif np.argmax(maxwfh[jj,:])==1:
             conter_lh+=1       
             list[jj]='lh%d'%conter_lh
-            wfh_general[j,jj,0:n_max_general2[j]]=wfh1s2[jj,np.argmax(maxwfh[jj,:]),:]+1e-20
+            wfh_general[j,jj,0:i_1]=wfh1s2[jj,np.argmax(maxwfh[jj,:]),:]+1e-20
         else:
             conter_so+=1       
             list[jj]='so%d'%conter_so
-            wfh_general[j,jj,0:n_max_general2[j]]=wfh1s2[jj,np.argmax(maxwfh[jj,:]),:]+1e-20
+            wfh_general[j,jj,0:i_1]=wfh1s2[jj,np.argmax(maxwfh[jj,:]),:]+1e-20
     return wfh_general,wfe_general,list,n_max_general2
 # -----------------------------------------------------------------------------
 
@@ -1246,11 +1247,11 @@ def Strain_and_Masses(model):
         m_so = -m_e/(model.A2)    
     return m_hh,m_lh,m_so,VNIT,ZETA,CNIT,Ppz_Psp,EPC
 
-def calc_E_state_general(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO):
+def calc_E_state_general(HUPMAT3_reduced_list,HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO):
     n_max=model.n_max
     n_max_general=np.zeros(model.N_wells_virtual,dtype=int)
-    HUPMAT3=np.zeros((n_max*3, n_max*3))
-    HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)
+    #HUPMAT3=np.zeros((n_max*3, n_max*3))
+    #HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)
     HUPMATC3=CBMAT_V(HUPMATC1,fitotc,RATIO,n_max,UNIM)
     #stop
     tmp1=np.zeros((model.N_wells_virtual,n_max))
@@ -1289,16 +1290,25 @@ def calc_E_state_general(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,m
                 couter+=1
         if (couter>subnumber_e):
             print("For this QW, the number confined states of e-levels is: ",couter)    
-    tmp=np.zeros((model.N_wells_virtual,n_max*3))
+    
     KPV2=np.zeros((model.N_wells_virtual,subnumber_h))
-    V2=np.zeros((model.N_wells_virtual,n_max*3,n_max*3))
-    V22=np.zeros((model.N_wells_virtual,n_max*3,n_max*3))
+
+    V22=np.zeros((model.N_wells_virtual,n_max,n_max))
+    n_max_general3 = np.zeros(model.N_wells_virtual,int)
+    wfh_general3 = np.zeros((model.N_wells_virtual,i2,n_max))
     for k in range(1,model.N_wells_virtual-1):
         I1,I2,I11,I22 =amort_wave(k,Well_boundary,n_max)
         i_1=I2-I1
-        HUPMAT3_general=np.zeros((i_1*3,i_1*3))
+        
+        V2=np.zeros((model.N_wells_virtual,i_1*3,i_1*3))        
+        tmp=np.zeros((model.N_wells_virtual,i_1*3))        
+        #HUPMAT3_general=np.zeros((i_1*3,i_1*3))
+        HUPMAT3_general_2=np.zeros((i_1*3,i_1*3))
         i1=I1-I1
         i2=I2-I1
+        HUPMAT3_general_2=HUPMAT3_reduced_list[k-1]
+        HUPMAT3_general_2=VBMAT_V_2(HUPMAT3_general_2,fitot,RATIO,i_1,I1,UNIM)
+        """
         HUPMAT3_general[i1:i2,i1:i2]=HUPMAT3[I1:I2,I1:I2]
         HUPMAT3_general[i1+i_1:i2+i_1,i1:i2]=HUPMAT3[I1+n_max:I2+n_max,I1:I2]
         HUPMAT3_general[i1:i2,i1+i_1:i2+i_1]=HUPMAT3[I1:I2,I1+n_max:I2+n_max]
@@ -1308,78 +1318,48 @@ def calc_E_state_general(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,m
         HUPMAT3_general[i1+i_1*2:i2+i_1*2,i1+i_1*2:i2+i_1*2]=HUPMAT3[I1+n_max*2:I2+n_max*2,I1+n_max*2:I2+n_max*2]
         HUPMAT3_general[i1+i_1:i2+i_1,i1+i_1*2:i2+i_1*2]=HUPMAT3[I1+n_max:I2+n_max,I1+n_max*2:I2+n_max*2]
         HUPMAT3_general[i1+i_1*2:i2+i_1*2,i1+i_1:i2+i_1]=HUPMAT3[I1+n_max*2:I2+n_max*2,I1+n_max:I2+n_max]
-        la2,v2= linalg.eigh(HUPMAT3_general)     
+        """
+        la2,v2= linalg.eigh(HUPMAT3_general_2)     
         tmp[k,i1:i2*3]=-la2/RATIO*J2meV
         V2[k,i1:i2*3,i1:i2*3]=v2
 
         if (max(tmp[k,0:subnumber_h])>max(fitot[I11:I22])*J2meV and 1==2):
             logger.warning(":You may experience convergence problem due to unconfined states.")
-    """
-    for j in range(1,model.N_wells_virtual-1):
-        for i in range(0,subnumber_h,1):
-            KPV2[j,i]=tmp[j,i]
-    """
-    n_max_general3 = np.zeros(model.N_wells_virtual,int)
-    wfh_general3 = np.zeros((model.N_wells_virtual,i2,n_max))
-    for j in range(1,model.N_wells_virtual-1):
-        I1,I2,I11,I22 =amort_wave(j,Well_boundary,n_max)
-        i_1=I2-I1
-        i1=I1-I1
-        i2=I2-I1
+
         i11=I11-I1
         i22=I22-I1
-        n_max_general3[j]=int(I2-I1)
-        wfh1s3 = np.zeros((i2,3,n_max_general3[j]))
+        n_max_general3[k]=int(I2-I1)
+        wfh1s3 = np.zeros((i2,3,n_max_general3[k]))
         maxwfh = np.zeros((i2,3))        
         couter1=0            
         for i in range(i1,i2):
-            for k in range(0,3):
-                wfh1s3[i,k,:] = V2[j,k*n_max_general3[j]:(k+1)*n_max_general3[j],i]
-                wfh_pow=np.cumsum(wfh1s3[i,k,:]*wfh1s3[i,k,:])
-                maxwfh[i,k]=wfh_pow[n_max_general3[j]-1]
+            for kk in range(0,3):
+                wfh1s3[i,kk,:] = V2[k,kk*n_max_general3[k]:(kk+1)*n_max_general3[k],i]
+                wfh_pow=np.cumsum(wfh1s3[i,kk,:]*wfh1s3[i,kk,:])
+                maxwfh[i,kk]=wfh_pow[n_max_general3[k]-1]
             if np.argmax(maxwfh[i,:])==0 :
-                wfh_general3[j,i,0:n_max_general3[j]]=wfh1s3[i,np.argmax(maxwfh[i,:]),:]
+                wfh_general3[k,i,0:n_max_general3[k]]=wfh1s3[i,np.argmax(maxwfh[i,:]),:]
             elif np.argmax(maxwfh[i,:])==1:
-                wfh_general3[j,i,0:n_max_general3[j]]=wfh1s3[i,np.argmax(maxwfh[i,:]),:]
+                wfh_general3[k,i,0:n_max_general3[k]]=wfh1s3[i,np.argmax(maxwfh[i,:]),:]
             else:
-                wfh_general3[j,i,0:n_max_general3[j]]=wfh1s3[i,np.argmax(maxwfh[i,:]),:]                                
+                wfh_general3[k,i,0:n_max_general3[k]]=wfh1s3[i,np.argmax(maxwfh[i,:]),:]                                
             
-            wfh_pow1=np.cumsum(wfh_general3[j,i,i11:i22]*wfh_general3[j,i,i11:i22])
+            wfh_pow1=np.cumsum(wfh_general3[k,i,i11:i22]*wfh_general3[k,i,i11:i22])
             
-            if (tmp[j,i]<max(fitot[I11-1:I22+1])*J2meV and tmp[j,i]>min(fitot[I11-1:I22+1])*J2meV) and couter1+1<=subnumber_h and (wfh_pow1[i22-i11-1]>1e-1) :
+            if (tmp[k,i]<max(fitot[I11-1:I22+1])*J2meV and tmp[k,i]>min(fitot[I11-1:I22+1])*J2meV) and couter1+1<=subnumber_h and (wfh_pow1[i22-i11-1]>1e-1) :
                 #print(wfh_pow1[i22-i11-1],'!=0')
                 #print(max(fitot[I11-1:I22+1])*J2meV ,'>',tmp[j,i],'>',min(fitot[I11-1:I22+1])*J2meV) 
-                KPV2[j,couter1]=tmp[j,i]
-                V22[j,i1:i2*3,couter1]+=V2[j,i1:i2*3,i]
+                KPV2[k,couter1]=tmp[k,i]
+                V22[k,i1:i2*3,couter1]+=V2[k,i1:i2*3,i]
                 couter1+=1
         if (couter1>subnumber_h):
             print("For this QW, the number confined states of h-levels is: ",couter1 )            
     return KPV1,V11,KPV2,V22
 
-def calc_E_state(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,UNIM,RATIO):#not used
-    n_max=model.n_max
-    HUPMAT3=np.zeros((n_max*3, n_max*3))
-    HUPMAT3=VBMAT_V(HUPMAT1,fitot,RATIO,n_max,UNIM)
-    HUPMATC3=CBMAT_V(HUPMATC1,fitotc,RATIO,n_max,UNIM)
-    #stop
-    KPV1=[0.0]*subnumber_e
-    la1,v1= linalg.eigh(HUPMATC3)
-    tmp1=la1/RATIO*J2meV
-    tmp1=tmp1.tolist()
-    for i in range(0,subnumber_e,1):
-        KPV1[i]=tmp1[i]
-    KPV2=[0.0]*subnumber_h 
-    la2,v2= linalg.eigh(HUPMAT3) 
-    tmp=-la2/RATIO*J2meV
-    tmp=tmp.tolist()
-    for i in range(0,subnumber_h,1):
-        KPV2[i]=tmp[i]
-    return KPV1,v1,KPV2,v2
-
 def Main_Str_Array(model):
     n_max=model.n_max
-    HUPMAT1=np.zeros((n_max*3, n_max*3))
-    HUPMATC1=np.zeros((n_max, n_max))
+    #HUPMAT1=np.zeros((n_max*3, n_max*3))
+    #HUPMATC1=np.zeros((n_max, n_max))
     x_max=model.dx*n_max
     m_hh,m_lh,m_so,VNIT,ZETA,CNIT,Ppz_Psp,EPC=Strain_and_Masses(model)
     UNIM = np.identity(n_max)
@@ -1395,15 +1375,15 @@ def Main_Str_Array(model):
         HUPMAT1=-VBMAT2(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,x_max,n_max,AC1,UNIM,KPINT,DEL3,DEL1,DEL2)
         HUPMATC1=CBMAT(KP,Pce,model.cb_meff/m_e,x_max,n_max,AC1,UNIM,KPINT)
     return HUPMAT1,HUPMATC1,m_hh,m_lh,m_so,Ppz_Psp
-def Schro(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max):
-    V1=np.zeros((model.N_wells_virtual,n_max,n_max))
-    V2=np.zeros((model.N_wells_virtual,n_max*3,n_max*3))
+def Schro(HUPMAT3_reduced_list,HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max):    
+    #V1=np.zeros((model.N_wells_virtual,n_max,n_max))
+    #V2=np.zeros((model.N_wells_virtual,n_max*3,n_max*3))
     n_max_general=np.zeros(model.N_wells_virtual,dtype=int)
     wfh_general = np.zeros((model.N_wells_virtual,subnumber_h,n_max))
     wfe_general = np.zeros((model.N_wells_virtual,subnumber_e,n_max)) 
     meff_statec_general= np.zeros((model.N_wells_virtual,subnumber_e))
     meff_state_general= np.zeros((model.N_wells_virtual,subnumber_h))             
-    E_statec_general,V1,E_state_general,V2=calc_E_state_general(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO)
+    E_statec_general,V1,E_state_general,V2=calc_E_state_general(HUPMAT3_reduced_list,HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO)
     for j in range(1,model.N_wells_virtual-1):
         wfh_general_tmp = np.zeros((model.N_wells_virtual,subnumber_h,n_max))
         wfe_general_tmp = np.zeros((model.N_wells_virtual,subnumber_e,n_max))                   
@@ -1454,12 +1434,33 @@ def Poisson_Schrodinger(model):
     N_wells_virtual = model.N_wells_virtual
     Well_boundary=model.Well_boundary
     Ppz_Psp= np.zeros(n_max)
+    """
     HUPMAT1=np.zeros((n_max*3, n_max*3))
     HUPMATC1=np.zeros((n_max, n_max))
+    """
     UNIM = np.identity(n_max)
     x_max=dx*n_max
     RATIO=m_e/hbar**2*(x_max)**2  
     HUPMAT1,HUPMATC1,m_hh,m_lh,m_so,Ppz_Psp=Main_Str_Array(model)
+    HUPMAT3_reduced_list=[]
+    ###################
+    for k in range(1,model.N_wells_virtual-1):
+        I1,I2,I11,I22 =amort_wave(k,Well_boundary,n_max)
+        i_1=I2-I1
+        HUPMAT3_reduced=np.zeros((i_1*3,i_1*3))
+        i1=I1-I1
+        i2=I2-I1
+        HUPMAT3_reduced[i1:i2,i1:i2]=HUPMAT1[I1:I2,I1:I2]
+        HUPMAT3_reduced[i1+i_1:i2+i_1,i1:i2]=HUPMAT1[I1+n_max:I2+n_max,I1:I2]
+        HUPMAT3_reduced[i1:i2,i1+i_1:i2+i_1]=HUPMAT1[I1:I2,I1+n_max:I2+n_max]
+        HUPMAT3_reduced[i1+i_1:i2+i_1,i1+i_1:i2+i_1]=HUPMAT1[I1+n_max:I2+n_max,I1+n_max:I2+n_max]
+        HUPMAT3_reduced[i1+i_1*2:i2+i_1*2,i1:i2]=HUPMAT1[I1+n_max*2:I2+n_max*2,I1:I2]
+        HUPMAT3_reduced[i1:i2,i1+i_1*2:i2+i_1*2]=HUPMAT1[I1:I2,I1+n_max*2:I2+n_max*2]
+        HUPMAT3_reduced[i1+i_1*2:i2+i_1*2,i1+i_1*2:i2+i_1*2]=HUPMAT1[I1+n_max*2:I2+n_max*2,I1+n_max*2:I2+n_max*2]
+        HUPMAT3_reduced[i1+i_1:i2+i_1,i1+i_1*2:i2+i_1*2]=HUPMAT1[I1+n_max:I2+n_max,I1+n_max*2:I2+n_max*2]
+        HUPMAT3_reduced[i1+i_1*2:i2+i_1*2,i1+i_1:i2+i_1]=HUPMAT1[I1+n_max*2:I2+n_max*2,I1+n_max:I2+n_max]    
+        HUPMAT3_reduced_list.append(HUPMAT3_reduced)    
+    ##################
     # Check
     if comp_scheme ==6:
         logger.warning("""The calculation of Vxc depends upon m*, however when non-parabolicity is also 
@@ -1561,10 +1562,10 @@ def Poisson_Schrodinger(model):
         if model.N_wells_virtual-2!=0:
             if config.predic_correc:
                 if iteration==1: 
-                    E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
+                    E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT3_reduced_list,HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
                 damping=0.15   
             else:
-                E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
+                E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT3_reduced_list,HUPMAT1,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
                 damping=0.15#0.1 works between high and low doping
             n,p,fi,EF,fi_old0 =Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,ni,n_max,iteration,fi,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface,fi_old0)             
         else:
