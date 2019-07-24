@@ -33,7 +33,7 @@ Vapplied=1.8# (V)
 
 # GRID
 # For 1D, z-axis is choosen
-gridfactor = 1#nm
+gridfactor = 0.5#nm
 maxgridpoints = 200000 #for controlling the size
 mat_type='Zincblende'
 # REGIONS

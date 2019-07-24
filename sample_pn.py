@@ -36,7 +36,7 @@ subnumber_e = 1
 subnumber_h = 2
 # APPLIED ELECTRIC FIELD
 Fapplied =  0.0# (V/m)2.5e7/50e-9
-Vapplied=0.79# (V)
+Vapplied=0.65# (V)
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
@@ -54,8 +54,8 @@ mat_type='Zincblende'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material =[[3140.5, 'Si', 0.0, 0.0, 1e+16, 'p','b'],          
-            [3140.5, 'Si', 0.0, 0.0, 1e+17, 'n','b']]
+material =[[3140.5, 'Si', 0.0, 0.0, 0.7e+16, 'p','b'],          
+            [3140.5, 'Si', 0.0, 0.0, 0.7e+17, 'n','b']]
 import numpy as np
 x_max = sum([layer[0] for layer in material])
 def round2int(x):

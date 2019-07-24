@@ -212,15 +212,15 @@ materialproperty = {
 'VSATP':6e5 # Saturation Velocity of Holes
 },
 'GaN':{ 
-'m_e':0.2,
+'m_e':0.21,#☻.22
 'm_e_alpha':5.3782e18,
-'m_hh':1.2,
-'m_lh':0.8,
-'m_so':0.5,
+'m_hh':1.87,#1.1 1
+'m_lh':0.14,#1.1
+'m_so':0.5,#0.15
 'epsilonStatic':9.5,
 'Eg':3.437,# 3.44 Madelung (1991)
 'Bowing_param':3.2,
-'Band_offset':0.677,
+'Band_offset':0.63,
 'A1':-6.4,#-6.56 -0.91 5.65 -2.83 -3.13 -4.86
 'A2':-0.5,
 'A3':5.9,
@@ -234,39 +234,39 @@ materialproperty = {
 'D5':-4,
 'D6':-5.65,
 'Ac':-4.60,
-'a0_wz':3.1892,#3.189 5.185
+'a0_wz':3.189,#3.189 5.185
 'C11':37.,
 'C12':14.5,
 'C13':10.3,
-'C33':39.0,
+'C33':39.0,#40.4
 'C44':9.5,
 'C66':12.3,
-'D15':-1.7e-12,
-'D31':-1.25e-12,
-'D33':2.291e-12,
-'Psp':-0.034,
-'delta_so':0.015,
-'delta_cr':0.022,
-'a0_sub':3.1892,
-'TAUN0':0.1E-7,# Electron SRH life time
-'TAUP0':0.1E-7,# Hole SRH life time
-'mun0':0.1,# Electron Mobility in m2/V-s
-'mup0':0.02,# Electron Mobility in m2/V-s
-'BETAN':1.0,# Parameter in calculatation of the Field Dependant Mobility
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
-'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 # Saturation Velocity of Holes
+'D15':-1.579e-12,#-1.579e-12      -1.7e-12
+'D31':-1.253e-12,#-1.253e-12      -1.6e-12 
+'D33':2.291e-12,# 2.291e-12     2.291e-12
+'Psp':-0.029,#-0.029 -0.034 
+'delta_so':0.015,#15.5mev
+'delta_cr':0.022,#72.9mev
+'a0_sub':3.189,
+'TAUN0':5.1e-8,# Electron SRH life time
+'TAUP0':5.1e-8,# Hole SRH life time
+'mun0':0.1,# Electron Mobility in m2/V-s 0.1 0.2
+'mup0':0.02,# Electron Mobility in m2/V-s 0.03 0.02
+'BETAN':2,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':2,# Parameter in calculatation of the Field Dependant Mobility
+'VSATN':3e5,#3e5 Saturation Velocity of Electrons 1.5e5 2.5e5 2.7e5 2e5
+'VSATP': 6e5#6e5 Saturation Velocity of Holes 1.5e5
 },
 'InN':{#now
-'m_e':0.11,
+'m_e':0.07,#0.11
 'm_e_alpha':5.3782e18,
-'m_hh':1.2,
-'m_lh':0.8,
-'m_so':0.5,
+'m_hh':1.61,#1.61
+'m_lh':0.11,#1.61
+'m_so':0.5,#0.1
 'epsilonStatic':15.3,
-'Eg':0.608,#0.76
+'Eg':0.608,#0.76 0.608
 'Bowing_param':3.2,
-'Band_offset':0.677,#
+'Band_offset':0.63,#
 'A1':-9.09,#-9.28 -0.60 8.68 -4.34 -4.32 -6.08
 'A2':-0.63,
 'A3':8.46,
@@ -287,21 +287,21 @@ materialproperty = {
 'C33':20.5,
 'C44':9.5,
 'C66':7.4,
-'D15':-1.1e-12,
-'D31':-3.147e-12,
-'D33':6.201e-12,
-'Psp':-0.032,
-'delta_so':0.001,
-'delta_cr':0.041,
-'a0_sub':3.1892,
-'TAUN0':0.1E-7,# Electron SRH life time
-'TAUP0':0.1E-7,# Hole SRH life time
-'mun0':0.1,# Electron Mobility in m2/V-s
-'mup0':0.02,# Electron Mobility in m2/V-s
-'BETAN':1.3,# Parameter in calculatation of the Field Dependant Mobility
-'BETAP':1.3,# Parameter in calculatation of the Field Dependant Mobility
-'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 # Saturation Velocity of Holes
+'D15':-2.292e-12,#-2.292e-12 -1.1e-12
+'D31':-3.147e-12,#-3.147e-12 -3.5e-12
+'D33':6.201e-12,#6.201e-12
+'Psp':-0.032,#-0.032 -0.042 
+'delta_so':0.001,#5mev
+'delta_cr':0.041,#40mev
+'a0_sub':3.189,
+'TAUN0':5.1e-8,# Electron SRH life time
+'TAUP0':5.1e-8,# Hole SRH life time
+'mun0':0.1,# Electron Mobility in m2/V-s 0.1 0.2
+'mup0':0.02,# Electron Mobility in m2/V-s 0.03 0.02
+'BETAN':2,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1,# Parameter in calculatation of the Field Dependant Mobility
+'VSATN':3e5,#3e5 Saturation Velocity of Electrons 1.5e5
+'VSATP':6e5 #6e5 Saturation Velocity of Holes 1.5e5
 },
 'AlN':{
 'm_e':0.22,
@@ -332,12 +332,12 @@ materialproperty = {
 'C13':10.8,
 'C33':37.7,
 'C44':11.6,
-'D15':-2.0e-12,
-'D31':-2.650e-12,
-'D33':5.53e-12,
-'Psp':-0.081,
-'delta_so':0.019,
-'delta_cr':-0.164,
+'D15':-2.0e-12,#−2.069e-12      −4.08e-12
+'D31':-2.650e-12,#−2.298e-12    −2.65e-12
+'D33':5.53e-12,#5.352e-12        5.53e-12
+'Psp':-0.081,#-0.081 −0.09
+'delta_so':0.019,#20.4mev
+'delta_cr':-0.164,#−58.5mev
 'a0_sub':3.189,
 'TAUN0':0.1E-7,# Electron SRH life time
 'TAUP0':0.1E-7,# Hole SRH life time
@@ -345,8 +345,8 @@ materialproperty = {
 'mup0':0.02,# Electron Mobility in m2/V-s
 'BETAN':0.45,# Parameter in calculatation of the Field Dependant Mobility
 'BETAP':0.45,# Parameter in calculatation of the Field Dependant Mobility
-'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 # Saturation Velocity of Holes
+'VSATN':3e5,# Saturation Velocity of Electrons 1.5e5
+'VSATP':6e5 # Saturation Velocity of Holes 1.5e5
 },
 'CdO':{
 'm_e':0.12,
@@ -471,8 +471,8 @@ materialproperty = {
 'D31':-5e-12,
 'D33':1e-12,
 'Psp':-0.05,
-'delta_so':0.0126,
-'delta_cr':0.0305,
+'delta_so':0.0126,#16mev
+'delta_cr':0.0305,#43mev
 'a0_sub':3.250,
 'TAUN0':0.1E-7,# Electron SRH life time
 'TAUP0':0.1E-7,# Hole SRH life time
@@ -651,7 +651,7 @@ alloyproperty = {
 'VSATP':6e5 # Saturation Velocity of Holes
 },
 'AlGaN':{
-'Bowing_param':1.3,
+'Bowing_param':1.3,#0.7 1.3 1
 'Band_offset':0.67,
 'm_e_alpha':5.3782e18,
 'a0_sub':3.189,
@@ -660,32 +660,32 @@ alloyproperty = {
 'Material2':'GaN',
 'TAUN0':0.1E-6,
 'TAUP0':0.1E-6,
-'mun0':0.15,
-'mup0':0.1,
+'mun0':0.15,#0.1 0.015
+'mup0':0.1,#0.03 0.1
 'BETAN':2.0,
 'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
 'VSATP':6e5 # Saturation Velocity of Holes
 },
 'InGaN':{
-'Bowing_param':3.2,#3.2
-'Band_offset':0.63,#0.677
+'Bowing_param':1.4,#1.4 3.8 3
+'Band_offset':0.63,#0.677 0.63
 'm_e_alpha':0.0,
 'a0_sub':3.189,
 'c0_sub':4.982,
 'Material1':'InN',
 'Material2':'GaN',
-'TAUN0':0.1E-6,
-'TAUP0':0.1E-6,
-'mun0':0.15,
-'mup0':0.1,
+'TAUN0':5.2e-8,
+'TAUP0':5.2e-8,
+'mun0':0.1,#0.1 0.015
+'mup0':0.02,#0.03 0.1
 'BETAN':2.0,
 'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
-'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 # Saturation Velocity of Holes
+'VSATN':3e5,# 3e5Saturation Velocity of Electrons 1.5e5
+'VSATP':6e5 #6e5 Saturation Velocity of Holes 1.5e5
 },
 'AlInN':{
-'Bowing_param':3.6,
+'Bowing_param':3.6,#2.5
 'Band_offset':0.677,
 'm_e_alpha':0.0,
 'a0_sub':3.189,

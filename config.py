@@ -73,14 +73,15 @@ max_iterations=80 #maximum number of iterations.
 convergence_test=1e-4 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
 
 # Aestimo_numpy_h
-predic_correc=False#predictor corrector method
+predic_correc=True#predictor corrector method
 anti_crossing_length=0.0001 # the lower lenght limit to consider anti-crossing (nm), works with old versions
 amort_wave_0=1.5#ratio of half well's width for wavefunction  to penetration into the the left adjacent barrier
 amort_wave_1=1.5#ratio of half well's width for wavefunction to penetration into the the right adjacent barrier
 strain =True # for aestimo_numpy_eh
 piezo=False # directly calculationg the induced electric field,for old poisson solver, works with old versions
-piezo1=False #indirectly using interface charges.
-quantum_effect=False#temporary
+piezo1=True #indirectly using interface charges.
+quantum_effect=True#temporary
+piezo_test=1
 #--------------
 parameters=False
 

@@ -22,11 +22,11 @@ computation_scheme = 7
 
 # QUANTUM
 # Total subband number to be calculated for electrons
-subnumber_h = 2
+subnumber_h = 1
 subnumber_e = 1
 # APPLIED ELECTRIC FIELD
 Fapplied =  0.0# (V/m)2.5e7/50e-9
-
+Vapplied=3.4
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
@@ -45,14 +45,15 @@ mat_type='Wurtzite'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material =[[ 30.0, 'AlGaN', 0.05, 0.0, 1e-10, 'p','b'],
-            [ 2.0, 'AlGaN', 0.05, 0.0, 5e18, 'p','b'],
+material =[[ 300.0, 'AlGaN', 0.05, 0.0, 5e18, 'p','b'],
             [ 2.0, 'InGaN', 0.2, 0.0, 1e-10,'n','w'],
             [ 5.0, 'GaN', 0.0, 0.0, 1e-10, 'n','b'],
             [ 2.0, 'InGaN', 0.2, 0.0, 1e-10,'n','w'],
-            [ 2.0, 'AlGaN', 0.05, 0.0, 5e18, 'n','b'],
-            [ 30.0, 'AlGaN', 0.05, 0.0, 1e-10, 'n','b']]
+            [ 200.0, 'AlGaN', 0.05, 0.0, 5e18, 'n','b']]
 
+material1 =[[ 20.0, 'AlGaN', 0.3, 0.0, 5e16, 'p','b'],
+            [ 10.0, 'GaN', 0.2, 0.0, 1e18,'p','w'],
+            [ 20.0, 'AlGaN', 0.3, 0.0, 5e16, 'p','b']]
 import numpy as np
 x_max = sum([layer[0] for layer in material])
 def round2int(x):

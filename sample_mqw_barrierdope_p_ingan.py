@@ -33,7 +33,7 @@ Vapplied=3.4 # (V)
 
 # GRID
 # For 1D, z-axis is choosen
-gridfactor = 0.1 #nm
+gridfactor = 0.2 #nm
 maxgridpoints = 200000 #for controlling the size
 mat_type='Wurtzite'
 # REGIONS
@@ -45,21 +45,19 @@ mat_type='Wurtzite'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material1 =[[ 2.0, 'GaN', 0.05, 0.0, 0.0, 'n','b'],
-            [ 2.0, 'GaN', 0.05, 0.0, 1.5e18, 'n','b'],
-            [ 2.0, 'InGaN', 0.2, 0.0, 0,'n','w'],
+material =[[ 100.0, 'GaN', 0.05, 0.0, 1.5e18, 'p','b'],
+            [ 2.0, 'InGaN', 0.05, 0.0, 0,'n','w'],
             [ 2.0, 'GaN', 0.0, 0.0, 0.0, 'n','b'],
-            [ 2.0, 'InGaN', 0.1, 0.0, 0,'n','w'],
-            [ 2.0, 'GaN', 0.05, 0.0, 1.5e18, 'n','b'],
-            [ 2.0, 'GaN', 0.05, 0.0, 0.0, 'n','b']]
+            [ 2.0, 'InGaN', 0.05, 0.0, 0,'n','w'],
+            [ 100.0, 'GaN', 0.05, 0.0, 1.5e18, 'n','b']]
 
-material =[ [ 20.0, 'AlGaN', 0.05, 0.0, 0.0, 'n','b'],
+material2 =[ [ 20.0, 'AlGaN', 0.05, 0.0, 0.0, 'n','b'],
             [ 2.0, 'InGaN', 0.2, 0.0, 0,'n','w'],
             [ 5.0, 'GaN', 0.0, 0.0, 0.0, 'n','b'],
             [ 2.0, 'InGaN', 0.1, 0.0, 0,'n','w'],
             [ 20.0, 'GaN', 0.05, 0.0, 0.0, 'n','b']]
 
-material2 =[ [ 500.0, 'GaN', 0.0, 0.0, 3e18, 'n','b'],
+material1 =[ [ 500.0, 'GaN', 0.0, 0.0, 3e18, 'n','b'],
             [ 3.5, 'InGaN', 0.2, 0.0, 0.0,'i','w'],
             [ 100.0, 'AlGaN', 0.1, 0.0, 7e19, 'p','b'],
             [ 200.0, 'GaN', 0.0, 0.0, 7e19, 'p','b']]

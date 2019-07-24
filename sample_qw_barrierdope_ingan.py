@@ -19,14 +19,14 @@ T = 300.0 #Kelvin
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 # 7: Schrodinger-Poisson-Drift_Diffusion
 
-computation_scheme = 2
+computation_scheme = 8
 # QUANTUM
 # Total subband number to be calculated for electrons
 subnumber_h = 2
 subnumber_e = 2
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.#0.41348e8 (V/m)
-Vapplied=3.6
+Vapplied=3.1
 
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
@@ -47,7 +47,7 @@ mat_type='Wurtzite'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 # To input this list in Gallium, we use lists N:
 
-material11 =[[ 100.0 , 'GaN'  , 0.3 , 0.0, 3e18, 'n','b'],         
+material2 =[[ 100.0 , 'GaN'  , 0.3 , 0.0, 3e18, 'n','b'],         
            [ 50.0  , 'InGaN', 0.1 , 0.0, 3e18, 'n','b'],
            [ 100.0 , 'AlGaN', 0.14, 0.0, 3e18, 'n','b'],
            [ 50.0  , 'GaN'  , 0.3 , 0.0, 7e17, 'n','b'],
@@ -63,7 +63,7 @@ material11 =[[ 100.0 , 'GaN'  , 0.3 , 0.0, 3e18, 'n','b'],
            [ 100.0 , 'AlGaN', 0.14, 0.0, 1e20, 'p','b'],           
            [ 30.0  , 'GaN'  , 0.3 , 0.0, 2e20, 'p','b']]
 
-material1 =[[ 30.0  , 'GaN'  , 0.3 , 0.0, 2e20, 'p','b'],           
+material =[[ 30.0  , 'GaN'  , 0.3 , 0.0, 2e20, 'p','b'],           
            [ 100.0 , 'AlGaN', 0.14, 0.0, 1e20, 'p','b'],                      
            [ 50.0  , 'GaN'  , 0.3 , 0.0, 5e18, 'p','b'],
            [ 20.0  , 'AlGaN', 0.2 , 0.0, 1e19, 'p','b'],           
@@ -79,7 +79,7 @@ material1 =[[ 30.0  , 'GaN'  , 0.3 , 0.0, 2e20, 'p','b'],
            [ 50.0  , 'InGaN', 0.1 , 0.0, 3e18, 'n','b'],
            [ 100.0 , 'GaN'  , 0.3 , 0.0, 3e18, 'n','b']]
 
-material =[[ 15.0, 'GaN', 0.3, 0.0, 1e18, 'n','b'],
+material1 =[[ 15.0, 'GaN', 0.3, 0.0, 1e18, 'n','b'],
            [ 20.0, 'AlGaN', 0.3, 0.0, 1e18,'n','b'],
            [ 5.0, 'AlGaN', 0.3, 0.0, 0.0,'i','b'],
            [ 3.0, 'GaN', 0.3, 0.0, 0.0,'i','w'],

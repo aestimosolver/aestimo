@@ -22,11 +22,11 @@ computation_scheme = 2
 
 # QUANTUM
 # Total subband number to be calculated for electrons
-subnumber_h = 3
-subnumber_e = 3
+subnumber_h = 1
+subnumber_e = 1
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.#0.41348e8 (V/m)
-Vapplied=1.8# (V)
+Vapplied=1.6# (V)
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
@@ -45,9 +45,9 @@ mat_type='Zincblende'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 # To input this list in Gallium, we use lists N:
 material =[[ 245.0, 'AlGaAs', 0.3, 0.0, 1e17, 'p','b'],
-           [ 50.0, 'AlGaAs', 0.3, 0.0, 0.0, 'n','b'],
-           [ 15.0, 'GaAs', 0.3, 0.0, 0.0,'n','w'],
-           [ 5.0, 'AlGaAs', 0.3, 0.0, 0.0,'n','b'],
+           [ 50.0, 'AlGaAs', 0.3, 0.0, 0.0, 'i','b'],
+           [ 15.0, 'GaAs', 0.3, 0.0, 0.0,'i','w'],
+           [ 5.0, 'AlGaAs', 0.3, 0.0, 0.0,'i','b'],
            [ 20.0, 'AlGaAs', 0.3, 0.0, 0.95e18,'n','b'],           
            [ 15.0, 'GaAs', 0.3, 0.0, 0.95e18, 'n','b']]
 
@@ -70,7 +70,7 @@ dop_n=np.zeros(n_max)
 dop_p=np.zeros(n_max)
 dop_profile=np.zeros(n_max)
 surface=np.zeros(2)
-surface[1]=-0.6
+#surface[1]=-0.6
 xaxis = np.arange(0,n_max)*gridfactor#[nm]
 Q_n=2e12#implant dose [1/cm2]
 Rp_n=86#projected range Rp [nm]

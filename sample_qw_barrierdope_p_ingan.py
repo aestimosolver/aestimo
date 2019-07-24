@@ -26,7 +26,7 @@ subnumber_h = 3
 subnumber_e = 3
 # APPLIED ELECTRIC FIELD
 Fapplied =  0.0# (V/m)-20e8
-
+Vapplied=1.5
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------

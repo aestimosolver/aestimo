@@ -21,7 +21,7 @@ T = 300.0 #Kelvin
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 # 7: Schrodinger-Poisson-Drift_Diffusion
 
-computation_scheme = 7
+computation_scheme = 2
 
 # QUANTUM
 # Total subband number to be calculated for electrons
@@ -36,7 +36,7 @@ Vapplied=3.1
 contact=0.0
 # GRID
 # For 1D, z-axis is choosen
-gridfactor = 0.4#nm
+gridfactor = 0.5#nm
 maxgridpoints = 200000 #for controlling the size
 mat_type='Wurtzite'
 # REGIONS
@@ -48,12 +48,29 @@ mat_type='Wurtzite'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material =[[ 200.0, 'GaN',  0.0, 0.0, 1.2e19, 'p','b'],
-            [ 3.0, 'InGaN', 0.2, 0.0, 0.7e17, 'n','w'],
-            [ 15.0, 'GaN',  0.0, 0.0, 0.7e17, 'n','b'],
-            [ 3.0, 'InGaN', 0.2, 0.0, 0.7e17, 'n','w'],
-            [ 300.0, 'GaN', 0.0, 0.0, 4.2e18, 'n','b']]
 
+
+
+material  =[[ 200.0, 'GaN',  0.0, 0.0, 2e19, 'p','b'],
+            [ 3.0, 'InGaN', 0.2, 0.0, 0.01e17, 'n','w'],
+            [ 15.0, 'GaN',  0.0, 0.0, 0.01e17, 'n','b'],
+            [ 3.0, 'InGaN', 0.2, 0.0, 0.01e17, 'n','w'],
+            [ 300.0, 'GaN', 0.0, 0.0, 5e18, 'n','b']]
+
+material11  =[[ 15.0, 'GaN',  0.0, 0.0, 2e19, 'p','b'],
+            [ 3.0, 'InGaN', 0.2, 0.0, 0.01e17, 'n','w'],
+            [ 15.0, 'GaN',  0.0, 0.0, 0.01e17, 'n','b'],
+            [ 3.0, 'InGaN', 0.2, 0.0, 0.01e17, 'n','w'],
+            [ 15.0, 'GaN', 0.0, 0.0, 5e18, 'n','b']]
+material1 =[[ 200.0, 'GaN',  0.0, 0.0, 2e19, 'p','b'],
+            [ 3.0, 'InGaN', 0.2, 0.0, 1.0e17, 'n','w'],
+            [ 300.0, 'GaN', 0.0, 0.0, 5e18, 'n','b']]
+
+material2 =[[ 200.0, 'ZnO',  0.0, 0.0, 2e19, 'p','b'],
+            [ 3.0, 'CdZnO', 0.2, 0.0, 1.0e17, 'n','w'],
+            [ 15.0, 'ZnO',  0.0, 0.0, 1.0e17, 'n','b'],
+            [ 3.0, 'CdZnO', 0.2, 0.0, 1.0e17, 'n','w'],
+            [ 300.0, 'ZnO', 0.0, 0.0, 5e18, 'n','b']]
 
 material3 =[[ 200.0, 'GaN',  0.0, 0.0, 1.2e18, 'p','b'],
             [ 3.0, 'InGaN', 0.2, 0.0, 0.7e17, 'n','w'],
@@ -61,16 +78,20 @@ material3 =[[ 200.0, 'GaN',  0.0, 0.0, 1.2e18, 'p','b'],
             [ 3.0, 'InGaN', 0.2, 0.0, 0.7e17, 'n','w'],
             [ 300.0, 'GaN', 0.0, 0.0, 4.2e17, 'n','b']]
 
+material4  =[[ 200.0, 'GaN',  0.0, 0.0, 0.0, 'p','b'],
+            [ 3.0, 'InGaN', 0.2, 0.0, 0.0, 'n','w'],
+            [ 15.0, 'GaN',  0.0, 0.0, 0.0, 'n','b'],
+            [ 3.0, 'InGaN', 0.2, 0.0, 0.0, 'n','w'],
+            [ 300.0, 'GaN', 0.0, 0.0, 0.0, 'n','b']]
 
-
-material1 =[[ 200.0, 'GaN',  0.0, 0.0, 1.8e19, 'p','b'],
+material5 =[[ 200.0, 'GaN',  0.0, 0.0, 1.8e19, 'p','b'],
             [ 3.0, 'AlGaInN', 0.0, 0.2, 0.8e17, 'n','w'],
             [ 15.0, 'GaN',  0.0, 0.0, 0.8e17, 'n','b'],
             [ 3.0, 'AlGaInN', 0.0, 0.2, 0.8e17, 'n','w'],
             [ 300.0, 'GaN', 0.0, 0.0, 4.8e18, 'n','b']]
 
 
-material2 =[[ 300.0, 'GaN', 0.3, 0.0, 4.2e18, 'n','b'],
+material6 =[[ 300.0, 'GaN', 0.3, 0.0, 4.2e18, 'n','b'],
             [ 3.0, 'InGaN', 0.2, 0.0, 0.7e17, 'n','w'],
             [ 15.0,  'GaN', 0.3, 0.0, 0.7e17, 'n','b'],
             [ 3.0, 'InGaN', 0.2, 0.0, 0.7e17, 'n','w'],

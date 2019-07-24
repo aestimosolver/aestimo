@@ -18,7 +18,7 @@ T = 300.0 #Kelvin
 # 4: Schrodinger-Exchange interaction
 # 5: Schrodinger-Poisson + Exchange interaction
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
-computation_scheme = 2
+computation_scheme = 7
 
 # Non-parabolic effective mass function
 # 0: no energy dependence
@@ -31,18 +31,13 @@ fermi_np_scheme = True
 
 # QUANTUM
 # Total subband number to be calculated for electrons
-subnumber_e = 4
-subnumber_h = 4
+subnumber_e = 1
+subnumber_h = 1
 # APPLIED ELECTRIC FIELD
 Fapplied =  0.0# (V/m)2.5e7/50e-9
-# --------------------------------
-# REGIONAL SETTINGS FOR SIMULATION
-# --------------------------------
-T     = 300              # [K]
-Na = 1E22             # [1/cm^3]
-Nd = 1E23             # [1/cm^3]
+Vapplied=0.98# (V)
 # For 1D, z-axis is choosen
-gridfactor = 3
+gridfactor = 2
 maxgridpoints = 200000 #for controlling the size
 mat_type='Zincblende'
 # REGIONS

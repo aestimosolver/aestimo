@@ -18,7 +18,7 @@ T = 300.0 #Kelvin
 # 4: Schrodinger-Exchange interaction
 # 5: Schrodinger-Poisson + Exchange interaction
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
-computation_scheme = 2
+computation_scheme = 8
 
 # QUANTUM
 # Total subband number to be calculated for electrons
@@ -26,7 +26,7 @@ subnumber_h = 2
 subnumber_e = 2
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.00#/50e-9 # (V/m)
-
+Vapplied=3.1
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
@@ -44,13 +44,13 @@ mat_type='Wurtzite'
 # Layer 0 |      250.0     |   Si     |      0         |     1e16      |     n       |
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
-material =[[ 200.0, 'ZnO', 0.0, 0.0, 1e17, 'p','b'],
+material =[[ 150.0, 'ZnO', 0.0, 0.0, 1e17, 'p','b'],
             [ 20.0, 'ZnO', 0.0, 0.0, 1e17, 'p','b'],
             [ 20.0, 'ZnO', 0.0, 0.0, 0.0, 'p','b'],
-            [ 5.0, 'CdZnO', 0.25, 0.0, 0, 'p','w'],
+            [ 5.0, 'CdZnO', 0.1, 0.0, 0, 'p','w'],
             [ 20.0, 'ZnO', 0.0, 0.0, 0.0, 'p','b'],
             [ 20.0, 'ZnO', 0.0, 0.0, 1e17, 'n','b'],
-            [ 100.0, 'ZnO', 0.0, 0.0, 1e17, 'n','b']]
+            [ 150.0, 'ZnO', 0.0, 0.0, 1e17, 'n','b']]
  
 import numpy as np
 x_max = sum([layer[0] for layer in material])
