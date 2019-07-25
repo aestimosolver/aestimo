@@ -79,7 +79,7 @@ amort_wave_0=1.5#ratio of half well's width for wavefunction  to penetration int
 amort_wave_1=1.5#ratio of half well's width for wavefunction to penetration into the the right adjacent barrier
 strain =True # for aestimo_numpy_eh
 piezo=False # directly calculationg the induced electric field,for old poisson solver, works with old versions
-piezo1=True #indirectly using interface charges.
+piezo1=False #indirectly using interface charges.
 quantum_effect=True#temporary
 piezo_test=1
 #--------------

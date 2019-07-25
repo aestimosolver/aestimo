@@ -17,7 +17,8 @@ T = 300.0 #Kelvin
 # 4: Schrodinger-Exchange interaction
 # 5: Schrodinger-Poisson + Exchange interaction
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
-# 7: Schrodinger-Poisson-Drift_Diffusion
+# 7: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson then  poisson and DD)
+# 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD)
 computation_scheme = 2
 
 # QUANTUM

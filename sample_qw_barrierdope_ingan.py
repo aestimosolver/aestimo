@@ -18,7 +18,8 @@ T = 300.0 #Kelvin
 # 5: Schrodinger-Poisson + Exchange interaction
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 # 7: Schrodinger-Poisson-Drift_Diffusion
-
+# 7: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson then  poisson and DD)
+# 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD)
 computation_scheme = 8
 # QUANTUM
 # Total subband number to be calculated for electrons

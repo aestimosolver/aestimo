@@ -19,9 +19,9 @@ T = 300.0 #Kelvin
 # 4: Schrodinger-Exchange interaction
 # 5: Schrodinger-Poisson + Exchange interaction
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
-# 7: Schrodinger-Poisson-Drift_Diffusion
-
-computation_scheme = 2
+# 7: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson then  poisson and DD)
+# 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD)
+computation_scheme = 8
 
 # QUANTUM
 # Total subband number to be calculated for electrons
@@ -29,7 +29,7 @@ subnumber_h = 1
 subnumber_e = 1
 # APPLIED ELECTRIC FIELD
 Fapplied =  0.0# (V/m)-20e8
-Vapplied=3.1
+Vapplied=3.4
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
