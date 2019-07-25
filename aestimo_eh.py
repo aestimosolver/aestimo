@@ -2256,7 +2256,7 @@ def Poisson_Schrodinger_DD_test(result,model):
         ##                 END OF NON-EQUILIBRIUM  SOLUTION PART                ##
         ##########################################################################
         # Write the results of the simulation in files #
-        fi_result,Efn_result,Efp_result,ro_result,el_field1_result,el_field2_result,nf_result,pf_result,Ec_result,Ev_result,Ei_result,axis,av_curr=Write_results_non_equi2(fi_e,fi_h,Vt,q,ni,n+n_q,p+p_q,dop,dx,Ldi,fi,n_max,
+        fi_result,Efn_result,Efp_result,ro_result,el_field1_result,el_field2_result,nf_result,pf_result,Ec_result,Ev_result,Ei_result,av_curr=Write_results_non_equi2(fi_e,fi_h,Vt,q,ni,n+n_q,p+p_q,dop,dx,Ldi,fi,n_max,
                                                                                                Jnip1by2,Jnim1by2,Jelec,Jpip1by2,Jpim1by2,Jhole,Jtotal,Total_Steps)
         fitot = fi_h-Vt*q*fi
         fitotc = fi_e-Vt*q*fi    
