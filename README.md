@@ -31,7 +31,7 @@ See the examples subdirectory of the distribution. Also, detailed information ca
 License
 -------
 
-Aestimo is Copyrighted by (C) 2013-2018 Sefer Bora Lisesivdin and Aestimo group. This software is distributed under the terms of the GNU General Public License v3, see ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt . This means that everyone is free to use, change, share and share the changes.
+Aestimo is Copyrighted by (C) 2013-2020 AestimoSolver group. This software is distributed under the terms of the GNU General Public License v3, see ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt . This means that everyone is free to use, change, share and share the changes.
 
 Sefer Bora Lisesivdin is the initiator of the project, large contributions have since been made by Robert J. Steed and Hamza Hebal. For the full list of contributors, see ~/AUTHORS.
 
