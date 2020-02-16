@@ -44,14 +44,14 @@ meV2J=1e-3*q #meV to Joules
 #inputfilename = "sample_qw_barrierdope_p_ingan"
 #inputfilename = "sample_qw_barrierdope_ingaas"
 #inputfilename = "sample_mqw_barrierdope_p_ingan"
-#inputfilename = "sample_qw_barrierdope_p_cdzno"
+inputfilename = "sample_qw_barrierdope_p_cdzno"
 #inputfilename = "sample_multi_qw_barrierdope_p_ingan"
 #inputfilename = "sample_qw_wide_isbt"
 #inputfilename = "sample_qw_barrierdope_p_InGaAsP"
 #inputfilename = "sample_qw_barrierdope_p_AlGaInN"
 #inputfilename = "sample_qw_barrierdope_p_AlGaInN_2"
 #inputfilename = "sample_pn"
-inputfilename = "sample_2qw_InGaN_GaN_vs_1ddcc"
+#inputfilename = "sample_2qw_InGaN_GaN_vs_1ddcc"
 # Calculation
 # -----------
 # Aestimo
