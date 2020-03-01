@@ -229,11 +229,11 @@ class Structure():
         barrier_boundary=np.zeros((N_wells_virtual+1,2),dtype=int)
         layer_boundary=np.zeros((N_layers_virtual,2),dtype=int)
         n_max_general=np.zeros(N_wells_virtual,dtype=int)
-        Well_boundary[N_wells_virtual-1,0]=n_max 
-        Well_boundary[N_wells_virtual-1,1]=n_max
-        Well_boundary2[N_wells_virtual-1,0]=n_max 
-        Well_boundary2[N_wells_virtual-1,1]=n_max
-        barrier_boundary[N_wells_virtual,0]=n_max
+        Well_boundary[N_wells_virtual-1,0]=n_max-1 
+        Well_boundary[N_wells_virtual-1,1]=n_max-1
+        Well_boundary2[N_wells_virtual-1,0]=n_max-1
+        Well_boundary2[N_wells_virtual-1,1]=n_max-1
+        barrier_boundary[N_wells_virtual,0]=n_max-1
         barrier_len=np.zeros(N_wells_virtual+1)
         n=np.zeros(n_max)
         p=np.zeros(n_max)
@@ -1340,9 +1340,9 @@ def calc_E_state_general(HUPMAT3_reduced_list,HUPMATC1,subnumber_h,subnumber_e,f
     
     KPV2=np.zeros((model.N_wells_virtual,subnumber_h))
 
-    V22=np.zeros((model.N_wells_virtual,n_max,n_max))
+    V22=np.zeros((model.N_wells_virtual,3*n_max,3*n_max))
     n_max_general3 = np.zeros(model.N_wells_virtual,int)
-    wfh_general3 = np.zeros((model.N_wells_virtual,i2,n_max))
+    wfh_general3 = np.zeros((model.N_wells_virtual,n_max,n_max))
     for k in range(1,model.N_wells_virtual-1):
         I1,I2,I11,I22 =amort_wave(k,Well_boundary,n_max)
         i_1=I2-I1
@@ -1434,6 +1434,7 @@ def Schro(HUPMAT3_reduced_list,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,mod
         meff_statec,meff_state = calc_meff_state_general(wfh_general[j,:,:],wfe_general[j,:,:],model,fitotc,E_statec_general[j,:],list,m_hh,m_lh,m_so,int(n_max_general[j]),j,Well_boundary,n_max)
         meff_statec_general[j,:],meff_state_general[j,:] =meff_statec,meff_state
     return E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general
+
 def Poisson_Schrodinger(model):
     """Performs a self-consistent Poisson-Schrodinger calculation of a 1d quantum well structure.
     Model is an object with the following attributes:
