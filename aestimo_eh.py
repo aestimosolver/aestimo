@@ -1741,10 +1741,9 @@ def Poisson_Schrodinger(model):
         if config.predic_correc:
             delta1=Vnew_general-previousfi0
             delta_max1=max(abs(delta1[:]))
-            print('error_potential=',delta_max0*J2meV,'meV')
             if delta_max1/q < convergence_test0: #Convergence test
-            #print('error=',abs(E_state_general[1,0]-previousE0)/1e3)
-            #if abs(E_state_general[1,0]-previousE0)/1e3 < convergence_test: #Convergence test
+                #print('error=',abs(E_state_general[1,0]-previousE0)/1e3)
+                #if abs(E_state_general[1,0]-previousE0)/1e3 < convergence_test: #Convergence test
                 if model.N_wells_virtual-2!=0:                    
                     E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT3_reduced_list,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
                 break
@@ -1755,17 +1754,18 @@ def Poisson_Schrodinger(model):
                 iteration += 1
                 previousfi0 = V
         else:
-            print('error_energy_states=',abs(E_state_general[1,0]-previousE0),'meV')
-            if abs(E_state_general[1,0]-previousE0)/1e3 < convergence_test: #Convergence test
+            delta1=Vnew_general-previousfi0
+            delta_max1=max(abs(delta1[:]))
+            if delta_max1/q < convergence_test0: #Convergence test
                 break
             elif iteration >= max_iterations: #Iteration limit
                 logger.warning("Have reached maximum number of iterations")
                 break
             else:
                 iteration += 1
-                previousE0 = E_state_general[1,0]
+                previousfi0 = V
                 # END OF SELF-CONSISTENT LOOP
-    Ec_result,Ev_result,ro_result,el_field1_result,el_field2_result,nf_result,pf_result,fi_result=Write_results_equi2(fitotc,fitot,Vt,q,ni,n,p,dop,dx,Ldi,fi,n_max)
+    Ec_result,Ev_result,ro_result,el_field1_result,el_field2_result,nf_result,pf_result,fi_result=Write_results_equi2(ns,fitotc,fitot,Vt,q,ni,n,p,dop,dx,Ldi,fi,n_max)
     time3 = time.time() # timing audit
     if not(config.messagesoff):        
         logger.info("calculation time  %g s",(time3 - time2))
@@ -2042,13 +2042,13 @@ def Poisson_Schrodinger_DD(result,model):
             #previousE0= 2   #(meV) energy of zeroth state for previous iteration(for testing convergence)            
             while(flag_conv_2):
                 fi,flag_conv_2=Poisson_non_equi2(fi_stat,n,p,dop,Ppz_Psp,pol_surf_char,n_max,dx,fi,flag_conv_2,Ldi,ni,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general)
-                #print'inside while loop'
+                #
                 mun,mup=Mobility2(mun0,mup0,fi,Vt,Ldi,VSATN,VSATP,BETAN,BETAP,n_max,dx)
                 ########### END of FIELD Dependant Mobility Calculation ###########
                 n,p=Continuity2(n,p,mun,mup,fi,Vt,Ldi,n_max,dx,TAUN0,TAUP0)
                 ####################### END of HOLE Continuty Solver ###########
                 # End of WHILE Loop for Poisson's eqn solver
-
+                #print('inside while loop')
             Jnip1by2,Jnim1by2,Jelec,Jpip1by2,Jpim1by2,Jhole=Current2(vindex,n,p,mun,mup,fi,Vt,n_max,Total_Steps,q,dx,ni,Ldi,
                                                                      Jnip1by2,Jnim1by2,Jelec,Jpip1by2,Jpim1by2,Jhole)            
             
