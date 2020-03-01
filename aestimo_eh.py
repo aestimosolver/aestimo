@@ -2058,7 +2058,7 @@ def Poisson_Schrodinger_DD(result,model):
         ##                 END OF NON-EQUILIBRIUM  SOLUTION PART                ##
         ##########################################################################
         # Write the results of the simulation in files #
-        fi_result,Efn_result,Efp_result,ro_result,el_field1_result,el_field2_result,nf_result,pf_result,Ec_result,Ev_result,Ei_result,av_curr=Write_results_non_equi2(fi_e,fi_h,Vt,q,ni,n,p,dop,dx,Ldi,fi,n_max,
+        fi_result,Efn_result,Efp_result,ro_result,el_field1_result,el_field2_result,nf_result,pf_result,Ec_result,Ev_result,Ei_result,av_curr=Write_results_non_equi2(Nc,Nv,fi_e,fi_h,Vt,q,ni,n,p,dop,dx,Ldi,fi,n_max,
                                                                                                Jnip1by2,Jnim1by2,Jelec,Jpip1by2,Jpim1by2,Jhole,Jtotal,Total_Steps)
         fitot = fi_h-Vt*q*fi
         fitotc = fi_e-Vt*q*fi        
@@ -2263,7 +2263,7 @@ def Poisson_Schrodinger_DD_test(result,model):
     Ldi= np.zeros(n_max)
     Nc= np.zeros(n_max)
     Nv= np.zeros(n_max)
-    m_v= np.zeros(n_max)
+    vb_meff= np.zeros(n_max)
     ni= np.zeros(n_max)
     hbark=hbar*2*pi
     #m_hh,m_lh,m_so,VNIT,ZETA,CNIT,Ppz_Psp,EPC,pol_surf_char=Strain_and_Masses(model)
@@ -2275,16 +2275,16 @@ def Poisson_Schrodinger_DD_test(result,model):
     x_max=dx*n_max
     RATIO=m_e/hbar**2*(x_max)**2
     for i in range(n_max): 
-        m_v[i]=(m_hh[i]**(3/2)+m_lh[i]**(3/2)+m_so[i]**(3/2))**(2/3)
+        vb_meff[i]=(m_hh[i]**(3/2)+m_lh[i]**(3/2)+m_so[i]**(3/2))**(2/3)
     Nc=2*(2*pi*cb_meff*kb*T/hbark**2)**(3/2)
-    Nv=2*(2*pi*m_v*kb*T/hbark**2)**(3/2)  
+    Nv=2*(2*pi*vb_meff*kb*T/hbark**2)**(3/2)  
     Half_Eg=np.zeros(n_max)
     for i in range(n_max):       
         ni[i]= sqrt(Nc[i]*Nv[i]*exp(-(fi_e[i]-fi_h[i])/(kb*T)))#Intrinsic carrier concentration [1/m^3] kb*T/q
         #print("%.3E" % (ni[i]*1e-6))
         #print(fi_e[i]-fi_h[i])
-        if dop[i]==0:
-            dop[i]+=ni[i]        
+        if dop[i]==1:
+            dop[i]*=ni[i]        
         Ld_n_p[i] = sqrt(eps[i]*Vt/(q*abs(dop[i])))
         Ldi[i] = sqrt(eps[i]*Vt/(q*ni[i]))        
         Half_Eg[i]=(fi_e[i]-fi_h[i])/2       
@@ -2292,7 +2292,7 @@ def Poisson_Schrodinger_DD_test(result,model):
         fi_h[i]=-Half_Eg[i]-kb*T*log(Nv[i]/Nc[i])/2
     n=result.nf_result/ni
     p=result.pf_result/ni    
-    if dx>min(Ld_n_p[:]):
+    if dx>min(Ld_n_p[:]) and 1==2:
         logger.error("""You are setting the grid size %g nm greater than the extrinsic Debye lengths %g nm""",dx*1e9,min(Ld_n_p[:])*1e9)
         exit()
     # STARTING SELF CONSISTENT LOOP
@@ -2350,7 +2350,8 @@ def Poisson_Schrodinger_DD_test(result,model):
             while(flag_conv_2):
                 fitot = fi_h-Vt*q*fi
                 fitotc = fi_e-Vt*q*fi
-                E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT3_reduced_list,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
+                if model.N_wells_virtual-2!=0 :
+                    E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT3_reduced_list,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
                 fi,flag_conv_2,n_q,p_q,fi_n,fi_p=Poisson_non_equi3(vindex,fi_stat,n,p,dop,Ppz_Psp,pol_surf_char,n_max,dx,fi,flag_conv_2,Ldi,ni,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general)            
                
                 mun,mup=Mobility3(mun0,mup0,fi,fi_n,fi_p,Vt,Ldi,VSATN,VSATP,BETAN,BETAP,n_max,dx)
@@ -2373,7 +2374,7 @@ def Poisson_Schrodinger_DD_test(result,model):
         ##                 END OF NON-EQUILIBRIUM  SOLUTION PART                ##
         ##########################################################################
         # Write the results of the simulation in files #
-        fi_result,Efn_result,Efp_result,ro_result,el_field1_result,el_field2_result,nf_result,pf_result,Ec_result,Ev_result,Ei_result,av_curr=Write_results_non_equi2(fi_e,fi_h,Vt,q,ni,n+n_q,p+p_q,dop,dx,Ldi,fi,n_max,
+        fi_result,Efn_result,Efp_result,ro_result,el_field1_result,el_field2_result,nf_result,pf_result,Ec_result,Ev_result,Ei_result,av_curr=Write_results_non_equi2(Nc,Nv,fi_e,fi_h,Vt,q,ni,n,p,dop,dx,Ldi,fi,n_max,
                                                                                                Jnip1by2,Jnim1by2,Jelec,Jpip1by2,Jpim1by2,Jhole,Jtotal,Total_Steps)
         fitot = fi_h-Vt*q*fi
         fitotc = fi_e-Vt*q*fi    
@@ -2436,6 +2437,478 @@ def Poisson_Schrodinger_DD_test(result,model):
     results.EF=EF
     results.Total_Steps=Total_Steps
     return results
+
+
+def Poisson_Schrodinger_DD_test_2(result,model):
+    fi=result.fi_result
+    E_state_general= result.E_state_general 
+    meff_state_general= result.meff_state_general
+    E_statec_general=result.E_statec_general 
+    meff_statec_general= result.meff_statec_general
+    wfh_general= result.wfh_general
+    wfe_general= result.wfe_general
+    n_max=model.n_max
+    dx=model.dx
+    HUPMAT3_reduced_list= result.HUPMAT3_reduced_list
+    HUPMATC1= result.HUPMATC1
+    m_hh= result.m_hh
+    m_lh= result.m_lh
+    m_so= result.m_so
+    Ppz_Psp= result.Ppz_Psp
+    pol_surf_char= result.pol_surf_char
+    """Performs a self-consistent Poisson-Schrodinger calculation of a 1d quantum well structure.
+    Model is an object with the following attributes:
+    fi_e - Bandstructure potential (J) (array, len n_max)
+    cb_meff - conduction band effective mass (kg)(array, len n_max)
+    eps - dielectric constant (including eps0) (array, len n_max)
+    dop - doping distribution (m**-3) ( array, len n_max)
+    Fapp - Applied field (Vm**-1)
+    T - Temperature (K)
+    comp_scheme - simulation scheme (currently unused)
+    subnumber_e - number of subbands for look for in the conduction band
+    dx - grid spacing (m)
+    n_max - number of points.
+    """   
+    fi_e = model.fi_e
+    cb_meff = model.cb_meff
+    eps = model.eps
+    dop = model.dop
+    Fapp = model.Fapp
+    vmax= model.vmax
+    vmin= model.vmin
+    Each_Step= model.Each_Step
+    surface= model.surface
+    T = model.T
+    comp_scheme = model.comp_scheme
+    subnumber_h = model.subnumber_h
+    subnumber_e = model.subnumber_e
+    dx = model.dx
+    n_max = model.n_max
+    TAUN0 = model.TAUN0  
+    TAUP0 = model.TAUP0
+    mun0 = model.mun0
+    mup0 = model.mup0
+    Cn0=model.Cn0
+    Cp0=model.Cp0
+    BETAN = model.BETAN
+    BETAP = model.BETAP
+    VSATN= model.VSATN
+    VSATP= model.VSATP
+    
+    if comp_scheme in (4,5,6):
+        logger.error("""aestimo_eh doesn't currently include exchange interactions
+        in its valence band calculations.""")
+        exit()
+    if comp_scheme in (1,3,6):
+        logger.error("""aestimo_eh doesn't currently include nonparabolicity effects in 
+        its valence band calculations.""")
+        exit()
+    fi_h = model.fi_h
+    N_wells_virtual = model.N_wells_virtual
+    Well_boundary=model.Well_boundary
+    x_max=dx*n_max 
+    UNIM = np.identity(n_max)
+    RATIO=m_e/hbar**2*(x_max)**2      
+       
+    # Check
+    if comp_scheme ==6:
+        logger.warning("""The calculation of Vxc depends upon m*, however when non-parabolicity is also 
+                 considered m* becomes energy dependent which would make Vxc energy dependent.
+                 Currently this effect is ignored and Vxc uses the effective masses from the 
+                 bottom of the conduction bands even when non-parabolicity is considered 
+                 elsewhere.""")
+    
+    # Preparing empty subband energy lists.
+    E_state = [0.0]*subnumber_h     # Energies of subbands/levels (meV)
+    N_state = [0.0]*subnumber_h     # Number of carriers in subbands  
+    E_statec = [0.0]*subnumber_e     # Energies of subbands/levels (meV)
+    N_statec = [0.0]*subnumber_e     # Number of carriers in subbands
+    # Preparing empty subband energy arrays for multiquantum wells.
+    """
+    E_state_general = np.zeros((model.N_wells_virtual,subnumber_h))     # Energies of subbands/levels (meV)
+    E_statec_general = np.zeros((model.N_wells_virtual,subnumber_e))     # Energies of subbands/levels (meV)
+    meff_statec_general= np.zeros((model.N_wells_virtual,subnumber_e))
+    meff_state_general= np.zeros((model.N_wells_virtual,subnumber_h))
+    """
+    N_state_general = np.zeros((model.N_wells_virtual,subnumber_h))     # Number of carriers in subbands  
+    N_statec_general = np.zeros((model.N_wells_virtual,subnumber_e))     # Number of carriers in subbands
+    
+    # Creating and Filling material arrays
+    xaxis = np.arange(0,n_max)*dx   #metres
+    fitot = np.zeros(n_max)         #Energy potential = Bandstructure + Coulombic potential
+    fitotc = np.zeros(n_max)         #Energy potential = Bandstructure + Coulombic potentia
+    #eps = np.zeros(n_max+2)	    #dielectric constant
+    #dop = np.zeros(n_max+2)	    #doping distribution
+    #sigma = np.zeros(n_max+2)      #charge distribution (donors + free charges)
+    #F = np.zeros(n_max+2)          #Electric Field
+    #Vapp = np.zeros(n_max+2)       #Applied Electric Potential
+    V = np.zeros(n_max)             #Electric Potential
+
+    # Subband wavefunction for holes list. 2-dimensional: [i][j] i:stateno, j:wavefunc
+    
+    wfh = np.zeros((subnumber_h,n_max))
+    wfe = np.zeros((subnumber_e,n_max))
+    """
+    wfh_general = np.zeros((model.N_wells_virtual,subnumber_h,n_max))
+    wfe_general = np.zeros((model.N_wells_virtual,subnumber_e,n_max))
+    """
+    E_F_general= np.zeros(model.N_wells_virtual)
+    sigma_general = np.zeros(n_max)
+    F_general = np.zeros(n_max)
+    Vnew_general = np.zeros(n_max)
+    #fi = np.zeros(n_max)
+    # Setup the doping
+    Ntotal = sum(dop) # calculating total doping density m-3
+    Ntotal2d = Ntotal*dx
+    if not(config.messagesoff):
+        #print "Ntotal ",Ntotal,"m**-3"
+        logger.info("Ntotal2d %g m**-2", Ntotal2d)
+    
+    #Applied Field
+    #Vapp = calc_potn(Fapp*eps0/eps,model)
+    #Vapp[n_max-1] -= Vapp[n_max//2] #Offsetting the applied field's potential so that it is zero in the centre of the structure.
+    #s 
+    #setting up Ldi and Ld p and n
+    Ld_n_p= np.zeros(n_max)
+    Ldi= np.zeros(n_max)
+    Nc= np.zeros(n_max)
+    Nv= np.zeros(n_max)
+    vb_meff= np.zeros(n_max)
+    ni= np.zeros(n_max)
+    hbark=hbar*2*pi
+    Ppz_Psp_tmp= Ppz_Psp
+    Ppz_Psp= np.zeros(n_max)
+    for i in range(n_max): 
+        vb_meff[i]=(m_hh[i]**(3/2)+m_lh[i]**(3/2)+m_so[i]**(3/2))**(2/3)
+    Nc=2*(2*pi*cb_meff*kb*T/hbark**2)**(3/2)
+    Nv=2*(2*pi*vb_meff*kb*T/hbark**2)**(3/2)  
+    Half_Eg=np.zeros(n_max)
+    for i in range(n_max):       
+        ni[i]= sqrt(Nc[i]*Nv[i]*exp(-(fi_e[i]-fi_h[i])/(kb*T)))#Intrinsic carrier concentration [1/m^3] kb*T/q
+        Ld_n_p[i] = sqrt(eps[i]*Vt/(q*abs(dop[i])))
+        Ldi[i] = sqrt(eps[i]*Vt/(q*ni[i]))
+        if dop[i]==1:
+            dop[i]*=ni[i]        
+        Half_Eg[i]=(fi_e[i]-fi_h[i])/2       
+        fi_e[i]=Half_Eg[i]-kb*T*log(Nv[i]/Nc[i])/2
+        fi_h[i]=-Half_Eg[i]-kb*T*log(Nv[i]/Nc[i])/2
+    n=result.nf_result/ni
+    p=result.pf_result/ni    
+    if dx>min(Ld_n_p[:]) and 1==2:
+        logger.error("""You are setting the grid size %g nm greater than the extrinsic Debye lengths %g nm""",dx*1e9,min(Ld_n_p[:])*1e9)
+        #exit()
+    # STARTING SELF CONSISTENT LOOP
+    time2 = time.time() # timing audit
+    iteration = 1   #iteration counter
+    #previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
+    #fitot = fi_h + Vapp #For initial iteration sum bandstructure and applied field
+    #fitotc = fi_e + Vapp     
+    xaxis = np.arange(0,n_max)*dx   #metres
+    mup=np.zeros(n_max)
+    mun=np.zeros(n_max)
+    n_q=np.zeros(n_max)
+    p_q=np.zeros(n_max)
+    fi_n=np.zeros(n_max)
+    fi_p=np.zeros(n_max)    
+    EF=0.0
+    Total_Steps=int((vmax-vmin)/Each_Step)+1
+    vindex = 0 
+    Va_t=np.zeros(Total_Steps) 
+ 
+    Jtotal=np.zeros((Total_Steps,n_max))    
+    ###############################################################    
+    len_ = xaxis[n_max-1]
+   
+    #
+    xm = np.mean(xaxis)      
+    nis=np.zeros(n_max) 
+    mun=np.zeros(n_max) 
+    mup=np.zeros(n_max)
+    Cn=np.zeros(n_max)
+    Cp=np.zeros(n_max)
+    l2=np.zeros(n_max-1)
+    Fn=np.zeros(n_max)
+    Fp=np.zeros(n_max)
+    n=np.zeros(n_max)
+    p=np.zeros(n_max)
+    nn=np.zeros(n_max)
+    pp=np.zeros(n_max)
+    V=np.zeros(n_max)
+    vvect=np.zeros(Total_Steps)
+    n_=np.zeros((Total_Steps,n_max))
+    p_=np.zeros((Total_Steps,n_max))
+    Fn_=np.zeros((Total_Steps,n_max))
+    Fp_=np.zeros((Total_Steps,n_max))
+    V_=np.zeros((Total_Steps,n_max))
+    Jn=np.zeros((Total_Steps,n_max))
+    Jp=np.zeros((Total_Steps,n_max))
+    #J=np.zeros((Total_Steps,n_max-1))
+    lambda2=np.zeros((Total_Steps,n_max))
+    DV=np.zeros(Total_Steps)
+    Emax=np.zeros(Total_Steps)
+
+    nn,pp,fi_out=equi_np_fi(iteration,dop,Ppz_Psp,n_max,ni,model,Vt,surface)    
+    #xn = xm+1e-7
+    #xp = xm-1e-7
+    ## Scaling coefficients
+    xs= len_
+    ns1= np.linalg.norm(dop,np.inf)
+    
+    ns2=np.linalg.norm(Ppz_Psp_tmp,np.inf)
+
+    ns=max(ns1,ns2)
+    class data():
+        def __init__(self):        
+            self.dop=dop
+            self.TAUN0=TAUN0
+            self.TAUP0=TAUP0 
+            self.Fn=Fn 
+            self.Fp=Fp 
+            self.V=V 
+            self.n=n 
+            self.p=p 
+            self.nis=nis 
+            self.mun=mun 
+            self.mup=mup 
+            self.l2=l2
+            self.Ppz_Psp=Ppz_Psp
+            self.Cn=Cn
+            self.Cp=Cp
+            self.E_state_general= result.E_state_general 
+            self.meff_state_general= result.meff_state_general
+            self.E_statec_general=result.E_statec_general 
+            self.meff_statec_general= result.meff_statec_general
+            self.wfh_general= result.wfh_general
+            self.wfe_general= result.wfe_general            
+    idata=data()
+    odata=data()
+    
+    Vs= Vt
+    us= max (max(mun0), max(mup0))
+    Js= xs / (us * Vs * q * ns)
+    xbar = len_                     # [m]
+    Vbar = Vt                   # [V]
+    mubar = max (max(mun0), max(mup0))         # [m^2 V^{-1} s^{-1}]
+    tbar = xbar**2 / (mubar * Vbar) # [s]
+    Rbar = ns/tbar;                 # [m^{-3} s^{-1}]    
+    CAubar = Rbar/ns**3             # [m^6 s^{-1}]    
+    idata.Cn     = Cn0/CAubar
+    idata.Cp     = Cp0/CAubar    
+    ###############################################################
+    if(vmax==0):        
+        print ('Va_max=0')
+    else:
+        print ('Convergence of the Gummel cycles')
+        vindex=0
+        for vindex in range(0,Total_Steps):
+            #introducing piezo spont effect with increasing ratio till 33.33%
+            Ppz_Psp=Ppz_Psp_tmp/(Total_Steps+2-vindex)
+            #piezo_ratio=100*np.linalg.norm(Ppz_Psp,np.inf)/np.linalg.norm(Ppz_Psp_tmp,np.inf)
+            #print("ratio of piezo=%.2f"%piezo_ratio," %")
+            # Start Va increment loop
+            Va = vmin
+            Va+=Each_Step*vindex
+            Va_t[vindex]=Va
+            
+            print ("Va_t[",vindex,"]=%.2f"%Va_t[vindex])
+            #####################################################################################
+            vvect[vindex] = Va
+            #z
+            xin = xaxis/xs
+            n_[vindex,:] = nn*ni
+            p_[vindex,:] = pp*ni      
+            #
+            Fn = Va*(xaxis<=xm)
+            Fp = Fn
+            #
+            V_[vindex,:] = (Fn - Vt * np.log(p_[vindex,:]/ni)) 
+            #
+            ## Scaling    
+            
+            Fn_[vindex,:] = (Fn - Vs * np.log(ni/ns))
+            Fp_[vindex,:] = (Fp + Vs * np.log(ni/ns))
+                # 
+            idata.l2 = (Vs*eps[0:n_max-1])/(q*ns*xs**2)
+            idata.nis = ni/ns
+            idata.dop = dop/ns
+            idata.Ppz_Psp = Ppz_Psp/ns
+            #mun,mup=Mobility2(mun0,mup0,fi,Vt,Ldi,VSATN,VSATP,BETAN,BETAP,n_max,dx)
+            idata.mun = mun0/us
+            idata.mup = mup0/us
+
+            #sinodes = np.arange(len(xaxis))
+            idata.TAUN0 = TAUN0/tbar#np.inf
+            idata.TAUP0 = TAUP0/tbar#np.inf
+            idata.theta = ni/ns
+
+            idata.n = n_[vindex,:]/ns
+            idata.p = p_[vindex,:]/ns
+            idata.V = V_[vindex,:]/Vs
+            idata.Fn = Fn_[vindex,:]/Vs
+            idata.Fp=  Fp_[vindex,:]/Vs            
+            fitot = fi_h-Vt*q*idata.V
+            fitotc = fi_e-Vt*q*idata.V
+            if model.N_wells_virtual-2!=0 and config.quantum_effect:
+                idata.E_statec_general,idata.E_state_general,idata.wfe_general,idata.wfh_general,idata.meff_statec_general,idata.meff_state_general=Schro(HUPMAT3_reduced_list,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
+
+            ## Solution of DD system
+            #
+            ## Algorithm parameters
+            toll= 1e-3
+            maxit = 10
+            ptoll= 1e-10
+            pmaxit = 30
+            verbose = 0
+            
+            [odata,it,res] = DDGgummelmap (n_max,xin,idata,odata,toll,maxit,ptoll,pmaxit,verbose,ni,fi_e,fi_h,model,Vt)
+
+            [odata,it,res] = DDNnewtonmap (ni,fi_e,fi_h,xin,odata,toll, maxit,verbose,model,Vt)
+
+            n_[vindex,:] = odata.n
+            p_[vindex,:] = odata.p
+            V_[vindex,:] = odata.V
+         
+            #print("n_newt=",odata.n[:])
+            Fn_[vindex,:] = odata.Fn
+            Fp_[vindex,:] = odata.Fp  
+            DV[vindex]= V_[vindex, n_max-1]-V_[0, vindex]
+            Emax[vindex] = max(abs((V_[vindex, 1:n_max]-V_[vindex,0:n_max-1])/(xin[1:n_max]-xin[0:n_max-1])))
+            #
+             
+            Bp = Ubernoulli( (V_[vindex, 1:n_max]-V_[vindex, 0:n_max-1])+(fi_n[1:n_max]-fi_n[0:n_max-1]),1)
+            Bm = Ubernoulli((V_[vindex, 1:n_max]-V_[vindex, 0:n_max-1])+(fi_p[1:n_max]-fi_p[0:n_max-1]),0)
+            Jn[vindex,0:n_max-1] = -odata.mun[0:n_max-1] * (n_[vindex, 1:n_max]*Bp-n_[vindex, 0:n_max-1]*Bm)/ (xin[1:n_max]-xin[0:n_max-1])
+            Jp[vindex,0:n_max-1] =  odata.mup[0:n_max-1] * (p_[vindex, 1:n_max]*Bm-p_[vindex, 0:n_max-1]*Bp)/ (xin[1:n_max]-xin[0:n_max-1])
+
+        ## Descaling
+        n_ = n_*ns
+        p_ = p_*ns
+        V_ = V_*Vs
+        #J = abs (Jp+Jn)*Js
+        Jtotal=abs(Jp+Jn)*us*q*ns
+        Jtotal[:,n_max-1]=Jtotal[:,n_max-2]
+        Fn   = V_/Vs - np.log(n_)
+        Fp   = V_/Vs + np.log(p_)   
+        #Fn_=Fn_*Vs
+        #Fp_=Fp_*Vs
+        #
+        time1 = time.time()
+        delta_t=(time1-time0)/60
+        print("time=%.2fmn"%delta_t)  
+        
+        ro_result=np.zeros(n_max)
+        el_field1_result=np.zeros(n_max)
+        el_field2_result=np.zeros(n_max)        
+        Ec_result=np.zeros(n_max)
+        Ev_result=np.zeros(n_max)
+        Ei_result=np.zeros(n_max)
+        Efn_result=np.zeros(n_max)
+        Efp_result=np.zeros(n_max)
+        av_curr=np.zeros(Total_Steps)          
+        fi_result=V_[vindex,:]
+        #Efn_result,Efp_result=Fn_[vindex,:],Fp_[vindex,:]
+        nf_result,pf_result=n_[vindex,:],p_[vindex,:]
+        av_curr=Jtotal[:,n_max-1]
+        for i in range(1,n_max-1): 
+            Ec_result[i] = fi_e[i]/q - V_[vindex,i]     #Values from the second Node%
+            Ev_result[i] = fi_h[i]/q - V_[vindex,i]     #Values from the second Node%
+            Ei_result[i]   = Ec_result[i] -((fi_e[i]-fi_h[i])/(2*q))
+            ro_result[i] = -q*(n_[vindex,i] - p_[vindex,i] - ns*dop[i])
+            el_field1_result[i] = -(V_[vindex,i+1] - V_[vindex,i])/(dx)
+            el_field2_result[i] = -(V_[vindex,i+1] - V_[vindex,i-1])/(2*dx)
+            Efn_result[i]  = Ec_result[i] + Vt*log(n_[vindex,i]/Nc[i])
+            Efp_result[i]  = Ev_result[i] - Vt*log(p_[vindex,i]/Nv[i])       
+        #Efn_result=Fn_[vindex,:] 
+        #Efp_result=Fp_[vindex,:] 
+        Ec_result[0] = Ec_result[1]
+        Ec_result[n_max-1] = Ec_result[n_max-2]
+        Ev_result[0] = Ev_result[1]
+        Ev_result[n_max-1] = Ev_result[n_max-2]
+
+        Ei_result[0] = Ei_result[1]
+        Ei_result[n_max-1] = Ei_result[n_max-2]
+        Efn_result[0] = Efn_result[1]
+        Efn_result[n_max-1] = Efn_result[n_max-2]
+
+        Efp_result[0] = Efp_result[1]
+        Efp_result[n_max-1] = Efp_result[n_max-2]
+        el_field1_result[0] = el_field1_result[1]
+        el_field2_result[0] = el_field2_result[1]
+        el_field1_result[n_max-1] = el_field1_result[n_max-2]
+        el_field2_result[n_max-1] = el_field2_result[n_max-2]
+        ro_result[0] = ro_result[1]
+        ro_result[n_max-1] = ro_result[n_max-2]
+        nf_result[0]=nf_result[1]
+        nf_result[n_max-1] = nf_result[n_max-2]
+        pf_result[0]=pf_result[1]
+        pf_result[n_max-1] = pf_result[n_max-2]        
+        Va_t=vvect
+        fitot = fi_h-Vt*q*odata.V
+        fitotc = fi_e-Vt*q*odata.V
+        if model.N_wells_virtual-2!=0 and 1==2 :
+            idata.E_statec_general,idata.E_state_general,idata.wfe_general,idata.wfh_general,idata.meff_statec_general,idata.meff_state_general=Schro(HUPMAT3_reduced_list,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
+
+    time3 = time.time() # timing audit
+    if not(config.messagesoff):        
+        logger.info("calculation time  %g s",(time3 - time2))
+    
+    class Results(): pass
+    results = Results()
+    results.N_wells_virtual=N_wells_virtual
+    results.Well_boundary=Well_boundary
+    results.xaxis = xaxis
+    results.wfh = wfh
+    results.wfe = wfe
+    results.wfh_general = idata.wfh_general
+    results.wfe_general = idata.wfe_general
+    results.fitot = fitot
+    results.fitotc = fitotc
+    results.fi_e = fi_e
+    results.fi_h = fi_h
+    #results.sigma = sigma
+    results.sigma_general = sigma_general
+    #results.F = F
+    results.V = V
+    results.E_state = E_state
+    results.N_state = N_state
+    #results.meff_state = meff_state
+    results.E_statec = E_statec
+    results.N_statec = N_statec
+    #results.meff_statec = meff_statec
+    results.F_general = F_general
+    results.E_state_general = idata.E_state_general
+    results.N_state_general = N_state_general
+    results.meff_state_general = idata.meff_state_general
+    results.E_statec_general = idata.E_statec_general
+    results.N_statec_general = N_statec_general
+    results.meff_statec_general = idata.meff_statec_general
+    results.Fapp = Fapp
+    results.T = T
+    #results.E_F = E_F
+    results.E_F_general = E_F_general
+    results.dx = dx
+    results.subnumber_h = subnumber_h
+    results.subnumber_e = subnumber_e
+    results.Ntotal2d = Ntotal2d
+    ########################
+    results.Va_t=Va_t
+    results.Efn_result=Efn_result
+    results.Efp_result=Efp_result
+    results.Ei_result=Ei_result
+    results.av_curr=av_curr
+    results.Ec_result=Ec_result
+    results.Ev_result=Ev_result
+    results.ro_result=ro_result
+    results.el_field1_result=el_field1_result
+    results.el_field2_result=el_field2_result
+    results.nf_result=nf_result
+    results.pf_result=pf_result
+    results.fi_result=fi_result
+    results.EF=EF
+    results.Total_Steps=Total_Steps
+    return results
+
+
 
 def save_and_plot2(result,model):
     xaxis = result.xaxis
