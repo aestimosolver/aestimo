@@ -969,15 +969,17 @@ def equi_np_fi(iteration,dop,Ppz_Psp,n_max,ni,model,Vt,surface):
     p=np.zeros(n_max)
     fi_old = np.zeros(n_max)
     for i2 in  range(0,n_max):       
-        nn,pp=np_cal(dop[i2],ni[i2])
+        nn,pp=np_cal(dop[i2]+Ppz_Psp[i2],ni[i2])
         n[i2]=nn/ni[i2]
         p[i2]=pp/ni[i2]
         fi_old[i2]=log(n[i2])
-    fi_old[0]+=surface[0]/Vt
-    fi_old[n_max-1]+=surface[1]/Vt
-    for i1 in range(0,n_max):
-        n[i1]=exp(fi_old[i1])
-        p[i1]=exp(-fi_old[i1])
+    fi_old[0]=fi_old[1]
+    fi_old[n_max-1]=fi_old[n_max-2]
+    
+    fi_old[0]-=surface[0]/Vt
+    fi_old[n_max-1]-=surface[1]/Vt
+    n=np.exp(fi_old)
+    p=np.exp(-fi_old)
     return n,p,fi_old
 
 def np_cal(dop,ni):
