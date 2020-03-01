@@ -262,7 +262,7 @@ class Structure():
                 cb_meff[startindex:finishindex] = matprops['m_e']*m_e
                 cb_meff_alpha[startindex:finishindex] = matprops['m_e_alpha']
                 fi_e[startindex:finishindex] = matprops['Band_offset']*matprops['Eg']*q #Joule
-                if mat_type=='Zincblende' :
+                if mat_crys_strc=='Zincblende' :
                     a0_sub[startindex:finishindex]=matprops['a0']*1e-10
                     C11[startindex:finishindex] = matprops['C11']*1e10
                     C12[startindex:finishindex] = matprops['C12']*1e10
@@ -340,7 +340,7 @@ class Structure():
                 BETAP[startindex:finishindex] = alloyprops['BETAP']
                 VSATN[startindex:finishindex] = alloyprops['VSATN']
                 VSATP[startindex:finishindex] = alloyprops['VSATP']
-                if mat_type=='Zincblende':
+                if mat_crys_strc=='Zincblende':
                     C11[startindex:finishindex] = (x*mat1['C11'] + (1-x)* mat2['C11'])*1e10
                     C12[startindex:finishindex] = (x*mat1['C12'] + (1-x)* mat2['C12'])*1e10
                     GA1[startindex:finishindex] =x*mat1['GA1'] + (1-x)* mat2['GA1']
@@ -404,7 +404,7 @@ class Structure():
                     BETAP[startindex:finishindex] = alloyprops['BETAP']
                     VSATN[startindex:finishindex] = alloyprops['VSATN']
                     VSATP[startindex:finishindex] = alloyprops['VSATP']
-                    if mat_type=='Zincblende':
+                    if mat_crys_strc=='Zincblende':
                         
                         alloyprops = alloy_property_4[matType]
                         mat1 = material_property[alloyprops['Material1']]
@@ -854,7 +854,7 @@ class StructureFrom(Structure):
         self.comp_scheme = inputfile.computation_scheme
         self.dx = inputfile.gridfactor*1e-9 #grid in m
         self.maxgridpoints = inputfile.maxgridpoints
-        self.mat_type = inputfile.mat_type
+        self.mat_crys_strc = inputfile.mat_type
         # Loading material list
         self.material = inputfile.material
         
@@ -1237,17 +1237,18 @@ def Strain_and_Masses(model):
     m_so = np.zeros(n_max)
     Ppz= np.zeros(n_max)
     Ppz_Psp= np.zeros(n_max)
+    Ppz_Psp0= np.zeros(n_max)
     pol_surf_char=np.zeros(n_max)
     pol_surf_char1=np.zeros(n_max)
     x_max=model.dx*n_max
     if config.strain :
-        if model.mat_type=='Zincblende' :
+        if model.mat_crys_strc=='Zincblende' :
             EXX= (model.a0_sub-model.a0)/model.a0
             EZZ= -2.0*model.C12/model.C11*EXX
             ZETA= -model.B/2.0*(EXX+EXX-2.0*EZZ)
             CNIT= model.Ac*(EXX+EXX+EZZ)
             VNIT= -model.Av*(EXX+EXX+EZZ)
-        if model.mat_type=='Wurtzite':            
+        if model.mat_crys_strc=='Wurtzite':            
             EXX= (model.a0_sub-model.a0_wz)/model.a0_wz
             #EXX= (4.189*1e-10-model.a0_wz)/model.a0_wz
             EZZ=-2.0*model.C13/model.C33*EXX
@@ -1286,25 +1287,34 @@ def Strain_and_Masses(model):
                     pol_surf_char[i]=(model.Psp[i]+Ppz[i])/(q)                
                 for i in range(1,n_max-1):
                     pol_surf_char1[i]=((model.Psp[i-1]+Ppz[i-1])-(model.Psp[i+1]+Ppz[i+1]))/(q)                                     
-                dxx=0.5e-9
+                for i in range(1,n_max-1):    
+                    Ppz_Psp0[i] =(pol_surf_char[i]-pol_surf_char[i-1])/(dx)                
+                
                 for I in range(1,model.N_wells_virtual2-1):
                     BW=model.Well_boundary2[I,0]
                     WB=model.Well_boundary2[I,1]
                     Ppz_Psp[WB] =(pol_surf_char[WB+1]-pol_surf_char[WB-1])/(dx)
-                    Ppz_Psp[BW] =(pol_surf_char[BW+1]-pol_surf_char[BW-1])/(dx)        
-            
-            
-            """   
-            xaxis = np.arange(0,n_max)*model.dx 
-            pl.plot(xaxis,Ppz_Psp,'b',xaxis,model.fi_e/q*0.25e27,'k')#,pol_surf_char/(dx) ,'k'
-            pl.show()
-            dfrg
-            """
+                    Ppz_Psp[BW] =(pol_surf_char[BW+1]-pol_surf_char[BW-1])/(dx)
+                
+                Ppz_Psp0[0] =(pol_surf_char[0]-0.)/(dx)
+                
+                Ppz_Psp0[n_max-1] =(0.-pol_surf_char[n_max-1])/(dx)
+                """
+                xaxis = np.arange(0,n_max)*dx
+                pl.plot(xaxis*1e6,Ppz_Psp0,'r')#,xaxis*1e6,Ppz_Psp0,'b'
+                pl.xlabel('x [um]')
+                pl.ylabel('Energy [eV]')
+                pl.title('pze (0 (red) & 1 (bleu)) vs Position', fontsize=12)
+                pl.legend(('Efn','Efp'),loc='best',fontsize=12)
+                pl.grid(True)
+                pl.show()
+                ggggggggggggg
+                """
     if config.piezo1 and not(config.strain):
-        if model.mat_type=='Zincblende' :
+        if model.mat_crys_strc=='Zincblende' :
             EXX= (model.a0_sub-model.a0)/model.a0
             EZZ= -2.0*model.C12/model.C11*EXX
-        if model.mat_type=='Wurtzite':
+        if model.mat_crys_strc=='Wurtzite':
             EXX= (model.a0_sub-model.a0_wz)/model.a0_wz
             EZZ=-2.0*model.C13/model.C33*EXX
         dx=x_max/n_max
@@ -1312,7 +1322,9 @@ def Strain_and_Masses(model):
         pol_surf_char=np.zeros(n_max)
         pol_surf_char1=np.zeros(n_max)
         for i in range(0,n_max):
-            pol_surf_char[i]=(model.Psp[i]+Ppz[i])/(q) 
+            pol_surf_char[i]=(model.Psp[i]+Ppz[i])/(q)
+        for i in range(1,n_max-1):    
+            Ppz_Psp0[i] =(pol_surf_char[i]-pol_surf_char[i-1])/(dx)
         for i in range(1,n_max-1):                    
             pol_surf_char1[i]=((model.Psp[i-1]+Ppz[i-1])-(model.Psp[i+1]+Ppz[i+1]))/(q)                
         for I in range(1,model.N_wells_virtual2-1):
@@ -1320,8 +1332,8 @@ def Strain_and_Masses(model):
             WB=model.Well_boundary2[I,1]
             Ppz_Psp[WB] =(pol_surf_char[WB+1]-pol_surf_char[WB-1])/(dx)
             Ppz_Psp[BW] =(pol_surf_char[BW+1]-pol_surf_char[BW-1])/(dx)
-          
-    if model.mat_type=='Zincblende' :
+
+    if model.mat_crys_strc=='Zincblende' :
         for i in range(0,n_max,1):
             if  EXX[i]!=0: 
                 S[i]=ZETA[i]/model.delta[i]
@@ -1333,11 +1345,11 @@ def Strain_and_Masses(model):
         m_hh = m_e/(model.GA1 -2*model.GA2 )
         m_lh = m_e/(model.GA1 +2*fp*model.GA2 )
         m_so = m_e/(model.GA1 +2*fm*model.GA2 )            
-    if model.mat_type=='Wurtzite' :
+    if model.mat_crys_strc=='Wurtzite' :
         m_hh = -m_e/(model.A2 + model.A4 -model.A5)
         m_lh = -m_e/(model.A2 + model.A4 +model.A5 )
         m_so = -m_e/(model.A2)
-    return m_hh,m_lh,m_so,VNIT,ZETA,CNIT,Ppz_Psp,EPC,pol_surf_char
+    return m_hh,m_lh,m_so,VNIT,ZETA,CNIT,Ppz_Psp0,EPC,pol_surf_char
 
 def calc_E_state_general(HUPMAT3_reduced_list,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO):
     n_max=model.n_max
@@ -1451,13 +1463,13 @@ def Main_Str_Array(model):
     UNIM = np.identity(n_max)
     RATIO=m_e/hbar**2*(x_max)**2    
     AC1=(n_max+1)**2    
-    AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,Pce,GDELM,DEL3,DEL1,DEL2=qsv(model.GA1,model.GA2,model.GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,model.delta,model.A1,model.A2,model.A3,model.A4,model.A5,model.A6,model.delta_so,model.delta_cr,model.mat_type)
+    AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,Pce,GDELM,DEL3,DEL1,DEL2=qsv(model.GA1,model.GA2,model.GA3,RATIO,VNIT,ZETA,CNIT,AC1,n_max,model.delta,model.A1,model.A2,model.A3,model.A4,model.A5,model.A6,model.delta_so,model.delta_cr,model.mat_crys_strc)
     KP=0.0
     KPINT=0.01
-    if model.mat_type=='Zincblende' and  (model.N_wells_virtual-2!=0) :        
+    if model.mat_crys_strc=='Zincblende' and  (model.N_wells_virtual-2!=0) :        
         HUPMAT1=VBMAT1(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,FSO,GDELM,x_max,n_max,AC1,UNIM,KPINT)
         HUPMATC1=CBMAT(KP,Pce,model.cb_meff/m_e,x_max,n_max,AC1,UNIM,KPINT)
-    if model.mat_type=='Wurtzite' and  (model.N_wells_virtual-2!=0)  :
+    if model.mat_crys_strc=='Wurtzite' and  (model.N_wells_virtual-2!=0)  :
         HUPMAT1=-VBMAT2(KP,AP1,AP2,AP3,AP4,AP5,AP6,FH,FL,x_max,n_max,AC1,UNIM,KPINT,DEL3,DEL1,DEL2)
         HUPMATC1=CBMAT(KP,Pce,model.cb_meff/m_e,x_max,n_max,AC1,UNIM,KPINT)
     return HUPMAT1,HUPMATC1,m_hh,m_lh,m_so,Ppz_Psp,pol_surf_char
