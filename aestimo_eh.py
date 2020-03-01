@@ -56,8 +56,14 @@ import VBHM
 from scipy import linalg
 from VBHM import qsv,VBMAT1,VBMAT2,VBMAT_V,CBMAT,CBMAT_V,VBMAT_V_2
 import config,database
-from aestimo_poisson1d import Poisson_equi2,equi_np_fi,Write_results_equi2,equi_np_fi2,equi_np_fi3, Poisson_non_equi3,Poisson_equi_non_2,equi_np_fi22
+from aestimo_poisson1d import Poisson_equi2,equi_np_fi,Write_results_equi2,equi_np_fi2,equi_np_fi3, Poisson_non_equi3,Poisson_equi_non_2,equi_np_fi22,equi_np_fi222
 from aestimo_poisson1d import Poisson_equi1, Mobility2, Continuity2,Mobility3, Continuity3, Poisson_non_equi2, Current2,Write_results_non_equi2,Write_results_equi1,amort_wave
+import DDGgummelmap
+from DDGgummelmap import DDGgummelmap
+import DDNnewtonmap
+from DDNnewtonmap import DDNnewtonmap
+import func_lib
+from func_lib import Ubernoulli
 # --------------------------------------
 import logging
 logger = logging.getLogger('aestimo_eh')
@@ -91,7 +97,6 @@ meV2J=1e-3*q #meV to Joules
 
 time1 = time.time() # timing audit
 #logger.info("Aestimo is starting...")
-
 # Input Class
 # -------------------------------------
 
