@@ -149,14 +149,14 @@ class Structure():
         """ initialise arrays/lists for structure"""
         #self.N_wells_real0=sum(sum(np.char.count(self.material,'w')))
         self.N_wells_real0=sum(np.char.count([layer[6] for layer in self.material],'w'))
-        self.N_layers_real0=sum(np.char.count([layer[6] for layer in self.material],'w'))+sum(np.char.count([layer[6] for layer in self.material],'b'))
+        self.N_layers_real0=len(self.material)#sum(np.char.count([layer[6] for layer in self.material],'w'))+sum(np.char.count([layer[6] for layer in self.material],'b'))
 
         # Calculate the required number of grid points
         self.x_max = sum([layer[0] for layer in self.material])*1e-9 #total thickness (m)
         n_max = round2int(self.x_max/self.dx)
         # Check on n_max
         maxgridpoints = self.maxgridpoints
-        mat_type= self.mat_type
+        mat_crys_strc= self.mat_crys_strc
         if n_max > maxgridpoints:
             logger.error("Grid number is exceeding the max number of %d",maxgridpoints)
             exit()
