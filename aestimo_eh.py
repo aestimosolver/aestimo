@@ -676,43 +676,59 @@ class Structure():
             
             dop_profile=self.dop_profile
             if layer[5] == 'n':  
-                dop[startindex:finishindex] = layer[4]*1e6+dop_profile[startindex:finishindex]  #charge density in m**-3 (conversion from cm**-3)
+                dop[startindex:finishindex] = layer[4]*1e6+dop_profile[startindex:finishindex]+1  #charge density in m**-3 (conversion from cm**-3)
             elif layer[5] == 'p': 
-                dop[startindex:finishindex] = -layer[4]*1e6+dop_profile[startindex:finishindex] #charge density in m**-3 (conversion from cm**-3)
+                dop[startindex:finishindex] = -layer[4]*1e6+dop_profile[startindex:finishindex]-1 #charge density in m**-3 (conversion from cm**-3)
             else:
-                dop[startindex:finishindex]=dop_profile[startindex:finishindex]
+                dop[startindex:finishindex]=dop_profile[startindex:finishindex]+1
+        
         """
-        xaxis = np.arange(0,n_max)*dx
-        pl.plot(xaxis, abs(dop)*1e-6,'r')
-        pl.plot(xaxis, dop_profile*1e-6,'k')
-        pl.xlabel('Position (m)')
-        pl.ylabel('electrons  and and holes concentrations (cm-3)' )
-        pl.title('electrons (red) and holes (blue)')
-        pl.grid(True)
-        ssssss
-        
-        
         Here we remove barriers that are less than the anti_crossing_length
         so we can constructe the new well boundary using the resulted barrier boundary
         """
         brr=0        
         anti_crossing_length=config.anti_crossing_length*1e-9
-        for J in range(2,N_wells_virtual2-1):
-            if (barrier_len[J]*dx <= anti_crossing_length ) :
-                brr+=1
-        brr_vec=np.zeros(brr)
-        brr2=0
-        for J in range(2,N_wells_virtual2-1):
-            if (barrier_len[J]*dx <= anti_crossing_length ) :
-                brr2+=1
-                brr_vec[brr2-1]=J+1-brr2
-        for I in range (0,brr):
-            barrier_boundary=np.delete(barrier_boundary,brr_vec[I], 0)
-        N_wells_virtual=N_wells_virtual-brr
-        Well_boundary=np.resize(Well_boundary,(N_wells_virtual,2))
-        for J in range(0,N_wells_virtual):
-            Well_boundary[J-1,1]=barrier_boundary[J,0]
-            Well_boundary[J,0]=barrier_boundary[J,1]
+        if not(self.Quantum_Regions):
+            for J in range(2,N_wells_virtual2-1):
+                if (barrier_len[J]*dx <= anti_crossing_length ) :
+                    brr+=1
+            brr_vec=np.zeros(brr)
+            brr2=0
+            for J in range(2,N_wells_virtual2-1):
+                if (barrier_len[J]*dx <= anti_crossing_length ) :
+                    brr2+=1
+                    brr_vec[brr2-1]=J+1-brr2
+            for I in range (0,brr):
+                barrier_boundary=np.delete(barrier_boundary,brr_vec[I], 0)
+            N_wells_virtual=N_wells_virtual-brr
+            Well_boundary=np.resize(Well_boundary,(N_wells_virtual,2))
+            for J in range(0,N_wells_virtual):
+                Well_boundary[J-1,1]=barrier_boundary[J,0]
+                Well_boundary[J,0]=barrier_boundary[J,1]
+        else:
+            #setup of independent quantum regions
+            #ratio of half well's width for wavefunction  to penetration into the the left adjacent barrier            
+            config.amort_wave_0=0.
+            config.amort_wave_1=0.
+            N_wells_real0=len(self.Quantum_Regions_boundary[:,0])
+            N_wells_virtual=N_wells_real0+2
+            N_wells_virtual2=N_wells_real0+2
+            N_layers_virtual=N_layers_real0+2
+            Well_boundary=np.zeros((N_wells_virtual,2),dtype=int)
+            Well_boundary2=np.zeros((N_wells_virtual,2),dtype=int)
+            barrier_boundary=np.zeros((N_wells_virtual+1,2),dtype=int)
+            layer_boundary=np.zeros((N_layers_virtual,2),dtype=int)
+            n_max_general=np.zeros(N_wells_virtual,dtype=int)
+            Well_boundary[N_wells_virtual-1,0]=n_max-1 
+            Well_boundary[N_wells_virtual-1,1]=n_max-1
+            Well_boundary2[N_wells_virtual-1,0]=n_max-1
+            Well_boundary2[N_wells_virtual-1,1]=n_max-1
+            barrier_boundary[N_wells_virtual,0]=n_max-1
+            barrier_len=np.zeros(N_wells_virtual+1)
+            for i in range(len(self.Quantum_Regions_boundary[:,0])):
+                for j in range(2):
+                    Well_boundary[i+1,j]=round2int(self.Quantum_Regions_boundary[i,j]*1e-9/dx)
+        
         self.fi_e = fi_e
         self.fi_h = fi_h
         self.cb_meff = cb_meff
@@ -804,6 +820,8 @@ class StructureFrom(Structure):
         max_val = inputfile.maxgridpoints
         
         self.dop_profile=inputfile.dop_profile
+        self.Quantum_Regions_boundary=inputfile.Quantum_Regions_boundary
+        self.Quantum_Regions=inputfile.Quantum_Regions
         if self.n_max > max_val:
             logger.error(" Grid number is exceeding the max number of %d", max_val)
             exit()
