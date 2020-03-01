@@ -2920,8 +2920,8 @@ def save_and_plot2(result,model):
         fname2 = os.path.join(output_directory,fname)
         np.savetxt(fname2,np.column_stack(datatuple),fmt='%.6e', delimiter=' ',header=header)    
     #Plotting results
-    if config.Drift_Diffusion_out:
-        saveoutput("av_curr.dat",(result.Va_t*Vt,result.av_curr*1e-4))    
+    #if config.Drift_Diffusion_out:
+    #saveoutput("av_curr.dat",(result.Va_t*Vt,result.av_curr*1e-4))    
     for jjj in range(result.Total_Steps-1,result.Total_Steps):
         vtt=result.Va_t[jjj]
         vt=vtt*Vt
@@ -2958,7 +2958,7 @@ def save_and_plot2(result,model):
         pl.suptitle('Aestimo Results')
         pl.subplot(1,1,1)                
         pl.plot(xaxis*1e6,result.Ec_result,xaxis*1e6,result.Ev_result,xaxis*1e6,result.Ei_result,xaxis*1e6,result.Efn_result,'r',xaxis*1e6,result.Efp_result,'b')        
-        if model.comp_scheme==7 or  model.comp_scheme==8 and model.N_wells_virtual-2!=0:            
+        if model.N_wells_virtual-2!=0:            
             for j in range(1,result.N_wells_virtual-1):
                 I1,I2,I11,I22  = amort_wave(j,result.Well_boundary,model.n_max)
                 i1=I1-I1
@@ -2991,9 +2991,9 @@ def save_and_plot2(result,model):
         #Plotting Efield
         #figure(1)
         pl.subplot(2,2,2)
-        pl.plot(xaxis*1e6, result.el_field1_result*1e-2,'r',xaxis*1e6,result.el_field2_result*1e-2,'b')
+        pl.plot(xaxis*1e6, result.el_field1_result*1e-8,'r',xaxis*1e6,result.el_field2_result*1e-8,'b')
         pl.xlabel('x [um]')
-        pl.ylabel('Electric Field 1(red) & 2 (bleu) [V/cm]')
+        pl.ylabel('Electric Field 1(red) & 2 (bleu) [MV/cm]')
         pl.title('Field Profile vs Position ', fontsize=12)
         pl.legend(('Electric Field 1','Electric Field 2'),loc='best',fontsize=12)
         pl.grid(True)
@@ -3039,7 +3039,7 @@ def save_and_plot2(result,model):
         pl.subplot(2,2,3)
         pl.plot(xaxis*1e6,Vt*result.fi_result)
         pl.xlabel('x [um]')
-        pl.ylabel('Potential [eV]')
+        pl.ylabel('Potential [V]')
         pl.title('Potential vs Position',fontsize=12)
         pl.legend(('fi'),loc='best',fontsize=12)
         pl.grid(True)
@@ -3129,20 +3129,20 @@ def save_and_plot(result,model):
         #Plotting Efield
         #figure(1)
         pl.subplot(2,2,2)
-        pl.plot(xaxis*1e6, result.el_field1_result*1e-2,'r',xaxis*1e6,result.el_field2_result*1e-2,'b')
+        pl.plot(xaxis*1e6, result.el_field1_result*1e-8,'r',xaxis*1e6,result.el_field2_result*1e-8,'b')
         pl.xlabel('x [um]')
-        pl.ylabel('Electric Field  [V/cm]')
+        pl.ylabel('Electric Field  [MV/cm]')
         pl.title('Field Profile 1(red) & 2 (bleu) vs Position ', fontsize=10)
         pl.grid(True)
     
         #Plotting Potential
         #figure(2)
         pl.subplot(2,2,3)
-        pl.plot(xaxis*1e6, result.Ec_result/q,'r',xaxis*1e6,result.Ev_result/q,'b')
-        pl.plot(xaxis*1e6,result.EF*span[0:model.n_max],'k',ls='--')
+        pl.plot(xaxis*1e6,Vt*result.fi_result)
         pl.xlabel('x [um]')
-        pl.ylabel('Conduction Band Energy (red) & Potential (bleu) (eV)')
-        pl.title('Conduction Band & Potential vs Position ', fontsize=10)
+        pl.ylabel('Potential [V]')
+        pl.title('Potential vs Position',fontsize=12)
+        pl.legend(('fi'),loc='best',fontsize=12)
         pl.grid(True)
         
         pl.subplot(2,2,4)
