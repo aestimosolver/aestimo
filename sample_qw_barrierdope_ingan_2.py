@@ -19,23 +19,24 @@ T = 300.0 #Kelvin
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 # 7: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson then  poisson and DD)
 # 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD)
-
-computation_scheme = 2
+# 9: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel & Newton map
+computation_scheme = 9
 # QUANTUM
 # Total subband number to be calculated for electrons
 subnumber_h = 2
 subnumber_e = 2
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.#0.41348e8 (V/m)
-Vapplied=3.2
-
+vmax= 2.9
+vmin= 0.0
+Each_Step=0.05
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
 
 # GRID
 # For 1D, z-axis is choosen
-gridfactor = 1#nm
+gridfactor = 0.5#nm
 maxgridpoints = 200000 #for controlling the size
 #mat_type='Zincblende'
 mat_type='Wurtzite'
@@ -48,7 +49,7 @@ mat_type='Wurtzite'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 # To input this list in Gallium, we use lists N:
 
-material11 =[[ 100.0 , 'GaN'  , 0.3 , 0.0, 3e18, 'n','b'],         
+material =[[ 100.0 , 'GaN'  , 0.3 , 0.0, 3e18, 'n','b'],         
            [ 50.0  , 'InGaN', 0.1 , 0.0, 3e18, 'n','b'],
            [ 100.0 , 'AlGaN', 0.14, 0.0, 3e18, 'n','b'],
            [ 50.0  , 'GaN'  , 0.3 , 0.0, 7e17, 'n','b'],
@@ -79,23 +80,17 @@ material11 =[[ 30.0  , 'GaN'  , 0.3 , 0.0, 2e20, 'p','b'],
            [ 100.0 , 'AlGaN', 0.14, 0.0, 3e18, 'n','b'],
            [ 50.0  , 'InGaN', 0.1 , 0.0, 3e18, 'n','b'],
            [ 100.0 , 'GaN'  , 0.3 , 0.0, 3e18, 'n','b']]
-
-
-material =[[ 250.0, 'GaN', 0.3, 0.0, 1e17, 'p','b'],
-           [ 100.0, 'AlGaN', 0.1, 0.0, 1e17,'p','b'],          
-           [ 50.0, 'GaN', 0.3, 0.0, 0.0,'i','b'],
-           [ 15.0, 'InGaN', 0.3, 0.0, 0.0,'i','w'],
-           [ 350.0, 'GaN', 0.3, 0.0, 1e18, 'n','b']]
-#Doping profiles based on the LSS theory (ion implantation).
+#----------------------------------------
 import numpy as np
 x_max = sum([layer[0] for layer in material])
 def round2int(x):
     return int(x+0.5)
 n_max=round2int(x_max/gridfactor)
+#----------------------------------------
+#Doping profiles based on the LSS theory (ion implantation).
 dop_n=np.zeros(n_max)
 dop_p=np.zeros(n_max)
 dop_profile=np.zeros(n_max)
-surface=np.zeros(2)
 
 """   
 import matplotlib.pyplot as pl
@@ -107,6 +102,13 @@ pl.title('electrons (red) and holes (blue)')
 pl.grid(True)
 khkhk
 """
+#----------------------------------------
+Quantum_Regions=False
+Quantum_Regions_boundary=np.zeros((2,2))
+#----------------------------------------
+surface=np.zeros(2)
+#surface[0]=-0.6
+#----------------------------------------
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
     import aestimo_eh

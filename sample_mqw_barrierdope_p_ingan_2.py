@@ -20,6 +20,7 @@ T = 300.0 #Kelvin
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 # 7: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson then  poisson and DD)
 # 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD)
+# 9: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel & Newton map
 computation_scheme = 7
 
 # QUANTUM
@@ -28,8 +29,9 @@ subnumber_h = 1
 subnumber_e = 1
 # APPLIED ELECTRIC FIELD
 Fapplied =  0.0# (V/m)2.5e7/50e-9
-Vapplied=3.4
-# --------------------------------
+vmax= 3.2
+vmin= 0.0
+Each_Step=0.05# --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
 
@@ -56,15 +58,20 @@ material =[[ 300.0, 'AlGaN', 0.05, 0.0, 5e18, 'p','b'],
 material1 =[[ 20.0, 'AlGaN', 0.3, 0.0, 5e16, 'p','b'],
             [ 10.0, 'GaN', 0.2, 0.0, 1e18,'p','w'],
             [ 20.0, 'AlGaN', 0.3, 0.0, 5e16, 'p','b']]
+#----------------------------------------
 import numpy as np
 x_max = sum([layer[0] for layer in material])
+#----------------------------------------
 def round2int(x):
     return int(x+0.5)
 n_max=round2int(x_max/gridfactor)
 dop_profile=np.zeros(n_max)  
-surface=np.zeros(2)  
-
-
+#----------------------------------------
+Quantum_Regions=False
+Quantum_Regions_boundary=np.zeros((2,2))
+#----------------------------------------  
+surface=np.zeros(2)
+#----------------------------------------
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
     import aestimo_eh

@@ -20,6 +20,7 @@ T = 300.0 #Kelvin
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 # 7: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson then  poisson and DD)
 # 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD)
+# 9: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel & Newton map
 computation_scheme = 2
 # QUANTUM
 # Total subband number to be calculated for electrons
@@ -27,14 +28,15 @@ subnumber_h = 2
 subnumber_e = 1
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.0 # (V/m)
-Vapplied=3.4 # (V)
-# --------------------------------
+vmax= 3.1
+vmin= 0.0
+Each_Step=0.05# --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
 
 # GRID
 # For 1D, z-axis is choosen
-gridfactor = 0.1 #nm
+gridfactor = 0.5 #nm
 maxgridpoints = 200000 #for controlling the size
 mat_type='Wurtzite'
 # REGIONS
@@ -46,7 +48,7 @@ mat_type='Wurtzite'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material1 =[[ 20.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
+material =[[ 200.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
             [ 2.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
             [ 2.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
             [ 3.0, 'InGaN', 0.15, 0.0, 0.0,'p','w'],
@@ -54,11 +56,11 @@ material1 =[[ 20.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
             [ 3.0, 'InGaN', 0.15, 0.0, 0.0,'p','w'],
             [ 5.0, 'GaN', 0.0,0.0, 0.0, 'p','b'],
             [ 3.0, 'InGaN', 0.15, 0.0, 0.0,'p','w'],
-            [ 2.0, 'GaN', 0.0, 0.0, 5e18,'p','b'],                           
-            [ 2.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
-            [ 20.0, 'GaN', 0.0, 0.0, 5e18, 'p','b']]
+            [ 2.0, 'GaN', 0.0, 0.0, 5e18,'n','b'],                           
+            [ 2.0, 'GaN', 0.0, 0.0, 5e18, 'n','b'],
+            [ 200.0, 'GaN', 0.0, 0.0, 5e18, 'n','b']]
 
-material =[[ 20.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
+material1 =[[ 20.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
             [ 20.0, 'AlGaN', 0.18, 0.0, 5e18, 'p','b'],
             [ 8.0, 'InGaN', 0.035, 0.0, 5e18, 'p','b'],
             [ 4.0, 'InGaN', 0.1, 0.0, 0.0,'p','w'],
@@ -69,15 +71,20 @@ material =[[ 20.0, 'GaN', 0.0, 0.0, 5e18, 'p','b'],
             [ 8.0, 'InGaN', 0.035, 0.0, 5e18,'p','b'],                           
             [ 20.0, 'AlGaN', 0.18, 0.0, 5e18, 'p','b'],
             [ 20.0, 'GaN', 0.0, 0.0, 5e18, 'p','b']]
+#----------------------------------------
 import numpy as np
 x_max = sum([layer[0] for layer in material])
 def round2int(x):
     return int(x+0.5)
 n_max=round2int(x_max/gridfactor)
-dop_profile=np.zeros(n_max)  
-surface=np.zeros(2)  
-
- 
+#----------------------------------------
+dop_profile=np.zeros(n_max)
+#----------------------------------------
+Quantum_Regions=False
+Quantum_Regions_boundary=np.zeros((2,2))
+#----------------------------------------  
+surface=np.zeros(2)
+#---------------------------------------- 
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
     import aestimo_eh

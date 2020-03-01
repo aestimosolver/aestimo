@@ -18,7 +18,7 @@ T = 300.0 #Kelvin
 # 4: Schrodinger-Exchange interaction
 # 5: Schrodinger-Poisson + Exchange interaction
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
-computation_scheme = 2
+computation_scheme = 9
 
 # Non-parabolic effective mass function
 # 0: no energy dependence
@@ -34,7 +34,7 @@ fermi_np_scheme = True
 subnumber_e = 2
 subnumber_h = 2
 # APPLIED ELECTRIC FIELD
-Fapplied = 0.0 # (V/m)
+Fapplied = 0.7 # (V/m)
 
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
@@ -57,15 +57,21 @@ mat_type='Zincblende'
 material =[[ 200.0, 'AlGaAs', 0.2,0.2,  0, 'n','b'],
             [10.0, 'GaAs', 0,0.2,  2e18, 'n','w'],
             [200.0, 'AlGaAs', 0.2,0.2,  0, 'n','b']]
- 
+ #----------------------------------------
 import numpy as np
 x_max = sum([layer[0] for layer in material])
 def round2int(x):
     return int(x+0.5)
 n_max=round2int(x_max/gridfactor)
+#----------------------------------------
 dop_profile=np.zeros(n_max)  
-surface=np.zeros(2)  
-
+#----------------------------------------
+Quantum_Regions=False
+Quantum_Regions_boundary=np.zeros((2,2))
+#----------------------------------------
+surface=np.zeros(2)
+#surface[0]=-0.6
+#---------------------------------------- 
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
     import aestimo_eh

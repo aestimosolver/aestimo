@@ -20,7 +20,8 @@ T = 300.0 #Kelvin
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 # 7: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson then  poisson and DD)
 # 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD)
-computation_scheme = 7
+# 9: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel & Newton map
+computation_scheme = 2
 
 # QUANTUM
 # Total subband number to be calculated for electrons
@@ -28,8 +29,9 @@ subnumber_h = 2
 subnumber_e = 2
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.00#/50e-9 # (V/m)
-Vapplied=1.4 # (V)
-# --------------------------------
+vmax= 1.4
+vmin= 0.0
+Each_Step=0.05# --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
 
@@ -53,14 +55,18 @@ material =[[ 100.0, 'AlGaAs', 0.3, 0.0, dopp, 'p','b'],
             [ 20.0, 'GaAs', 0.0, 0.0, 0.0,'n','w'],
             [ 40.0, 'AlGaAs', 0.3, 0.0, dopp, 'n','b'],
             [ 100.0, 'AlGaAs', 0.3, 0.0, dopp, 'n','b']]
-
+#---------------------------------------- 
 import numpy as np
 x_max = sum([layer[0] for layer in material])
 n_max=int(x_max/gridfactor)
+#---------------------------------------- 
 dop_profile=np.zeros(n_max) 
-surface=np.zeros(2) 
-
-
+#----------------------------------------
+Quantum_Regions=False
+Quantum_Regions_boundary=np.zeros((2,2))
+#----------------------------------------  
+surface=np.zeros(2)
+#---------------------------------------- 
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
     import aestimo_eh

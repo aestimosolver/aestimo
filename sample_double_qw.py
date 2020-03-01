@@ -20,8 +20,8 @@ T = 300.0 #Kelvin
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 # 7: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson then  poisson and DD)
 # 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD)
-computation_scheme = 7
-
+# 9: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel & Newton map
+computation_scheme = 2
 # Non-parabolic effective mass function
 # 0: no energy dependence
 # 1: Nelson's effective 2-band model
@@ -37,7 +37,9 @@ subnumber_e = 1
 subnumber_h = 3
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.0 # (V/m)
-Vapplied=1.7# (V)
+vmax= 1.7
+vmin= 0.0
+Each_Step=0.05
 mat_type='Zincblende'
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
@@ -56,29 +58,25 @@ maxgridpoints = 200000 #for controlling the size
 # Layer 1 |       250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
+
 material =[[ 300.0, 'AlGaAs', 0.3, 0.3, 1e17, 'p','b'],
             [3.0, 'GaAs', 0, 0.3, 0.0, 'i','w'],
             [20.0, 'AlGaAs', 0.3, 0.3, 0.0, 'i','b'],
             [3.0, 'GaAs', 0, 0.3, 0.0, 'i','w'],
             [20.0, 'AlGaAs', 0.3, 0.3, 0.0, 'i','b'],
             [300.0, 'AlGaAs', 0.3, 0.3, 1e17, 'n','b']]
-"""
-if __name__ == "__main__": #this code allows you to run the input file directly
-    input_obj = vars()
-    import aestimo
-    aestimo.run_aestimo(input_obj)
-"""
+
+#----------------------------------------
 #Doping profiles based on the LSS theory (ion implantation).
 import numpy as np
 x_max = sum([layer[0] for layer in material])
 def round2int(x):
     return int(x+0.5)
 n_max=round2int(x_max/gridfactor)
+#----------------------------------------
 dop_n=np.zeros(n_max)
 dop_p=np.zeros(n_max)
 dop_profile=np.zeros(n_max)
-surface=np.zeros(2)
-#surface[0]=-0.6
 xaxis = np.arange(0,n_max)*gridfactor#[nm]
 Q_n=2e12#implant dose [1/cm2]
 Rp_n=86#projected range Rp [nm]
@@ -95,6 +93,13 @@ for i in range(n_max):
     dop_n[i]=Lss_profile_dop(xaxis[n_max-1-i],Q_n,Delta_Rp_n,Rp_n)*1e6
     dop_p[i]=-Lss_profile_dop(xaxis[n_max-1-i],Q_p,Delta_Rp_p,Rp_p)*1e6
     #dop_profile[i]=dop_n[i]+dop_p[i] 
+#----------------------------------------
+Quantum_Regions=False
+Quantum_Regions_boundary=np.zeros((2,2))
+#----------------------------------------  
+surface=np.zeros(2)
+#surface[0]=-0.6
+#----------------------------------------
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
     import aestimo_eh

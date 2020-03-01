@@ -19,6 +19,7 @@ T = 300.0 #Kelvin
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 # 7: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson then  poisson and DD)
 # 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD)
+# 9: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel & Newton map
 computation_scheme = 2
 
 # QUANTUM
@@ -27,8 +28,9 @@ subnumber_h = 1
 subnumber_e = 1
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.#0.41348e8 (V/m)
-Vapplied=1.6# (V)
-# --------------------------------
+vmax= 0.6
+vmin= 0.0
+Each_Step=0.05# --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
 
@@ -49,10 +51,8 @@ material =[[ 245.0, 'AlGaAs', 0.3, 0.0, 1e17, 'p','b'],
            [ 50.0, 'AlGaAs', 0.3, 0.0, 0.0, 'i','b'],
            [ 15.0, 'GaAs', 0.3, 0.0, 0.0,'i','w'],
            [ 5.0, 'AlGaAs', 0.3, 0.0, 0.0,'i','b'],
-           [ 20.0, 'AlGaAs', 0.3, 0.0, 0.95e18,'n','b'],           
-           [ 15.0, 'GaAs', 0.3, 0.0, 0.95e18, 'n','b']]
-
-
+           [ 20.0, 'AlGaAs', 0.3, 0.0, 0.8e18,'n','b'],           
+           [ 15.0, 'GaAs', 0.3, 0.0, 0.8e18, 'n','b']]
 
 material2 =[[ 15.0, 'GaAs', 0.0, 0.0, 1e18, 'n','b'],
            [ 20.0, 'AlGaAs', 0.3, 0.0, 1e18,'n','b'],
@@ -60,18 +60,17 @@ material2 =[[ 15.0, 'GaAs', 0.0, 0.0, 1e18, 'n','b'],
            [ 15.0, 'GaAs', 0.0, 0.0, 0.0,'i','w'],
            [ 50.0, 'AlGaAs', 0.3, 0.0, 0.0, 'i','b'],           
            [ 245.0, 'AlGaAs', 0.3, 0.0, 1e17, 'p','b']]
-
-#Doping profiles based on the LSS theory (ion implantation).
+#----------------------------------------
 import numpy as np
 x_max = sum([layer[0] for layer in material])
 def round2int(x):
     return int(x+0.5)
 n_max=round2int(x_max/gridfactor)
+#----------------------------------------
+#Doping profiles based on the LSS theory (ion implantation).
 dop_n=np.zeros(n_max)
 dop_p=np.zeros(n_max)
 dop_profile=np.zeros(n_max)
-surface=np.zeros(2)
-#surface[1]=-0.6
 xaxis = np.arange(0,n_max)*gridfactor#[nm]
 Q_n=2e12#implant dose [1/cm2]
 Rp_n=86#projected range Rp [nm]
@@ -98,6 +97,14 @@ pl.title('electrons (red) and holes (blue)')
 pl.grid(True)
 khkhk
 """
+#----------------------------------------
+Quantum_Regions=False
+Quantum_Regions_boundary=np.zeros((2,2))
+#----------------------------------------  
+surface=np.zeros(2)
+surface[1]=0.6
+surface[0]=0.0
+#---------------------------------------- 
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
     import aestimo_eh
