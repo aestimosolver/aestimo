@@ -3171,6 +3171,8 @@ def run_aestimo(input_obj):
         result_dd = Poisson_Schrodinger_DD(result,model)
     if model.comp_scheme==8:
         result_dd = Poisson_Schrodinger_DD_test(result,model)
+    if model.comp_scheme==9:
+        result_dd = Poisson_Schrodinger_DD_test_2(result,model)
     time4 = time.time() #timing audit
     if not(config.messagesoff):
         
@@ -3179,8 +3181,9 @@ def run_aestimo(input_obj):
 
     
     # Write the simulation results in files
-    save_and_plot(result,model)
-    if model.comp_scheme==7 or model.comp_scheme==8 :
+    if model.comp_scheme==7 or model.comp_scheme==8 or model.comp_scheme==2:
+        save_and_plot(result,model)
+    if model.comp_scheme==7 or model.comp_scheme==8 or model.comp_scheme==9:
         save_and_plot2(result_dd,model)
     if not(config.messagesoff):        
         logger.info("""Simulation is finished. All files are closed. Please control the related files.
