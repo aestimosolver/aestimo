@@ -241,6 +241,9 @@ class Structure():
         TAUP0=np.zeros(n_max)
         mun0=np.zeros(n_max)
         mup0=np.zeros(n_max)
+
+        Cn0=np.zeros(n_max)
+        Cp0=np.zeros(n_max)
         BETAN=np.zeros(n_max)
         BETAP=np.zeros(n_max)
         VSATN=np.zeros(n_max)
@@ -248,8 +251,10 @@ class Structure():
         position = 0.0 # keeping in nanometres (to minimise errors)
         for layer in self.material:
             startindex = round2int(position*1e-9/dx)
+            z0= round2int(position*1e-9/dx)
             position += layer[0] # update position to end of the layer
             finishindex = round2int(position*1e-9/dx)
+            z1= round2int(position*1e-9/dx)
             #
             matType = layer[1]
             if matType in material_property:
@@ -275,11 +280,14 @@ class Structure():
                     TAUP0[startindex:finishindex] = matprops['TAUP0']
                     mun0[startindex:finishindex] = matprops['mun0']
                     mup0[startindex:finishindex] = matprops['mup0']
+
+                    Cn0[startindex:finishindex] = matprops['Cn0']*1e-12
+                    Cp0[startindex:finishindex] = matprops['Cp0']*1e-12
                     BETAN[startindex:finishindex] = matprops['BETAN']
                     BETAP[startindex:finishindex] = matprops['BETAP']
                     VSATN[startindex:finishindex] = matprops['VSATN']
                     VSATP[startindex:finishindex] = matprops['VSATP']
-                if mat_type=='Wurtzite' :
+                if mat_crys_strc=='Wurtzite' :
                     a0_sub[startindex:finishindex]=matprops['a0_sub']*1e-10
                     C11[startindex:finishindex] = matprops['C11']*1e10
                     C12[startindex:finishindex] = matprops['C12']*1e10
@@ -308,6 +316,9 @@ class Structure():
                     TAUP0[startindex:finishindex] = matprops['TAUP0']
                     mun0[startindex:finishindex] = matprops['mun0']
                     mup0[startindex:finishindex] = matprops['mup0']
+                    
+                    Cn0[startindex:finishindex] = matprops['Cn0']*1e-12
+                    Cp0[startindex:finishindex] = matprops['Cp0']*1e-12
                     BETAN[startindex:finishindex] = matprops['BETAN']
                     BETAP[startindex:finishindex] = matprops['BETAP']
                     VSATN[startindex:finishindex] = matprops['VSATN']
@@ -349,8 +360,12 @@ class Structure():
                     cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(mat2['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
                 
                     mun0[startindex:finishindex] =x*mat1['mun0'] + (1-x)* mat2['mun0']
-                    mup0[startindex:finishindex] = x*mat1['mup0'] + (1-x)* mat2['mup0']                
-                if mat_type=='Wurtzite' :
+                    mup0[startindex:finishindex] = x*mat1['mup0'] + (1-x)* mat2['mup0']
+                    
+                    Cn0[startindex:finishindex] =(x*mat1['Cn0'] + (1-x)* mat2['Cn0'])*1e-12
+                    Cp0[startindex:finishindex] = (x*mat1['Cp0'] + (1-x)* mat2['Cp0'])*1e-12
+                if mat_crys_strc=='Wurtzite' :
+                    #A1[startindex:finishindex] =vegard1(mat1['A1'],mat1['A1'],x)
                     A1[startindex:finishindex] =x*mat1['A1'] + (1-x)* mat2['A1']
                     A2[startindex:finishindex] =x*mat1['A2'] + (1-x)* mat2['A2']
                     A3[startindex:finishindex] =x*mat1['A3'] + (1-x)* mat2['A3']
@@ -377,6 +392,9 @@ class Structure():
                     Ac[startindex:finishindex] = Ac_alloy*q
                     mun0[startindex:finishindex] =x*mat1['mun0'] + (1-x)* mat2['mun0']
                     mup0[startindex:finishindex] = x*mat1['mup0'] + (1-x)* mat2['mup0'] 
+
+                    Cn0[startindex:finishindex] =(x*mat1['Cn0'] + (1-x)* mat2['Cn0'])*1e-12
+                    Cp0[startindex:finishindex] = (x*mat1['Cp0'] + (1-x)* mat2['Cp0'])*1e-12
                     #############################################
             elif matType in alloy_property_4:
                     alloyprops = alloy_property_4[matType]
@@ -503,8 +521,21 @@ class Structure():
                         mup0_alloy_BCD_y=y*mat2['mup0'] + (1-y)* mat4['mup0']                        
                         mup0[startindex:finishindex] =(x*(1-x)*(y*mup0_alloy_ABC_x+(1-y)*mup0_alloy_ABD_x)+y*(1-y)*(x*mup0_alloy_ACD_y+(1-x)*mup0_alloy_BCD_y))/(x*(1-x)+y*(1-y))
                         
+
+                        Cn0_alloy_ABC_x=x*mat1['Cn0'] + (1-x)* mat2['Cn0']
+                        Cn0_alloy_ABD_x=x*mat3['Cn0'] + (1-x)* mat4['Cn0']
+                        Cn0_alloy_ACD_y=y*mat1['Cn0'] + (1-y)* mat3['Cn0']
+                        Cn0_alloy_BCD_y=y*mat2['Cn0'] + (1-y)* mat4['Cn0']                        
+                        Cn0[startindex:finishindex] =(x*(1-x)*(y*Cn0_alloy_ABC_x+(1-y)*Cn0_alloy_ABD_x)+y*(1-y)*(x*Cn0_alloy_ACD_y+(1-x)*Cn0_alloy_BCD_y))/(x*(1-x)+y*(1-y))*1e-12
+                        
+                        Cp0_alloy_ABC_x=x*mat1['Cp0'] + (1-x)* mat2['Cp0']
+                        Cp0_alloy_ABD_x=x*mat3['Cp0'] + (1-x)* mat4['Cp0']
+                        Cp0_alloy_ACD_y=y*mat1['Cp0'] + (1-y)* mat3['Cp0']
+                        Cp0_alloy_BCD_y=y*mat2['Cp0'] + (1-y)* mat4['Cp0']                        
+                        Cp0[startindex:finishindex] =(x*(1-x)*(y*Cp0_alloy_ABC_x+(1-y)*Cp0_alloy_ABD_x)+y*(1-y)*(x*Cp0_alloy_ACD_y+(1-x)*Cp0_alloy_BCD_y))/(x*(1-x)+y*(1-y))*1e-12
+                        
                         cb_meff_alpha[startindex:finishindex] = alloyprops['m_e_alpha']*(mat2['m_e']/cb_meff_alloy) #non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
-                    if mat_type=='Wurtzite' :
+                    if mat_crys_strc=='Wurtzite' :
                         alloyprops = alloy_property_4[matType]
                         mat1 = material_property[alloyprops['Material1']]#GaN
                         mat2 = material_property[alloyprops['Material2']]#InN
@@ -656,14 +687,24 @@ class Structure():
                         mun0_alloy_ABC=u_4*mat2['mun0'] + (1-u_4)* mat3['mun0']
                         mun0_alloy_ACD=v_4*mat1['mun0'] + (1-v_4)* mat2['mun0']
                         mun0_alloy_ABD=w_4*mat1['mun0'] + (1-w_4)* mat3['mun0']                        
-                        mun0[startindex:finishindex]=(x*y*mun0_alloy_ABC+y*(1-x-y)*mun0_alloy_ACD+x*(1-x-y)*mun0_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e10
+                        mun0[startindex:finishindex]=(x*y*mun0_alloy_ABC+y*(1-x-y)*mun0_alloy_ACD+x*(1-x-y)*mun0_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
 
                         mup0_alloy_ABC=u_4*mat2['mup0'] + (1-u_4)* mat3['mup0']
                         mup0_alloy_ACD=v_4*mat1['mup0'] + (1-v_4)* mat2['mup0']
                         mup0_alloy_ABD=w_4*mat1['mup0'] + (1-w_4)* mat3['mup0']                        
-                        mup0[startindex:finishindex]=(x*y*mup0_alloy_ABC+y*(1-x-y)*mup0_alloy_ACD+x*(1-x-y)*mup0_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e10
+                        mup0[startindex:finishindex]=(x*y*mup0_alloy_ABC+y*(1-x-y)*mup0_alloy_ACD+x*(1-x-y)*mup0_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))
+                        
+                        Cn0_alloy_ABC=u_4*mat2['Cn0'] + (1-u_4)* mat3['Cn0']
+                        Cn0_alloy_ACD=v_4*mat1['Cn0'] + (1-v_4)* mat2['Cn0']
+                        Cn0_alloy_ABD=w_4*mat1['Cn0'] + (1-w_4)* mat3['Cn0']                        
+                        Cn0[startindex:finishindex]=(x*y*Cn0_alloy_ABC+y*(1-x-y)*Cn0_alloy_ACD+x*(1-x-y)*Cn0_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e-12
 
+                        Cp0_alloy_ABC=u_4*mat2['Cp0'] + (1-u_4)* mat3['Cp0']
+                        Cp0_alloy_ACD=v_4*mat1['Cp0'] + (1-v_4)* mat2['Cp0']
+                        Cp0_alloy_ABD=w_4*mat1['Cp0'] + (1-w_4)* mat3['Cp0']                        
+                        Cp0[startindex:finishindex]=(x*y*Cp0_alloy_ABC+y*(1-x-y)*Cp0_alloy_ACD+x*(1-x-y)*Cp0_alloy_ABD)/(x*y+y*(1-x-y)+x*(1-x-y))*1e-12
 
+            
             #wells and barriers boundaries
             matRole= layer[6]
             if  matRole == 'w':
@@ -785,6 +826,8 @@ class Structure():
         self.TAUP0=TAUP0
         self.mun0=mun0
         self.mup0=mup0
+        self.Cn0=Cn0
+        self.Cp0=Cp0
         self.BETAN=BETAN
         self.BETAP=BETAP
         self.VSATN=VSATN
@@ -801,7 +844,9 @@ class StructureFrom(Structure):
             inputfile=AttrDict(inputfile)            
         # Parameters for simulation
         self.Fapp = inputfile.Fapplied
-        self.Vapplied = inputfile.Vapplied
+        self.vmax= inputfile.vmax
+        self.vmin= inputfile.vmin
+        self.Each_Step= inputfile.Each_Step
         self.surface =inputfile.surface
         self.T = inputfile.T
         self.subnumber_h = inputfile.subnumber_h
@@ -1454,7 +1499,9 @@ def Poisson_Schrodinger(model):
     eps = model.eps
     dop = model.dop
     Fapp = model.Fapp
-    Vapplied = model.Vapplied
+    vmax= model.vmax
+    vmin= model.vmin
+    Each_Step= model.Each_Step
     surface= model.surface
     T = model.T
     comp_scheme = model.comp_scheme
@@ -1562,37 +1609,61 @@ def Poisson_Schrodinger(model):
     Ldi= np.zeros(n_max)
     Nc= np.zeros(n_max)
     Nv= np.zeros(n_max)
-    m_v= np.zeros(n_max)
+    vb_meff= np.zeros(n_max)
     ni= np.zeros(n_max)
     n= np.zeros(n_max)
     p= np.zeros(n_max)
     hbark=hbar*2*pi
     for i in range(n_max): 
-        m_v[i]=(m_hh[i]**(3/2)+m_lh[i]**(3/2))**(2/3)
+        vb_meff[i]=(m_hh[i]**(3/2)+m_lh[i]**(3/2))**(2/3)
     Nc=2*(2*pi*cb_meff*kb*T/hbark**2)**(3/2)
-    Nv=2*(2*pi*m_v*kb*T/hbark**2)**(3/2)  
+    Nv=2*(2*pi*vb_meff*kb*T/hbark**2)**(3/2)  
     Half_Eg=np.zeros(n_max)
+    Eg_=np.zeros(n_max)
+    ns1= np.linalg.norm(dop,np.inf)    
+    ns2=np.linalg.norm(Ppz_Psp,np.inf)
+    ns=max(ns1,ns2)
+    offset0=0.0
+    offset1=0.0
     for i in range(n_max):       
-        ni[i]= sqrt(Nc[i]*Nv[i]*exp(-(fi_e[i]-fi_h[i])/(kb*T)))#Intrinsic carrier concentration [1/m^3] kb*T/q
-        #print("%.3E" % (ni[i]))
-        #print(fi_e[i]-fi_h[i])
-        if dop[i]==0:
-            dop[i]+=ni[i]        
+        ni[i]= sqrt(Nc[i]*Nv[i]*exp(-(fi_e[i]-fi_h[i])/(kb*T)))#Intrinsic carrier concentration [1/m^3]
+        if dop[i]==1:
+            dop[i]*=ni[i]        
         Ld_n_p[i] = sqrt(eps[i]*Vt/(q*abs(dop[i])))
-        Ldi[i] = sqrt(eps[i]*Vt/(q*ni[i]))        
-        Half_Eg[i]=(fi_e[i]-fi_h[i])/2                
+        Ldi[i] = sqrt(eps[i]*Vt/(q*ns*ni[i]))        
+        Half_Eg[i]=(fi_e[i]-fi_h[i])/2
+        Eg_[i]=(fi_e[i]-fi_h[i])
+                 
         fi_e[i]=Half_Eg[i]-kb*T*log(Nv[i]/Nc[i])/2
         fi_h[i]=-Half_Eg[i]-kb*T*log(Nv[i]/Nc[i])/2
-    if dx>min(Ld_n_p[:] ):
+
+    
+    
+    """
+    fi_e-=fi_e[0]
+    fi_h-=fi_e[0]
+    
+    fi_e+=offset0+offset1#+kb*T*np.log(Nv/Nc)/2
+    fi_h+=offset0+offset1#+kb*T*np.log(Nv/Nc)/2
+    
+    
+    pl.plot(xaxis, Half_Eg/q,'k')
+    pl.xlabel('Position (m)')
+    pl.ylabel('electrons  and and holes concentrations (cm-3)' )
+    pl.title('electrons (red) and holes (blue)')
+    pl.grid(True)
+    """
+    if dx>min(Ld_n_p[:] ) and 1==2:
         logger.error("""You are setting the grid size %g nm greater than the extrinsic Debye lengths %g nm""",dx*1e9,min(Ld_n_p[:])*1e9)
-        exit()
+        #exit()
     # STARTING SELF CONSISTENT LOOP
     time2 = time.time() # timing audit
     iteration = 1   #iteration counter
-    previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
+    #previousE0= 0   (meV) energy of zeroth state for previous iteration(for testing convergence)
     previousfi0= 0   #(meV) energy of  for previous iteration(for testing convergence)
     fitot = fi_h# + Vapp #For initial iteration sum bandstructure and applied field
     fitotc = fi_e# + Vapp
+    #initializing Stern damping method variables
     r=0.0
     w_n_minus_max=1.0
     w_n_max=0.0
@@ -1600,45 +1671,50 @@ def Poisson_Schrodinger(model):
     damping_n_plus = 0.1
     damping_n=0.1
     Ppz_Psp0=Ppz_Psp
+    EF=0.0
+
     if config.predic_correc:
         print("Predictor–corrector method is activated")
     while True:
+        if model.comp_scheme==9:
+            break
         print("Iteration:", iteration)
         if not(config.messagesoff) :
             logger.info("Iteration: %d", iteration)         
         if model.N_wells_virtual-2!=0:
-            if config.predic_correc:
-                if iteration==1: 
-                    E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT3_reduced_list,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
-                    E_statec_general0,E_state_general0,wfe_general0,wfh_general0,meff_statec_general0,meff_state_general0=E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general
-                damping=0.15   
-            else:
-                E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT3_reduced_list,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
+            E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=Schro(HUPMAT3_reduced_list,HUPMATC1,subnumber_h,subnumber_e,fitot,fitotc,model,Well_boundary,UNIM,RATIO,m_hh,m_lh,m_so,n_max)
+            if iteration==1:
                 E_statec_general0,E_state_general0,wfe_general0,wfh_general0,meff_statec_general0,meff_state_general0=E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general                
-                damping=0.15#0.1 works between high and low doping
-            n,p,fi,EF,fi_stat =Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,Ppz_Psp0,pol_surf_char,ni,n_max,iteration,fi,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface,fi_stat)             
+            damping=0.15#0.1 works between high and low doping
+            if config.predic_correc:
+                E_statec_general,E_state_general,wfe_general,wfh_general,meff_statec_general,meff_state_general=E_statec_general0,E_state_general0,wfe_general0,wfh_general0,meff_statec_general0,meff_state_general0
+            n,p,fi,EF,fi_stat =Poisson_equi2(ns,fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,Ppz_Psp0,pol_surf_char,ni,n_max,iteration,fi,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface,fi_stat)             
         else:
-            n,p,fi,EF,fi_stat =Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,Ppz_Psp0,pol_surf_char,ni,n_max,iteration,fi,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface,fi_stat)
+            n,p,fi,EF,fi_stat =Poisson_equi2(ns,fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,Ppz_Psp0,pol_surf_char,ni,n_max,iteration,fi,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface,fi_stat)
             damping=1            
         if comp_scheme in (0,1): 
             #if we are not self-consistently including Poisson Effects then only do one loop
             break
         
+        """
         # Combine band edge potential with potential due to charge distribution
         # To increase convergence, we calculate a moving average of electric potential 
         #with previous iterations. By dampening the corrective term, we avoid oscillations.
         #tryng new dmping method 
-        """F. Stern, J. Computational Physics 6, 56 (1970)."""
+        F. Stern, J. Computational Physics 6, 56 (1970).
         #the extrapolated-convergence-factor method instead of the fixed-convergence-factor method
+        """
         Vnew_general=-Vt*q*fi
         w_n=Vnew_general - V
         w_n_max=max(abs(w_n[:]))*J2meV
         r=w_n_max/w_n_minus_max        
         w_n_minus_max=w_n_max
         damping_n_plus=damping_n/(1-abs(r))       
-        damping_n=damping_n_plus                
-        #V+= damping_n_plus*(w_n)
-        V+= damping*(w_n)
+        damping_n=damping_n_plus
+        if config.Stern_damping :                
+            V+= damping_n_plus*(w_n)
+        else:
+            V+= damping*(w_n)
         fitot = fi_h + V + Vapp
         fitotc = fi_e + V + Vapp
         xaxis = np.arange(0,n_max)*dx        
@@ -1781,7 +1857,9 @@ def Poisson_Schrodinger_DD(result,model):
     eps = model.eps
     dop = model.dop
     Fapp = model.Fapp
-    Vapplied = model.Vapplied
+    vmax= model.vmax
+    vmin= model.vmin
+    Each_Step= model.Each_Step
     surface= model.surface
     T = model.T
     comp_scheme = model.comp_scheme
@@ -1875,15 +1953,15 @@ def Poisson_Schrodinger_DD(result,model):
     Ldi= np.zeros(n_max)
     Nc= np.zeros(n_max)
     Nv= np.zeros(n_max)
-    m_v= np.zeros(n_max)
+    vb_meff= np.zeros(n_max)
     ni= np.zeros(n_max)
     hbark=hbar*2*pi
     Ppz_Psp_tmp= Ppz_Psp
     Ppz_Psp= np.zeros(n_max)
     for i in range(n_max): 
-        m_v[i]=(m_hh[i]**(3/2)+m_lh[i]**(3/2)+m_so[i]**(3/2))**(2/3)
+        vb_meff[i]=(m_hh[i]**(3/2)+m_lh[i]**(3/2)+m_so[i]**(3/2))**(2/3)
     Nc=2*(2*pi*cb_meff*kb*T/hbark**2)**(3/2)
-    Nv=2*(2*pi*m_v*kb*T/hbark**2)**(3/2)  
+    Nv=2*(2*pi*vb_meff*kb*T/hbark**2)**(3/2)  
     Half_Eg=np.zeros(n_max)
     for i in range(n_max):       
         ni[i]= sqrt(Nc[i]*Nv[i]*exp(-(fi_e[i]-fi_h[i])/(kb*T)))#Intrinsic carrier concentration [1/m^3] kb*T/q
@@ -1891,28 +1969,29 @@ def Poisson_Schrodinger_DD(result,model):
         #print(fi_e[i]-fi_h[i])
         Ld_n_p[i] = sqrt(eps[i]*Vt/(q*abs(dop[i])))
         Ldi[i] = sqrt(eps[i]*Vt/(q*ni[i]))
-        if dop[i]==0:
-            dop[i]+=ni[i]        
+        if dop[i]==1:
+            dop[i]*=ni[i]        
         Half_Eg[i]=(fi_e[i]-fi_h[i])/2       
         fi_e[i]=Half_Eg[i]-kb*T*log(Nv[i]/Nc[i])/2
         fi_h[i]=-Half_Eg[i]-kb*T*log(Nv[i]/Nc[i])/2
     n=result.nf_result/ni
     p=result.pf_result/ni    
-    if dx>min(Ld_n_p[:]):
+    if dx>min(Ld_n_p[:]) and 1==2:
         logger.error("""You are setting the grid size %g nm greater than the extrinsic Debye lengths %g nm""",dx*1e9,min(Ld_n_p[:])*1e9)
-        exit()
+        #exit()
     # STARTING SELF CONSISTENT LOOP
     time2 = time.time() # timing audit
     iteration = 1   #iteration counter
     #previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
     #fitot = fi_h + Vapp #For initial iteration sum bandstructure and applied field
     #fitotc = fi_e + Vapp     
-    Va_max=Vapplied#1.8#input()0.625
+    Va_max=vmax#1.8#input()0.625
     #Va_max=0.625#input()0.625    
-    dVa=0.1*Vt#input()0.01
+    dVa=0.5*Vt#input()0.01
     dVa=dVa/Vt
     Each_Step = dVa
-    Total_Steps = int((Va_max/Vt)/(Each_Step))
+    vmin=0.0
+    Total_Steps = int(((Va_max-vmin)/Vt)/(Each_Step))
     xaxis = np.arange(0,n_max)*dx   #metres
     mup=np.zeros(n_max)
     mun=np.zeros(n_max)
@@ -2078,7 +2157,9 @@ def Poisson_Schrodinger_DD_test(result,model):
     eps = model.eps
     dop = model.dop
     Fapp = model.Fapp
-    Vapplied = model.Vapplied
+    vmax= model.vmax
+    vmin= model.vmin
+    Each_Step= model.Each_Step
     surface= model.surface
     T = model.T
     comp_scheme = model.comp_scheme
@@ -2209,12 +2290,12 @@ def Poisson_Schrodinger_DD_test(result,model):
     previousfi0= 0   #(meV) energy of  for previous iteration(for testing convergence)    
     fitot = fi_h# + Vapp #For initial iteration sum bandstructure and applied field
     fitotc = fi_e# + Vapp     
-    Va_max=Vapplied#1.8#input()0.625
+    Va_max=vmax#1.8#input()0.625
     #Va_max=0.625#input()0.625    
-    dVa=0.2#*Vt#input()0.01
+    dVa=Each_Step#*Vt#input()0.01
     dVa=dVa/Vt
     Each_Step = dVa
-    Total_Steps = int((Va_max/Vt)/(Each_Step))
+    Total_Steps = int(((Va_max-vmin)/Vt)/(Each_Step))
     xaxis = np.arange(0,n_max)*dx   #metres
     mup=np.zeros(n_max)
     mun=np.zeros(n_max)
