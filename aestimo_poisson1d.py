@@ -21,11 +21,10 @@ T = 300.0 #Kelvin
 Vt    = kb*T/q           # [eV]
 J2meV=1e3/q #Joules to meV
 meV2J=1e-3*q #meV to Joules
-def Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,Ppz_Psp,pol_surf_char,ni,n_max,iteration,fi_old,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface,fi_stat):
+def Poisson_equi2(ns,fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,Ppz_Psp,pol_surf_char,ni,n_max,iteration,fi_old,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface,fi_stat):
     fi_out=np.zeros(n_max)
     dop_out=np.zeros(n_max) 
     Ppz_Psp_out=np.zeros(n_max)
-    pol_surf_char_out=np.zeros(n_max)  
     d=np.zeros(n_max)
     v=np.zeros(n_max)    
     f=np.zeros(n_max)
@@ -34,49 +33,29 @@ def Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,Ppz_Psp,pol_surf_c
     a=np.zeros(n_max)
     delta=np.zeros(n_max)
     fi_out=fi_old
-    dop_out=dop/ni
-    Ppz_Psp_out=Ppz_Psp/ni
-    pol_surf_char_out=pol_surf_char/ni   
+    dop_out=dop/(ns*ni)
+    Ppz_Psp_out=Ppz_Psp/(ns*ni)
     delta_acc=1.e-5    
     dx2=dx*dx
     Ldi2=Ldi*Ldi
     iteration0=1
-    pol_surf_char_out0=np.zeros(n_max)
-    
-    for i in  range(1,n_max-2):
-        pol_surf_char_out0[i-1]=(pol_surf_char_out[i-1]-pol_surf_char_out[i+1])/(2*dx)
-    """
-    xaxis = np.arange(0,n_max)*model.dx 
-    pl.plot(xaxis,pol_surf_char_out0 ,'k',xaxis,Ppz_Psp_out,'b')
-    #pl.plot(xaxis,ni ,'k')
-    pl.show()
-    dfrg
-    """
+
     if iteration==iteration0:
         #Determination of the Fermi Level
         EF=0.0        
-        n=np.zeros(n_max)
-        p=np.zeros(n_max)
         fi_out=np.zeros(n_max)
         n,p,fi_out=equi_np_fi(iteration,dop,Ppz_Psp,n_max,ni,model,Vt,surface)
         fi_stat=fi_out
+        
     else:
-        n=np.zeros(n_max)
-        p=np.zeros(n_max)
-        if config.predic_correc:#(check high concentrations)
-            n,p,fi_non,EF =equi_np_fi3(fi_stat,n,p,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_out,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,dop,Ppz_Psp,n_max,ni)
-        else:    
-            n,p,fi_non,EF =equi_np_fi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_out,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,dop,Ppz_Psp,n_max,ni)
+        n,p,fi_non,EF =equi_np_fi3(fi_stat,n,p,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_out,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,dop,Ppz_Psp,n_max,ni)
+    
     for i in  range(1,n_max-1):
         a[i]=Ldi2[i]/(dx2)
         c[i]=Ldi2[i]/(dx2)
-        b[i]=-(2*Ldi2[i]/(dx2)+n[i]+p[i])
-        if config.piezo_test==1:            
-            f[i] = n[i] - p[i] - dop_out[i]-Ppz_Psp_out[i] - (fi_out[i]*(n[i] + p[i]))
-        elif config.piezo_test==2:            
-            f[i] = n[i] - p[i] - dop_out[i]-pol_surf_char_out0[i] - (fi_out[i]*(n[i] + p[i]))
-        else:
-            f[i] = n[i] - p[i] - dop_out[i]-(pol_surf_char_out[i+1]-pol_surf_char_out[i-1])/(2*dx) - (fi_out[i]*(n[i] + p[i]))
+        b[i]=-(2*Ldi2[i]/(dx2)+n[i]/ns+p[i]/ns)
+        f[i] = n[i]/ns - p[i]/ns - dop_out[i]-Ppz_Psp_out[i] - (fi_out[i]*(n[i]/ns + p[i]/ns))
+
     # (B) Define the elements of the coefficient matrix and initialize the forcing
     # function at the ohmic contacts
     a[0]=0.
@@ -117,29 +96,17 @@ def Poisson_equi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,Ppz_Psp,pol_surf_c
         if (delta_max<delta_acc) :
             flag_conv = False
         else:
-            if iteration==iteration0 :
-                n=np.zeros(n_max)
-                p=np.zeros(n_max)                
-                for ii in  range(0,n_max):
-                    n[ii]=exp(fi_out[ii])
-                    p[ii]=exp(-fi_out[ii])
+            if iteration==iteration0 :                
+                n=np.exp(fi_out)
+                p=np.exp(-fi_out)
             else:
-                n=np.zeros(n_max)
-                p=np.zeros(n_max)
-                if config.predic_correc:            
-                    n,p,fi_non,EF =equi_np_fi3(fi_stat,n,p,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_out,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,dop,Ppz_Psp,n_max,ni)
-                else:                 
-                    n,p,fi_non,EF =equi_np_fi2(fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_out,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,dop,Ppz_Psp,n_max,ni)
+                n,p,fi_non,EF =equi_np_fi3(fi_stat,n,p,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_out,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,dop,Ppz_Psp,n_max,ni)
             for i in  range(1,n_max-1):
-                b[i]=-(2*Ldi2[i]/(dx2)+n[i]+p[i])
-                if config.piezo_test==1:            
-                    f[i] = n[i] - p[i] - dop_out[i]-Ppz_Psp_out[i] - (fi_out[i]*(n[i] + p[i]))
-                elif config.piezo_test==2:            
-                    f[i] = n[i] - p[i] - dop_out[i]-pol_surf_char_out0[i] - (fi_out[i]*(n[i] + p[i]))
-                else:
-                    f[i] = n[i] - p[i] - dop_out[i]-(pol_surf_char_out[i+1]-pol_surf_char_out[i-1])/(2*dx) - (fi_out[i]*(n[i] + p[i]))
+                b[i]=-(2*Ldi2[i]/(dx2)+n[i]/ns+p[i]/ns)
+                f[i] = n[i]/ns - p[i]/ns - dop_out[i]-Ppz_Psp_out[i] - (fi_out[i]*(n[i]/ns + p[i]/ns))
 
     return n,p,fi_out,EF,fi_stat 
+
 def Poisson_equi_non_2(vindex,fitotc,fitot,Nc,Nv,fi_e,fi_h,n,p,dx,Ldi,dop,Ppz_Psp,pol_surf_char,ni,n_max,iteration,fi_old,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,surface,fi_stat):
     fi_out=np.zeros(n_max)
     dop_out=np.zeros(n_max) 
@@ -270,6 +237,7 @@ def amort_wave(j,Well_boundary,n_max):
     I22=Well_boundary[j,1]
     amort_wave_0=int(config.amort_wave_0*(Well_boundary[j,1]-Well_boundary[j,0])/2)            
     amort_wave_1=int(config.amort_wave_1*(Well_boundary[j,1]-Well_boundary[j,0])/2)    
+
     I1=I11-amort_wave_0 #n_max-70#
     I2=I22+amort_wave_1#n_max-5#
     return I1,I2,I11,I22  
@@ -415,62 +383,32 @@ def equi_np_fi4(fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_old,Vt,wfh_general,wfe
     return n,p,fi_old,EF  # density of carriers
 def equi_np_fi3(fi_stat,n,p,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_old,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,dop,Ppz_Psp,n_max,ni):#use
     EF=0.0
-    nf=n*ni
-    pf=p*ni
-    ## Calculate Quasi Fermi Level - Efn Efp
-    Ec=np.zeros(n_max)
-    Ev=np.zeros(n_max)
-    Ei=np.zeros(n_max)
     Efn=np.zeros(n_max)
     Efp=np.zeros(n_max)
-    for i in range(1,n_max-1): 
-        Ec[i] = fi_e[i]/q - Vt*fi_old[i]     #Values from the second Node%
-        Ev[i] = fi_h[i]/q - Vt*fi_old[i]     #Values from the second Node%    
-    Ec[0] = Ec[1]
-    Ec[n_max-1] = Ec[n_max-2]
-    Ev[0] = Ev[1]
-    Ev[n_max-1] = Ev[n_max-2]
-    if config.predic_correc:
-        Ef_Ec=np.zeros(n_max)
-        Ev_Ef=np.zeros(n_max)
-        E3kbT=np.zeros(n_max)
-        #Determination of the Fermi Level
-        EF=0.0
-        for i1 in range(0,n_max):
-            Ef_Ec[i1]=(EF-(fi_e[i1]-Vt*q*fi_old[i1]))/(kb*T)#*J2meV
-            Ev_Ef[i1]=((fi_h[i1]-Vt*q*fi_old[i1])-EF)/(kb*T)#*J2meV
-            E3kbT[i1]=-3*kb*T/(kb*T)#*J2meV
-            if (EF*meV2J-(fi_e[i1]-Vt*q*fi_old[i1])>-3*kb*T  ) :#-3*kb*T 
-                n[i1]=Nc[i1]*fd3((EF*meV2J-(fi_e[i1]-Vt*q*fi_old[i1]))/(kb*T))/ni[i1]
-            else:
-                n[i1]=Nc[i1]*exp((EF*meV2J-(fi_e[i1]-Vt*q*fi_old[i1]))/(kb*T))/ni[i1]
-                #print(n[i1])
-            if ((fi_h[i1]-Vt*q*fi_old[i1])-EF*meV2J>-3*kb*T ):#-3*kb*T 
-                
-                p[i1]=Nv[i1]*fd3(((fi_h[i1]-Vt*q*fi_old[i1])-EF*meV2J)/(kb*T))/ni[i1]
-            else:
-                p[i1]=Nv[i1]*exp(((fi_h[i1]-Vt*q*fi_old[i1])-EF*meV2J)/(kb*T))/ni[i1]        
-        fi_stat=Ei=Efn=Efp#the states are calculated under no built-in potential  
-    else:
-        for i in range(0,n_max):
-            Ei[i]   = Ec[i] -((fi_e[i]-fi_h[i])/(2*q))
-            Efn[i]  = Ei[i] + Vt*log(abs(nf[i]/ni[i]))
-            Efp[i]  = Ei[i] - Vt*log(abs(pf[i]/ni[i]))
+    
+    n=np.exp(fi_old)
+    p=np.exp(-fi_old)
+    """    
+    for i1 in range(0,n_max):
+        if (EF*meV2J-(fi_e[i1]-Vt*q*fi_old[i1])>-3*kb*T  ):
+            n[i1]=Nc[i1]*fd3((EF*meV2J-(fi_e[i1]-Vt*q*fi_old[i1]))/(kb*T))/ni[i1]
+            p[i1]=Nv[i1]*fd3(((fi_h[i1]-Vt*q*fi_old[i1])-EF*meV2J)/(kb*T))/ni[i1]       
+    """
+    fi_stat=Efn=Efp
     Delta_fi=np.zeros(n_max)
     for k in range(1,model.N_wells_virtual-1):
         I1,I2,I11,I22 =amort_wave(k,model.Well_boundary,n_max)
-        i1=I1-I1
         n[I1:I2]=0.0
         p[I1:I2]=0.0
-        for j in range(0,model.subnumber_e,1):
-            for i in range(I1,I2):
-                Delta_fi[i]=-Vt*q*fi_stat[i]-(-Vt*q*fi_old[i])
+        if not(config.predic_correc):
+            fi_stat=fi_old
+        for i in range(I1,I2):
+            Delta_fi[i]=-Vt*q*fi_stat[i]-(-Vt*q*fi_old[i])
+            for j in range(0,model.subnumber_e,1):            
                 n[i]+= (fd2(E_statec_general[k,j]-Delta_fi[i]*J2meV,Efn[i]*q*J2meV,model)*meff_statec_general[k,j]/(hbar**2*pi))*(wfe_general[k,j,i-I1])**2/(ni[i]*model.dx)
-        for jj in range(0,model.subnumber_h,1):          
-            for ii in range(I1,I2):
-                Delta_fi[ii]=-Vt*q*fi_stat[ii]-(-Vt*q*fi_old[ii])#predictor-corrector-type approach.
-                p[ii]+= (fd1(E_state_general[k,jj]-Delta_fi[ii]*J2meV,Efp[ii]*q*J2meV,model)*meff_state_general[k,jj]/(hbar**2*pi))*(wfh_general[k,jj,ii-I1])**2/(ni[ii]*model.dx)    
-    return n,p,fi_old,EF  # density of carriers
+            for jj in range(0,model.subnumber_h,1):          
+                p[i]+= (fd1(E_state_general[k,jj]-Delta_fi[i]*J2meV,Efp[i]*q*J2meV,model)*meff_state_general[k,jj]/(hbar**2*pi))*(wfh_general[k,jj,i-I1])**2/(ni[i]*model.dx)      
+    return n,p,fi_old,EF
 def Ber(x):
     flag_sum =True
     if(x>0.01):
@@ -832,7 +770,7 @@ def Write_results_equi1(dEc,Vt,q,ni,n,p,dop,dx,Ldi,fi,n_max):
     fi_result=fi[0:n_max]
     return Ec_result,ro_result,el_field1_result,el_field2_result,nf_result,pf_result,fi_result
 
-def Write_results_equi2(fitotc,fitot,Vt,q,ni,n,p,dop,dx,Ldi,fi,n_max):
+def Write_results_equi2(ns,fitotc,fitot,Vt,q,ni,n,p,dop,dx,Ldi,fi,n_max):
     ro=np.zeros(n_max)
     el_field1=np.zeros(n_max)
     el_field2=np.zeros(n_max)
@@ -1115,7 +1053,7 @@ def Continuity2(n,p,mun,mup,fi,Vt,Ldi,n_max,dx,TAUN0,TAUP0):
     ####################### END of ELECTRON Continuty Solver ###########  
     #(D)  Start the iterative procedure for the solution of the linearized Continuity
     #     equation for "HOLES" using LU decomposition method:
-    print(max(n[:]))
+    #print(max(n[:]))
     dp[0] = bp[0]
     for i in range(1,n_max):
         betap[i]=ap[i]/dp[i-1]
@@ -1507,6 +1445,49 @@ def equi_np_fi22(vindex,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,fi_old,Vt,wfh_gen
         pl.ylabel('Energy (meV)')
         pl.grid(True)
     return n_q,p_q,fi_n,fi_p # density of carriers
+def equi_np_fi222(ni,idata,fi_e,fi_h,fi_old,Vt,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general,n_max,n,p):#use    
+    n_q=np.zeros(n_max)
+    p_q=np.zeros(n_max)
+    Ec=np.zeros(n_max)
+    Ev=np.zeros(n_max)
+    Ei=np.zeros(n_max)
+    Efn=np.zeros(n_max)
+    Efp=np.zeros(n_max)
+    fi_n=np.zeros(n_max)
+    fi_p=np.zeros(n_max)
+    for i in range(1,n_max-1): 
+        Ec[i] = fi_e[i]/q - Vt*fi_old[i]     #Values from the second Node%
+        Ev[i] = fi_h[i]/q - Vt*fi_old[i]     #Values from the second Node%    
+    Ec[0] = Ec[1]
+    Ec[n_max-1] = Ec[n_max-2]
+    Ev[0] = Ev[1]
+    Ev[n_max-1] = Ev[n_max-2]
+    for i in range(0,n_max):
+        Ei[i]   = Ec[i] -((fi_e[i]-fi_h[i])/(2*q))
+    #######################################################
+    #EF=0.0 
+    
+    for k in range(1,model.N_wells_virtual-1):
+        I1,I2,I11,I22 =amort_wave(k,model.Well_boundary,n_max)      
+        #n[I1:I2]=0.0
+        #p[I1:I2]=0.0        
+        #couter=0
+        for j in range(0,model.subnumber_e,1):
+            for i in range(I11,I22):
+                Efn[i]  = Ei[i] + Vt*log(abs(n[i]+1))
+                n_q[i]+= (fd2(E_statec_general[k,j],Efn[i]*q*J2meV,model)*meff_statec_general[k,j]/(hbar**2*pi))*(wfe_general[k,j,i-I1])**2/(ni[i]*model.dx)                
+        for jj in range(0,model.subnumber_h,1):          
+            for ii in range(I11,I22):
+                Efp[ii]  = Ei[ii] - Vt*log(abs(p[ii]+1))
+                p_q[ii]+= (fd1(E_state_general[k,jj],Efp[ii]*q*J2meV,model)*meff_state_general[k,jj]/(hbar**2*pi))*(wfh_general[k,jj,ii-I1])**2/(ni[ii]*model.dx)
+    
+    for k in range(1,model.N_wells_virtual-1):
+        I1,I2,I11,I22 =amort_wave(k,model.Well_boundary,n_max)
+        for i in range(I11,I22):
+            fi_n[i]  = Vt*log(abs((n_q[i]+1)/(n[i]+1)))
+            fi_p[i]  = -Vt*log(abs((p_q[i]+1)/(p[i]+1)))
+    return fi_n,fi_p # density of carriers
+
 def Poisson_non_equi3(vindex,fi_stat3,n,p,dop,Ppz_Psp,pol_surf_char,n_max,dx,fi,flag_conv_2,Ldi,ni,fitotc,fitot,Nc,Nv,fi_e,fi_h,iteration,wfh_general,wfe_general,model,E_state_general,E_statec_general,meff_state_general,meff_statec_general):
     #################################################################### 
     ## 3.3 Calculate potential fi again with new values of "n" and "p"##
@@ -1614,7 +1595,7 @@ def Current2(vindex,n,p,mun,mup,fi,Vt,n_max,Total_Steps,q,dx,ni,Ldi,Jnip1by2,Jni
 
 
 
-def Write_results_non_equi2(fi_e,fi_h,Vt,q,ni,n,p,dop,dx,Ldi,fi,n_max
+def Write_results_non_equi2(Nc,Nv,fi_e,fi_h,Vt,q,ni,n,p,dop,dx,Ldi,fi,n_max
                    ,Jnip1by2,Jnim1by2,Jelec,Jpip1by2,Jpim1by2,Jhole,Jtotal,Total_Steps):
 
 
@@ -1661,8 +1642,8 @@ def Write_results_non_equi2(fi_e,fi_h,Vt,q,ni,n,p,dop,dx,Ldi,fi,n_max
     ## Calculate Quasi Fermi Level - Efn Efp
     for i in range(0,n_max):
         Ei[i]   = Ec[i] -((fi_e[i]-fi_h[i])/(2*q))
-        #Efn[i]  = Ei[i] + Vt*log(nf[i]/ni[i]+1)
-        #Efp[i]  = Ei[i] - Vt*log(pf[i]/ni[i]+1)           
+        Efn[i]  = Ei[i] + Vt*log(nf[i]/ni[i]+1)
+        Efp[i]  = Ei[i] - Vt*log(pf[i]/ni[i]+1)           
     
     Efn[0]=Efn[1]
     Efn[n_max-1] = Efn[n_max-2]
