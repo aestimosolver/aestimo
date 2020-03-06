@@ -18,8 +18,8 @@ T = 300.0 #Kelvin
 # 4: Schrodinger-Exchange interaction
 # 5: Schrodinger-Poisson + Exchange interaction
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
-# 7: Schrodinger-Poisson-Drift_Diffusion
-# 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel map
+# 7: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson then  poisson and DD)
+# 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD)
 # 9: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel & Newton map
 computation_scheme = 9
 
@@ -38,14 +38,9 @@ subnumber_e = 1
 subnumber_h = 1
 # APPLIED ELECTRIC FIELD
 Fapplied =  0.0# (V/m)2.5e7/50e-9
-vmax= 1.2
+vmax= 2.0
 vmin= 0.0
-Each_Step=0.05
-# --------------------------------
-# REGIONAL SETTINGS FOR SIMULATION
-# --------------------------------
-T     = 300              # [K]
-# For 1D, z-axis is choosen
+Each_Step=0.05# For 1D, z-axis is choosen
 gridfactor = 1
 maxgridpoints = 200000 #for controlling the size
 mat_type='Zincblende'
@@ -58,10 +53,13 @@ mat_type='Zincblende'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material1 =[[3140.5, 'Si', 0.0, 0.0, 0.7e+17, 'p','b'],          
-            [3140.5, 'Si', 0.0, 0.0, 0.7e+16, 'n','b']]
-material =[[500, 'Si', 0.0, 0.0, 1e+19, 'p','b'],          
-            [500, 'Si', 0.0, 0.0,1e+19, 'n','b']]
+material =[[500, 'Si', 0.1, 0.0, 1e+19, 'p','b'],
+            [500, 'Si', 0.1, 0.0, 1e+19, 'n','b']]
+
+
+material1 =[[350, 'InGaAs', 0.1, 0.0, 1e+16, 'p','b'],
+            [15, 'InAs', 0.0, 0.0, 1e+16, 'n','w'],
+            [600, 'InGaAs', 0.1, 0.0, 1e+17, 'n','b']] 
 #---------------------------------------- 
 import numpy as np
 x_max = sum([layer[0] for layer in material])

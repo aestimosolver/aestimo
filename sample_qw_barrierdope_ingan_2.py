@@ -20,25 +20,26 @@ T = 300.0 #Kelvin
 # 7: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson then  poisson and DD)
 # 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD)
 # 9: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel & Newton map
-computation_scheme = 7
-
+computation_scheme = 9
 # QUANTUM
 # Total subband number to be calculated for electrons
-subnumber_h = 3
-subnumber_e = 3
+subnumber_h = 2
+subnumber_e = 2
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.#0.41348e8 (V/m)
-vmax= 1.8
+vmax= 2.9
 vmin= 0.0
-Each_Step=0.05# --------------------------------
+Each_Step=0.05
+# --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
 
 # GRID
 # For 1D, z-axis is choosen
-gridfactor = 1#nm
+gridfactor = 0.5#nm
 maxgridpoints = 200000 #for controlling the size
-mat_type='Zincblende'
+#mat_type='Zincblende'
+mat_type='Wurtzite'
 # REGIONS
 # Region input is a two-dimensional list input.
 # An example:
@@ -48,43 +49,49 @@ mat_type='Zincblende'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 # To input this list in Gallium, we use lists N:
 
-material =[[ 180.0, 'AlGaAs', 0.3, 0.0, 0.95e18, 'p','b'],
-            [ 5.0, 'AlGaAs', 0.3, 0.0, 0.0, 'p','b'],
-            [ 10.0, 'AlGaAs', 0.3, 0.0, 1e15, 'n','b'],
-            [ 10.0, 'GaAs', 0.0, 0.0, 1e15, 'n','w'],
-            [ 10.0, 'AlGaAs', 0.3, 0.0, 1e15, 'n','b'],
-            [ 5.0, 'AlGaAs', 0.3, 0.0, 0.0 , 'n','b'],
-            [ 180.0, 'AlGaAs', 0.3, 0.0, 0.95e18, 'n','b']]
+material =[[ 100.0 , 'GaN'  , 0.3 , 0.0, 3e18, 'n','b'],         
+           [ 50.0  , 'InGaN', 0.1 , 0.0, 3e18, 'n','b'],
+           [ 100.0 , 'AlGaN', 0.14, 0.0, 3e18, 'n','b'],
+           [ 50.0  , 'GaN'  , 0.3 , 0.0, 7e17, 'n','b'],
+           [ 10.0  , 'AlGaN', 0.2 , 0.0, 7e16, 'n','b'],
+           [ 4.0   , 'InGaN', 0.02, 0.0, 7e16, 'n','w'],
+           [ 10.0  , 'AlGaN', 0.2 , 0.0, 7e16, 'n','b'],
+           [ 4.0   , 'InGaN', 0.02, 0.0, 7e16, 'n','w'],
+           [ 10.0  , 'AlGaN', 0.2 , 0.0, 7e16, 'n','b'],
+           [ 4.0   , 'InGaN', 0.02, 0.0, 7e16, 'n','w'],
+           [ 10.0  , 'AlGaN', 0.2 , 0.0, 7e16, 'n','b'],
+           [ 20.0  , 'AlGaN', 0.2 , 0.0, 1e19, 'p','b'],           
+           [ 50.0  , 'GaN'  , 0.3 , 0.0, 5e18, 'p','b'],
+           [ 100.0 , 'AlGaN', 0.14, 0.0, 1e20, 'p','b'],           
+           [ 30.0  , 'GaN'  , 0.3 , 0.0, 2e20, 'p','b']]
+
+material11 =[[ 30.0  , 'GaN'  , 0.3 , 0.0, 2e20, 'p','b'],           
+           [ 100.0 , 'AlGaN', 0.14, 0.0, 1e20, 'p','b'],                      
+           [ 50.0  , 'GaN'  , 0.3 , 0.0, 5e18, 'p','b'],
+           [ 20.0  , 'AlGaN', 0.2 , 0.0, 1e19, 'p','b'],           
+           [ 10.0  , 'AlGaN', 0.2 , 0.0, 7e16, 'n','b'],
+           [ 4.0   , 'InGaN', 0.02, 0.0, 7e16, 'n','w'],
+           [ 10.0  , 'AlGaN', 0.2 , 0.0, 7e16, 'n','b'],
+           [ 4.0   , 'InGaN', 0.02, 0.0, 7e16, 'n','w'],
+           [ 10.0  , 'AlGaN', 0.2 , 0.0, 7e16, 'n','b'],
+           [ 4.0   , 'InGaN', 0.02, 0.0, 7e16, 'n','w'],
+           [ 10.0  , 'AlGaN', 0.2 , 0.0, 7e16, 'n','b'],
+           [ 50.0  , 'GaN'  , 0.3 , 0.0, 7e17, 'n','b'],
+           [ 100.0 , 'AlGaN', 0.14, 0.0, 3e18, 'n','b'],
+           [ 50.0  , 'InGaN', 0.1 , 0.0, 3e18, 'n','b'],
+           [ 100.0 , 'GaN'  , 0.3 , 0.0, 3e18, 'n','b']]
 #----------------------------------------
 import numpy as np
 x_max = sum([layer[0] for layer in material])
 def round2int(x):
     return int(x+0.5)
 n_max=round2int(x_max/gridfactor)
-#Doping profiles based on the LSS theory (ion implantation).
 #----------------------------------------
+#Doping profiles based on the LSS theory (ion implantation).
 dop_n=np.zeros(n_max)
 dop_p=np.zeros(n_max)
 dop_profile=np.zeros(n_max)
-"""
-surface[1]=-0.6
-xaxis = np.arange(0,n_max)*gridfactor#[nm]
-Q_n=2e12#implant dose [1/cm2]
-Rp_n=86#projected range Rp [nm]
-Delta_Rp_n=44#projected straggle Delta Rp [nm]
-Q_p=1e11#implant dose [1/cm2]
-Rp_p=75#projected range Rp [nm]
-Delta_Rp_p=20#projected straggle Delta Rp [nm]
-from math import sqrt, exp
-def Lss_profile_dop(x,Q,Delta_Rp,Rp):   
-    return Q/(sqrt(2*np.pi)*Delta_Rp*1e-7)*exp(-(x-Rp)**2/(2*Delta_Rp**2))
-def Lss_profile_dop_diff(x,Q,Delta_Rp,Rp):   
-    return Q/(2*sqrt(np.pi)*Delta_Rp*1e-7)*exp(-(x-Rp)**2/(4*Delta_Rp**2))
-for i in range(n_max):   
-    dop_n[i]=Lss_profile_dop(xaxis[n_max-1-i],Q_n,Delta_Rp_n,Rp_n)*1e6#n_max-1-i
-    dop_p[i]=-Lss_profile_dop(xaxis[n_max-1-i],Q_p,Delta_Rp_p,Rp_p)*1e6
-    dop_profile[i]=dop_n[i]+dop_p[i]
-"""
+
 """   
 import matplotlib.pyplot as pl
 pl.plot(xaxis, dop_n*1e-6,'r',xaxis,dop_p*1e-6,'b')
@@ -98,9 +105,10 @@ khkhk
 #----------------------------------------
 Quantum_Regions=False
 Quantum_Regions_boundary=np.zeros((2,2))
-#----------------------------------------  
+#----------------------------------------
 surface=np.zeros(2)
-#---------------------------------------- 
+#surface[0]=-0.6
+#----------------------------------------
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
     import aestimo_eh
