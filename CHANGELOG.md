@@ -1,3 +1,7 @@
+### v.2.0 (March 2020)
+
+* 
+
 ### v.1.2.1 (July 22nd, 2018)
 
 *   intersubband\_optical\_transitions module now has model handling wavelength dependent dielectric constants - reliability of the results is unproven though.

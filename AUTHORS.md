@@ -2,6 +2,13 @@
 
 Contributors of Aestimo. Names are listed in alphabetic order. Name, Initials, Email, Institution and Country are given, respectively.
 
+## Version 2.0
+
+### Committers
+
+* Hamza Hebal, HH, h.hebal-AT-yahoo.fr, University of Djilali Lyabes Sidi Bel Abes, Algeria.
+* Sefer Bora Lisesivdin, SBL, sblisesivdin-AT-gmail.com, Gazi University, Turkey.
+
 ## Version 1.2.1
 
 ### Committers
@@ -12,34 +19,34 @@ Contributors of Aestimo. Names are listed in alphabetic order. Name, Initials, E
 
 ### Committers 
 
-*	Hamza Hebal, HH, ncmagra54-AT-yahoo.fr, University of Djilali Lyabes Sidi Bel Abes, Algeria
+*	Hamza Hebal, HH, ncmagra54-AT-yahoo.fr, University of Djilali Lyabes Sidi Bel Abes, Algeria.
 * Robert Steed, RS, robsteed0-AT-gmail.com
- 
+
 ## Version 1.1 
 
 ### Committers 
 
 *	Robert Steed, RS, robsteed0-AT-gmail.com
-  
+
 ## Version 1.0 
 
 ### Committers 
 
-*	Hamza Hebal, HH, ncmagra54-AT-yahoo.fr, University of Djilali Lyabes Sidi Bel Abes, Algeria
+*	Hamza Hebal, HH, ncmagra54-AT-yahoo.fr, University of Djilali Lyabes Sidi Bel Abes, Algeria.
 *	Robert Steed, RS, robsteed0-AT-gmail.com
-  
+
 ## Version 0.9 
 
 ### Committers 
 
-*	Hamza Hebal, HH, ncmagra54-AT-yahoo.fr, University of Djilali Lyabes Sidi Bel Abes, Algeria
+*	Hamza Hebal, HH, ncmagra54-AT-yahoo.fr, University of Djilali Lyabes Sidi Bel Abes, Algeria.
 *	Robert Steed, RS, robsteed0-AT-gmail.com
 
 ## Version 0.8 
 
 ### Committers 
 
-*	Hamza Hebal, HH, ncmagra54-AT-yahoo.fr, University of Djilali Lyabes Sidi Bel Abes, Algeria
+*	Hamza Hebal, HH, ncmagra54-AT-yahoo.fr, University of Djilali Lyabes Sidi Bel Abes, Algeria.
 *	Robert Steed, RS, robsteed0-AT-gmail.com
 *	Sefer Bora Lisesivdin, SBL, sblisesivdin-AT-gmail.com, Gazi University, Turkey.
 

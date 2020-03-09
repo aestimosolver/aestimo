@@ -1,6 +1,6 @@
 AESTIMO 1-D SELF-CONSISTENT SCHRÖDINGER-POISSON SOLVER
 ======================================================
-Version 1.2.1
+Version 2.0
 -------------
 
 Overview
@@ -45,7 +45,7 @@ or send your question to email address: aestimo-users@googlegroups.com
 Download and Installation
 -------------------------
 
-The latest version of the program is available in zipped form from the website: https://bitbucket.org/sblisesivdin/aestimo/.
+The latest version of the program is available in zipped form from the website: https://github.com/aestimosolver/aestimo.
 
 Alternatively, aestimo can now be installed from PyPI via the command `pip install aestimo`.
 
@@ -89,4 +89,34 @@ For simulating a design several times while varying a parameter over a range of 
 
     ./main_iterating.py
 
-If the output file options are true in ``config.py`` file, results can be found in the outputs folder. For Output files, please read README_OUTPUTS file.
+If the output file options are true in ``config.py`` file, results can be found in the outputs folder. 
+
+## Outputs Folder
+
+In this directory, you can find 5 different files after a successful simulation. Each file have some data rows which are explained below.
+Creation of the files can be controlled in config.py file.
+
+efield.dat
+----------
+
+Row 1: Position (m), Row 2: Electric Field strength (V/m)
+
+potn.dat
+--------
+
+Row 1: Position (m), Row 2:[V_cb + V_p] (J)
+
+sigma.dat
+---------
+
+Row 1: Position (m), Row 2: Sigma (e/m^2)
+
+states.dat
+----------
+
+Row 1: Number of state (number), Row 2: Carrier density of state (m^-2), Row 3: Energy of state (meV), Row 4: Effective mass of state (kg)
+
+wavefunctions.dat
+-----------------
+
+Row 1: Position (m), Row 2: Psi^2
