@@ -1,3 +1,4 @@
+# Aestimo 1D
 Aestimo is a one-dimensional (1D) self-consistent Schrödinger-Poisson solver for semiconductor heterostructures. Aestimo is started as a hobby at the beginning of 2012, and become an usable tool which can be used as a co-tool in an educational and/or scientific work.
 
 Aestimo is a [GPL](http://www.gnu.org/copyleft/gpl.txt) software, written by [several authors](AUTHORS.md). The code is hosted on [Github](http://github.com).
