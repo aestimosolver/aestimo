@@ -1,7 +1,20 @@
 ### v.2.0 (March 2020)
 
-* 
-
+*   New DD solver base on Gummel and newton map.
+*   Updating structures files with new options and settings.
+*   Updating data base with variables for new DD solver.
+*   Adding stern damping method as an option.
+*   Adding contacts setting as boundary for Poisson equation.
+*   Improve piezo- and spontaneous- charges handling independently of wb and bw variables.
+*   Improve quantum well counting in structure list.
+*   Including the option of free quantum region.
+*   Correction in the position of interface charges for peizo option.
+*   Quantum density of carrier is working now, according to Modified QDD model.
+*   Adding new structure files.
+*   Setting for predictor corrector method.-Setting for QW calculation limits around the well region.
+*   Organizing existing function for Schrödinger and strain setting in separate functions.
+*   Improved method for locating energy levels for each QW. 
+*   Quaternary alloys (type BxCyD1-x-yA).
 ### v.1.2.1 (July 22nd, 2018)
 
 *   intersubband\_optical\_transitions module now has model handling wavelength dependent dielectric constants - reliability of the results is unproven though.
@@ -11,7 +24,7 @@
 
 ### v.1.2 (November 6th, 2017)
 
-*	Quaternary alloys (type A_{x}B_{1-x}C_{y}D_{1-y})
+*	Quaternary alloys (type A_{x}B_{1-x}C_{y}D_{1-y}).
 *	Added an improved model for modelling conduction band intersubband transitions
 *	Added a periodic boundary condition for the Electric field for modelling repeating structures.
 *	Small changes were made like to get aestimo to work on python3.4, example files were renamed to be more pythonic etc ...
