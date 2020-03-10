@@ -3859,7 +3859,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
         vindex = 0
         for vindex in range(0, Total_Steps):
             # introducing piezo spont effect with increasing ratio till 33.33%
-            Ppz_Psp = Ppz_Psp_tmp / (Total_Steps + 2 - vindex)
+            Ppz_Psp = Ppz_Psp_tmp# / (Total_Steps + 2 - vindex)
             # piezo_ratio=100*np.linalg.norm(Ppz_Psp,np.inf)/np.linalg.norm(Ppz_Psp_tmp,np.inf)
             # print("ratio of piezo=%.2f"%piezo_ratio," %")
             # Start Va increment loop
@@ -4002,8 +4002,8 @@ def Poisson_Schrodinger_DD_test_2(result, model):
         # J = abs (Jp+Jn)*Js
         Jtotal = abs(Jp + Jn) * us * q * ns
         Jtotal[:, n_max - 1] = Jtotal[:, n_max - 2]
-        Fn = V_ / Vs - np.log(n_)
-        Fp = V_ / Vs + np.log(p_)
+        #Fn = V_ / Vs - np.log(n_)
+        #Fp = V_ / Vs + np.log(p_)
         # Fn_=Fn_*Vs
         # Fp_=Fp_*Vs
         #
@@ -4031,8 +4031,8 @@ def Poisson_Schrodinger_DD_test_2(result, model):
             ro_result[i] = -q * (n_[vindex, i] - p_[vindex, i] - ns * dop[i])
             el_field1_result[i] = -(V_[vindex, i + 1] - V_[vindex, i]) / (dx)
             el_field2_result[i] = -(V_[vindex, i + 1] - V_[vindex, i - 1]) / (2 * dx)
-            Efn_result[i] = Ec_result[i] + Vt * log(n_[vindex, i] / Nc[i])
-            Efp_result[i] = Ev_result[i] - Vt * log(p_[vindex, i] / Nv[i])
+            #Efn_result[i] = Ec_result[i] + Vt * log(n_[vindex, i] / Nc[i])
+            #Efp_result[i] = Ev_result[i] - Vt * log(p_[vindex, i] / Nv[i])
         # Efn_result=Fn_[vindex,:]
         # Efp_result=Fp_[vindex,:]
         Ec_result[0] = Ec_result[1]
