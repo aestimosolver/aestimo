@@ -30,7 +30,7 @@ subnumber_h = 1
 subnumber_e = 1
 # APPLIED ELECTRIC FIELD
 Fapplied =  0.0# (V/m)-20e8
-vmax= 3.1
+vmax= 3.3
 vmin= 0.0
 Each_Step=0.1
 # --------------------------------

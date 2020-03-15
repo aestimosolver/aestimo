@@ -3811,7 +3811,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     ns2 = np.linalg.norm(Ppz_Psp_tmp, np.inf)
 
     ns = max(ns1, ns2)
-
+        
     class data:
         def __init__(self):
             self.dop = dop
@@ -3859,7 +3859,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
         vindex = 0
         for vindex in range(0, Total_Steps):
             # introducing piezo spont effect with increasing ratio till 33.33%
-            Ppz_Psp = Ppz_Psp_tmp# / (Total_Steps + 2 - vindex)
+            Ppz_Psp = Ppz_Psp_tmp / (Total_Steps + 2 - vindex)
             # piezo_ratio=100*np.linalg.norm(Ppz_Psp,np.inf)/np.linalg.norm(Ppz_Psp_tmp,np.inf)
             # print("ratio of piezo=%.2f"%piezo_ratio," %")
             # Start Va increment loop
@@ -4324,7 +4324,7 @@ def save_and_plot2(result, model):
         # Plotting State(s)
         # figure(3)
         pl.subplot(2, 2, 4)
-        pl.plot(result.Va_t * Vt, result.av_curr * 1e-4)
+        pl.plot(result.Va_t , result.av_curr * 1e-4)
         pl.xlabel("Va [V]")
         pl.ylabel("Total Current Density [Amp/cm^2]")
         pl.title("I vs V Plot", fontsize=12)

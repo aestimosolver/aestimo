@@ -15,6 +15,7 @@
 *   Organizing existing function for Schrödinger and strain setting in separate functions.
 *   Improved method for locating energy levels for each QW. 
 *   Quaternary alloys (type BxCyD1-x-yA).
+*   Version 2.0 works with Python 3.7.6 and previous python3 versions.
 ### v.1.2.1 (July 22nd, 2018)
 
 *   intersubband\_optical\_transitions module now has model handling wavelength dependent dielectric constants - reliability of the results is unproven though.
