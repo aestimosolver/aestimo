@@ -87,7 +87,7 @@ parameters=False
 
 # Output Files
 # ------------
-output_directory = "outputs"
+output_directory = "output_"+inputfilename
 parameters = True
 electricfield_out = True
 potential_out = True
@@ -103,5 +103,5 @@ wavefunction_scalefactor = 400 # scales wavefunctions when plotting QW diagrams
 # Messages
 # --------
 messagesoff = True
-logfile = 'aestimo.log'
+logfile = "aestimo.log"
 

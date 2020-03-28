@@ -52,7 +52,12 @@ import matplotlib.pyplot as pl
 import numpy as np
 
 alen = np.alen
-import os
+import os,sys
+
+#importing examples directory
+examplesdir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'examples'))
+sys.path.append(examplesdir)
+
 from math import log, exp, sqrt
 import VBHM
 from scipy import linalg
@@ -91,8 +96,12 @@ from func_lib import Ubernoulli
 # --------------------------------------
 import logging
 
-logger = logging.getLogger("aestimo_eh")
-hdlr = logging.FileHandler(config.logfile)
+logger = logging.getLogger("aestimo")
+
+if not os.path.isdir(os.path.abspath(os.path.join(examplesdir, config.output_directory))):
+    os.makedirs(os.path.abspath(os.path.join(examplesdir, config.output_directory)))
+
+hdlr = logging.FileHandler(os.path.abspath(os.path.join(examplesdir, os.path.join(config.output_directory,config.logfile))))
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
@@ -105,7 +114,7 @@ logger.addHandler(ch)
 logger.setLevel(logging.INFO)
 if not (config.messagesoff):
     os.sys.stderr.write(
-        "WARNING aestimo_eh logs automatically to aestimo.log in the current working directory.\n"
+        "WARNING aestimo_eh logs automatically to aestimo.log in the example's directory.\n"
     )
 # --------------------------------------
 
@@ -4398,7 +4407,10 @@ def save_and_plot2(result, model):
 
 def save_and_plot(result, model):
     xaxis = result.xaxis
-    output_directory = config.output_directory + "_eh"
+    
+    output_directory = config.output_directory
+    output_directory = os.path.join(examplesdir, output_directory)
+    
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)
 
