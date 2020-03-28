@@ -1,21 +1,22 @@
-### v.2.0 (March 2020)
+### v.2.0 (March 28th, 2020)
 
-*   New DD solver base on Gummel and newton map.
-*   Updating structures files with new options and settings.
-*   Updating data base with variables for new DD solver.
-*   Adding stern damping method as an option.
-*   Adding contacts setting as boundary for Poisson equation.
-*   Improve piezo- and spontaneous- charges handling independently of wb and bw variables.
-*   Improve quantum well counting in structure list.
-*   Including the option of free quantum region.
-*   Correction in the position of interface charges for peizo option.
-*   Quantum density of carrier is working now, according to Modified QDD model.
-*   Adding new structure files.
-*   Setting for predictor corrector method.-Setting for QW calculation limits around the well region.
-*   Organizing existing function for Schrödinger and strain setting in separate functions.
-*   Improved method for locating energy levels for each QW. 
-*   Quaternary alloys (type BxCyD1-x-yA).
-*   Version 2.0 works with Python 3.7.6 and previous python3 versions.
+*  New DD solver base on Gummel and newton map.
+*  Updating structures files with new options and settings.
+*  Updating database with variables for new DD solver.
+*  Adding the stern damping method as an option.
+*  Adding a contact setting as a boundary for the Poisson equation.
+*  Improve piezo- and spontaneous- charges handling independently of wb and bw variables.
+*  Improve quantum well counting in the structure list.
+*  Including the option of the free quantum region.
+*  Correction in the position of interface charges for piezo option.
+*  The Quantum density of carrier is working now, according to the Modified QDD model.
+*  Adding new structure files.
+*  Setting for predictor-corrector method.-Setting for QW calculation limits around the well region.
+*  Organizing existing functions for Schrödinger and strain setting in separate functions.
+*  Improved method for locating energy levels for each QW.
+*  Quaternary alloys (type B_{x}C_{y}D_{1-x-y}A).
+*  Version 2.0 works with Python 3.7.6 and previous python3 versions.
+
 ### v.1.2.1 (July 22nd, 2018)
 
 *   intersubband\_optical\_transitions module now has model handling wavelength dependent dielectric constants - reliability of the results is unproven though.
