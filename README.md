@@ -39,8 +39,7 @@ Get Help
 --------
 Before asking any question, please visit http://www.aestimosolver.org to read many tutorials which includes many important examples. Same tutorials are included in your /doc folder.
 
-To ask a question to other possible users please signup to https://groups.google.com/d/forum/aestimo-users
-or send your question to email address: aestimo-users@googlegroups.com
+To ask a question to other possible users please send your question to email address: aestimo-users@googlegroups.com
 
 Download and Installation
 -------------------------

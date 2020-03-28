@@ -72,7 +72,7 @@ def  DDGn2phin (V,n):
     ## Load constants
     nmin = 0
     #n    = n * (n>nmin) + nmin * (n<=nmin)
-    phin = V - np.log(n) 
+    phin = V - np.log(abs(n))
     
     return phin
 
@@ -111,7 +111,7 @@ def DDGp2phip (V,p):
     ## Load constants
     pmin = 0
     #p    = p * (p>pmin) + pmin * (p<=pmin)
-    phip = V + np.log(p) 
+    phip = V + np.log(abs(p)) 
       
     return phip
 def  Ucompmass (nodes,n_max,elements,Nelements,Bvect,Cvect):

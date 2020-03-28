@@ -23,13 +23,13 @@ T = 300.0 #Kelvin
 computation_scheme = 9
 # QUANTUM
 # Total subband number to be calculated for electrons
-subnumber_h = 2
-subnumber_e = 2
+subnumber_h = 1
+subnumber_e = 1
 # APPLIED ELECTRIC FIELD
 Fapplied = 0.#0.41348e8 (V/m)
-vmax= 2.9
+vmax= 3.1
 vmin= 0.0
-Each_Step=0.05
+Each_Step=0.5
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
@@ -49,23 +49,9 @@ mat_type='Wurtzite'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 # To input this list in Gallium, we use lists N:
 
-material =[[ 100.0 , 'GaN'  , 0.3 , 0.0, 3e18, 'n','b'],         
-           [ 50.0  , 'InGaN', 0.1 , 0.0, 3e18, 'n','b'],
-           [ 100.0 , 'AlGaN', 0.14, 0.0, 3e18, 'n','b'],
-           [ 50.0  , 'GaN'  , 0.3 , 0.0, 7e17, 'n','b'],
-           [ 10.0  , 'AlGaN', 0.2 , 0.0, 7e16, 'n','b'],
-           [ 4.0   , 'InGaN', 0.02, 0.0, 7e16, 'n','w'],
-           [ 10.0  , 'AlGaN', 0.2 , 0.0, 7e16, 'n','b'],
-           [ 4.0   , 'InGaN', 0.02, 0.0, 7e16, 'n','w'],
-           [ 10.0  , 'AlGaN', 0.2 , 0.0, 7e16, 'n','b'],
-           [ 4.0   , 'InGaN', 0.02, 0.0, 7e16, 'n','w'],
-           [ 10.0  , 'AlGaN', 0.2 , 0.0, 7e16, 'n','b'],
-           [ 20.0  , 'AlGaN', 0.2 , 0.0, 1e19, 'p','b'],           
-           [ 50.0  , 'GaN'  , 0.3 , 0.0, 5e18, 'p','b'],
-           [ 100.0 , 'AlGaN', 0.14, 0.0, 1e20, 'p','b'],           
-           [ 30.0  , 'GaN'  , 0.3 , 0.0, 2e20, 'p','b']]
 
-material11 =[[ 30.0  , 'GaN'  , 0.3 , 0.0, 2e20, 'p','b'],           
+
+material =[[ 30.0  , 'GaN'  , 0.3 , 0.0, 2e20, 'p','b'],           
            [ 100.0 , 'AlGaN', 0.14, 0.0, 1e20, 'p','b'],                      
            [ 50.0  , 'GaN'  , 0.3 , 0.0, 5e18, 'p','b'],
            [ 20.0  , 'AlGaN', 0.2 , 0.0, 1e19, 'p','b'],           

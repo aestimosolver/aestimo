@@ -3820,7 +3820,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     ns2 = np.linalg.norm(Ppz_Psp_tmp, np.inf)
 
     ns = max(ns1, ns2)
-
+        
     class data:
         def __init__(self):
             self.dop = dop
@@ -4011,8 +4011,8 @@ def Poisson_Schrodinger_DD_test_2(result, model):
         # J = abs (Jp+Jn)*Js
         Jtotal = abs(Jp + Jn) * us * q * ns
         Jtotal[:, n_max - 1] = Jtotal[:, n_max - 2]
-        Fn = V_ / Vs - np.log(n_)
-        Fp = V_ / Vs + np.log(p_)
+        #Fn = V_ / Vs - np.log(n_)
+        #Fp = V_ / Vs + np.log(p_)
         # Fn_=Fn_*Vs
         # Fp_=Fp_*Vs
         #
@@ -4040,8 +4040,8 @@ def Poisson_Schrodinger_DD_test_2(result, model):
             ro_result[i] = -q * (n_[vindex, i] - p_[vindex, i] - ns * dop[i])
             el_field1_result[i] = -(V_[vindex, i + 1] - V_[vindex, i]) / (dx)
             el_field2_result[i] = -(V_[vindex, i + 1] - V_[vindex, i - 1]) / (2 * dx)
-            Efn_result[i] = Ec_result[i] + Vt * log(n_[vindex, i] / Nc[i])
-            Efp_result[i] = Ev_result[i] - Vt * log(p_[vindex, i] / Nv[i])
+            #Efn_result[i] = Ec_result[i] + Vt * log(n_[vindex, i] / Nc[i])
+            #Efp_result[i] = Ev_result[i] - Vt * log(p_[vindex, i] / Nv[i])
         # Efn_result=Fn_[vindex,:]
         # Efp_result=Fp_[vindex,:]
         Ec_result[0] = Ec_result[1]
@@ -4333,7 +4333,7 @@ def save_and_plot2(result, model):
         # Plotting State(s)
         # figure(3)
         pl.subplot(2, 2, 4)
-        pl.plot(result.Va_t * Vt, result.av_curr * 1e-4)
+        pl.plot(result.Va_t , result.av_curr * 1e-4)
         pl.xlabel("Va [V]")
         pl.ylabel("Total Current Density [Amp/cm^2]")
         pl.title("I vs V Plot", fontsize=12)
