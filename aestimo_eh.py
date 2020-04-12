@@ -97,11 +97,12 @@ from func_lib import Ubernoulli
 import logging
 
 logger = logging.getLogger("aestimo")
+output_directory = config.output_directory + "_eh"
 
-if not os.path.isdir(os.path.abspath(os.path.join(examplesdir, config.output_directory))):
-    os.makedirs(os.path.abspath(os.path.join(examplesdir, config.output_directory)))
+if not os.path.isdir(os.path.abspath(os.path.join(examplesdir, output_directory))):
+    os.makedirs(os.path.abspath(os.path.join(examplesdir, output_directory)))
 
-hdlr = logging.FileHandler(os.path.abspath(os.path.join(examplesdir, os.path.join(config.output_directory,config.logfile))))
+hdlr = logging.FileHandler(os.path.abspath(os.path.join(examplesdir, os.path.join(output_directory,config.logfile))))
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
@@ -4159,6 +4160,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
 def save_and_plot2(result, model):
     xaxis = result.xaxis
     output_directory = config.output_directory + "_eh"
+    output_directory = os.path.join(examplesdir, output_directory)
 
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)
@@ -4408,7 +4410,7 @@ def save_and_plot2(result, model):
 def save_and_plot(result, model):
     xaxis = result.xaxis
     
-    output_directory = config.output_directory
+    output_directory = config.output_directory + "_eh"
     output_directory = os.path.join(examplesdir, output_directory)
     
     if not os.path.isdir(output_directory):
