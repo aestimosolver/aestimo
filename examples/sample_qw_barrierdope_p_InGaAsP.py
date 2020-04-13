@@ -79,7 +79,10 @@ Quantum_Regions_boundary=np.zeros((2,2))
 surface=np.zeros(2) 
 #----------------------------------------
 #This is accourding to interpolated Vegard’s law for quaternary AxB(1-x)CyD(1-y)=InxGa(1-x)AsyP(1-y)
+from os import path
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
-    import aestimo_eh as aestimo
-    aestimo.run_aestimo(input_obj)
+    import sys
+    sys.path.append(path.join(path.dirname(__file__), '..'))
+    import aestimo_eh
+    aestimo_eh.run_aestimo(input_obj)

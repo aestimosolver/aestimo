@@ -72,8 +72,11 @@ material =[[ 10.0, 'AlGaAs', 0.3, 0.0, 'n'],
  
 
 
+from os import path
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
+    import sys
+    sys.path.append(path.join(path.dirname(__file__), '..'))
     import aestimo
     aestimo.run_aestimo(input_obj)
     

@@ -74,7 +74,10 @@ Quantum_Regions_boundary=np.zeros((2,2))
 surface=np.zeros(2)
 #surface[0]=-0.6
 #----------------------------------------
+from os import path
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
-    import aestimo_eh as aestimo
-    aestimo.run_aestimo(input_obj)
+    import sys
+    sys.path.append(path.join(path.dirname(__file__), '..'))
+    import aestimo_eh
+    aestimo_eh.run_aestimo(input_obj)
