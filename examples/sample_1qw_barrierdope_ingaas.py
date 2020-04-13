@@ -100,24 +100,10 @@ surface=np.zeros(2)
 surface[0]=  0.0
 surface[1]=  0.6
 #----------------------------------------
+from os import path
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
+    import sys
+    sys.path.append(path.join(path.dirname(__file__), '..'))
     import aestimo_eh
     aestimo_eh.run_aestimo(input_obj)
-
-"""
-        
-        A	= sp.spdiags([a, b, c],np.array([-1,0,1]),n_max,n_max).todense()
-        A=np.delete(A, [0,n_max-1], 0)
-        A=np.delete(A, [0,n_max-1], 1)
-        R=np.delete(f, [0,n_max-1], 0)        
-        cc= np.linalg.solve(A, R)
-                
-        tmp=np.zeros(n_max)
-        tmp[1:n_max-1]=cc
-        tmp[0]=fi_out[0]
-        tmp[n_max-1]=fi_out[n_max-1]
-        
-        delta=tmp-fi_out
-        fi_out=tmp
-"""
