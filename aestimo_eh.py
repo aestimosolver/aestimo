@@ -3861,6 +3861,9 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     CAubar = Rbar / ns ** 3  # [m^6 s^{-1}]
     idata.Cn = Cn0 / CAubar
     idata.Cp = Cp0 / CAubar
+    if config.use_cython :
+        from aestimo_dd_lib import DDGgummelmap_cython,DDNnewtonmap_cython
+        print("use_cython option is activated")
     ###############################################################
     if vmax == 0:
         print("Va_max=0")
@@ -3947,27 +3950,32 @@ def Poisson_Schrodinger_DD_test_2(result, model):
             ptoll = 1e-10
             pmaxit = 30
             verbose = 0
-
-            [odata, it, res] = DDGgummelmap(
-                n_max,
-                xin,
-                idata,
-                odata,
-                toll,
-                maxit,
-                ptoll,
-                pmaxit,
-                verbose,
-                ni,
-                fi_e,
-                fi_h,
-                model,
-                Vt,
-            )
-
-            [odata, it, res] = DDNnewtonmap(
-                ni, fi_e, fi_h, xin, odata, toll, maxit, verbose, model, Vt
-            )
+            if config.use_cython :
+                [odata, it, res] = DDGgummelmap_cython(idata,odata,model,xin,ni,fi_e,fi_h,toll,Vt,ptoll,pmaxit,n_max,verbose,maxit)
+            else:                
+                [odata, it, res] = DDGgummelmap(
+                    n_max,
+                    xin,
+                    idata,
+                    odata,
+                    toll,
+                    maxit,
+                    ptoll,
+                    pmaxit,
+                    verbose,
+                    ni,
+                    fi_e,
+                    fi_h,
+                    model,
+                    Vt,
+                )
+            
+            if config.use_cython :
+                [odata, it, res] = DDNnewtonmap_cython(odata,model,ni,fi_e,fi_h,xin,toll,Vt,maxit,verbose)
+            else:                
+                [odata, it, res] = DDNnewtonmap(
+                    ni, fi_e, fi_h, xin, odata, toll, maxit, verbose, model, Vt
+                )
 
             n_[vindex, :] = odata.n
             p_[vindex, :] = odata.p
