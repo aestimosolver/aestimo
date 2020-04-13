@@ -4049,10 +4049,8 @@ def Poisson_Schrodinger_DD_test_2(result, model):
             ro_result[i] = -q * (n_[vindex, i] - p_[vindex, i] - ns * dop[i])
             el_field1_result[i] = -(V_[vindex, i + 1] - V_[vindex, i]) / (dx)
             el_field2_result[i] = -(V_[vindex, i + 1] - V_[vindex, i - 1]) / (2 * dx)
-            #Efn_result[i] = Ec_result[i] + Vt * log(n_[vindex, i] / Nc[i])
-            #Efp_result[i] = Ev_result[i] - Vt * log(p_[vindex, i] / Nv[i])
-        # Efn_result=Fn_[vindex,:]
-        # Efp_result=Fp_[vindex,:]
+            Efn_result[i] = Ei_result[i] + Vt * log(n_[vindex, i]/ni[i]+1)
+            Efp_result[i] = Ei_result[i] - Vt * log(p_[vindex, i]/ni[i]+1)
         Ec_result[0] = Ec_result[1]
         Ec_result[n_max - 1] = Ec_result[n_max - 2]
         Ev_result[0] = Ev_result[1]
