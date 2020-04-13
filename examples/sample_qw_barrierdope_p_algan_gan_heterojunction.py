@@ -84,8 +84,8 @@ Quantum_Regions_boundary[0,1]=55
 
 #----------------------------------------
 surface=np.zeros(2)
-surface[0]=1.42
-surface[1]=0.0
+surface[0]=-0.2
+surface[1]=-1.6
 #----------------------------------------
 from os import path
 if __name__ == "__main__": #this code allows you to run the input file directly

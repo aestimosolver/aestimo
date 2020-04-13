@@ -31,15 +31,15 @@ subnumber_e = 1
 # APPLIED ELECTRIC FIELD
 Fapplied =  0.0# (V/m)-20e8
 vmax= 3.3
-vmin= 0.0
-Each_Step=0.1
+vmin= 3.0
+Each_Step=0.15
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
 contact=0.0
 # GRID
 # For 1D, z-axis is choosen
-gridfactor = 1#nm
+gridfactor = 0.25#nm
 maxgridpoints = 200000 #for controlling the size
 mat_type='Wurtzite'
 # REGIONS
@@ -52,11 +52,11 @@ mat_type='Wurtzite'
 #
 # To input this list in Gallium, we use lists as:
 
-material  =[[ 200.0, 'GaN',  0.0, 0.0, 2e19, 'p','b'],
-            [ 3.0, 'InGaN', 0.2, 0.0, 1e17, 'n','w'],
-            [ 14.0, 'GaN',  0.0, 0.0, 1e17, 'n','b'],
-            [ 3.0, 'InGaN', 0.2, 0.0, 1e17, 'n','w'],
-            [ 300.0, 'GaN', 0.0, 0.0, 1e18, 'n','b']]
+material  =[[ 200.0, 'GaN',  0.0, 0.0, 0.5e19, 'p','b'],
+            [ 3.0, 'InGaN', 0.2, 0.0, 0.0e17, 'n','w'],
+            [ 15.0, 'GaN',  0.0, 0.0, 0.0e17, 'n','b'],
+            [ 3.0, 'InGaN', 0.2, 0.0, 0.0e17, 'n','w'],
+            [ 300.0, 'GaN', 0.0, 0.0, 5e18, 'n','b']]
 
 
 material1  =[[ 15.0, 'GaN',  0.0, 0.0, 2e19, 'p','b'],

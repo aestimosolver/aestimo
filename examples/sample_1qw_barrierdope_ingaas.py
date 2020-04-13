@@ -36,7 +36,7 @@ Each_Step=0.05# --------------------------------
 
 # GRID
 # For 1D, z-axis is choosen
-gridfactor = 1#nm
+gridfactor = 0.1#nm
 maxgridpoints = 200000 #for controlling the size
 mat_type='Zincblende'
 # REGIONS
@@ -47,12 +47,12 @@ mat_type='Zincblende'
 # Layer 0 |      250.0     |   Si     |      0         |     1e16      |     n       |
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 # To input this list in Gallium, we use lists N:
-material =[[ 250.0, 'AlGaAs', 0.3, 0.0, 1e17, 'p','b'],
+material =[[ 250.0, 'AlGaAs', 0.3, 0.0, 0.8e17, 'p','b'],
            [ 50.0, 'AlGaAs', 0.3, 0.0, 0.0, 'n','b'],
            [ 15.0, 'GaAs', 0.3, 0.0, 0.0,'n','w'],
            [ 5.0, 'AlGaAs', 0.3, 0.0, 0.0,'n','b'],
-           [ 20.0, 'AlGaAs', 0.3, 0.0, 1e18,'n','b'],           
-           [ 15.0, 'GaAs', 0.3, 0.0, 1e18, 'n','b']]
+           [ 20.0, 'AlGaAs', 0.3, 0.0, 0.8e18,'n','b'],           
+           [ 15.0, 'GaAs', 0.3, 0.0, 0.8e18, 'n','b']]
 
 
 #----------------------------------------
