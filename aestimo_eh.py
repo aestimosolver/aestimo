@@ -4076,7 +4076,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
         Va_t = vvect
         fitot = fi_h - Vt * q * odata.V
         fitotc = fi_e - Vt * q * odata.V
-        if model.N_wells_virtual - 2 != 0 and 1 == 2:
+        if model.N_wells_virtual - 2 != 0 and config.quantum_effect:
             (
                 idata.E_statec_general,
                 idata.E_state_general,
@@ -4182,7 +4182,7 @@ def save_and_plot2(result, model):
     # saveoutput("av_curr.dat",(result.Va_t*Vt,result.av_curr*1e-4))
     for jjj in range(result.Total_Steps - 1, result.Total_Steps):
         vtt = result.Va_t[jjj]
-        vt = vtt * Vt
+        vt = vtt
         if config.Drift_Diffusion_out:
             if config.sigma_out:
                 saveoutput("sigma_eh_%.2f.dat" % vt, (xaxis, result.ro_result))
@@ -4300,7 +4300,7 @@ def save_and_plot2(result, model):
 
         fig2 = pl.figure(figsize=(10, 8))
         pl.suptitle(
-            "1D Drift Diffusion Model for pn Diodes Results - at Applied Bias (%.2f)"
+            "1D Drift Diffusion Model Results - at Applied Bias (%.2f)"
             % vt,
             fontsize=12,
         )
@@ -4351,7 +4351,7 @@ def save_and_plot2(result, model):
 
         fig3 = pl.figure(figsize=(10, 8))
         pl.suptitle(
-            "1D Drift Diffusion Model for pn Diodes Results - at Applied Bias (%.2f)"
+            "1D Drift Diffusion Model Results - at Applied Bias (%.2f)"
             % vt,
             fontsize=12,
         )
@@ -4429,15 +4429,15 @@ def save_and_plot(result, model):
         )
 
     if config.sigma_out:
-        saveoutput("sigma_eh.dat", (xaxis, result.ro_result))
+        saveoutput("sigma_eh_equi_cond.dat", (xaxis, result.ro_result))
     if config.electricfield_out:
         saveoutput(
-            "efield_eh.dat", (xaxis, result.el_field1_result, result.el_field2_result)
+            "efield_eh_equi_cond.dat", (xaxis, result.el_field1_result, result.el_field2_result)
         )
     if config.potential_out:
-        saveoutput("potn_eh.dat", (xaxis * 1e2, result.fitotc / q, result.fitot / q))
+        saveoutput("potn_eh_equi_cond.dat", (xaxis * 1e2, result.fitotc / q, result.fitot / q))
         saveoutput(
-            "np_data0.dat",
+            "np_data0_equi_cond.dat",
             (xaxis * 1e2, result.nf_result * 1e-6, result.pf_result * 1e-6),
         )
     if config.states_out:
@@ -4453,10 +4453,10 @@ def save_and_plot(result, model):
             )
             # header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
             header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
-            saveoutput("states_h_QWR%d.dat" % j, columns, header=header)
+            saveoutput("states_h_QWR%d_equi_cond.dat" % j, columns, header=header)
             if config.probability_out:
                 saveoutput(
-                    "wavefunctions_h_QWR%d.dat" % j,
+                    "wavefunctions_h_QWR%d_equi_cond.dat" % j,
                     (xaxis, result.wfh_general[j].transpose()),
                 )
     if config.states_out:
@@ -4472,17 +4472,17 @@ def save_and_plot(result, model):
             )
             # header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
             header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
-            saveoutput("states_e_QWR%d.dat" % j, columns, header=header)
+            saveoutput("states_e_QWR%d_equi_cond.dat" % j, columns, header=header)
             if config.probability_out:
                 saveoutput(
-                    "wavefunctions_e_QWR%d.dat" % j,
+                    "wavefunctions_e_QWR%d_equi_cond.dat" % j,
                     (xaxis, result.wfe_general[j].transpose()),
                 )
     # Resultviewer
     if config.resultviewer:
         span = np.ones(100000000)
         fig1 = pl.figure(figsize=(10, 8))
-        pl.suptitle("Aestimo Results")
+        pl.suptitle("Aestimo Results - at Equilibrium Condition")
         pl.subplot(1, 1, 1)
         pl.plot(xaxis, result.fitot * J2meV, "k", xaxis, result.fitotc * J2meV, "k")
         for j in range(1, result.N_wells_virtual - 1):
@@ -4518,7 +4518,7 @@ def save_and_plot(result, model):
 
         fig2 = pl.figure(figsize=(10, 8))
         pl.suptitle(
-            "1D Drift Diffusion Model for pn Diodes Results - at Equilibrium Condition ",
+            "Aestimo Results - at Equilibrium Condition ",
             fontsize=12,
         )
         pl.subplots_adjust(hspace=0.4, wspace=0.4)
