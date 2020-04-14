@@ -70,6 +70,7 @@ Quantum_Regions_boundary=np.zeros((2,2))
 surface=np.zeros(2)
 surface[1]=-0.6
 #----------------------------------------
+inputfilename = "sample_qw_barrierdope_p_ingaas"
 from os import path
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()

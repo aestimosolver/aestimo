@@ -63,6 +63,7 @@ material1 =[[3140.5, 'Si', 0.0, 0.0, 0.7e+17, 'p','b'],
 material =[[500, 'Si', 0.0, 0.0, 1e+19, 'p','b'],          
             [500, 'Si', 0.0, 0.0,1e+19, 'n','b']]
 #---------------------------------------- 
+inputfilename = "sample_pn"
 import numpy as np
 x_max = sum([layer[0] for layer in material])
 def round2int(x):

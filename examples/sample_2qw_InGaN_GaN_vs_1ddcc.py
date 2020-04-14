@@ -22,7 +22,7 @@ T = 300.0 #Kelvin
 # 7: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson then  poisson and DD)
 # 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD)
 # 9: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel & Newton map
-computation_scheme = 9
+computation_scheme = 2
 
 # QUANTUM
 # Total subband number to be calculated for electrons
@@ -84,6 +84,7 @@ surface=np.zeros(2)
 surface[0]=0.0
 surface[1]=0.0
 #----------------------------------------
+inputfilename = "sample_2qw_InGaN_GaN_vs_1ddcc"
 #this code allows you to run the input file directly
 from os import path
 if __name__ == "__main__": #this code allows you to run the input file directly

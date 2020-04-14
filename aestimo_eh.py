@@ -1298,7 +1298,7 @@ class StructureFrom(Structure):
         self.mat_crys_strc = inputfile.mat_type
         # Loading material list
         self.material = inputfile.material
-
+        self.inputfilename=inputfile.inputfilename
         totallayer = alen(self.material)
         if not (config.messagesoff):
             logger.info("Total layer number: %s", totallayer)
@@ -4165,7 +4165,8 @@ def Poisson_Schrodinger_DD_test_2(result, model):
 
 def save_and_plot2(result, model):
     xaxis = result.xaxis
-    output_directory = config.output_directory + "_eh"
+    output_directory = "output_"+model.inputfilename + "_eh"
+    #output_directory = config.output_directory + "_eh"
     output_directory = os.path.join(examplesdir, output_directory)
 
     if not os.path.isdir(output_directory):
@@ -4414,9 +4415,10 @@ def save_and_plot2(result, model):
 
 
 def save_and_plot(result, model):
+
     xaxis = result.xaxis
-    
-    output_directory = config.output_directory + "_eh"
+    output_directory = "output_"+model.inputfilename + "_eh"
+    #output_directory = config.output_directory + "_eh"
     output_directory = os.path.join(examplesdir, output_directory)
     
     if not os.path.isdir(output_directory):
@@ -4627,6 +4629,7 @@ if __name__ == "__main__":
 
     # Import from config file
     inputfile = __import__(options.inputfile)
+    
     if not (config.messagesoff):
         logger.info("inputfile is %s", options.inputfile)
     run_aestimo(inputfile)

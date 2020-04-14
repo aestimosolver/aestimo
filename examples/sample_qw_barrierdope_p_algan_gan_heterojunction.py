@@ -87,6 +87,7 @@ surface=np.zeros(2)
 surface[0]=-0.2
 surface[1]=-1.6
 #----------------------------------------
+inputfilename = "sample_qw_barrierdope_p_algan_gan_heterojunction"
 from os import path
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()

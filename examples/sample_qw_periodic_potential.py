@@ -71,7 +71,7 @@ material =[[ 10.0, 'AlGaAs', 0.3, 0.0, 'n'],
             [ 10.0, 'AlGaAs', 0.3, 0.0, 'n']]
  
 
-
+inputfilename = "sample_qw_periodic_potential"
 from os import path
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()

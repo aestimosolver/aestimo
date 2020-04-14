@@ -79,6 +79,8 @@ Quantum_Regions_boundary=np.zeros((2,2))
 surface=np.zeros(2) 
 #----------------------------------------
 #This is accourding to interpolated Vegard’s law for quaternary AxB(1-x)CyD(1-y)=InxGa(1-x)AsyP(1-y)
+#---------------------
+inputfilename = "sample_qw_barrierdope_p_InGaAsP"
 from os import path
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()

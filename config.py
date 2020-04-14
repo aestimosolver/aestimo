@@ -50,8 +50,8 @@ meV2J=1e-3*q #meV to Joules
 #inputfilename = "sample_qw_barrierdope_p_InGaAsP"
 #inputfilename = "sample_qw_barrierdope_p_AlGaInN"
 #inputfilename = "sample_qw_barrierdope_p_AlGaInN_2"
-#inputfilename = "sample_pn"
-inputfilename = "sample_2qw_barrierdope_ingaas"
+inputfilename = "sample_pn"
+#inputfilename = "sample_2qw_barrierdope_ingaas"
 # Calculation
 # -----------
 # Aestimo
