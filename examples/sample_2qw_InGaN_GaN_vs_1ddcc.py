@@ -22,6 +22,7 @@ T = 300.0 #Kelvin
 # 7: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson then  poisson and DD)
 # 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD)
 # 9: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel & Newton map
+# 10: Schrodinger-Poisson under testing using Newton iteration (will replace scheme 2)
 computation_scheme = 2
 
 # QUANTUM
@@ -52,7 +53,7 @@ mat_type='Wurtzite'
 #
 # To input this list in Gallium, we use lists as:
 
-material  =[[ 200.0, 'GaN',  0.0, 0.0, 0.5e19, 'p','b'],
+material  =[[ 200.0, 'GaN',  0.0, 0.0, 2e19, 'p','b'],
             [ 3.0, 'InGaN', 0.2, 0.0, 0.0e17, 'n','w'],
             [ 15.0, 'GaN',  0.0, 0.0, 0.0e17, 'n','b'],
             [ 3.0, 'InGaN', 0.2, 0.0, 0.0e17, 'n','w'],

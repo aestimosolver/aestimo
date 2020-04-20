@@ -21,7 +21,7 @@ T = 300.0 #Kelvin
 # 7: Schrodinger-Poisson-Drift_Diffusion
 # 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel map
 # 9: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel & Newton map
-computation_scheme = 9
+computation_scheme = 2
 
 # Non-parabolic effective mass function
 # 0: no energy dependence

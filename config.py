@@ -81,7 +81,7 @@ amort_wave_1=1.5#ratio of half well's width for wavefunction to penetration into
 strain =True # for aestimo_numpy_eh
 piezo=False # directly calculationg the induced electric field,for old poisson solver, works with old versions
 piezo1=True #indirectly using interface charges.
-quantum_effect=False#temporary
+quantum_effect=True#temporary
 #--------------
 parameters=False
 

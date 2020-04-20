@@ -92,6 +92,8 @@ import DDNnewtonmap
 from DDNnewtonmap import DDNnewtonmap
 import func_lib
 from func_lib import Ubernoulli
+import DDGnlpoisson
+from DDGnlpoisson import DDGnlpoisson_new
 
 # --------------------------------------
 import logging
@@ -2440,124 +2442,88 @@ def Poisson_Schrodinger(model):
         if not (config.messagesoff):
             logger.info("Iteration: %d", iteration)
         if model.N_wells_virtual - 2 != 0:
-            (
-                E_statec_general,
-                E_state_general,
-                wfe_general,
-                wfh_general,
-                meff_statec_general,
-                meff_state_general,
-            ) = Schro(
-                HUPMAT3_reduced_list,
-                HUPMATC1,
-                subnumber_h,
-                subnumber_e,
-                fitot,
-                fitotc,
-                model,
-                Well_boundary,
-                UNIM,
-                RATIO,
-                m_hh,
-                m_lh,
-                m_so,
-                n_max,
-            )
-            if iteration == 1:
+            if config.predic_correc and iteration == 1:
                 (
-                    E_statec_general0,
-                    E_state_general0,
-                    wfe_general0,
-                    wfh_general0,
-                    meff_statec_general0,
-                    meff_state_general0,
-                ) = (
                     E_statec_general,
                     E_state_general,
                     wfe_general,
                     wfh_general,
                     meff_statec_general,
                     meff_state_general,
+                ) = Schro(
+                    HUPMAT3_reduced_list,
+                    HUPMATC1,
+                    subnumber_h,
+                    subnumber_e,
+                    fitot,
+                    fitotc,
+                    model,
+                    Well_boundary,
+                    UNIM,
+                    RATIO,
+                    m_hh,
+                    m_lh,
+                    m_so,
+                    n_max,
+                )
+            elif not(config.predic_correc):
+                (
+                    E_statec_general,
+                    E_state_general,
+                    wfe_general,
+                    wfh_general,
+                    meff_statec_general,
+                    meff_state_general,
+                ) = Schro(
+                    HUPMAT3_reduced_list,
+                    HUPMATC1,
+                    subnumber_h,
+                    subnumber_e,
+                    fitot,
+                    fitotc,
+                    model,
+                    Well_boundary,
+                    UNIM,
+                    RATIO,
+                    m_hh,
+                    m_lh,
+                    m_so,
+                    n_max,
                 )
             damping = 0.15  # 0.1 works between high and low doping
-            if config.predic_correc:
-                (
-                    E_statec_general,
-                    E_state_general,
-                    wfe_general,
-                    wfh_general,
-                    meff_statec_general,
-                    meff_state_general,
-                ) = (
-                    E_statec_general0,
-                    E_state_general0,
-                    wfe_general0,
-                    wfh_general0,
-                    meff_statec_general0,
-                    meff_state_general0,
-                )
-            n, p, fi, EF, fi_stat = Poisson_equi2(
-                ns,
-                fitotc,
-                fitot,
-                Nc,
-                Nv,
-                fi_e,
-                fi_h,
-                n,
-                p,
-                dx,
-                Ldi,
-                dop,
-                Ppz_Psp0,
-                pol_surf_char,
-                ni,
-                n_max,
-                iteration,
-                fi,
-                Vt,
-                wfh_general,
-                wfe_general,
-                model,
-                E_state_general,
-                E_statec_general,
-                meff_state_general,
-                meff_statec_general,
-                surface,
-                fi_stat,
-            )
         else:
-            n, p, fi, EF, fi_stat = Poisson_equi2(
-                ns,
-                fitotc,
-                fitot,
-                Nc,
-                Nv,
-                fi_e,
-                fi_h,
-                n,
-                p,
-                dx,
-                Ldi,
-                dop,
-                Ppz_Psp0,
-                pol_surf_char,
-                ni,
-                n_max,
-                iteration,
-                fi,
-                Vt,
-                wfh_general,
-                wfe_general,
-                model,
-                E_state_general,
-                E_statec_general,
-                meff_state_general,
-                meff_statec_general,
-                surface,
-                fi_stat,
-            )
             damping = 1
+        n, p, fi, EF, fi_stat = Poisson_equi2(
+            ns,
+            fitotc,
+            fitot,
+            Nc,
+            Nv,
+            fi_e,
+            fi_h,
+            n,
+            p,
+            dx,
+            Ldi,
+            dop,
+            Ppz_Psp0,
+            pol_surf_char,
+            ni,
+            n_max,
+            iteration,
+            fi,
+            Vt,
+            wfh_general,
+            wfe_general,
+            model,
+            E_state_general,
+            E_statec_general,
+            meff_state_general,
+            meff_statec_general,
+            surface,
+            fi_stat,
+        )
+        #
         if comp_scheme in (0, 1):
             # if we are not self-consistently including Poisson Effects then only do one loop
             break
@@ -2621,6 +2587,7 @@ def Poisson_Schrodinger(model):
                         m_so,
                         n_max,
                     )
+
                 break
             elif iteration >= max_iterations:  # Iteration limit
                 logger.warning("Have reached maximum number of iterations")
@@ -2632,6 +2599,31 @@ def Poisson_Schrodinger(model):
             delta1 = Vnew_general - previousfi0
             delta_max1 = max(abs(delta1[:]))
             if delta_max1 / q < convergence_test0:  # Convergence test
+                if model.N_wells_virtual - 2 != 0:
+                    (
+                        E_statec_general,
+                        E_state_general,
+                        wfe_general,
+                        wfh_general,
+                        meff_statec_general,
+                        meff_state_general,
+                    ) = Schro(
+                        HUPMAT3_reduced_list,
+                        HUPMATC1,
+                        subnumber_h,
+                        subnumber_e,
+                        fitot,
+                        fitotc,
+                        model,
+                        Well_boundary,
+                        UNIM,
+                        RATIO,
+                        m_hh,
+                        m_lh,
+                        m_so,
+                        n_max,
+                    )
+
                 break
             elif iteration >= max_iterations:  # Iteration limit
                 logger.warning("Have reached maximum number of iterations")
@@ -2721,6 +2713,518 @@ def Poisson_Schrodinger(model):
     ##########################
     return results
 
+def Poisson_Schrodinger_new(model):
+    """Performs a self-consistent Poisson-Schrodinger calculation of a 1d quantum well structure.
+    Model is an object with the following attributes:
+    fi_e - Bandstructure potential (J) (array, len n_max)
+    cb_meff - conduction band effective mass (kg)(array, len n_max)
+    eps - dielectric constant (including eps0) (array, len n_max)
+    dop - doping distribution (m**-3) ( array, len n_max)
+    Fapp - Applied field (Vm**-1)
+    T - Temperature (K)
+    comp_scheme - simulation scheme (currently unused)
+    subnumber_e - number of subbands for look for in the conduction band
+    dx - grid spacing (m)
+    n_max - number of points.
+    """
+    fi_e = model.fi_e
+    cb_meff = model.cb_meff
+    eps = model.eps
+    dop = model.dop
+    Fapp = model.Fapp
+    surface = model.surface
+    T = model.T
+    comp_scheme = model.comp_scheme
+    subnumber_h = model.subnumber_h
+    subnumber_e = model.subnumber_e
+    dx = model.dx
+    n_max = model.n_max
+    if comp_scheme in (4, 5, 6):
+        logger.error(
+            """aestimo_eh doesn't currently include exchange interactions
+        in its valence band calculations."""
+        )
+        exit()
+    if comp_scheme in (1, 3, 6):
+        logger.error(
+            """aestimo_eh doesn't currently include nonparabolicity effects in 
+        its valence band calculations."""
+        )
+        exit()
+    fi_h = model.fi_h
+    N_wells_virtual = model.N_wells_virtual
+    Well_boundary = model.Well_boundary
+    Ppz_Psp = np.zeros(n_max)
+    HUPMATC1 = np.zeros((n_max, n_max))
+    UNIM = np.identity(n_max)
+    x_max = dx * n_max
+    RATIO = m_e / hbar ** 2 * (x_max) ** 2
+    HUPMAT3_reduced_list = []
+    if model.N_wells_virtual - 2 != 0:
+        HUPMAT1, HUPMATC1, m_hh, m_lh, m_so, Ppz_Psp, pol_surf_char = Main_Str_Array(
+            model
+        )
+        for k in range(1, model.N_wells_virtual - 1):
+            I1, I2, I11, I22 = amort_wave(k, Well_boundary, n_max)
+            i_1 = I2 - I1
+            HUPMAT3_reduced = np.zeros((i_1 * 3, i_1 * 3))
+            i1 = I1 - I1
+            i2 = I2 - I1
+            HUPMAT3_reduced[i1:i2, i1:i2] = HUPMAT1[I1:I2, I1:I2]
+            HUPMAT3_reduced[i1 + i_1 : i2 + i_1, i1:i2] = HUPMAT1[
+                I1 + n_max : I2 + n_max, I1:I2
+            ]
+            HUPMAT3_reduced[i1:i2, i1 + i_1 : i2 + i_1] = HUPMAT1[
+                I1:I2, I1 + n_max : I2 + n_max
+            ]
+            HUPMAT3_reduced[i1 + i_1 : i2 + i_1, i1 + i_1 : i2 + i_1] = HUPMAT1[
+                I1 + n_max : I2 + n_max, I1 + n_max : I2 + n_max
+            ]
+            HUPMAT3_reduced[i1 + i_1 * 2 : i2 + i_1 * 2, i1:i2] = HUPMAT1[
+                I1 + n_max * 2 : I2 + n_max * 2, I1:I2
+            ]
+            HUPMAT3_reduced[i1:i2, i1 + i_1 * 2 : i2 + i_1 * 2] = HUPMAT1[
+                I1:I2, I1 + n_max * 2 : I2 + n_max * 2
+            ]
+            HUPMAT3_reduced[
+                i1 + i_1 * 2 : i2 + i_1 * 2, i1 + i_1 * 2 : i2 + i_1 * 2
+            ] = HUPMAT1[
+                I1 + n_max * 2 : I2 + n_max * 2, I1 + n_max * 2 : I2 + n_max * 2
+            ]
+            HUPMAT3_reduced[i1 + i_1 : i2 + i_1, i1 + i_1 * 2 : i2 + i_1 * 2] = HUPMAT1[
+                I1 + n_max : I2 + n_max, I1 + n_max * 2 : I2 + n_max * 2
+            ]
+            HUPMAT3_reduced[i1 + i_1 * 2 : i2 + i_1 * 2, i1 + i_1 : i2 + i_1] = HUPMAT1[
+                I1 + n_max * 2 : I2 + n_max * 2, I1 + n_max : I2 + n_max
+            ]
+            HUPMAT3_reduced_list.append(HUPMAT3_reduced)
+    else:
+        (
+            m_hh,
+            m_lh,
+            m_so,
+            VNIT,
+            ZETA,
+            CNIT,
+            Ppz_Psp,
+            EPC,
+            pol_surf_char,
+        ) = Strain_and_Masses(model)
+    # Check
+    if comp_scheme == 6:
+        logger.warning(
+            """The calculation of Vxc depends upon m*, however when non-parabolicity is also 
+                 considered m* becomes energy dependent which would make Vxc energy dependent.
+                 Currently this effect is ignored and Vxc uses the effective masses from the 
+                 bottom of the conduction bands even when non-parabolicity is considered 
+                 elsewhere."""
+        )
+    # Preparing empty subband energy lists.
+    E_state = [0.0] * subnumber_h  # Energies of subbands/levels (meV)
+    N_state = [0.0] * subnumber_h  # Number of carriers in subbands
+    E_statec = [0.0] * subnumber_e  # Energies of subbands/levels (meV)
+    N_statec = [0.0] * subnumber_e  # Number of carriers in subbands
+    # Preparing empty subband energy arrays for multiquantum wells.
+    E_state_general = np.zeros(
+        (model.N_wells_virtual, subnumber_h)
+    )  # Energies of subbands/levels (meV)
+    N_state_general = np.zeros(
+        (model.N_wells_virtual, subnumber_h)
+    )  # Number of carriers in subbands
+    E_statec_general = np.zeros(
+        (model.N_wells_virtual, subnumber_e)
+    )  # Energies of subbands/levels (meV)
+    N_statec_general = np.zeros(
+        (model.N_wells_virtual, subnumber_e)
+    )  # Number of carriers in subbands
+    meff_statec_general = np.zeros((model.N_wells_virtual, subnumber_e))
+    meff_state_general = np.zeros((model.N_wells_virtual, subnumber_h))
+    # Creating and Filling material arrays
+    xaxis = np.arange(0, n_max) * dx  # metres
+    fitot = np.zeros(n_max)  # Energy potential = Bandstructure + Coulombic potential
+    fitotc = np.zeros(n_max)  # Energy potential = Bandstructure + Coulombic potentia
+    # eps = np.zeros(n_max+2)	    #dielectric constant
+    # dop = np.zeros(n_max+2)	    #doping distribution
+    # sigma = np.zeros(n_max+2)      #charge distribution (donors + free charges)
+    # F = np.zeros(n_max+2)          #Electric Field
+    # Vapp = np.zeros(n_max+2)       #Applied Electric Potential
+    V = np.zeros(n_max)  # Electric Potential
+
+    # Subband wavefunction for holes list. 2-dimensional: [i][j] i:stateno, j:wavefunc
+    wfh = np.zeros((subnumber_h, n_max))
+    wfe = np.zeros((subnumber_e, n_max))
+    wfh_general = np.zeros((model.N_wells_virtual, subnumber_h, n_max))
+    wfe_general = np.zeros((model.N_wells_virtual, subnumber_e, n_max))
+    (
+        E_statec_general0,
+        E_state_general0,
+        wfe_general0,
+        wfh_general0,
+        meff_statec_general0,
+        meff_state_general0,
+    ) = (
+        E_statec_general,
+        E_state_general,
+        wfe_general,
+        wfh_general,
+        meff_statec_general,
+        meff_state_general,
+    )
+    E_F_general = np.zeros(model.N_wells_virtual)
+    sigma_general = np.zeros(n_max)
+    F_general = np.zeros(n_max)
+    Vnew_general = np.zeros(n_max)
+    fi = np.zeros(n_max)
+    fi_stat = np.zeros(n_max)
+    # Setup the doping
+    Ntotal = sum(dop)  # calculating total doping density m-3
+    Ntotal2d = Ntotal * dx
+    if not (config.messagesoff):
+        # print "Ntotal ",Ntotal,"m**-3"
+        logger.info("Ntotal2d %g m**-2", Ntotal2d)
+    # Applied Field
+    Vapp = calc_potn(Fapp * eps0 / eps, model)
+    Vapp[n_max - 1] -= Vapp[
+        n_max // 2
+    ]  # Offsetting the applied field's potential so that it is zero in the centre of the structure.
+    # s
+    # setting up Ldi and Ld p and n
+    Ld_n_p = np.zeros(n_max)
+    Ldi = np.zeros(n_max)
+    Nc = np.zeros(n_max)
+    Nv = np.zeros(n_max)
+    vb_meff = np.zeros(n_max)
+    ni = np.zeros(n_max)
+    n = np.zeros(n_max)
+    p = np.zeros(n_max)
+    hbark = hbar * 2 * pi
+    for i in range(n_max):
+        vb_meff[i] = (m_hh[i] ** (3 / 2) + m_lh[i] ** (3 / 2)) ** (2 / 3)
+    Nc = 2 * (2 * pi * cb_meff * kb * T / hbark ** 2) ** (3 / 2)
+    Nv = 2 * (2 * pi * vb_meff * kb * T / hbark ** 2) ** (3 / 2)
+    Half_Eg = np.zeros(n_max)
+    Eg_ = np.zeros(n_max)
+    ns1 = np.linalg.norm(dop, np.inf)
+    ns2 = np.linalg.norm(Ppz_Psp, np.inf)
+    ns = max(ns1, ns2)
+
+    for i in range(n_max):
+        ni[i] = sqrt(
+            Nc[i] * Nv[i] * exp(-(fi_e[i] - fi_h[i]) / (kb * T))
+        )  # Intrinsic carrier concentration [1/m^3]
+        if dop[i] == 1:
+            dop[i] *= ni[i]
+        Ld_n_p[i] = sqrt(eps[i] * Vt / (q * abs(dop[i])))
+        Ldi[i] = sqrt(eps[i] * Vt / (q * ns * ni[i]))
+        Half_Eg[i] = (fi_e[i] - fi_h[i]) / 2
+        Eg_[i] = fi_e[i] - fi_h[i]
+
+        fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+        fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+
+    if dx > min(Ld_n_p[:]) and 1 == 2:
+        logger.error(
+            """You are setting the grid size %g nm greater than the extrinsic Debye lengths %g nm""",
+            dx * 1e9,
+            min(Ld_n_p[:]) * 1e9,
+        )
+        # exit()
+    # STARTING SELF CONSISTENT LOOP
+    time2 = time.time()  # timing audit
+    iteration = 1  # iteration counter
+    # previousE0= 0   (meV) energy of zeroth state for previous iteration(for testing convergence)
+    previousfi0 = 0  # (meV) energy of  for previous iteration(for testing convergence)
+    fitot = fi_h  # + Vapp #For initial iteration sum bandstructure and applied field
+    fitotc = fi_e  # + Vapp
+    # initializing Stern damping method variables
+    r = 0.0
+    w_n_minus_max = 1.0
+    w_n_max = 0.0
+    w_n = np.zeros(n_max)
+    damping_n_plus = 0.1
+    damping_n = 0.1
+    Ppz_Psp0 = Ppz_Psp
+    EF = 0.0
+
+    l2 = (Vt * eps[0 : n_max - 1]) / (q * ns * xaxis[n_max - 1] ** 2)
+    class data:
+        def __init__(self):
+            self.l2 = l2
+            self.dop = dop
+            self.V = V
+            self.n = n
+            self.p = p
+            self.Ppz_Psp = Ppz_Psp
+            self.E_state_general = E_state_general
+            self.meff_state_general = meff_state_general
+            self.E_statec_general = E_statec_general
+            self.meff_statec_general = meff_statec_general
+            self.wfh_general = wfh_general
+            self.wfe_general = wfe_general
+            self.ni=ni
+
+    idata = data()
+    odata = data()
+    toll = 1e-3
+    maxit = 10
+    ptoll = 1e-10
+    pmaxit = 30
+    verbose = 0
+    v_Nnodes=np.arange(n_max)
+    idata.l2 = (Vt * eps[0 : n_max - 1]) / (q * ns )#* xaxis[n_max - 1] ** 2
+    idata.ni = ni / ns
+    idata.dop = dop / ns
+    idata.Ppz_Psp = Ppz_Psp / ns
+    if config.predic_correc:
+        print("Predictor–corrector method is activated")
+    while True:
+        if model.comp_scheme == 9:
+            break
+        print("Iteration:", iteration)
+        if not (config.messagesoff):
+            logger.info("Iteration: %d", iteration)
+        if model.N_wells_virtual - 2 != 0:
+            if config.predic_correc and iteration == 1:
+                (
+                    idata.E_statec_general,
+                    idata.E_state_general,
+                    idata.wfe_general,
+                    idata.wfh_general,
+                    idata.meff_statec_general,
+                    idata.meff_state_general,
+                ) = Schro(
+                    HUPMAT3_reduced_list,
+                    HUPMATC1,
+                    subnumber_h,
+                    subnumber_e,
+                    fitot,
+                    fitotc,
+                    model,
+                    Well_boundary,
+                    UNIM,
+                    RATIO,
+                    m_hh,
+                    m_lh,
+                    m_so,
+                    n_max,
+                )
+            elif not(config.predic_correc):
+                (
+                    idata.E_statec_general,
+                    idata.E_state_general,
+                    idata.wfe_general,
+                    idata.wfh_general,
+                    idata.meff_statec_general,
+                    idata.meff_state_general,
+                ) = Schro(
+                    HUPMAT3_reduced_list,
+                    HUPMATC1,
+                    subnumber_h,
+                    subnumber_e,
+                    fitot,
+                    fitotc,
+                    model,
+                    Well_boundary,
+                    UNIM,
+                    RATIO,
+                    m_hh,
+                    m_lh,
+                    m_so,
+                    n_max,
+                )
+            damping = 0.15  # 0.1 works between high and low doping
+        else:
+            damping = 1
+        [fi,n,p,fi_stat] =DDGnlpoisson_new (idata,xaxis,v_Nnodes,fi,n,p,ptoll,pmaxit,verbose,fi_e,fi_h,model,Vt,surface,fi_stat,iteration,ns)
+        #
+        if comp_scheme in (0, 1):
+            # if we are not self-consistently including Poisson Effects then only do one loop
+            break
+        """
+        # Combine band edge potential with potential due to charge distribution
+        # To increase convergence, we calculate a moving average of electric potential 
+        #with previous iterations. By dampening the corrective term, we avoid oscillations.
+        #tryng new dmping method 
+        F. Stern, J. Computational Physics 6, 56 (1970).
+        #the extrapolated-convergence-factor method instead of the fixed-convergence-factor method
+        """
+        Vnew_general = -Vt * q * fi
+        w_n = Vnew_general - V
+        w_n_max = max(abs(w_n[:])) * J2meV
+        r = w_n_max / w_n_minus_max
+        w_n_minus_max = w_n_max
+        damping_n_plus = damping_n / (1 - abs(r))
+        damping_n = damping_n_plus
+        if config.Stern_damping:
+            V += damping_n_plus * (w_n)
+        else:
+            V += damping * (w_n)
+        fitot = fi_h + V + Vapp
+        fitotc = fi_e + V + Vapp
+        xaxis = np.arange(0, n_max) * dx
+        delta0 = V - Vnew_general
+        delta_max0 = max(abs(delta0[:]))
+        # print('w_n_max=',w_n_max)
+        # print('r=',r)
+        # print('damping_n=',damping_n)
+        # print('damping_n_plus=',damping_n_plus)
+        # print('w_n_minus_max=',w_n_minus_max)
+        print("error_potential=", delta_max0 * J2meV, "meV")
+        if config.predic_correc:
+            delta1 = Vnew_general - previousfi0
+            delta_max1 = max(abs(delta1[:]))
+            if delta_max1 / q < convergence_test0 :  # Convergence test
+                # print('error=',abs(E_state_general[1,0]-previousE0)/1e3)
+                # if abs(E_state_general[1,0]-previousE0)/1e3 < convergence_test: #Convergence test
+                if model.N_wells_virtual - 2 != 0:
+                    (
+                        E_statec_general,
+                        E_state_general,
+                        wfe_general,
+                        wfh_general,
+                        meff_statec_general,
+                        meff_state_general,
+                    ) = Schro(
+                        HUPMAT3_reduced_list,
+                        HUPMATC1,
+                        subnumber_h,
+                        subnumber_e,
+                        fitot,
+                        fitotc,
+                        model,
+                        Well_boundary,
+                        UNIM,
+                        RATIO,
+                        m_hh,
+                        m_lh,
+                        m_so,
+                        n_max,
+                    )
+
+                break
+            elif iteration >= max_iterations:  # Iteration limit
+                logger.warning("Have reached maximum number of iterations")
+                break
+            else:
+                iteration += 1
+                previousfi0 = V
+        else:
+            delta1 = Vnew_general - previousfi0
+            delta_max1 = max(abs(delta1[:]))
+            if delta_max1 / q < convergence_test0:  # Convergence test
+                if model.N_wells_virtual - 2 != 0:
+                    (
+                        E_statec_general,
+                        E_state_general,
+                        wfe_general,
+                        wfh_general,
+                        meff_statec_general,
+                        meff_state_general,
+                    ) = Schro(
+                        HUPMAT3_reduced_list,
+                        HUPMATC1,
+                        subnumber_h,
+                        subnumber_e,
+                        fitot,
+                        fitotc,
+                        model,
+                        Well_boundary,
+                        UNIM,
+                        RATIO,
+                        m_hh,
+                        m_lh,
+                        m_so,
+                        n_max,
+                    )
+
+                break
+            elif iteration >= max_iterations:  # Iteration limit
+                logger.warning("Have reached maximum number of iterations")
+                break
+            else:
+                iteration += 1
+                previousfi0 = V
+                # END OF SELF-CONSISTENT LOOP
+    (
+        Ec_result,
+        Ev_result,
+        ro_result,
+        el_field1_result,
+        el_field2_result,
+        nf_result,
+        pf_result,
+        fi_result,
+    ) = Write_results_equi2(ns, fitotc, fitot, Vt, q, ni, n*ns/ni, p*ns/ni, dop, dx, Ldi, fi, n_max)
+    time3 = time.time()  # timing audit
+    if not (config.messagesoff):
+        logger.info("calculation time  %g s", (time3 - time2))
+
+    class Results:
+        pass
+
+    results = Results()
+    results.N_wells_virtual = N_wells_virtual
+    results.Well_boundary = Well_boundary
+    results.xaxis = xaxis
+    results.wfh = wfh
+    results.wfe = wfe
+    results.fitot = fitot
+    results.fitotc = fitotc
+    results.fi_e = fi_e
+    results.fi_h = fi_h
+    # results.sigma = sigma
+    results.sigma_general = sigma_general
+    # results.F = F
+    results.V = V
+    results.E_state = E_state
+    results.N_state = N_state
+    # results.meff_state = meff_state
+    results.E_statec = E_statec
+    results.N_statec = N_statec
+    # results.meff_statec = meff_statec
+    results.F_general = F_general
+    results.E_state_general = E_state_general
+    results.N_state_general = N_state_general
+    results.meff_state_general = meff_state_general
+    results.E_statec_general = E_statec_general
+    results.N_statec_general = N_statec_general
+    results.meff_statec_general = meff_statec_general
+    results.wfh_general = wfh_general
+    results.wfe_general = wfe_general
+
+    results.E_state_general0 = E_state_general0
+    results.E_statec_general0 = E_statec_general0
+    results.meff_state_general0 = meff_state_general0
+    results.meff_statec_general0 = meff_statec_general0
+    results.wfh_general0 = wfh_general0
+    results.wfe_general0 = wfe_general0
+    results.Fapp = Fapp
+    results.T = T
+    # results.E_F = E_F
+    results.E_F_general = E_F_general
+    results.dx = dx
+    results.subnumber_h = subnumber_h
+    results.subnumber_e = subnumber_e
+    results.Ntotal2d = Ntotal2d
+    ########################
+    results.Ec_result = Ec_result
+    results.Ev_result = Ev_result
+    results.ro_result = ro_result
+    results.el_field1_result = el_field1_result
+    results.el_field2_result = el_field2_result
+    results.nf_result = nf_result
+    results.pf_result = pf_result
+    results.fi_result = fi_result
+    results.EF = EF
+    results.HUPMAT3_reduced_list = HUPMAT3_reduced_list
+    results.m_hh = m_hh
+    results.m_lh = m_lh
+    results.m_so = m_so
+    results.Ppz_Psp = Ppz_Psp
+    results.pol_surf_char = pol_surf_char
+    results.HUPMATC1 = HUPMATC1
+    ##########################
+    return results
 
 def Poisson_Schrodinger_DD(result, model):
     fi = result.fi_result
@@ -4588,7 +5092,11 @@ def run_aestimo(input_obj):
     model = StructureFrom(input_obj, database)
 
     # Perform the calculation
-    result = Poisson_Schrodinger(model)
+    
+    if model.comp_scheme == 10:
+        result = Poisson_Schrodinger_new(model)
+    else:
+        result = Poisson_Schrodinger(model)
     if model.comp_scheme == 7:
         result_dd = Poisson_Schrodinger_DD(result, model)
     if model.comp_scheme == 8:
@@ -4601,7 +5109,7 @@ def run_aestimo(input_obj):
         logger.info("total running time (inc. loading libraries) %g s", (time4 - time0))
         logger.info("total running time (exc. loading libraries) %g s", (time4 - time1))
     # Write the simulation results in files
-    if model.comp_scheme == 7 or model.comp_scheme == 8 or model.comp_scheme == 2:
+    if model.comp_scheme == 7 or model.comp_scheme == 8 or model.comp_scheme == 2 or model.comp_scheme == 10:
         save_and_plot(result, model)
     if model.comp_scheme == 7 or model.comp_scheme == 8 or model.comp_scheme == 9:
         save_and_plot2(result_dd, model)
