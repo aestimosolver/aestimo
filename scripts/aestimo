@@ -29,6 +29,12 @@ Alternatively, many of the example input files show how we can transform them
 into scripts that can be run directly to perform the simulations. That approach
 also allows us to tailor each simulation even more to our needs.
 """
+
+__author__    = "For the list of contributors, see ~/AUTHORS.md"
+__copyright__ = "Copyright (C) 2013-2020 Sefer Bora Lisesivdin and Aestimo group"
+__license__   = "GPLv3+ WITHOUT ANY WARRANTY"
+__version__   = "2.0.1"
+
 import sys,os
 import optparse
 import aestimo.aestimo as aestimo

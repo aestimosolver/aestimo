@@ -13,9 +13,9 @@ also allows us to tailor each simulation even more to our needs.
 """
 
 __author__    = "For the list of contributors, see ~/AUTHORS.md"
-__copyright__ = "Copyright (C) 2013-2017 Sefer Bora Lisesivdin and Aestimo group"
+__copyright__ = "Copyright (C) 2013-2020 Sefer Bora Lisesivdin and Aestimo group"
 __license__   = "GPLv3+ WITHOUT ANY WARRANTY"
-__version__   = "1.2.0"
+__version__   = "2.0.1"
 
 import sys,os
 import optparse
