@@ -49,10 +49,18 @@ Created on Mon Aug 19 13:59:47 2019
 import numpy as np
 from math import*
 from scipy import sparse as sp
-import func_lib
-from func_lib import DDGphin2n,DDGphip2p,Ucompmass,Ucomplap,Ucompconst,Ubernoulli
-from aestimo_poisson1d import equi_np_fi222
-import config
+
+if __package__:  # explicit relative imports for using aestimo as a package (in python3)
+    from . import func_lib
+    from .func_lib import DDGphin2n,DDGphip2p,Ucompmass,Ucomplap,Ucompconst,Ubernoulli
+    from .aestimo_poisson1d import equi_np_fi222
+    from . import config
+else:
+    import func_lib
+    from func_lib import DDGphin2n,DDGphip2p,Ucompmass,Ucomplap,Ucompconst,Ubernoulli
+    from aestimo_poisson1d import equi_np_fi222
+    import config
+    
 def DDGelectron_driftdiffusion(psi,xaxis,ng,p,ni,TAUN0,TAUP0,mun,fi_e,fi_h,model,Vt,idata):
     
     nodes        = xaxis

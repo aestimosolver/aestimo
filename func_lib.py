@@ -7,6 +7,7 @@ Created on Mon Aug 19 15:09:15 2019
 import numpy as np
 from math import*
 from scipy import sparse as sp
+
 def DDGphin2n (V,phin,n):
     """
     ## -*- texinfo -*-
@@ -39,7 +40,8 @@ def DDGphip2p (V,phip,p):
     p=  np.exp ((phip-V))
     #p = p * (p>pmin) + pmin * (p<=pmin) 
     return p
-def  DDGn2phin (V,n):
+
+def DDGn2phin (V,n):
     """
     ## Copyright (C) 2004-2008  Carlo de Falco
     ##
@@ -76,8 +78,6 @@ def  DDGn2phin (V,n):
     
     return phin
 
-
-  
 def DDGp2phip (V,p):
     """
     ## Copyright (C) 2004-2008  Carlo de Falco
@@ -114,7 +114,8 @@ def DDGp2phip (V,p):
     phip = V + np.log(abs(p)) 
       
     return phip
-def  Ucompmass (nodes,n_max,elements,Nelements,Bvect,Cvect):
+
+def Ucompmass (nodes,n_max,elements,Nelements,Bvect,Cvect):
     """
     ## -*- texinfo -*-
     ##
@@ -141,6 +142,7 @@ def  Ucompmass (nodes,n_max,elements,Nelements,Bvect,Cvect):
     d0[1:n_max-1]=Bvect[1:n_max-1]*(h[0:len(h)-1]+h[1:len(h)])/2
     Bmat  = sp.spdiags(d0, [0], n_max,n_max).todense()      
     return Bmat
+
 def Ucomplap (nodes,n_max,elements,Nelements,coeff):
     """
     ## -*- texinfo -*-
@@ -204,7 +206,6 @@ def Ucompconst (nodes,n_max,elements,Nelements,D,C):
     return R
 
 
-
 def Ubernoulli(x,sg):
     """
     ## Copyright (C) 2004-2008  Carlo de Falco
@@ -255,10 +256,7 @@ def Ubernoulli(x,sg):
     return b
 
 
-
-
-
-def   Ubern(x):
+def Ubern(x):
     """
     ## Copyright (C) 2004-2008  Carlo de Falco
       ##
@@ -334,10 +332,6 @@ def   Ubern(x):
     return [bp,bn]
 
 
-  
-
-
-
 def Uscharfettergummel(nodes,n_max,elements,Nelements,acoeff,bcoeff,v):
     
     """
@@ -403,7 +397,7 @@ def Uscharfettergummel(nodes,n_max,elements,Nelements,acoeff,bcoeff,v):
     A = sp.spdiags([dm1, d0, d1],np.array([-1,0,1]),n_max,n_max).todense()
     return A
 
-     
+
 def Umediaarmonica(w):
     """
     ## Copyright (C) 2004-2008  Carlo de Falco

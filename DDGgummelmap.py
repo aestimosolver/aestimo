@@ -67,12 +67,21 @@ Created on Wed Aug 14 07:27:07 2019
 ##
 ## @end deftypefn
 import numpy as np
-import DDGnlpoisson
-from DDGnlpoisson import DDGnlpoisson
-from DDGelectron_driftdiffusion import DDGelectron_driftdiffusion
-from DDGhole_driftdiffusion import DDGhole_driftdiffusion
-import func_lib
-from func_lib import DDGp2phip,DDGn2phin
+
+if __package__:  # explicit relative imports for using aestimo as a package (in python3)
+    from . import DDGnlpoisson
+    from .DDGnlpoisson import DDGnlpoisson
+    from .DDGelectron_driftdiffusion import DDGelectron_driftdiffusion
+    from .DDGhole_driftdiffusion import DDGhole_driftdiffusion
+    from . import func_lib
+    from .func_lib import DDGp2phip,DDGn2phin
+else:        
+    import DDGnlpoisson
+    from DDGnlpoisson import DDGnlpoisson
+    from DDGelectron_driftdiffusion import DDGelectron_driftdiffusion
+    from DDGhole_driftdiffusion import DDGhole_driftdiffusion
+    import func_lib
+    from func_lib import DDGp2phip,DDGn2phin
 
 def DDGgummelmap (n_max,xaxis,idata,odata,toll,maxit,ptoll,pmaxit,verbose,ni,fi_e,fi_h,model,Vt):
 

@@ -67,12 +67,21 @@ Created on Thu Aug 29 14:14:03 2019
 
 import numpy as np
 from math import*
-import func_lib
-from func_lib import Uscharfettergummel,Ucompmass,Ucomplap,Umediaarmonica
 from scipy import sparse as sp
 from scipy.sparse import bsr_matrix
-from aestimo_poisson1d import equi_np_fi222
-import config
+
+if __package__:  # explicit relative imports for using aestimo as a package (in python3)
+    from . import func_lib
+    from .func_lib import Uscharfettergummel,Ucompmass,Ucomplap,Umediaarmonica
+    from .aestimo_poisson1d import equi_np_fi222
+    from . import config
+else:    
+    import func_lib
+    from func_lib import Uscharfettergummel,Ucompmass,Ucomplap,Umediaarmonica
+    from aestimo_poisson1d import equi_np_fi222
+    import config
+
+
 def  DDNnewtonmap (ni,fi_e,fi_h,xaxis,idata,toll,maxit,verbose,model,Vt):
     odata     = idata
     n_max    = len(xaxis)
