@@ -26,6 +26,7 @@ class sdist(_sdist):
         # Make sure the compiled Cython files in the distribution are up-to-date
         from Cython.Build import cythonize
         cythonize(['psi_at_inf_cython.pyx'])
+        cythonize(['aestimo_dd_lib.pyx'])
         _sdist.run(self)
         #print('compiling cython module into c source')
 
@@ -44,6 +45,7 @@ except ImportError:
     
 ext_modules += [
     Extension("aestimo.psi_at_inf_cython", [ "psi_at_inf_cython" +ext ]),
+    Extension("aestimo_dd_lib", [ "aestimo_dd_lib" +ext])
     ]
 
 # if numpy needed to be installed to as a dependency of aestimo, this might enable
@@ -72,7 +74,7 @@ cmdclass.update({ 'build_ext': build_ext })
 
 
 setup(  name='aestimo',
-        version='1.2.1',
+        version='2.0.1',
         description='A bandstructure simulator of semiconductor nanostructures called quantum wells.',
         long_description= read('README.md'),
         classifiers=[
@@ -92,7 +94,10 @@ setup(  name='aestimo',
         keywords='quantum well semiconductor nanostructure optical transitions',
         package_dir = {'aestimo': ''},
         packages=['aestimo'],
-        package_data={'aestimo':['README.md','README_OUTPUTS','AUTHORS.md','COPYING','CHANGELOG.md','psi_at_inf_cython.c','doc/*']},
+        package_data={'aestimo':['README.md','AUTHORS.md','COPYING.md','CHANGELOG.md',
+                                 'psi_at_inf_cython.c','psi_at_inf_cython.pyz',
+                                 'aestimo_dd_lib.c','aestimo_dd_lib.pyd',
+                                 'tutorials/*','examples/*.py']},
         scripts=['scripts/aestimo','scripts/aestimo_eh'],
         install_requires=['numpy>1.7.0','matplotlib','scipy'],
         zip_safe=False, #we want users to be able to easily see and edit the scripts
