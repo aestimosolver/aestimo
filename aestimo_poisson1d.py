@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
  Aestimo 1D Schrodinger-Poisson Solver
  Copyright (C) 2013-2020 Aestimo Group

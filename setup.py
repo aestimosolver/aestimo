@@ -45,7 +45,7 @@ except ImportError:
     
 ext_modules += [
     Extension("aestimo.psi_at_inf_cython", [ "psi_at_inf_cython" +ext ]),
-    Extension("aestimo_dd_lib", [ "aestimo_dd_lib" +ext])
+    Extension("aestimo.aestimo_dd_lib", [ "aestimo_dd_lib" +ext])
     ]
 
 # if numpy needed to be installed to as a dependency of aestimo, this might enable
@@ -95,8 +95,8 @@ setup(  name='aestimo',
         package_dir = {'aestimo': ''},
         packages=['aestimo'],
         package_data={'aestimo':['README.md','AUTHORS.md','COPYING.md','CHANGELOG.md',
-                                 'psi_at_inf_cython.c','psi_at_inf_cython.pyz',
-                                 'aestimo_dd_lib.c','aestimo_dd_lib.pyd',
+                                 'psi_at_inf_cython.pyx','psi_at_inf_cython.c',
+                                 'aestimo_dd_lib.pyx','aestimo_dd_lib.c','aestimo_dd_lib.pyd',
                                  'tutorials/*','examples/*.py']},
         scripts=['scripts/aestimo','scripts/aestimo_eh'],
         install_requires=['numpy>1.7.0','matplotlib','scipy'],
