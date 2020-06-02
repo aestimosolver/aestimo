@@ -43,7 +43,7 @@ describes the structure's layers.
 
     For the list of contributors, see ~/AUTHORS
 """
-__version__ = "2.0.1"
+__version__ = "2.0.2"
 import time
 
 time0 = time.time()  # timing audit
