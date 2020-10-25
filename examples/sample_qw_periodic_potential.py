@@ -8,7 +8,7 @@
 # ----------------
 
 # TEMPERATURE
-T = 300.0 #Kelvin
+T = 60.0 #Kelvin
 
 # COMPUTATIONAL SCHEME
 # 0: Schrodinger
@@ -18,14 +18,31 @@ T = 300.0 #Kelvin
 # 4: Schrodinger-Exchange interaction
 # 5: Schrodinger-Poisson + Exchange interaction
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
-computation_scheme = 2
+computation_scheme = 6
+
+# Non-parabolic effective mass function
+# 0: no energy dependence
+# 1: Nelson's effective 2-band model
+# 2: k.p model from Vurgaftman's 2001 paper
+meff_method = 2
+
+# Non-parabolic Dispersion Calculations for Fermi-Dirac
+fermi_np_scheme = True
+
+# (optional) Dopant Poisson field boundary condition
+# (only applies to electric field from dopants)
+# 0: Efield = 0 at boundaries
+# 1: Periodic Potential 
+boundary_scheme = 1
 
 # QUANTUM
 # Total subband number to be calculated for electrons
+subnumber_e = 3
+# Total subband number to be calculated for electrons (for aestimo_numpy_h)
 subnumber_h = 1
-subnumber_e = 1
+
 # APPLIED ELECTRIC FIELD
-Fapplied = 0#2.5e7/50e-9  (V/m)
+Fapplied = 0.0/50e-9 # (V/m)
 
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
@@ -33,9 +50,9 @@ Fapplied = 0#2.5e7/50e-9  (V/m)
 
 # GRID
 # For 1D, z-axis is choosen
-gridfactor = 0.2 #nm
+gridfactor = 0.1 #nm
 maxgridpoints = 200000 #for controlling the size
-mat_type='Wurtzite'
+mat_type='Zincblende'
 # REGIONS
 # Region input is a two-dimensional list input.
 # An example:
@@ -45,16 +62,21 @@ mat_type='Wurtzite'
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 #
 # To input this list in Gallium, we use lists as:
-material =[[ 1.0, 'GaN', 0.0, 0.0, 'p','b'],
-            [ 2.0, 'GaN', 0.0, 5e17, 'p','b'],
-            [ 2.0, 'InGaN', 0.2, 0,'p','w'],
-            [ 2.0, 'GaN', 0.0, 5e17, 'p','b'],                           
-            [ 1.0, 'GaN', 0.0, 0.0, 'p','b']]
-
+material =[[ 10.0, 'AlGaAs', 0.3, 0.0, 'n'],
+            [ 5.0, 'AlGaAs', 0.3, 5e17, 'n'],
+            [ 5.0, 'AlGaAs', 0.3, 0.0, 'n'],
+            [ 11.0, 'GaAs', 0, 0, 'n'],
+            [ 5.0, 'AlGaAs', 0.3, 0.0, 'n'],
+            [ 5.0, 'AlGaAs', 0.3, 0e17, 'n'],
+            [ 10.0, 'AlGaAs', 0.3, 0.0, 'n']]
  
 
-
+inputfilename = "sample_qw_periodic_potential"
+from os import path
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
-    import aestimo_h
-    aestimo_h.run_aestimo(input_obj)
+    import sys
+    sys.path.append(path.join(path.dirname(__file__), '..'))
+    import aestimo
+    aestimo.run_aestimo(input_obj)
+    

@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Aestimo 1D Schrodinger-Poisson Solver
+
+aestimo_eh script:
+------------------
+This script is one method of running aestimo_eh. If no input file is specified,
+the input file defined in the aestimo.config module will be run as default.
+
+Alternatively, many of the example input files show how we can transform them
+into scripts that can be run directly to perform the simulations. That approach
+also allows us to tailor each simulation even more to our needs.
+"""
+
+__author__    = "For the list of contributors, see ~/AUTHORS.md"
+__copyright__ = "Copyright (C) 2013-2020 Sefer Bora Lisesivdin and Aestimo group"
+__license__   = "GPLv3+ WITHOUT ANY WARRANTY"
+__version__   = "2.0.2"
+
+import sys,os
+import optparse
+import aestimo.aestimo_eh as aestimo_eh
+import aestimo.config as config
+
+usage = """usage: %prog <aestimo input module name>
+
+Aestimo is a Poisson-Schrodinger semiconductor simulator for quantum wells.
+It is written in python, see the aestimo package for examples on how to use
+it."""
+parser = optparse.OptionParser(usage=usage) #overkill now but may add options in the future.
+(options, args) = parser.parse_args()   
+if len(args)==0:
+    sys.stderr.write('Missing input file\nUsage: aestimo_eh <aestimo input module name>\n')
+    sys.exit()
+inputfile = args[0]
+
+# Import input file
+sys.path.append(os.getcwd())
+inputparams = __import__(inputfile,fromlist=[None])
+aestimo_eh.logger.info("inputfile is %s",inputfile)
+
+if __name__=="__main__":
+    aestimo_eh.run_aestimo(inputparams)
