@@ -2416,6 +2416,7 @@ def Poisson_Schrodinger(model):
     ns1 = np.linalg.norm(dop, np.inf)
     ns2 = np.linalg.norm(Ppz_Psp, np.inf)
     ns = max(ns1, ns2)
+
     offset0 = 0.0
     offset1 = 0.0
     for i in range(n_max):
@@ -2431,6 +2432,7 @@ def Poisson_Schrodinger(model):
 
         fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
         fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+        
     """
     fi_e-=fi_e[0]
     fi_h-=fi_e[0]
@@ -3441,13 +3443,9 @@ def Poisson_Schrodinger_DD(result, model):
     # previousE0= 0   #(meV) energy of zeroth state for previous iteration(for testing convergence)
     # fitot = fi_h + Vapp #For initial iteration sum bandstructure and applied field
     # fitotc = fi_e + Vapp
-    Va_max = vmax  # 1.8#input()0.625
-    # Va_max=0.625#input()0.625
-    dVa = 0.5 * Vt  # input()0.01
-    dVa = dVa / Vt
-    Each_Step = dVa
-    vmin = 0.0
-    Total_Steps = int(((Va_max - vmin) / Vt) / (Each_Step))
+
+    #vmin = 0.0
+    Total_Steps = int(((vmax - vmin) ) / (Each_Step))+1
     xaxis = np.arange(0, n_max) * dx  # metres
     mup = np.zeros(n_max)
     mun = np.zeros(n_max)
@@ -3461,28 +3459,30 @@ def Poisson_Schrodinger_DD(result, model):
     Jpip1by2 = np.zeros((Total_Steps, n_max))
     Jhole = np.zeros((Total_Steps, n_max))
     Jtotal = np.zeros((Total_Steps, n_max))
-
+    fi_va= np.zeros((Total_Steps, n_max))
+    Ec_result_= np.zeros((Total_Steps, n_max))
+    Ev_result_= np.zeros((Total_Steps, n_max))
     fi_stat = fi
-    if Va_max == 0:
+    fi[0] +=vmin/ Vt
+    if vmax == 0:
         print("Va_max=0")
     else:
         print("Convergence of the Gummel cycles")
         vindex = 0
         for vindex in range(0, Total_Steps):
-            # if vindex>int(Total_Steps*4/5):
-            Ppz_Psp = Ppz_Psp_tmp
+            if vindex>int(Total_Steps*4/5):
+                Ppz_Psp = Ppz_Psp_tmp
             # Start Va increment loop
             Va = Each_Step * vindex
             if vindex == 0:
                 fi[0] += 0.0  # Apply potential to Anode (1st node)
             else:
-                fi[0] += Each_Step
+                fi[0] += Each_Step/Vt
             flag_conv_2 = True  # Convergence of the Poisson loop
             #% Initialize the First and Last Node for Poisson's eqn
 
-            Va_t[vindex] = Va
-            print("Va_t[", vindex, "]=", Va_t[vindex] * Vt)
-            print("vindex=", vindex)
+            Va_t[vindex] = Va+vmin
+            print("Va_t[", vindex, "]=", Va_t[vindex])
             # previousE0= 2   #(meV) energy of zeroth state for previous iteration(for testing convergence)
             while flag_conv_2:
                 fi, flag_conv_2 = Poisson_non_equi2(
@@ -3546,6 +3546,10 @@ def Poisson_Schrodinger_DD(result, model):
 
             # End of main FOR loop for Va increment.
             Jtotal = Jelec + Jhole
+            fi_va[vindex,:] =fi
+        for vindex in range(Total_Steps):
+            Ec_result_[vindex, :] = fi_e / q - fi_va[vindex, :]  # Values from the all Node%
+            Ev_result_[vindex, :] = fi_h / q - fi_va[vindex, :]  # Values from the all Node%        
         ##########################################################################
         ##                 END OF NON-EQUILIBRIUM  SOLUTION PART                ##
         ##########################################################################
@@ -3674,6 +3678,9 @@ def Poisson_Schrodinger_DD(result, model):
     results.fi_result = fi_result
     results.EF = EF
     results.Total_Steps = Total_Steps
+    results.fi_va=fi_va
+    results.Ec_result_= Ec_result_
+    results.Ev_result_= Ec_result_
     return results
 
 
@@ -3869,12 +3876,7 @@ def Poisson_Schrodinger_DD_test(result, model):
     previousfi0 = 0  # (meV) energy of  for previous iteration(for testing convergence)
     fitot = fi_h  # + Vapp #For initial iteration sum bandstructure and applied field
     fitotc = fi_e  # + Vapp
-    Va_max = vmax  # 1.8#input()0.625
-    # Va_max=0.625#input()0.625
-    dVa = Each_Step  # *Vt#input()0.01
-    dVa = dVa / Vt
-    Each_Step = dVa
-    Total_Steps = int(((Va_max - vmin) / Vt) / (Each_Step))
+    Total_Steps = int(((vmax - vmin) ) / (Each_Step))+1
     xaxis = np.arange(0, n_max) * dx  # metres
     mup = np.zeros(n_max)
     mun = np.zeros(n_max)
@@ -3892,9 +3894,13 @@ def Poisson_Schrodinger_DD_test(result, model):
     Jpip1by2 = np.zeros((Total_Steps, n_max))
     Jhole = np.zeros((Total_Steps, n_max))
     Jtotal = np.zeros((Total_Steps, n_max))
+    fi_va= np.zeros((Total_Steps, n_max))
+    Ec_result_= np.zeros((Total_Steps, n_max))
+    Ev_result_= np.zeros((Total_Steps, n_max))
     fi_stat = fi
-    if Va_max == 0:
-        print("Va_max=0")
+    fi+=vmin/Vt
+    if vmax == 0:
+        print("vmax=0")
     else:
         print("Convergence of the Gummel cycles")
         vindex = 0
@@ -3906,13 +3912,12 @@ def Poisson_Schrodinger_DD_test(result, model):
             if vindex == 0:
                 fi[0] += 0.0  # Apply potential to Anode (1st node)
             else:
-                fi[0] += Each_Step
+                fi[0] += Each_Step/Vt
             flag_conv_2 = True  # Convergence of the Poisson loop
             #% Initialize the First and Last Node for Poisson's eqn
 
-            Va_t[vindex] = Va
-            print("Va_t[", vindex, "]=", Va_t[vindex] * Vt)
-            print("vindex=", vindex)
+            Va_t[vindex] = Va+vmin
+            print("Va_t[", vindex, "]=", Va_t[vindex])
             # previousE0= 2   #(meV) energy of zeroth state for previous iteration(for testing convergence)
             while flag_conv_2:
                 fitot = fi_h - Vt * q * fi
@@ -4015,12 +4020,16 @@ def Poisson_Schrodinger_DD_test(result, model):
 
             # End of main FOR loop for Va increment.
             Jtotal = Jelec + Jhole
+            fi_va[vindex,:] =fi
             """                
             pl.plot(xaxis*1e6,fitotc)
             pl.xlabel('Position (m)')
             pl.ylabel('Energy (meV)')
             pl.grid(True)
             """
+        for vindex in range(Total_Steps):
+            Ec_result_[vindex, :] = fi_e / q - fi_va[vindex, :]  # Values from the all Node%
+            Ev_result_[vindex, :] = fi_h / q - fi_va[vindex, :]  # Values from the all Node%
         ##########################################################################
         ##                 END OF NON-EQUILIBRIUM  SOLUTION PART                ##
         ##########################################################################
@@ -4124,6 +4133,9 @@ def Poisson_Schrodinger_DD_test(result, model):
     results.fi_result = fi_result
     results.EF = EF
     results.Total_Steps = Total_Steps
+    results.fi_va=fi_va
+    results.Ec_result_= Ec_result_
+    results.Ev_result_= Ec_result_
     return results
 
 
@@ -4320,6 +4332,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     Va_t = np.zeros(Total_Steps)
 
     Jtotal = np.zeros((Total_Steps, n_max))
+    J_Tunnling= np.zeros((Total_Steps, n_max))
     ###############################################################
     len_ = xaxis[n_max - 1]
 
@@ -4346,6 +4359,9 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     V_ = np.zeros((Total_Steps, n_max))
     Jn = np.zeros((Total_Steps, n_max))
     Jp = np.zeros((Total_Steps, n_max))
+    fi_va= np.zeros((Total_Steps, n_max))
+    Ec_result_= np.zeros((Total_Steps, n_max))
+    Ev_result_= np.zeros((Total_Steps, n_max))
     # J=np.zeros((Total_Steps,n_max-1))
     lambda2 = np.zeros((Total_Steps, n_max))
     DV = np.zeros(Total_Steps)
@@ -4520,7 +4536,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
             n_[vindex, :] = odata.n
             p_[vindex, :] = odata.p
             V_[vindex, :] = odata.V
-
+            fi_va[vindex, :] = odata.V
             # print("n_newt=",odata.n[:])
             Fn_[vindex, :] = odata.Fn
             Fp_[vindex, :] = odata.Fp
@@ -4559,7 +4575,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
         V_ = V_ * Vs
         # J = abs (Jp+Jn)*Js
         Jtotal = abs(Jp + Jn) * us * q * ns
-        Jtotal[:, n_max - 1] = Jtotal[:, n_max - 2]
+        Jtotal[:, n_max - 1] = Jtotal[:, n_max - 2]#+J_Tunnling[:, n_max - 2]
         #Fn = V_ / Vs - np.log(n_)
         #Fp = V_ / Vs + np.log(p_)
         # Fn_=Fn_*Vs
@@ -4616,6 +4632,9 @@ def Poisson_Schrodinger_DD_test_2(result, model):
         Va_t = vvect
         fitot = fi_h - Vt * q * odata.V
         fitotc = fi_e - Vt * q * odata.V
+        for vindex in range(Total_Steps):
+            Ec_result_[vindex, :] = fi_e / q - V_[vindex, :]  # Values from the all Node%
+            Ev_result_[vindex, :] = fi_h / q - V_[vindex, :]  # Values from the all Node%
         if model.N_wells_virtual - 2 != 0 and config.quantum_effect:
             (
                 idata.E_statec_general,
@@ -4700,6 +4719,9 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     results.fi_result = fi_result
     results.EF = EF
     results.Total_Steps = Total_Steps
+    results.fi_va=fi_va
+    results.Ec_result_ = Ec_result_
+    results.Ev_result_ = Ev_result_
     return results
 
 
@@ -4741,8 +4763,19 @@ def save_and_plot2(result, model):
                     "np_data0_%.2f.dat" % vt,
                     (xaxis * 1e2, result.nf_result * 1e-6, result.pf_result * 1e-6),
                 )
-            if config.states_out and 1 == 2:
+            
+    for k in range(0, result.Total_Steps):
+        if config.Drift_Diffusion_out:            
+            if config.potential_out:
+                saveoutput(
+                    "potn_eh_%.2f.dat" % result.Va_t[k],
+                    (xaxis * 1e2, result.Ec_result_[k,:], result.Ev_result_[k,:]),
+                )
+            if config.states_out:
                 for j in range(1, result.N_wells_virtual - 1):
+                    I1, I2, I11, I22 = amort_wave(j, result.Well_boundary, model.n_max)
+                    i1 = I1 - I1
+                    i2 = I2 - I1
                     rel_meff_state = [
                         meff / m_e for meff in result.meff_state_general[j]
                     ]  # going to report relative effective mass.
@@ -4760,10 +4793,14 @@ def save_and_plot2(result, model):
                     if config.probability_out:
                         saveoutput(
                             "wavefunctions_h_QWR%d_%.2f.dat" % (j, vt),
-                            (xaxis, result.wfh_general[j].transpose()),
+                            (xaxis[I1:I2], result.wfh_general[j,:,i1:i2].transpose()),
                         )
-            if config.states_out and 1 == 2:
+    
+            if config.states_out:
                 for j in range(1, result.N_wells_virtual - 1):
+                    I1, I2, I11, I22 = amort_wave(j, result.Well_boundary, model.n_max)
+                    i1 = I1 - I1
+                    i2 = I2 - I1
                     rel_meff_statec = [
                         meff / m_e for meff in result.meff_statec_general[j]
                     ]  # going to report relative effective mass.
@@ -4781,7 +4818,7 @@ def save_and_plot2(result, model):
                     if config.probability_out:
                         saveoutput(
                             "wavefunctions_e_QWR%d_%.2f.dat" % (j, vt),
-                            (xaxis, result.wfe_general[j].transpose()),
+                            (xaxis[I1:I2], result.wfe_general[j,:,i1:i2].transpose()),
                         )
     if config.resultviewer:
         span = np.ones(100000000)
@@ -4885,7 +4922,7 @@ def save_and_plot2(result, model):
         pl.plot(result.Va_t , result.av_curr * 1e-4)
         pl.xlabel("Va [V]")
         pl.ylabel("Total Current Density [Amp/cm^2]")
-        pl.title("I vs V Plot", fontsize=12)
+        pl.title("Current vs voltage", fontsize=12)
         pl.legend(("Total Current"), loc="best", fontsize=12)
         pl.grid(True)
         pl.show()
@@ -4984,6 +5021,9 @@ def save_and_plot(result, model):
         )
     if config.states_out:
         for j in range(1, result.N_wells_virtual - 1):
+            I1, I2, I11, I22 = amort_wave(j, result.Well_boundary, model.n_max)
+            i1 = I1 - I1
+            i2 = I2 - I1
             rel_meff_state = [
                 meff / m_e for meff in result.meff_state_general[j]
             ]  # going to report relative effective mass.
@@ -4999,10 +5039,13 @@ def save_and_plot(result, model):
             if config.probability_out:
                 saveoutput(
                     "wavefunctions_h_QWR%d_equi_cond.dat" % j,
-                    (xaxis, result.wfh_general[j].transpose()),
+                    (xaxis[I1:I2], result.wfh_general[j,:,i1:i2].transpose()),
                 )
     if config.states_out:
         for j in range(1, result.N_wells_virtual - 1):
+            I1, I2, I11, I22 = amort_wave(j, result.Well_boundary, model.n_max)
+            i1 = I1 - I1
+            i2 = I2 - I1
             rel_meff_statec = [
                 meff / m_e for meff in result.meff_statec_general[j]
             ]  # going to report relative effective mass.
@@ -5018,7 +5061,7 @@ def save_and_plot(result, model):
             if config.probability_out:
                 saveoutput(
                     "wavefunctions_e_QWR%d_equi_cond.dat" % j,
-                    (xaxis, result.wfe_general[j].transpose()),
+                    (xaxis[I1:I2], result.wfe_general[j,:,i1:i2].transpose()),
                 )
     # Resultviewer
     if config.resultviewer:
