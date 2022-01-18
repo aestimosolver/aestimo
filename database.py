@@ -54,6 +54,7 @@ materialproperty = {
 'C11':11.879, # (GPa) Elastic Constants
 'C12':5.376, # (GPa) Elastic Constants
 'a0':5.6533, # (A)Lattice constant
+'a0_sub':5.6533,
 'Ac':-7.17, # (eV) deformation potentials (Van de Walle formalism)
 'Av':1.16, # (eV) deformation potentials (Van de Walle formalism)
 'B':-1.7, # (eV) shear deformation potential (Van de Walle formalism)
@@ -84,7 +85,8 @@ materialproperty = {
 'GA3':1.29, 
 'C11':11.879,
 'C12':5.376,
-'a0':5.66, 
+'a0':5.66,
+'a0_sub':5.6533,
 'Ac':-5.64,
 'Av':2.47,
 'B':-1.5,
@@ -116,7 +118,8 @@ materialproperty = {
 'GA3':9.1,
 'C11':8.329,
 'C12':4.526,
-'a0':6.0584,
+'a0':6.0583,
+'a0_sub':5.6533,
 'Ac':-5.08,
 'Av':1.0,
 'B':-1.8,
@@ -149,6 +152,7 @@ materialproperty = {
 'C11':8.329,
 'C12':4.526,
 'a0':5.8688,
+'a0_sub':5.6533,
 'Ac':-5.04,
 'Av':1.27,
 'B':-1.7,
@@ -181,6 +185,7 @@ materialproperty = {
 'C11':14.05,
 'C12':6.203,
 'a0':5.4505,
+'a0_sub':5.6533,
 'Ac':-7.14,
 'Av':1.70,
 'B':-1.8,
@@ -213,6 +218,7 @@ materialproperty = {
 'C11':15.0,
 'C12':6.42,
 'a0':5.4635,
+'a0_sub':5.6533,
 'Ac':-5.54,
 'Av':3.15,
 'B':-1.5,
