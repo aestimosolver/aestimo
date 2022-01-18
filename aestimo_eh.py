@@ -352,7 +352,7 @@ class Structure:
                     matprops["Band_offset"] * matprops["Eg"] * q
                 )  # Joule
                 if mat_crys_strc == "Zincblende":
-                    a0_sub[startindex:finishindex] = matprops["a0"] * 1e-10
+                    a0_sub[startindex:finishindex] = matprops["a0_sub"] * 1e-10
                     C11[startindex:finishindex] = matprops["C11"] * 1e10
                     C12[startindex:finishindex] = matprops["C12"] * 1e10
                     GA1[startindex:finishindex] = matprops["GA1"]
@@ -470,7 +470,7 @@ class Structure:
                         x * mat1["epsilonStatic"] + (1 - x) * mat2["epsilonStatic"]
                     ) * eps0
                     a0[startindex:finishindex] = (
-                        (1 - x) * mat1["a0"] + x * mat2["a0"]
+                       x  * mat1["a0"] + (1 - x) * mat2["a0"]
                     ) * 1e-10
                     cb_meff_alpha[startindex:finishindex] = alloyprops["m_e_alpha"] * (
                         mat2["m_e"] / cb_meff_alloy
