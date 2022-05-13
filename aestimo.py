@@ -4417,9 +4417,6 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     CAubar = Rbar / ns ** 3  # [m^6 s^{-1}]
     idata.Cn = Cn0 / CAubar
     idata.Cp = Cp0 / CAubar
-    if config.use_cython :
-        from aestimo_dd_lib import DDGgummelmap_cython,DDNnewtonmap_cython
-        print("use_cython option is activated")
     ###############################################################
     if vmax == 0:
         print("Va_max=0")
