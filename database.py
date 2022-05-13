@@ -541,7 +541,8 @@ materialproperty = {
 'C11':16.6,
 'C12':6.4,
 'C44':7.96,
-'a0':5.431, 
+'a0':5.431,
+'a0_sub':5.4315,  # Just added as near value of a0 
 'Ac':-5.64,
 'Av':2.47,
 'B':-1.5,
@@ -574,7 +575,8 @@ materialproperty = {
 'C11':12.60,
 'C12':4.4,
 'C44':6.77,
-'a0':5.658, 
+'a0':5.658,
+'a0':5.6585, # Just added as near value of a0 
 'Ac':-5.64,
 'Av':2.47,
 'B':-1.5,
