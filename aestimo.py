@@ -60,76 +60,35 @@ import os,sys
 examplesdir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'examples'))
 sys.path.append(examplesdir)
 
-if __package__:  # explicit relative imports for using aestimo as a package (in python3)
-    from . import VBHM
-    from .VBHM import qsv, VBMAT1, VBMAT2, VBMAT_V, CBMAT, CBMAT_V, VBMAT_V_2
-    from . import config, database
-    from .aestimo_poisson1d import (
-        Poisson_equi2,
-        equi_np_fi,
-        Write_results_equi2,
-        equi_np_fi2,
-        equi_np_fi3,
-        Poisson_non_equi3,
-        Poisson_equi_non_2,
-        equi_np_fi22,
-        equi_np_fi222,
-    )
-    from .aestimo_poisson1d import (
-        Poisson_equi1,
-        Mobility2,
-        Continuity2,
-        Mobility3,
-        Continuity3,
-        Poisson_non_equi2,
-        Current2,
-        Write_results_non_equi2,
-        Write_results_equi1,
-        amort_wave,
-    )
-    from . import DDGgummelmap
-    from .DDGgummelmap import DDGgummelmap
-    from . import DDNnewtonmap
-    from .DDNnewtonmap import DDNnewtonmap
-    from . import func_lib
-    from .func_lib import Ubernoulli
-    from . import DDGnlpoisson
-    from .DDGnlpoisson import DDGnlpoisson_new
-else:
-    import VBHM
-    from VBHM import qsv, VBMAT1, VBMAT2, VBMAT_V, CBMAT, CBMAT_V, VBMAT_V_2
-    import config, database
-    from aestimo_poisson1d import (
-        Poisson_equi2,
-        equi_np_fi,
-        Write_results_equi2,
-        equi_np_fi2,
-        equi_np_fi3,
-        Poisson_non_equi3,
-        Poisson_equi_non_2,
-        equi_np_fi22,
-        equi_np_fi222,
-    )
-    from aestimo_poisson1d import (
-        Poisson_equi1,
-        Mobility2,
-        Continuity2,
-        Mobility3,
-        Continuity3,
-        Poisson_non_equi2,
-        Current2,
-        Write_results_non_equi2,
-        Write_results_equi1,
-        amort_wave,
-    )
-    import DDGgummelmap
-    from DDGgummelmap import DDGgummelmap
-    import DDNnewtonmap
-    from DDNnewtonmap import DDNnewtonmap
-    import func_lib
-    from func_lib import Ubernoulli
-    import DDGnlpoisson
-    from DDGnlpoisson import DDGnlpoisson_new
+from aeslibs.VBHM import qsv, VBMAT1, VBMAT2, VBMAT_V, CBMAT, CBMAT_V, VBMAT_V_2
+import config, database
+from aeslibs.aestimo_poisson1d import (
+    Poisson_equi2,
+    equi_np_fi,
+    Write_results_equi2,
+    equi_np_fi2,
+    equi_np_fi3,
+    Poisson_non_equi3,
+    Poisson_equi_non_2,
+    equi_np_fi22,
+    equi_np_fi222,
+)
+from aeslibs.aestimo_poisson1d import (
+    Poisson_equi1,
+    Mobility2,
+    Continuity2,
+    Mobility3,
+    Continuity3,
+    Poisson_non_equi2,
+    Current2,
+    Write_results_non_equi2,
+    Write_results_equi1,
+    amort_wave,
+)
+from aeslibs.ddggummelmap import DDGgummelmap
+from aeslibs.ddnnewtonmap import DDNnewtonmap
+from aeslibs.func_lib import Ubernoulli
+from aeslibs.ddgnlpoisson import DDGnlpoisson_new
 
 # --------------------------------------
 import logging

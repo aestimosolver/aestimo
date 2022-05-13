@@ -65,17 +65,10 @@ import numpy as np
 from math import*
 from scipy import sparse as sp
 
-if __package__:  # explicit relative imports for using aestimo as a package (in python3)
-    from . import func_lib
-    from .func_lib import DDGphin2n,DDGphip2p,Ucompmass,Ucomplap,Ucompconst
-    from .aestimo_poisson1d import equi_np_fi222,equi_np_fi3,equi_np_fi
-    from . import config
-else:
-    import func_lib
-    from func_lib import DDGphin2n,DDGphip2p,Ucompmass,Ucomplap,Ucompconst
-    from aestimo_poisson1d import equi_np_fi222,equi_np_fi3,equi_np_fi
-    import config
-    
+from .func_lib import DDGphin2n,DDGphip2p,Ucompmass,Ucomplap,Ucompconst
+from .aestimo_poisson1d import equi_np_fi222,equi_np_fi3,equi_np_fi
+import config
+
 def  DDGnlpoisson_new (idata,xaxis,sinodes,Vin,nin,pin,toll,maxit,verbose,fi_e,fi_h,model,Vt,surface,fi_stat,iteration,ns):
     ## Set some useful constants
     dampit = 10

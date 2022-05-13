@@ -70,16 +70,9 @@ from math import*
 from scipy import sparse as sp
 from scipy.sparse import bsr_matrix
 
-if __package__:  # explicit relative imports for using aestimo as a package (in python3)
-    from . import func_lib
-    from .func_lib import Uscharfettergummel,Ucompmass,Ucomplap,Umediaarmonica
-    from .aestimo_poisson1d import equi_np_fi222
-    from . import config
-else:    
-    import func_lib
-    from func_lib import Uscharfettergummel,Ucompmass,Ucomplap,Umediaarmonica
-    from aestimo_poisson1d import equi_np_fi222
-    import config
+from .func_lib import Uscharfettergummel,Ucompmass,Ucomplap,Umediaarmonica
+from .aestimo_poisson1d import equi_np_fi222
+import config
 
 
 def  DDNnewtonmap (ni,fi_e,fi_h,xaxis,idata,toll,maxit,verbose,model,Vt):
