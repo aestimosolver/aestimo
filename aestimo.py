@@ -1,32 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""This is the 3x3 k.p aestimo calculator for valence band calculations 
-   (Numpy version, there is no classic version for valence band calculations).
-
-It can be used similarly to the aestimo.py module. aestimo_eh.py can be used as 
-a script or a library.
-
-To use as a script, define the simulation in a python file. See the following 
-sample files for examples on usage and the required parameters:
-    sample-qw-barrierdope-p.py
-    sample-qw-barrierdope-p_cdzno.py
-    sample-qw-barrierdope-p_ingran.py
-    sample-multi-qw-barrierdope-p.py
-    sample-multi-qw-barrierdope-p_ingran.py   
-and then run aestimo on the command line as
-  ./aestimo.py -i <input file>
-Since we are abusing the python module system, the input 'file' needs to be 
-importable by the aestimo script. Alternatively, define the input file in the
-config module using the inputfilename parameter.
-
-To use aestimo_eh.py as a library, first create an instance of the StructureFrom
-class which builds the arrays describing a structure from the same input 
-parameters that are found in the sample files. A simple list format is used to 
-describes the structure's layers.
-"""
-"""
+Description = f'''
  Aestimo 1D Schrodinger-Poisson Solver
- Copyright (C) 2013-2020 Aestimo Group
+ Copyright (C) 2013-2022 Aestimo Group
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,11 +18,13 @@ describes the structure's layers.
     along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
 
     For the list of contributors, see ~/AUTHORS
-"""
+    
+    INFORMATION:
+    This is the effective mass calculator for conduction band and 
+    3x3 k.p Numpy calculator for valence band calculations.
 
-Description = f''' 
- Usage: 
- $ ./aestimo.py  <args>
+    Usage: 
+     $ ./aestimo.py  <args>
 '''
 
 import time
@@ -5218,7 +5196,10 @@ if __name__ == "__main__":
     logger = logging.getLogger("aestimo")
     output_directory = os.path.join(os.getcwd(),Path(inputFile).stem)
 
-    hdlr = logging.FileHandler(os.path.abspath(os.path.join(examplesdir, os.path.join(output_directory,config.logfile))))
+    if not os.path.isdir(output_directory):
+        os.makedirs(output_directory, exist_ok=True)
+        
+    hdlr = logging.FileHandler(os.path.abspath(os.path.join(output_directory,'aestimo.log')))
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
     hdlr.setFormatter(formatter)
     logger.addHandler(hdlr)
