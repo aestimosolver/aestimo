@@ -43,7 +43,12 @@ describes the structure's layers.
 
     For the list of contributors, see ~/AUTHORS
 """
-__version__ = "2.0.2"
+
+Description = f''' 
+ Usage: 
+ $ ./aestimo.py  <args>
+'''
+
 import time
 
 time0 = time.time()  # timing audit
@@ -52,9 +57,11 @@ import matplotlib.pyplot as pl
 import numpy as np
 from math import log, exp, sqrt
 from scipy import linalg
-
+from argparse import ArgumentParser, HelpFormatter
 alen = np.alen
-import os,sys
+import os,sys,getopt
+from pathlib import Path
+import textwrap
 
 #importing examples directory
 examplesdir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'examples'))
@@ -92,6 +99,9 @@ from aeslibs.ddgnlpoisson import DDGnlpoisson_new
 
 # --------------------------------------
 import logging
+
+# Version
+__version__ = "2.0.2"
 
 logger = logging.getLogger("aestimo")
 output_directory = config.output_directory + "_eh"
@@ -133,6 +143,11 @@ time1 = time.time()  # timing audit
 # logger.info("Aestimo is starting...")
 # Input Class
 # -------------------------------------
+
+# To print Description variable with argparse
+class RawFormatter(HelpFormatter):
+    def _fill_text(self, text, width, indent):
+        return "\n".join([textwrap.fill(line, width) for line in textwrap.indent(textwrap.dedent(text), indent).splitlines()])
 
 
 def round2int(x):
@@ -5122,7 +5137,7 @@ def run_aestimo(input_obj):
     module with the attributes needed to create the StructureFrom class, see 
     the class implementation or some of the sample-*.py files for details."""
     if not (config.messagesoff):
-        logger.info("Aestimo_eh is starting...")
+        logger.info("Aestimo is starting...")
     # Initialise structure class
     model = StructureFrom(input_obj, database)
 
@@ -5158,21 +5173,83 @@ def run_aestimo(input_obj):
 
 if __name__ == "__main__":
     import optparse
+    from argparse import ArgumentParser, HelpFormatter
+    
+    # Arguments parsing
+    parser = ArgumentParser(prog ='aestimo.py', description=Description, formatter_class=RawFormatter)
 
-    parser = optparse.OptionParser()
-    parser.add_option(
-        "-i",
-        "--inputfile",
-        action="store",
-        dest="inputfile",
-        default=config.inputfilename,
-        help="chose input file to override default in config.py",
-    )
-    (options, args) = parser.parse_args()
+    parser.add_argument("-i", "--input", dest = "inputfile", help="Input filename (will open output directory with same name)")
+    parser.add_argument("-v", "--version", dest="version", action='store_true')
+    parser.add_argument("-d", "--drawfigures", dest="drawfigures", action='store_true', help="Draws all data at the end of calculation.")
 
+    args = None
+
+    args = parser.parse_args()
+    
+    #Exit if no argument is provided
+    if args is None:
+        print("Please provide at least -i argument")  
+        quit()
+
+    #Preset variables
+    inputFile = None
+    drawFigures = False
+
+    try:
+        if args.version == True:
+            import requests
+            try:
+                response = requests.get("https://api.github.com/repos/aestimosolver/aestimo/releases/latest", timeout=5)
+                print('-------------------------------------------------------------------------------------------------------')
+                print('\033[91mAESTIMO\033[0m 1D Version '+str(__version__))
+                print('-------------------------------------------------------------------------------------------------------')
+                print('The latest STABLE release was '+response.json()["tag_name"]+', which is published at '+response.json()["published_at"])
+                print('Download the latest STABLE tarball release at: '+response.json()["tarball_url"])
+                print('Download the latest STABLE zipball release at: '+response.json()["zipball_url"])
+                print('Download the latest DEV zipball release at: https://github.com/aestimosolver/aestimo/archive/refs/heads/master.zip')
+            except (requests.ConnectionError, requests.Timeout) as exception:
+                print('-------------------------------------------------------------------------------------------------------')
+                print('\033[91AESTIMO\033[0m 1D Version '+str(__version__))
+                print('-------------------------------------------------------------------------------------------------------')
+                print('No internet connection available.')
+            quit()
+
+        if args.inputfile is not None:
+            # Get the folder information and use
+            inputFile = os.path.join(os.getcwd(),args.inputfile)
+            sys.path.append(os.getcwd())
+            # Works like from FILE import *
+            inpu = __import__(Path(inputFile).stem, globals(), locals(), ['*'])
+            for k in dir(inpu):
+                locals()[k] = getattr(inpu, k)
+            quit()
+        else:
+            print("Please provide input file with -i argument")
+            quit()
+
+        if args.drawfigures == True:
+            # Control the drawing data at the end of the calculation
+            drawFigures = True
+        
+
+    except getopt.error as err:
+        # output error, and return with an error code
+        print (str(err))
+                
+    #parser = optparse.OptionParser()
+    #parser.add_option(
+    #    "-i",
+    #    "--inputfile",
+    #    action="store",
+    #    dest="inputfile",
+    #    default=config.inputfilename,
+    #    help="chose input file to override default in config.py",
+    #)
+    #(options, args) = parser.parse_args()
+    
     # Import from config file
-    inputfile = __import__(options.inputfile)
+    #inputfile = __import__(options.inputfile)
     
     if not (config.messagesoff):
-        logger.info("inputfile is %s", options.inputfile)
-    run_aestimo(inputfile)
+        logger.info("inputfile is %s", inputFile)
+    run_aestimo(inputFile)
