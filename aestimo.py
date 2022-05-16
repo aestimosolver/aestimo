@@ -103,27 +103,6 @@ import logging
 # Version
 __version__ = "2.0.2"
 
-logger = logging.getLogger("aestimo")
-output_directory = config.output_directory + "_eh"
-
-if not os.path.isdir(os.path.abspath(os.path.join(examplesdir, output_directory))):
-    os.makedirs(os.path.abspath(os.path.join(examplesdir, output_directory)))
-
-hdlr = logging.FileHandler(os.path.abspath(os.path.join(examplesdir, os.path.join(output_directory,config.logfile))))
-formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
-hdlr.setFormatter(formatter)
-logger.addHandler(hdlr)
-# stderr
-ch = logging.StreamHandler()
-formatter2 = logging.Formatter("%(levelname)s %(message)s")
-ch.setFormatter(formatter2)
-logger.addHandler(ch)
-# LOG level can be INFO, WARNING, ERROR
-logger.setLevel(logging.INFO)
-if not (config.messagesoff):
-    os.sys.stderr.write(
-        "WARNING aestimo_eh logs automatically to aestimo.log in the example's directory.\n"
-    )
 # --------------------------------------
 
 # Defining constants and material parameters
@@ -4698,9 +4677,6 @@ def Poisson_Schrodinger_DD_test_2(result, model):
 
 def save_and_plot2(result, model):
     xaxis = result.xaxis
-    output_directory = "output_"+model.inputfilename + "_eh"
-    #output_directory = config.output_directory + "_eh"
-    output_directory = os.path.join(examplesdir, output_directory)
 
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)
@@ -4969,9 +4945,6 @@ def save_and_plot2(result, model):
 def save_and_plot(result, model):
 
     xaxis = result.xaxis
-    output_directory = "output_"+model.inputfilename + "_eh"
-    #output_directory = config.output_directory + "_eh"
-    output_directory = os.path.join(examplesdir, output_directory)
     
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory)
@@ -5242,19 +5215,24 @@ if __name__ == "__main__":
         # output error, and return with an error code
         print (str(err))
                 
-    #parser = optparse.OptionParser()
-    #parser.add_option(
-    #    "-i",
-    #    "--inputfile",
-    #    action="store",
-    #    dest="inputfile",
-    #    default=config.inputfilename,
-    #    help="chose input file to override default in config.py",
-    #)
-    #(options, args) = parser.parse_args()
-    
-    # Import from config file
-    #inputfile = __import__(options.inputfile)
+    logger = logging.getLogger("aestimo")
+    output_directory = os.path.join(os.getcwd(),Path(inputFile).stem)
+
+    hdlr = logging.FileHandler(os.path.abspath(os.path.join(examplesdir, os.path.join(output_directory,config.logfile))))
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+    hdlr.setFormatter(formatter)
+    logger.addHandler(hdlr)
+    # stderr
+    ch = logging.StreamHandler()
+    formatter2 = logging.Formatter("%(levelname)s %(message)s")
+    ch.setFormatter(formatter2)
+    logger.addHandler(ch)
+    # LOG level can be INFO, WARNING, ERROR
+    logger.setLevel(logging.INFO)
+    if not (config.messagesoff):
+        os.sys.stderr.write(
+            "\033[93mWARNING:\033[0m aestimo logs in the output directory.\n"
+        )
     
     if not (config.messagesoff):
         logger.info("inputfile is %s", inputFile)
