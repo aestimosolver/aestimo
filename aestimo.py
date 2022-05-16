@@ -1296,21 +1296,21 @@ class StructureFrom(Structure):
         if type(inputfile) == dict:
             inputfile = AttrDict(inputfile)
         # Parameters for simulation
-        self.Fapp = inputfile.Fapplied
-        self.vmax = inputfile.vmax
-        self.vmin = inputfile.vmin
-        self.Each_Step = inputfile.Each_Step
-        self.surface = inputfile.surface
-        self.T = inputfile.T
-        self.subnumber_h = inputfile.subnumber_h
-        self.subnumber_e = inputfile.subnumber_e
-        self.comp_scheme = inputfile.computation_scheme
-        self.dx = inputfile.gridfactor * 1e-9  # grid in m
-        self.maxgridpoints = inputfile.maxgridpoints
-        self.mat_crys_strc = inputfile.mat_type
+        self.Fapp = Fapplied
+        self.vmax = vmax
+        self.vmin = vmin
+        self.Each_Step = Each_Step
+        self.surface = surface
+        self.T = T
+        self.subnumber_h = subnumber_h
+        self.subnumber_e = subnumber_e
+        self.comp_scheme = computation_scheme
+        self.dx = gridfactor * 1e-9  # grid in m
+        self.maxgridpoints = maxgridpoints
+        self.mat_crys_strc = mat_type
         # Loading material list
-        self.material = inputfile.material
-        self.inputfilename=inputfile.inputfilename
+        self.material = material
+        self.inputfilename=inputfile
         totallayer = alen(self.material)
         if not (config.messagesoff):
             logger.info("Total layer number: %s", totallayer)
@@ -1320,11 +1320,11 @@ class StructureFrom(Structure):
         )  # total thickness (m)
         self.n_max = int(self.x_max / self.dx)
         # Check on n_max
-        max_val = inputfile.maxgridpoints
+        max_val = maxgridpoints
 
-        self.dop_profile = inputfile.dop_profile
-        self.Quantum_Regions_boundary = inputfile.Quantum_Regions_boundary
-        self.Quantum_Regions = inputfile.Quantum_Regions
+        self.dop_profile = dop_profile
+        self.Quantum_Regions_boundary = Quantum_Regions_boundary
+        self.Quantum_Regions = Quantum_Regions
         if self.n_max > max_val:
             logger.error(" Grid number is exceeding the max number of %d", max_val)
             exit()
@@ -5222,7 +5222,6 @@ if __name__ == "__main__":
             inpu = __import__(Path(inputFile).stem, globals(), locals(), ['*'])
             for k in dir(inpu):
                 locals()[k] = getattr(inpu, k)
-            quit()
         else:
             print("Please provide input file with -i argument")
             quit()
