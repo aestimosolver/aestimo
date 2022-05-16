@@ -1269,8 +1269,10 @@ class StructureFrom(Structure):
         self.material = material
         self.inputfilename=inputfile
         totallayer = alen(self.material)
-        if not (config.messagesoff):
-            logger.info("Total layer number: %s", totallayer)
+        
+        # Add to log
+        logger.info("Total layer number: %s", totallayer)
+        
         # Calculate the required number of grid points
         self.x_max = (
             sum([layer[0] for layer in self.material]) * 1e-9
@@ -1294,11 +1296,8 @@ class StructureFrom(Structure):
 
         self.alloy_property_4 = database.alloyproperty4
         totalalloy += alen(self.alloy_property_4)
-        if not (config.messagesoff):
-            logger.info(
-                "Total number of materials in database: %d"
-                % (totalmaterial + totalalloy)
-            )
+        # Add to log
+        logger.info("Total number of materials in database: %d" % (totalmaterial + totalalloy))
         # Initialise arrays
 
         # cb_meff #conduction band effective mass (array, len n_max)
@@ -1420,10 +1419,8 @@ def fermilevel_0Kc(Ntotal2d, E_statec, meff_statec, model):  # use
         else:
             break  # we have found Ef and so we should break out of the loop
     else:  # exception clause for 'for' loop.
-        if not (config.messagesoff):
-            logger.warning(
-                "Have processed all energy levels present and so can't be sure that Ef is below next higher energy level."
-            )
+        # Add to log
+        logger.warning("Have processed all energy levels present and so can't be sure that Ef is below next higher energy level.")
     # Ef1=(sum(E_state*meff_state)-Ntotal2d*hbar**2*pi)/(sum(meff_state))
     N_statec = [0.0] * len(E_statec)
     for i, (Ei, csb_meff) in enumerate(zip(E_statec, meff_statec)):
@@ -1452,10 +1449,8 @@ def fermilevel_0K(Ntotal2d, E_state, meff_state, model):  # use
         else:
             break  # we have found Ef and so we should break out of the loop
     else:  # exception clause for 'for' loop.
-        if not (config.messagesoff):
-            logger.warning(
-                "Have processed all energy levels present and so can't be sure that Ef is below next higher energy level."
-            )
+        # Add to log
+        logger.warning("Have processed all energy levels present and so can't be sure that Ef is below next higher energy level.")
     # Ef1=(sum(E_state*meff_state)-Ntotal2d*hbar**2*pi)/(sum(meff_state))
     N_state = [0.0] * len(E_state)
     for i, (Ei, vsb_meff) in enumerate(zip(E_state, meff_state)):
@@ -2319,9 +2314,8 @@ def Poisson_Schrodinger(model):
     # Setup the doping
     Ntotal = sum(dop)  # calculating total doping density m-3
     Ntotal2d = Ntotal * dx
-    if not (config.messagesoff):
-        # print "Ntotal ",Ntotal,"m**-3"
-        logger.info("Ntotal2d %g m**-2", Ntotal2d)
+    # Add to log
+    logger.info("Ntotal2d %g m**-2", Ntotal2d)
     # Applied Field
     Vapp = calc_potn(Fapp * eps0 / eps, model)
     Vapp[n_max - 1] -= Vapp[
@@ -2408,8 +2402,8 @@ def Poisson_Schrodinger(model):
         if model.comp_scheme == 9:
             break
         print("Iteration:", iteration)
-        if not (config.messagesoff):
-            logger.info("Iteration: %d", iteration)
+        # Add to log
+        logger.info("Iteration: %d", iteration)
         if model.N_wells_virtual - 2 != 0:
             if config.predic_correc and iteration == 1:
                 (
@@ -2612,8 +2606,8 @@ def Poisson_Schrodinger(model):
         fi_result,
     ) = Write_results_equi2(ns, fitotc, fitot, Vt, q, ni, n, p, dop, dx, Ldi, fi, n_max)
     time3 = time.time()  # timing audit
-    if not (config.messagesoff):
-        logger.info("calculation time  %g s", (time3 - time2))
+    # Add to log
+    logger.info("calculation time  %g s", (time3 - time2))
 
     class Results:
         pass
@@ -2848,9 +2842,8 @@ def Poisson_Schrodinger_new(model):
     # Setup the doping
     Ntotal = sum(dop)  # calculating total doping density m-3
     Ntotal2d = Ntotal * dx
-    if not (config.messagesoff):
-        # print "Ntotal ",Ntotal,"m**-3"
-        logger.info("Ntotal2d %g m**-2", Ntotal2d)
+    # Add to log
+    logger.info("Ntotal2d %g m**-2", Ntotal2d)
     # Applied Field
     Vapp = calc_potn(Fapp * eps0 / eps, model)
     Vapp[n_max - 1] -= Vapp[
@@ -2950,8 +2943,8 @@ def Poisson_Schrodinger_new(model):
         if model.comp_scheme == 9:
             break
         print("Iteration:", iteration)
-        if not (config.messagesoff):
-            logger.info("Iteration: %d", iteration)
+        # Add to log
+        logger.info("Iteration: %d", iteration)
         if model.N_wells_virtual - 2 != 0:
             if config.predic_correc and iteration == 1:
                 (
@@ -3125,8 +3118,8 @@ def Poisson_Schrodinger_new(model):
         fi_result,
     ) = Write_results_equi2(ns, fitotc, fitot, Vt, q, ni, n*ns/ni, p*ns/ni, dop, dx, Ldi, fi, n_max)
     time3 = time.time()  # timing audit
-    if not (config.messagesoff):
-        logger.info("calculation time  %g s", (time3 - time2))
+    # Add to log
+    logger.info("calculation time  %g s", (time3 - time2))
 
     class Results:
         pass
@@ -3322,9 +3315,8 @@ def Poisson_Schrodinger_DD(result, model):
     # Setup the doping
     Ntotal = sum(dop)  # calculating total doping density m-3
     Ntotal2d = Ntotal * dx
-    if not (config.messagesoff):
-        # print "Ntotal ",Ntotal,"m**-3"
-        logger.info("Ntotal2d %g m**-2", Ntotal2d)
+    # Add to log
+    logger.info("Ntotal2d %g m**-2", Ntotal2d)
     # Applied Field
     # Vapp = calc_potn(Fapp*eps0/eps,model)
     # Vapp[n_max-1] -= Vapp[n_max//2] #Offsetting the applied field's potential so that it is zero in the centre of the structure.
@@ -3550,8 +3542,8 @@ def Poisson_Schrodinger_DD(result, model):
                 n_max,
             )
     time3 = time.time()  # timing audit
-    if not (config.messagesoff):
-        logger.info("calculation time  %g s", (time3 - time2))
+    # Add to log
+    logger.info("calculation time  %g s", (time3 - time2))
 
     class Results:
         pass
@@ -3748,9 +3740,8 @@ def Poisson_Schrodinger_DD_test(result, model):
     # Setup the doping
     Ntotal = sum(dop)  # calculating total doping density m-3
     Ntotal2d = Ntotal * dx
-    if not (config.messagesoff):
-        # print "Ntotal ",Ntotal,"m**-3"
-        logger.info("Ntotal2d %g m**-2", Ntotal2d)
+    # Add to log
+    logger.info("Ntotal2d %g m**-2", Ntotal2d)
     # Applied Field
     # Vapp = calc_potn(Fapp*eps0/eps,model)
     # Vapp[n_max-1] -= Vapp[n_max//2] #Offsetting the applied field's potential so that it is zero in the centre of the structure.
@@ -4005,8 +3996,8 @@ def Poisson_Schrodinger_DD_test(result, model):
         fitot = fi_h - Vt * q * fi
         fitotc = fi_e - Vt * q * fi
     time3 = time.time()  # timing audit
-    if not (config.messagesoff):
-        logger.info("calculation time  %g s", (time3 - time2))
+    # Add to log
+    logger.info("calculation time  %g s", (time3 - time2))
 
     class Results:
         pass
@@ -4200,9 +4191,8 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     # Setup the doping
     Ntotal = sum(dop)  # calculating total doping density m-3
     Ntotal2d = Ntotal * dx
-    if not (config.messagesoff):
-        # print "Ntotal ",Ntotal,"m**-3"
-        logger.info("Ntotal2d %g m**-2", Ntotal2d)
+    # Add to log
+    logger.info("Ntotal2d %g m**-2", Ntotal2d)
     # Applied Field
     # Vapp = calc_potn(Fapp*eps0/eps,model)
     # Vapp[n_max-1] -= Vapp[n_max//2] #Offsetting the applied field's potential so that it is zero in the centre of the structure.
@@ -4588,8 +4578,8 @@ def Poisson_Schrodinger_DD_test_2(result, model):
                 n_max,
             )
     time3 = time.time()  # timing audit
-    if not (config.messagesoff):
-        logger.info("calculation time  %g s", (time3 - time2))
+    # Add to log
+    logger.info("calculation time  %g s", (time3 - time2))
 
     class Results:
         pass
@@ -5094,8 +5084,8 @@ def run_aestimo(input_obj):
     for 'normal' input files. Input_obj can be a dict, class, named tuple or 
     module with the attributes needed to create the StructureFrom class, see 
     the class implementation or some of the sample-*.py files for details."""
-    if not (config.messagesoff):
-        logger.info("Aestimo is starting...")
+    # Add to log
+    logger.info("Aestimo 1D is starting...")
     # Initialise structure class
     model = StructureFrom(input_obj, database)
 
@@ -5112,20 +5102,16 @@ def run_aestimo(input_obj):
     if model.comp_scheme == 9:
         result_dd = Poisson_Schrodinger_DD_test_2(result, model)
     time4 = time.time()  # timing audit
-    if not (config.messagesoff):
-
-        logger.info("total running time (inc. loading libraries) %g s", (time4 - time0))
-        logger.info("total running time (exc. loading libraries) %g s", (time4 - time1))
+    # Add to log
+    logger.info("total running time (inc. loading libraries) %g s", (time4 - time0))
+    logger.info("total running time (exc. loading libraries) %g s", (time4 - time1))
     # Write the simulation results in files
     if model.comp_scheme == 7 or model.comp_scheme == 8 or model.comp_scheme == 2 or model.comp_scheme == 10:
         save_and_plot(result, model)
     if model.comp_scheme == 7 or model.comp_scheme == 8 or model.comp_scheme == 9:
         save_and_plot2(result_dd, model)
-    if not (config.messagesoff):
-        logger.info(
-            """Simulation is finished. All files are closed. Please control the related files.
-                    -----------------------------------------------------------------"""
-        )
+    # Add to log
+    logger.info("Simulation is finished. All files are closed. Please control the related files.")
     return input_obj, model, result
 
 
@@ -5196,6 +5182,7 @@ if __name__ == "__main__":
     logger = logging.getLogger("aestimo")
     output_directory = os.path.join(os.getcwd(),Path(inputFile).stem)
 
+    #If output directory is not available, make one.
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory, exist_ok=True)
         
@@ -5210,11 +5197,9 @@ if __name__ == "__main__":
     logger.addHandler(ch)
     # LOG level can be INFO, WARNING, ERROR
     logger.setLevel(logging.INFO)
-    if not (config.messagesoff):
-        os.sys.stderr.write(
-            "\033[93mWARNING:\033[0m aestimo logs in the output directory.\n"
-        )
+    # Add to log
+    os.sys.stderr.write("WARNING: Aestimo 1D logs in the output directory.\n")
     
-    if not (config.messagesoff):
-        logger.info("inputfile is %s", inputFile)
+    # Add to log
+    logger.info("inputfile is %s", inputFile)
     run_aestimo(inputFile)
