@@ -5086,6 +5086,8 @@ def run_aestimo(input_obj):
     the class implementation or some of the sample-*.py files for details."""
     # Add to log
     logger.info("Aestimo 1D is starting...")
+    # Add to log
+    logger.info("Inputfile is %s", input_obj)
     # Initialise structure class
     model = StructureFrom(input_obj, database)
 
@@ -5200,6 +5202,4 @@ if __name__ == "__main__":
     # Add to log
     os.sys.stderr.write("WARNING: Aestimo 1D logs in the output directory.\n")
     
-    # Add to log
-    logger.info("inputfile is %s", inputFile)
     run_aestimo(inputFile)
