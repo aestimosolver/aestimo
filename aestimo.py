@@ -41,10 +41,6 @@ import os,sys,getopt
 from pathlib import Path
 import textwrap
 
-#importing examples directory
-examplesdir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'examples'))
-sys.path.append(examplesdir)
-
 from aeslibs.VBHM import qsv, VBMAT1, VBMAT2, VBMAT_V, CBMAT, CBMAT_V, VBMAT_V_2
 import config, database
 from aeslibs.aestimo_poisson1d import (
@@ -75,11 +71,10 @@ from aeslibs.ddnnewtonmap import DDNnewtonmap
 from aeslibs.func_lib import Ubernoulli
 from aeslibs.ddgnlpoisson import DDGnlpoisson_new
 
-# --------------------------------------
 import logging
 
 # Version
-__version__ = "2.0.2"
+__version__ = "3.0"
 
 # --------------------------------------
 

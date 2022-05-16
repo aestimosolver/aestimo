@@ -35,7 +35,7 @@ d_E = 1e-5*meV2J #Energy step (Joules) within Newton-Raphson method when improvi
 E_start = 0.0    #Energy to start shooting method from (if E_start = 0.0 uses minimum of energy of bandstructure)
 Estate_convergence_test = 1e-9*meV2J
 
-# FermiDirac
+# Fermi-Dirac
 FD_d_E = 1e-9 #Initial and minimum Energy step (meV) for derivative calculation for Newton-Raphson method to find E_F
 FD_convergence_test = 1e-6 #meV
 np_d_E = 1.0 # Energy step (meV) for dispersion calculations
@@ -48,7 +48,7 @@ Stern_damping=True#the extrapolated-convergence-factor method instead of the fix
 max_iterations=80 #maximum number of iterations.
 convergence_test=1e-4 #convergence is reached when the ground state energy (meV) is stable to within this number between iterations.
 
-# Valance band
+# Valence band
 predic_correc=True#predictor corrector method
 anti_crossing_length=0.0001 # the lower lenght limit to consider anti-crossing (nm), works with old versions
 amort_wave_0=1.5#ratio of half well's width for wavefunction  to penetration into the the left adjacent barrier
