@@ -97,10 +97,9 @@ Drift_Diffusion_out=True
 
 # Result Viewer
 # -------------
-resultviewer = True
 wavefunction_scalefactor = 400 # scales wavefunctions when plotting QW diagrams
 # Messages
 # --------
-messagesoff = True
+messagesoff = False
 logfile = "aestimo.log"
 

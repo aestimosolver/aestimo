@@ -4959,7 +4959,11 @@ def save_and_plot2(result, model):
         pl.legend(("Efn", "Efp"), loc="best", fontsize=12)
         pl.grid(True)
         pl.show()
-    return [fig1, fig2, fig3]
+    
+    if drawFigures:
+        return [fig1, fig2, fig3]
+    else:
+        return
 
 
 def save_and_plot(result, model):
@@ -5035,7 +5039,7 @@ def save_and_plot(result, model):
                     (xaxis[I1:I2], result.wfe_general[j,:,i1:i2].transpose()),
                 )
     # Resultviewer
-    if config.resultviewer:
+    if drawFigures:
         span = np.ones(100000000)
         fig1 = pl.figure(figsize=(10, 8))
         pl.suptitle("Aestimo Results - at Equilibrium Condition")
@@ -5128,7 +5132,10 @@ def save_and_plot(result, model):
         pl.title("Electron (red)& Hole (bleu) Densities vs Position ", fontsize=10)
         pl.grid(True)
         pl.show()
-    return [fig1, fig2]
+    if drawFigures:
+        return [fig1, fig2]
+    else:
+        return
 
 
 def run_aestimo(input_obj):
