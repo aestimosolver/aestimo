@@ -1,46 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 Description = f'''
- Aestimo 1D Schrodinger-Poisson Solver
- Copyright (C) 2013-2022 Aestimo Group
+Aestimo 1D Schrodinger-Poisson Solver
+Copyright (C) 2013-2022
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version. This program is distributed in
+the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more
+details. You should have received a copy of the GNU General Public
+License along with this program. See ~/COPYING file or
+http://www.gnu.org/copyleft/gpl.txt
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+INFORMATION:
+This is the effective mass calculator for conduction band and
+3x3 k.p Numpy calculator for valence band calculations.
 
-    You should have received a copy of the GNU General Public License
-    along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
-
-    For the list of contributors, see ~/AUTHORS
-    
-    INFORMATION:
-    This is the effective mass calculator for conduction band and 
-    3x3 k.p Numpy calculator for valence band calculations.
-
-    Usage: 
-     $ ./aestimo.py  <args>
+Usage:
+$ ./aestimo.py  <args>
 '''
-
-import time
-
-time0 = time.time()  # timing audit
-# from scipy.optimize import fsolve
+import os, sys, getopt, time, logging
 import matplotlib.pyplot as pl
 import numpy as np
 from math import log, exp, sqrt
 from scipy import linalg
 from argparse import ArgumentParser, HelpFormatter
-alen = np.alen
-import os,sys,getopt
 from pathlib import Path
 import textwrap
-
 from aeslibs.VBHM import qsv, VBMAT1, VBMAT2, VBMAT_V, CBMAT, CBMAT_V, VBMAT_V_2
 import config, database
 from aeslibs.aestimo_poisson1d import (
@@ -71,12 +60,11 @@ from aeslibs.ddnnewtonmap import DDNnewtonmap
 from aeslibs.func_lib import Ubernoulli
 from aeslibs.ddgnlpoisson import DDGnlpoisson_new
 
-import logging
+time0 = time.time()  # timing audit
+alen = np.alen
 
 # Version
-__version__ = "3.0"
-
-# --------------------------------------
+__version__ = "pre 3.0"
 
 # Defining constants and material parameters
 q = 1.602176e-19  # C
@@ -92,9 +80,6 @@ J2meV = 1e3 / q  # Joules to meV
 meV2J = 1e-3 * q  # meV to Joules
 
 time1 = time.time()  # timing audit
-# logger.info("Aestimo is starting...")
-# Input Class
-# -------------------------------------
 
 # To print Description variable with argparse
 class RawFormatter(HelpFormatter):
@@ -116,7 +101,7 @@ def vegard1(first, second, mole):
 
 class Structure:
     def __init__(self, database, **kwargs):
-        """This class holds details on the structure to be simulated.
+        """This class holds details on fthe structure to be simulated.
         database is the module containing the material properties. Then
         this class should have the following attributes set
         Fapp - applied field (Vm**-1)
@@ -132,7 +117,7 @@ class Structure:
         eps #dielectric constant (including eps0) (array, len n_max)
         dop #doping distribution (m**-3) (array, len n_max)
         
-        These last 4 can be created by using the method 
+        These last 4 can be created by using the method
         create_structure_arrays(material_list)
         """
         # setting any parameters provided with initialisation
@@ -172,7 +157,7 @@ class Structure:
         mat_crys_strc = self.mat_crys_strc
         if n_max > maxgridpoints:
             logger.error("Grid number is exceeding the max number of %d", maxgridpoints)
-            exit()
+            sys.exit()
         #
         self.n_max = n_max
         dx = self.dx
@@ -764,10 +749,8 @@ class Structure:
                     mat2 = material_property[alloyprops["Material2"]]  # InN
                     mat3 = material_property[alloyprops["Material3"]]  # AlN
                     # This is accourding to interpolated Vegard’s law for quaternary BxCyD1-x-yA=AlxInyGa1-x-yN
-                    """
-                        I. Vurgaftman, J.R. Meyer, L.R. RamMohan, J. Appl. Phys. 89 (2001) 5815.
-                        C. K. Williams, T. H. Glisson, J. R. Hauser, and M. A. Littlejohn, J. Electron. Mater. 7, 639 (1978).                       
-                        """
+                    # I. Vurgaftman, J.R. Meyer, L.R. RamMohan, J. Appl. Phys. 89 (2001) 5815.
+                    # C. K. Williams, T. H. Glisson, J. R. Hauser, and M. A. Littlejohn, J. Electron. Mater. 7, 639 (1978).
                     x = layer[2]  # alloy ratio x
                     y = layer[3]  # alloy ratio y
                     u_4 = (1 - x + y) / 2
@@ -1128,10 +1111,10 @@ class Structure:
                 )  # charge density in m**-3 (conversion from cm**-3)
             else:
                 dop[startindex:finishindex] = dop_profile[startindex:finishindex] + 1
-        """
-        Here we remove barriers that are less than the anti_crossing_length
-        so we can constructe the new well boundary using the resulted barrier boundary
-        """
+        
+        # Here we remove barriers that are less than the anti_crossing_length
+        # so we can constructe the new well boundary using the resulted barrier boundary
+
         brr = 0
         anti_crossing_length = config.anti_crossing_length * 1e-9
         if not (self.Quantum_Regions):
@@ -1281,7 +1264,7 @@ class StructureFrom(Structure):
         self.Quantum_Regions = Quantum_Regions
         if self.n_max > max_val:
             logger.error(" Grid number is exceeding the max number of %d", max_val)
-            exit()
+            sys.exit()
         # Loading materials database #
         self.material_property = database.materialproperty
         totalmaterial = alen(self.material_property)
@@ -1747,14 +1730,6 @@ def Strain_and_Masses(model):
             Ppz = (model.D31 * (model.C11 + model.C12) + model.D33 * model.C13) * (
                 EXX + EXX
             ) + (2 * model.D31 * model.C13 + model.D33 * model.C33) * (EZZ)
-
-            """
-            E31=(C11+C12)*D31+C13*D33
-            E33=2*C13*D31+C33*D33
-            print('E31=',E31,'E33=',E33)
-            Ppz2=2*EXX*(E31-E33*C13/C33)
-            print('Pps2=',Ppz2)
-            """
             dx = x_max / n_max
             sum_1 = 0.0
             sum_2 = 0.0
@@ -1793,17 +1768,7 @@ def Strain_and_Masses(model):
                 Ppz_Psp0[0] = (pol_surf_char[0] - 0.0) / (dx)
 
                 Ppz_Psp0[n_max - 1] = (0.0 - pol_surf_char[n_max - 1]) / (dx)
-                """
-                xaxis = np.arange(0,n_max)*dx
-                pl.plot(xaxis*1e6,Ppz_Psp0,'r')#,xaxis*1e6,Ppz_Psp0,'b'
-                pl.xlabel('x [um]')
-                pl.ylabel('Energy [eV]')
-                pl.title('pze (0 (red) & 1 (bleu)) vs Position', fontsize=12)
-                pl.legend(('Efn','Efp'),loc='best',fontsize=12)
-                pl.grid(True)
-                pl.show()
-                ggggggggggggg
-                """
+
     if config.piezo1 and not (config.strain):
         if model.mat_crys_strc == "Zincblende":
             EXX = (model.a0_sub - model.a0) / model.a0
@@ -2167,16 +2132,16 @@ def Poisson_Schrodinger(model):
     n_max = model.n_max
     if comp_scheme in (4, 5, 6):
         logger.error(
-            """aestimo_eh doesn't currently include exchange interactions
+            """Aestimo doesn't currently include exchange interactions
         in its valence band calculations."""
         )
-        exit()
+        sys.exit()
     if comp_scheme in (1, 3, 6):
         logger.error(
-            """aestimo_eh doesn't currently include nonparabolicity effects in 
+            """Aestimo doesn't currently include nonparabolicity effects in 
         its valence band calculations."""
         )
-        exit()
+        sys.exit()
     fi_h = model.fi_h
     N_wells_virtual = model.N_wells_virtual
     Well_boundary = model.Well_boundary
@@ -2352,28 +2317,14 @@ def Poisson_Schrodinger(model):
 
         fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
         fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
-        
-    """
-    fi_e-=fi_e[0]
-    fi_h-=fi_e[0]
-    
-    fi_e+=offset0+offset1#+kb*T*np.log(Nv/Nc)/2
-    fi_h+=offset0+offset1#+kb*T*np.log(Nv/Nc)/2
-    
-    
-    pl.plot(xaxis, Half_Eg/q,'k')
-    pl.xlabel('Position (m)')
-    pl.ylabel('electrons  and and holes concentrations (cm-3)' )
-    pl.title('electrons (red) and holes (blue)')
-    pl.grid(True)
-    """
+
     if dx > min(Ld_n_p[:]) and 1 == 2:
         logger.error(
             """You are setting the grid size %g nm greater than the extrinsic Debye lengths %g nm""",
             dx * 1e9,
             min(Ld_n_p[:]) * 1e9,
         )
-        # exit()
+
     # STARTING SELF CONSISTENT LOOP
     time2 = time.time()  # timing audit
     iteration = 1  # iteration counter
@@ -2699,16 +2650,16 @@ def Poisson_Schrodinger_new(model):
     n_max = model.n_max
     if comp_scheme in (4, 5, 6):
         logger.error(
-            """aestimo_eh doesn't currently include exchange interactions
+            """Aestimo doesn't currently include exchange interactions
         in its valence band calculations."""
         )
-        exit()
+        sys.exit()
     if comp_scheme in (1, 3, 6):
         logger.error(
-            """aestimo_eh doesn't currently include nonparabolicity effects in 
+            """Aestimo doesn't currently include nonparabolicity effects in 
         its valence band calculations."""
         )
-        exit()
+        sys.exit()
     fi_h = model.fi_h
     N_wells_virtual = model.N_wells_virtual
     Well_boundary = model.Well_boundary
@@ -2885,7 +2836,7 @@ def Poisson_Schrodinger_new(model):
             dx * 1e9,
             min(Ld_n_p[:]) * 1e9,
         )
-        # exit()
+
     # STARTING SELF CONSISTENT LOOP
     time2 = time.time()  # timing audit
     iteration = 1  # iteration counter
@@ -3184,6 +3135,19 @@ def Poisson_Schrodinger_new(model):
     return results
 
 def Poisson_Schrodinger_DD(result, model):
+    """Performs a self-consistent Poisson-Schrodinger calculation of a 1d quantum well structure.
+    Model is an object with the following attributes:
+    fi_e - Bandstructure potential (J) (array, len n_max)
+    cb_meff - conduction band effective mass (kg)(array, len n_max)
+    eps - dielectric constant (including eps0) (array, len n_max)
+    dop - doping distribution (m**-3) ( array, len n_max)
+    Fapp - Applied field (Vm**-1)
+    T - Temperature (K)
+    comp_scheme - simulation scheme (currently unused)
+    subnumber_e - number of subbands for look for in the conduction band
+    dx - grid spacing (m)
+    n_max - number of points.
+    """
     fi = result.fi_result
     E_state_general = result.E_state_general
     meff_state_general = result.meff_state_general
@@ -3200,19 +3164,6 @@ def Poisson_Schrodinger_DD(result, model):
     m_so = result.m_so
     Ppz_Psp = result.Ppz_Psp
     pol_surf_char = result.pol_surf_char
-    """Performs a self-consistent Poisson-Schrodinger calculation of a 1d quantum well structure.
-    Model is an object with the following attributes:
-    fi_e - Bandstructure potential (J) (array, len n_max)
-    cb_meff - conduction band effective mass (kg)(array, len n_max)
-    eps - dielectric constant (including eps0) (array, len n_max)
-    dop - doping distribution (m**-3) ( array, len n_max)
-    Fapp - Applied field (Vm**-1)
-    T - Temperature (K)
-    comp_scheme - simulation scheme (currently unused)
-    subnumber_e - number of subbands for look for in the conduction band
-    dx - grid spacing (m)
-    n_max - number of points.
-    """
     fi_e = model.fi_e
     cb_meff = model.cb_meff
     eps = model.eps
@@ -3238,16 +3189,16 @@ def Poisson_Schrodinger_DD(result, model):
     VSATP = model.VSATP
     if comp_scheme in (4, 5, 6):
         logger.error(
-            """aestimo_eh doesn't currently include exchange interactions
+            """Aestimo doesn't currently include exchange interactions
         in its valence band calculations."""
         )
-        exit()
+        sys.exit()
     if comp_scheme in (1, 3, 6):
         logger.error(
-            """aestimo_eh doesn't currently include nonparabolicity effects in 
+            """Aestimo doesn't currently include nonparabolicity effects in 
         its valence band calculations."""
         )
-        exit()
+        sys.exit()
     fi_h = model.fi_h
     N_wells_virtual = model.N_wells_virtual
     Well_boundary = model.Well_boundary
@@ -3270,12 +3221,6 @@ def Poisson_Schrodinger_DD(result, model):
     E_statec = [0.0] * subnumber_e  # Energies of subbands/levels (meV)
     N_statec = [0.0] * subnumber_e  # Number of carriers in subbands
     # Preparing empty subband energy arrays for multiquantum wells.
-    """
-    E_state_general = np.zeros((model.N_wells_virtual,subnumber_h))     # Energies of subbands/levels (meV)
-    E_statec_general = np.zeros((model.N_wells_virtual,subnumber_e))     # Energies of subbands/levels (meV)
-    meff_statec_general= np.zeros((model.N_wells_virtual,subnumber_e))
-    meff_state_general= np.zeros((model.N_wells_virtual,subnumber_h))
-    """
     N_state_general = np.zeros(
         (model.N_wells_virtual, subnumber_h)
     )  # Number of carriers in subbands
@@ -3354,7 +3299,7 @@ def Poisson_Schrodinger_DD(result, model):
             dx * 1e9,
             min(Ld_n_p[:]) * 1e9,
         )
-        # exit()
+
     # STARTING SELF CONSISTENT LOOP
     time2 = time.time()  # timing audit
     iteration = 1  # iteration counter
@@ -3604,6 +3549,19 @@ def Poisson_Schrodinger_DD(result, model):
 
 ################################################
 def Poisson_Schrodinger_DD_test(result, model):
+    """Performs a self-consistent Poisson-Schrodinger calculation of a 1d quantum well structure.
+    Model is an object with the following attributes:
+    fi_e - Bandstructure potential (J) (array, len n_max)
+    cb_meff - conduction band effective mass (kg)(array, len n_max)
+    eps - dielectric constant (including eps0) (array, len n_max)
+    dop - doping distribution (m**-3) ( array, len n_max)
+    Fapp - Applied field (Vm**-1)
+    T - Temperature (K)
+    comp_scheme - simulation scheme (currently unused)
+    subnumber_e - number of subbands for look for in the conduction band
+    dx - grid spacing (m)
+    n_max - number of points.
+    """
     fi = result.fi_result
     E_state_general = result.E_state_general
     meff_state_general = result.meff_state_general
@@ -3627,19 +3585,6 @@ def Poisson_Schrodinger_DD_test(result, model):
     Ppz_Psp = result.Ppz_Psp
     pol_surf_char = result.pol_surf_char
     HUPMATC1 = result.HUPMATC1
-    """Performs a self-consistent Poisson-Schrodinger calculation of a 1d quantum well structure.
-    Model is an object with the following attributes:
-    fi_e - Bandstructure potential (J) (array, len n_max)
-    cb_meff - conduction band effective mass (kg)(array, len n_max)
-    eps - dielectric constant (including eps0) (array, len n_max)
-    dop - doping distribution (m**-3) ( array, len n_max)
-    Fapp - Applied field (Vm**-1)
-    T - Temperature (K)
-    comp_scheme - simulation scheme (currently unused)
-    subnumber_e - number of subbands for look for in the conduction band
-    dx - grid spacing (m)
-    n_max - number of points.
-    """
     fi_e = model.fi_e
     cb_meff = model.cb_meff
     eps = model.eps
@@ -3665,16 +3610,16 @@ def Poisson_Schrodinger_DD_test(result, model):
     VSATP = model.VSATP
     if comp_scheme in (4, 5, 6):
         logger.error(
-            """aestimo_eh doesn't currently include exchange interactions
+            """Aestimo doesn't currently include exchange interactions
         in its valence band calculations."""
         )
-        exit()
+        sys.exit()
     if comp_scheme in (1, 3, 6):
         logger.error(
-            """aestimo_eh doesn't currently include nonparabolicity effects in 
+            """Aestimo doesn't currently include nonparabolicity effects in 
         its valence band calculations."""
         )
-        exit()
+        sys.exit()
     fi_h = model.fi_h
     N_wells_virtual = model.N_wells_virtual
     Well_boundary = model.Well_boundary
@@ -3695,12 +3640,6 @@ def Poisson_Schrodinger_DD_test(result, model):
     E_statec = [0.0] * subnumber_e  # Energies of subbands/levels (meV)
     N_statec = [0.0] * subnumber_e  # Number of carriers in subbands
     # Preparing empty subband energy arrays for multiquantum wells.
-    """
-    E_state_general = np.zeros((model.N_wells_virtual,subnumber_h))     # Energies of subbands/levels (meV)
-    E_statec_general = np.zeros((model.N_wells_virtual,subnumber_e))     # Energies of subbands/levels (meV)
-    meff_statec_general= np.zeros((model.N_wells_virtual,subnumber_e))
-    meff_state_general= np.zeros((model.N_wells_virtual,subnumber_h))
-    """
     N_state_general = np.zeros(
         (model.N_wells_virtual, subnumber_h)
     )  # Number of carriers in subbands
@@ -3723,10 +3662,6 @@ def Poisson_Schrodinger_DD_test(result, model):
 
     wfh = np.zeros((subnumber_h, n_max))
     wfe = np.zeros((subnumber_e, n_max))
-    """
-    wfh_general = np.zeros((model.N_wells_virtual,subnumber_h,n_max))
-    wfe_general = np.zeros((model.N_wells_virtual,subnumber_e,n_max))
-    """
     E_F_general = np.zeros(model.N_wells_virtual)
     sigma_general = np.zeros(n_max)
     F_general = np.zeros(n_max)
@@ -3785,7 +3720,7 @@ def Poisson_Schrodinger_DD_test(result, model):
             dx * 1e9,
             min(Ld_n_p[:]) * 1e9,
         )
-        exit()
+        sys.exit()
     # STARTING SELF CONSISTENT LOOP
     time2 = time.time()  # timing audit
     iteration = 1  # iteration counter
@@ -3938,12 +3873,7 @@ def Poisson_Schrodinger_DD_test(result, model):
             # End of main FOR loop for Va increment.
             Jtotal = Jelec + Jhole
             fi_va[vindex,:] =fi
-            """                
-            pl.plot(xaxis*1e6,fitotc)
-            pl.xlabel('Position (m)')
-            pl.ylabel('Energy (meV)')
-            pl.grid(True)
-            """
+
         for vindex in range(Total_Steps):
             Ec_result_[vindex, :] = fi_e / q - fi_va[vindex, :]  # Values from the all Node%
             Ev_result_[vindex, :] = fi_h / q - fi_va[vindex, :]  # Values from the all Node%
@@ -4114,16 +4044,16 @@ def Poisson_Schrodinger_DD_test_2(result, model):
 
     if comp_scheme in (4, 5, 6):
         logger.error(
-            """aestimo_eh doesn't currently include exchange interactions
+            """Aestimo doesn't currently include exchange interactions
         in its valence band calculations."""
         )
-        exit()
+        sys.exit()
     if comp_scheme in (1, 3, 6):
         logger.error(
-            """aestimo_eh doesn't currently include nonparabolicity effects in 
+            """Aestimo doesn't currently include nonparabolicity effects in 
         its valence band calculations."""
         )
-        exit()
+        sys.exit()
     fi_h = model.fi_h
     N_wells_virtual = model.N_wells_virtual
     Well_boundary = model.Well_boundary
@@ -4228,7 +4158,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
             dx * 1e9,
             min(Ld_n_p[:]) * 1e9,
         )
-        # exit()
+
     # STARTING SELF CONSISTENT LOOP
     time2 = time.time()  # timing audit
     iteration = 1  # iteration counter
@@ -4419,25 +4349,23 @@ def Poisson_Schrodinger_DD_test_2(result, model):
             ptoll = 1e-10
             pmaxit = 30
             verbose = 0
-            if config.use_cython :
-                [odata, it, res] = DDGgummelmap_cython(idata,odata,model,xin,ni,fi_e,fi_h,toll,Vt,ptoll,pmaxit,n_max,verbose,maxit)
-            else:                
-                [odata, it, res] = DDGgummelmap(
-                    n_max,
-                    xin,
-                    idata,
-                    odata,
-                    toll,
-                    maxit,
-                    ptoll,
-                    pmaxit,
-                    verbose,
-                    ni,
-                    fi_e,
-                    fi_h,
-                    model,
-                    Vt,
-                )
+               
+            [odata, it, res] = DDGgummelmap(
+                n_max,
+                xin,
+                idata,
+                odata,
+                toll,
+                maxit,
+                ptoll,
+                pmaxit,
+                verbose,
+                ni,
+                fi_e,
+                fi_h,
+                model,
+                Vt,
+            )
             
             if config.use_cython :
                 [odata, it, res] = DDNnewtonmap_cython(odata,model,ni,fi_e,fi_h,xin,toll,Vt,maxit,verbose)
@@ -5103,9 +5031,9 @@ def run_aestimo(input_obj):
     logger.info("total running time (inc. loading libraries) %g s", (time4 - time0))
     logger.info("total running time (exc. loading libraries) %g s", (time4 - time1))
     # Write the simulation results in files
-    if model.comp_scheme == 7 or model.comp_scheme == 8 or model.comp_scheme == 2 or model.comp_scheme == 10:
+    if model.comp_scheme in (2,7,8,10):
         save_and_plot(result, model)
-    if model.comp_scheme == 7 or model.comp_scheme == 8 or model.comp_scheme == 9:
+    if model.comp_scheme in (7,8,9):
         save_and_plot2(result_dd, model)
     # Add to log
     logger.info("Simulation is finished. All files are closed. Please control the related files.")
@@ -5113,9 +5041,6 @@ def run_aestimo(input_obj):
 
 
 if __name__ == "__main__":
-    import optparse
-    from argparse import ArgumentParser, HelpFormatter
-    
     # Arguments parsing
     parser = ArgumentParser(prog ='aestimo.py', description=Description, formatter_class=RawFormatter)
 
@@ -5130,7 +5055,7 @@ if __name__ == "__main__":
     #Exit if no argument is provided
     if args is None:
         print("Please provide at least -i argument")  
-        quit()
+        sys.exit()
 
     #Preset variables
     inputFile = None
@@ -5142,7 +5067,7 @@ if __name__ == "__main__":
             try:
                 response = requests.get("https://api.github.com/repos/aestimosolver/aestimo/releases/latest", timeout=5)
                 print('-------------------------------------------------------------------------------------------------------')
-                print('\033[91mAESTIMO\033[0m 1D Version '+str(__version__))
+                print('\033[91mAestimo\033[0m 1D Version '+str(__version__))
                 print('-------------------------------------------------------------------------------------------------------')
                 print('The latest STABLE release was '+response.json()["tag_name"]+', which is published at '+response.json()["published_at"])
                 print('Download the latest STABLE tarball release at: '+response.json()["tarball_url"])
@@ -5150,10 +5075,10 @@ if __name__ == "__main__":
                 print('Download the latest DEV zipball release at: https://github.com/aestimosolver/aestimo/archive/refs/heads/master.zip')
             except (requests.ConnectionError, requests.Timeout) as exception:
                 print('-------------------------------------------------------------------------------------------------------')
-                print('\033[91AESTIMO\033[0m 1D Version '+str(__version__))
+                print('\033[91Aestimo\033[0m 1D Version '+str(__version__))
                 print('-------------------------------------------------------------------------------------------------------')
                 print('No internet connection available.')
-            quit()
+            sys.exit()
 
         if args.inputfile is not None:
             # Get the folder information and use
@@ -5165,7 +5090,7 @@ if __name__ == "__main__":
                 locals()[k] = getattr(inpu, k)
         else:
             print("Please provide input file with -i argument")
-            quit()
+            sys.exit()
 
         if args.drawfigures == True:
             # Control the drawing data at the end of the calculation

@@ -1,17 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Aestimo's database module. Contains a materialproperty dict containing 
-sub-dicts of values for each material and similar alloyproperty dict for the
-alloys of the materials. See the source for details on the required keys for
-each material or alloy.
 
- References:
-  - GaAs,AlAs parameters:
-    Properties of Semiconductor Alloys: Group-IV, III-V and II-VI Semiconductors Sadao AdAchi?2009 John Wiley & Sons, Ltd.
-    Basic Semiconductor Physics Second Edition,Prof. Chihiro Hamaguchi 2010 Springer
-    Physics of Optoelectronic Devices ,S-L.CHUANG ,1995 by John Wiley & Sons. Inc
-  
-"""
 """
  Aestimo 1D Schrodinger-Poisson Solver
  Copyright (C) 2013-2016 Sefer Bora Lisesivdin and Aestimo group
@@ -30,6 +19,19 @@ each material or alloy.
     along with this program. See ~/COPYING file or http://www.gnu.org/copyleft/gpl.txt .
 
     For the list of contributors, see ~/AUTHORS
+    
+    INFORMATION:
+    Aestimo's database module. Contains a materialproperty dict containing 
+    sub-dicts of values for each material and similar alloyproperty dict for the
+    alloys of the materials. See the source for details on the required keys for
+    each material or alloy.
+
+    REFERENCES:
+  - GaAs,AlAs parameters:
+    Properties of Semiconductor Alloys: Group-IV, III-V and II-VI Semiconductors Sadao AdAchi?2009 John Wiley & Sons, Ltd.
+    Basic Semiconductor Physics Second Edition,Prof. Chihiro Hamaguchi 2010 Springer
+    Physics of Optoelectronic Devices ,S-L.CHUANG ,1995 by John Wiley & Sons. Inc
+  
 """
 
 # MATERIAL PROPERTIES
