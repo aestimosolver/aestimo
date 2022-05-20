@@ -48,16 +48,9 @@ import numpy as np
 from math import*
 from scipy import sparse as sp
 
-if __package__:  # explicit relative imports for using aestimo as a package (in python3)
-    from . import func_lib
-    from .func_lib import DDGphin2n,DDGphip2p,Ucompmass,Ucomplap,Ucompconst,Ubernoulli
-    from .aestimo_poisson1d import equi_np_fi222
-    from . import config
-else:    
-    import func_lib
-    from func_lib import DDGphin2n,DDGphip2p,Ucompmass,Ucomplap,Ucompconst,Ubernoulli
-    from aestimo_poisson1d import equi_np_fi222
-    import config
+from .func_lib import DDGphin2n,DDGphip2p,Ucompmass,Ucomplap,Ucompconst,Ubernoulli
+from .aestimo_poisson1d import equi_np_fi222
+import config
 
 def  DDGhole_driftdiffusion(psi,xaxis,pg,n,ni,TAUN0,TAUP0,mup,fi_e,fi_h,model,Vt,idata):
     

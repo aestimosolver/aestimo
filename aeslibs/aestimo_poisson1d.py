@@ -29,10 +29,7 @@ import numpy as np
 import matplotlib.pyplot as pl
 from math import exp, log, sqrt
 
-if __package__:  # explicit relative imports for using aestimo as a package (in python3)
-    from . import config
-else:
-    import config
+import config
 
 # Defining constants and material parameters
 q = 1.602176e-19  # C
