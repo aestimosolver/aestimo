@@ -39,6 +39,4 @@ setup(  name='aestimo',
         install_requires=['numpy>1.7.0','matplotlib','scipy'],
         zip_safe=False, #we want users to be able to easily see and edit the scripts
         #setup_requires=['numpy'], #causes problems with pip?
-        cmdclass = cmdclass,
-        ext_modules=ext_modules,
         )
