@@ -64,7 +64,7 @@ time0 = time.time()  # timing audit
 alen = np.alen
 
 # Version
-__version__ = "pre 3.0"
+__version__ = "3.0.0"
 
 # Defining constants and material parameters
 q = 1.602176e-19  # C
