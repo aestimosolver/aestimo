@@ -61,7 +61,7 @@ from aeslibs.func_lib import Ubernoulli
 from aeslibs.ddgnlpoisson import DDGnlpoisson_new
 
 time0 = time.time()  # timing audit
-alen = np.alen
+alen = len
 
 # Version
 __version__ = "3.0.0"
