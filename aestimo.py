@@ -61,7 +61,12 @@ from aeslibs.func_lib import Ubernoulli
 from aeslibs.ddgnlpoisson import DDGnlpoisson_new
 
 time0 = time.time()  # timing audit
-alen = len
+
+# Because alen is not used anymore
+def alen(x):
+    return 1 if np.isscalar(x) else len(x)
+
+#alen = np.alen 
 
 # Version
 __version__ = "3.0.0"
