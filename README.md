@@ -85,12 +85,12 @@ Row 1: Position (m), Row 2: Electric Field strength (V/m)
 potn.dat
 --------
 
-Row 1: Position (m), Row 2:[V_cb + V_p] (J)
+Row 1: Position (m), Row 2:[V_cb + V_p] (eV)
 
 sigma.dat
 ---------
 
-Row 1: Position (m), Row 2: Sigma (e/m^2)
+Row 1: Position (m), Row 2: Sigma (C/m^3)
 
 states.dat
 ----------
