@@ -4600,11 +4600,11 @@ def save_and_plot2(result, model):
             if config.potential_out:
                 saveoutput(
                     "potn_eh_%.2f.dat" % vt,
-                    (xaxis * 1e2, result.Ec_result, result.Ev_result),
+                    (xaxis, result.Ec_result, result.Ev_result),
                 )
                 saveoutput(
                     "np_data0_%.2f.dat" % vt,
-                    (xaxis * 1e2, result.nf_result * 1e-6, result.pf_result * 1e-6),
+                    (xaxis, result.nf_result * 1e-6, result.pf_result * 1e-6),
                 )
             
     for k in range(0, result.Total_Steps):
@@ -4612,7 +4612,7 @@ def save_and_plot2(result, model):
             if config.potential_out:
                 saveoutput(
                     "potn_eh_%.2f.dat" % result.Va_t[k],
-                    (xaxis * 1e2, result.Ec_result_[k,:], result.Ev_result_[k,:]),
+                    (xaxis, result.Ec_result_[k,:], result.Ev_result_[k,:]),
                 )
             if config.states_out:
                 for j in range(1, result.N_wells_virtual - 1):
@@ -4858,10 +4858,10 @@ def save_and_plot(result, model):
             "efield_eh_equi_cond.dat", (xaxis, result.el_field1_result, result.el_field2_result)
         )
     if config.potential_out:
-        saveoutput("potn_eh_equi_cond.dat", (xaxis * 1e2, result.fitotc / q, result.fitot / q))
+        saveoutput("potn_eh_equi_cond.dat", (xaxis, result.fitotc / q, result.fitot / q))
         saveoutput(
             "np_data0_equi_cond.dat",
-            (xaxis * 1e2, result.nf_result * 1e-6, result.pf_result * 1e-6),
+            (xaxis, result.nf_result * 1e-6, result.pf_result * 1e-6),
         )
     if config.states_out:
         for j in range(1, result.N_wells_virtual - 1):
