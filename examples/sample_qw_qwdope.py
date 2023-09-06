@@ -78,5 +78,5 @@ if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
     import sys
     sys.path.append(path.join(path.dirname(__file__), '..'))
-    import aestimo_eh
-    aestimo_eh.run_aestimo(input_obj)
+    import aestimo
+    aestimo.run_aestimo(input_obj)
