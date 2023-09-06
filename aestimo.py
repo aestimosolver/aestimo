@@ -71,6 +71,22 @@ def alen(x):
 # Version
 __version__ = "3.0.0"
 
+# Logger
+logger = logging.getLogger('aestimo')
+
+def initialize_logger():
+    hdlr = logging.FileHandler(os.path.abspath(os.path.join(output_directory, 'aestimo.log')))
+    hdlr_formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
+    hdlr.setFormatter(hdlr_formatter)
+    logger.addHandler(hdlr)
+    # stderr
+    ch = logging.StreamHandler()
+    ch_formatter = logging.Formatter('%(levelname)s %(message)s')
+    ch.setFormatter(ch_formatter)
+    logger.addHandler(ch)
+    # LOG level can be INFO, WARNING, ERROR
+    logger.setLevel(logging.INFO)
+
 # Defining constants and material parameters
 q = 1.602176e-19  # C
 kb = 1.3806504e-23  # J/K
@@ -5044,7 +5060,6 @@ def run_aestimo(input_obj):
     logger.info("Simulation is finished. All files are closed. Please control the related files.")
     return input_obj, model, result
 
-
 if __name__ == "__main__":
     # Arguments parsing
     parser = ArgumentParser(prog ='aestimo.py', description=Description, formatter_class=RawFormatter)
@@ -5105,26 +5120,26 @@ if __name__ == "__main__":
     except getopt.error as err:
         # output error, and return with an error code
         print (str(err))
-                
-    logger = logging.getLogger("aestimo")
+
     output_directory = os.path.join(os.getcwd(),Path(inputFile).stem)
 
     #If output directory is not available, make one.
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory, exist_ok=True)
-        
-    hdlr = logging.FileHandler(os.path.abspath(os.path.join(output_directory,'aestimo.log')))
-    formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
-    hdlr.setFormatter(formatter)
-    logger.addHandler(hdlr)
-    # stderr
-    ch = logging.StreamHandler()
-    formatter2 = logging.Formatter("%(levelname)s %(message)s")
-    ch.setFormatter(formatter2)
-    logger.addHandler(ch)
-    # LOG level can be INFO, WARNING, ERROR
-    logger.setLevel(logging.INFO)
-    # Add to log
+
+    initialize_logger()
+
     os.sys.stderr.write("WARNING: Aestimo 1D logs in the output directory.\n")
-    
+
     run_aestimo(inputFile)
+
+else:
+    output_directory = os.path.join(os.getcwd(), 'output')
+
+    #If output directory is not available, make one.
+    if not os.path.isdir(output_directory):
+        os.makedirs(output_directory, exist_ok=True)
+
+    initialize_logger()
+
+    os.sys.stderr.write("WARNING: Aestimo 1D logs automatically to aestimo.log in the output directory.\n")
