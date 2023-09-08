@@ -36,7 +36,6 @@ also allows us to tailor each simulation even more to our needs.
 
 import config
 
-#import aestimo_eh as aestimo
 import aestimo
     
 

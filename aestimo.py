@@ -71,6 +71,25 @@ def alen(x):
 # Version
 __version__ = "3.0.0"
 
+# Logger
+logger = logging.getLogger('aestimo')
+
+def initialize_logger():
+    hdlr = logging.FileHandler(os.path.abspath(os.path.join(output_directory, 'aestimo.log')))
+    hdlr_formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
+    hdlr.setFormatter(hdlr_formatter)
+    logger.addHandler(hdlr)
+    # stderr
+    ch = logging.StreamHandler()
+    ch_formatter = logging.Formatter('%(levelname)s %(message)s')
+    ch.setFormatter(ch_formatter)
+    logger.addHandler(ch)
+    # LOG level can be INFO, WARNING, ERROR
+    logger.setLevel(logging.INFO)
+
+#Preset variables
+drawFigures = False
+
 # Defining constants and material parameters
 q = 1.602176e-19  # C
 kb = 1.3806504e-23  # J/K
@@ -1236,39 +1255,39 @@ class StructureFrom(Structure):
         if type(inputfile) == dict:
             inputfile = AttrDict(inputfile)
         # Parameters for simulation
-        self.Fapp = Fapplied
-        self.vmax = vmax
-        self.vmin = vmin
-        self.Each_Step = Each_Step
-        self.surface = surface
-        self.T = T
-        self.subnumber_h = subnumber_h
-        self.subnumber_e = subnumber_e
-        self.comp_scheme = computation_scheme
-        self.dx = gridfactor * 1e-9  # grid in m
-        self.maxgridpoints = maxgridpoints
-        self.mat_crys_strc = mat_type
+        self.Fapp = inputfile.Fapplied
+        self.vmax = inputfile.vmax
+        self.vmin = inputfile.vmin
+        self.Each_Step = inputfile.Each_Step
+        self.surface = inputfile.surface
+        self.T = inputfile.T
+        self.subnumber_h = inputfile.subnumber_h
+        self.subnumber_e = inputfile.subnumber_e
+        self.comp_scheme = inputfile.computation_scheme
+        self.dx = inputfile.gridfactor * 1e-9  # grid in m
+        self.maxgridpoints = inputfile.maxgridpoints
+        self.mat_crys_strc = inputfile.mat_type
         # Loading material list
-        self.material = material
+        self.material = inputfile.material
         self.inputfilename=inputfile
         totallayer = alen(self.material)
-        
+
         # Add to log
         logger.info("Total layer number: %s", totallayer)
-        
+
         # Calculate the required number of grid points
         self.x_max = (
             sum([layer[0] for layer in self.material]) * 1e-9
         )  # total thickness (m)
         self.n_max = int(self.x_max / self.dx)
         # Check on n_max
-        max_val = maxgridpoints
+        max_val = inputfile.maxgridpoints
 
-        self.dop_profile = dop_profile
-        self.Quantum_Regions_boundary = Quantum_Regions_boundary
-        self.Quantum_Regions = Quantum_Regions
+        self.dop_profile = inputfile.dop_profile
+        self.Quantum_Regions_boundary = inputfile.Quantum_Regions_boundary
+        self.Quantum_Regions = inputfile.Quantum_Regions
         if self.n_max > max_val:
-            logger.error(" Grid number is exceeding the max number of %d", max_val)
+            logger.error("Grid number is exceeding the max number of %d", max_val)
             sys.exit()
         # Loading materials database #
         self.material_property = database.materialproperty
@@ -4663,7 +4682,7 @@ def save_and_plot2(result, model):
                             "wavefunctions_e_QWR%d_%.2f.dat" % (j, vt),
                             (xaxis[I1:I2], result.wfe_general[j,:,i1:i2].transpose()),
                         )
-    if config.resultviewer:
+    if drawFigures:
         span = np.ones(100000000)
         fig1 = pl.figure(figsize=(10, 8))
         pl.suptitle("Aestimo Results")
@@ -5014,8 +5033,6 @@ def run_aestimo(input_obj):
     the class implementation or some of the sample-*.py files for details."""
     # Add to log
     logger.info("Aestimo 1D is starting...")
-    # Add to log
-    logger.info("Inputfile is %s", input_obj)
     # Initialise structure class
     model = StructureFrom(input_obj, database)
 
@@ -5044,7 +5061,6 @@ def run_aestimo(input_obj):
     logger.info("Simulation is finished. All files are closed. Please control the related files.")
     return input_obj, model, result
 
-
 if __name__ == "__main__":
     # Arguments parsing
     parser = ArgumentParser(prog ='aestimo.py', description=Description, formatter_class=RawFormatter)
@@ -5061,10 +5077,6 @@ if __name__ == "__main__":
     if args is None:
         print("Please provide at least -i argument")  
         sys.exit()
-
-    #Preset variables
-    inputFile = None
-    drawFigures = False
 
     try:
         if args.version == True:
@@ -5090,9 +5102,9 @@ if __name__ == "__main__":
             inputFile = os.path.join(os.getcwd(),args.inputfile)
             sys.path.append(os.getcwd())
             # Works like from FILE import *
-            inpu = __import__(Path(inputFile).stem, globals(), locals(), ['*'])
-            for k in dir(inpu):
-                locals()[k] = getattr(inpu, k)
+            inputfile_import = __import__(Path(inputFile).stem, globals(), locals(), ['*'])
+            # Add to log
+            logger.info("Inputfile is %s", inputFile)
         else:
             print("Please provide input file with -i argument")
             sys.exit()
@@ -5105,26 +5117,26 @@ if __name__ == "__main__":
     except getopt.error as err:
         # output error, and return with an error code
         print (str(err))
-                
-    logger = logging.getLogger("aestimo")
-    output_directory = os.path.join(os.getcwd(),Path(inputFile).stem)
+
+    output_directory = os.path.join(os.getcwd(), Path(inputFile).stem)
 
     #If output directory is not available, make one.
     if not os.path.isdir(output_directory):
         os.makedirs(output_directory, exist_ok=True)
-        
-    hdlr = logging.FileHandler(os.path.abspath(os.path.join(output_directory,'aestimo.log')))
-    formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
-    hdlr.setFormatter(formatter)
-    logger.addHandler(hdlr)
-    # stderr
-    ch = logging.StreamHandler()
-    formatter2 = logging.Formatter("%(levelname)s %(message)s")
-    ch.setFormatter(formatter2)
-    logger.addHandler(ch)
-    # LOG level can be INFO, WARNING, ERROR
-    logger.setLevel(logging.INFO)
-    # Add to log
+
+    initialize_logger()
+
     os.sys.stderr.write("WARNING: Aestimo 1D logs in the output directory.\n")
-    
-    run_aestimo(inputFile)
+
+    run_aestimo(inputfile_import)
+
+else:
+    output_directory = os.path.join(os.getcwd(), 'output')
+
+    #If output directory is not available, make one.
+    if not os.path.isdir(output_directory):
+        os.makedirs(output_directory, exist_ok=True)
+
+    initialize_logger()
+
+    os.sys.stderr.write("WARNING: Aestimo 1D logs automatically to aestimo.log in the output directory.\n")
