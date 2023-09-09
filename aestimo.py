@@ -3346,9 +3346,9 @@ def Poisson_Schrodinger_DD(result, model):
     Jpip1by2 = np.zeros((Total_Steps, n_max))
     Jhole = np.zeros((Total_Steps, n_max))
     Jtotal = np.zeros((Total_Steps, n_max))
-    fi_va= np.zeros((Total_Steps, n_max))
-    Ec_result_= np.zeros((Total_Steps, n_max))
-    Ev_result_= np.zeros((Total_Steps, n_max))
+    fi_va = np.zeros((Total_Steps, n_max))
+    Ec_result_ = np.zeros((Total_Steps, n_max))
+    Ev_result_ = np.zeros((Total_Steps, n_max))
     fi_stat = fi
     fi[0] +=vmin/ Vt
     if vmax == 0:
@@ -3435,8 +3435,8 @@ def Poisson_Schrodinger_DD(result, model):
             Jtotal = Jelec + Jhole
             fi_va[vindex,:] =fi
         for vindex in range(Total_Steps):
-            Ec_result_[vindex, :] = fi_e / q - fi_va[vindex, :]  # Values from the all Node%
-            Ev_result_[vindex, :] = fi_h / q - fi_va[vindex, :]  # Values from the all Node%        
+            Ec_result_[vindex, :] = fi_e / q - Vt * fi_va[vindex, :]  # Values from the all Node%
+            Ev_result_[vindex, :] = fi_h / q - Vt * fi_va[vindex, :]  # Values from the all Node%
         ##########################################################################
         ##                 END OF NON-EQUILIBRIUM  SOLUTION PART                ##
         ##########################################################################
@@ -3565,9 +3565,9 @@ def Poisson_Schrodinger_DD(result, model):
     results.fi_result = fi_result
     results.EF = EF
     results.Total_Steps = Total_Steps
-    results.fi_va=fi_va
-    results.Ec_result_= Ec_result_
-    results.Ev_result_= Ec_result_
+    results.fi_va = fi_va
+    results.Ec_result_ = Ec_result_
+    results.Ev_result_ = Ev_result_
     return results
 
 
@@ -3770,9 +3770,9 @@ def Poisson_Schrodinger_DD_test(result, model):
     Jpip1by2 = np.zeros((Total_Steps, n_max))
     Jhole = np.zeros((Total_Steps, n_max))
     Jtotal = np.zeros((Total_Steps, n_max))
-    fi_va= np.zeros((Total_Steps, n_max))
-    Ec_result_= np.zeros((Total_Steps, n_max))
-    Ev_result_= np.zeros((Total_Steps, n_max))
+    fi_va = np.zeros((Total_Steps, n_max))
+    Ec_result_ = np.zeros((Total_Steps, n_max))
+    Ev_result_ = np.zeros((Total_Steps, n_max))
     fi_stat = fi
     fi+=vmin/Vt
     if vmax == 0:
@@ -3899,8 +3899,8 @@ def Poisson_Schrodinger_DD_test(result, model):
             fi_va[vindex,:] =fi
 
         for vindex in range(Total_Steps):
-            Ec_result_[vindex, :] = fi_e / q - fi_va[vindex, :]  # Values from the all Node%
-            Ev_result_[vindex, :] = fi_h / q - fi_va[vindex, :]  # Values from the all Node%
+            Ec_result_[vindex, :] = fi_e / q - Vt * fi_va[vindex, :]  # Values from the all Node%
+            Ev_result_[vindex, :] = fi_h / q - Vt * fi_va[vindex, :]  # Values from the all Node%
         ##########################################################################
         ##                 END OF NON-EQUILIBRIUM  SOLUTION PART                ##
         ##########################################################################
@@ -4004,9 +4004,9 @@ def Poisson_Schrodinger_DD_test(result, model):
     results.fi_result = fi_result
     results.EF = EF
     results.Total_Steps = Total_Steps
-    results.fi_va=fi_va
-    results.Ec_result_= Ec_result_
-    results.Ev_result_= Ec_result_
+    results.fi_va = fi_va
+    results.Ec_result_ = Ec_result_
+    results.Ev_result_ = Ev_result_
     return results
 
 
@@ -4229,9 +4229,9 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     V_ = np.zeros((Total_Steps, n_max))
     Jn = np.zeros((Total_Steps, n_max))
     Jp = np.zeros((Total_Steps, n_max))
-    fi_va= np.zeros((Total_Steps, n_max))
-    Ec_result_= np.zeros((Total_Steps, n_max))
-    Ev_result_= np.zeros((Total_Steps, n_max))
+    fi_va = np.zeros((Total_Steps, n_max))
+    Ec_result_ = np.zeros((Total_Steps, n_max))
+    Ev_result_ = np.zeros((Total_Steps, n_max))
     # J=np.zeros((Total_Steps,n_max-1))
     lambda2 = np.zeros((Total_Steps, n_max))
     DV = np.zeros(Total_Steps)
@@ -4584,7 +4584,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     results.fi_result = fi_result
     results.EF = EF
     results.Total_Steps = Total_Steps
-    results.fi_va=fi_va
+    results.fi_va = fi_va
     results.Ec_result_ = Ec_result_
     results.Ev_result_ = Ev_result_
     return results
