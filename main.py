@@ -22,7 +22,7 @@
 File Information:
 -----------------
 This file is one method of running aestimo. Simply define the input file in 
-the config.py module and run this script. We could also run aestimo.py directly
+the the related line and run this script. We could also run aestimo.py directly
 to achieve the same effect. 
 
 Alternatively, many of the example input files show how we can transform them
@@ -40,8 +40,8 @@ import aestimo
     
 
 # Import from config file
-inputfile = __import__(config.inputfilename)
-aestimo.logger.info("inputfile is %s" %config.inputfilename)
+inputfile = ""
+aestimo.logger.info("inputfile is %s" %inputfile)
 
 if __name__=="__main__":
     aestimo.run_aestimo(inputfile)
