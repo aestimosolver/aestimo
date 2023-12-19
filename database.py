@@ -28,9 +28,9 @@
 
     REFERENCES:
   - GaAs,AlAs parameters:
-    Properties of Semiconductor Alloys: Group-IV, III-V and II-VI Semiconductors Sadao AdAchi?2009 John Wiley & Sons, Ltd.
-    Basic Semiconductor Physics Second Edition,Prof. Chihiro Hamaguchi 2010 Springer
-    Physics of Optoelectronic Devices ,S-L.CHUANG ,1995 by John Wiley & Sons. Inc
+    Properties of Semiconductor Alloys: Group-IV, III-V, and II-VI Semiconductors Sadao AdAchi?2009 John Wiley & Sons, Ltd.
+    Basic Semiconductor Physics Second Edition, Prof. Chihiro Hamaguchi 2010 Springer
+    Physics of Optoelectronic Devices, S-L.CHUANG,1995 by John Wiley & Sons. Inc
   
 """
 
@@ -60,14 +60,14 @@ materialproperty = {
 'Ac':-7.17, # (eV) deformation potentials (Van de Walle formalism)
 'Av':1.16, # (eV) deformation potentials (Van de Walle formalism)
 'B':-1.7, # (eV) shear deformation potential (Van de Walle formalism)
-'TAUN0':0.1E-7,# Electron SRH life time
-'TAUP0':0.1E-7,# Hole SRH life time
+'TAUN0':0.1E-7,# Electron SRH lifetime
+'TAUP0':0.1E-7,# Hole SRH lifetime
 'mun0':0.1,# Electron Mobility in m2/V-s
 'mup0':0.02,# Electron Mobility in m2/V-s
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
-'BETAN':2.0,# Parameter in calculatation of the Field Dependant Mobility
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAN':2.0,# Parameter in the calculation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
 'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-6.92#Average Valence Band Energy or the absolute energy level
@@ -100,7 +100,7 @@ materialproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
 'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-7.49#Average Valence Band Energy or the absolute energy level
@@ -133,9 +133,9 @@ materialproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-6.67#Average Valence Band Energy or the absolute energy level
 },
 'InP':{
@@ -166,9 +166,9 @@ materialproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-7.04#Average Valence Band Energy or the absolute energy level
 },
 'GaP':{
@@ -199,9 +199,9 @@ materialproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-7.4#Average Valence Band Energy or the absolute energy level
 },
 'AlP':{
@@ -232,9 +232,9 @@ materialproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-8.09#Average Valence Band Energy or the absolute energy level
 },
 'GaN':{ 
@@ -274,14 +274,14 @@ materialproperty = {
 'delta_so':0.015,#15.5mev
 'delta_cr':0.022,#72.9mev
 'a0_sub':3.189,
-'TAUN0':0.1E-6,# Electron SRH life time
-'TAUP0':0.1E-6,# Hole SRH life time
+'TAUN0':0.1E-6,# Electron SRH lifetime
+'TAUP0':0.1E-6,# Hole SRH lifetime
 'mun0':0.1,# Electron Mobility in m2/V-s 0.1 0.2
 'mup0':0.02,# Electron Mobility in m2/V-s 0.03 0.02
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
-'BETAN':2,# Parameter in calculatation of the Field Dependant Mobility
-'BETAP':2,# Parameter in calculatation of the Field Dependant Mobility
+'BETAN':2,# Parameter in the calculation of the Field Dependant Mobility
+'BETAP':2,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,#3e5 Saturation Velocity of Electrons 1.5e5 2.5e5 2.7e5 2e5
 'VSATP': 6e5, # Saturation Velocity of Holes
 'AVb_E':-2.64#Average Valence Band Energy or the absolute energy level
@@ -323,16 +323,16 @@ materialproperty = {
 'delta_so':0.001,#5mev
 'delta_cr':0.041,#40mev
 'a0_sub':3.189,
-'TAUN0':5.1e-8,# Electron SRH life time
-'TAUP0':5.1e-8,# Hole SRH life time
+'TAUN0':5.1e-8,# Electron SRH lifetime
+'TAUP0':5.1e-8,# Hole SRH lifetime
 'mun0':0.1,# Electron Mobility in m2/V-s 0.1 0.2
 'mup0':0.02,# Electron Mobility in m2/V-s 0.03 0.02
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
-'BETAN':2,# Parameter in calculatation of the Field Dependant Mobility
-'BETAP':1,# Parameter in calculatation of the Field Dependant Mobility
+'BETAN':2,# Parameter in the calculation of the Field Dependant Mobility
+'BETAP':1,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,#3e5 Saturation Velocity of Electrons 1.5e5
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-1.59#Average Valence Band Energy or the absolute energy level
 },
 'AlN':{
@@ -371,16 +371,16 @@ materialproperty = {
 'delta_so':0.019,#20.4mev
 'delta_cr':-0.164,#−58.5mev
 'a0_sub':3.189,
-'TAUN0':0.1E-7,# Electron SRH life time
-'TAUP0':0.1E-7,# Hole SRH life time
+'TAUN0':0.1E-7,# Electron SRH lifetime
+'TAUP0':0.1E-7,# Hole SRH lifetime
 'mun0':0.1,# Electron Mobility in m2/V-s
 'mup0':0.02,# Electron Mobility in m2/V-s
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
-'BETAN':0.45,# Parameter in calculatation of the Field Dependant Mobility
-'BETAP':0.45,# Parameter in calculatation of the Field Dependant Mobility
+'BETAN':0.45,# Parameter in the calculation of the Field Dependant Mobility
+'BETAP':0.45,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons 1.5e5
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-3.44#Average Valence Band Energy or the absolute energy level 1.5e5
 },
 'CdO':{
@@ -419,16 +419,16 @@ materialproperty = {
 'delta_so':0.0126,
 'delta_cr':0.0305,
 'a0_sub':3.250,
-'TAUN0':0.1E-7,# Electron SRH life time
-'TAUP0':0.1E-7,# Hole SRH life time
+'TAUN0':0.1E-7,# Electron SRH lifetime
+'TAUP0':0.1E-7,# Hole SRH lifetime
 'mun0':0.1,# Electron Mobility in m2/V-s
 'mup0':0.02,# Electron Mobility in m2/V-s
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
-'BETAN':2.0,# Parameter in calculatation of the Field Dependant Mobility
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAN':2.0,# Parameter in the calculation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-7.52#Average Valence Band Energy or the absolute energy level
 },
 'MgO':{
@@ -467,16 +467,16 @@ materialproperty = {
 'delta_so':0.032,
 'delta_cr':0.3172,
 'a0_sub':3.250,
-'TAUN0':0.1E-7,# Electron SRH life time
-'TAUP0':0.1E-7,# Hole SRH life time
+'TAUN0':0.1E-7,# Electron SRH lifetime
+'TAUP0':0.1E-7,# Hole SRH lifetime
 'mun0':0.1,# Electron Mobility in m2/V-s
 'mup0':0.02,# Electron Mobility in m2/V-s
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
-'BETAN':2.0,# Parameter in calculatation of the Field Dependant Mobility
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAN':2.0,# Parameter in the calculation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-7.52#Average Valence Band Energy or the absolute energy level
 },
 'ZnO':{
@@ -515,16 +515,16 @@ materialproperty = {
 'delta_so':0.0126,#16mev
 'delta_cr':0.0305,#43mev
 'a0_sub':3.250,
-'TAUN0':0.1E-7,# Electron SRH life time
-'TAUP0':0.1E-7,# Hole SRH life time
+'TAUN0':0.1E-7,# Electron SRH lifetime
+'TAUP0':0.1E-7,# Hole SRH lifetime
 'mun0':0.1,# Electron Mobility in m2/V-s
 'mup0':0.02,# Electron Mobility in m2/V-s
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
-'BETAN':2.0,# Parameter in calculatation of the Field Dependant Mobility
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAN':2.0,# Parameter in the calculation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-7.52#Average Valence Band Energy or the absolute energy level
 },
 'Si':{#http://www.ioffe.ru/SVA/NSM/Semicond/Si/basic.html
@@ -558,7 +558,7 @@ materialproperty = {
 'BETAN':2.0,
 'BETAP':1.0,
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-7.03#Average Valence Band Energy or the absolute energy level
 },
 'Ge':{
@@ -578,7 +578,7 @@ materialproperty = {
 'C12':4.4,
 'C44':6.77,
 'a0':5.658,
-'a0':5.6585, # Just added as near value of a0 
+'a0_sub':5.6585, # Just added as near value of a0 
 'Ac':-5.64,
 'Av':2.47,
 'B':-1.5,
@@ -592,7 +592,7 @@ materialproperty = {
 'BETAN':2.0,
 'BETAP':1.0,
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-6.35#Average Valence Band Energy or the absolute energy level
 }
 }
@@ -615,9 +615,9 @@ alloyproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-2.1#Average Valence Band Energy or the absolute energy level
 },
 'InGaAs':{
@@ -635,9 +635,9 @@ alloyproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-2.1#Average Valence Band Energy or the absolute energy level
 },
 'InAsP':{
@@ -655,9 +655,9 @@ alloyproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-2.1#Average Valence Band Energy or the absolute energy level
 },
 'GaAsP':{
@@ -675,9 +675,9 @@ alloyproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-2.1#Average Valence Band Energy or the absolute energy level
 },
 'InGaP':{
@@ -695,9 +695,9 @@ alloyproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-2.1#Average Valence Band Energy or the absolute energy level
 },
 'AlInP':{
@@ -715,9 +715,9 @@ alloyproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-2.1#Average Valence Band Energy or the absolute energy level
 },
 'AlGaN':{
@@ -735,9 +735,9 @@ alloyproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-2.1#Average Valence Band Energy or the absolute energy level
 },
 'InGaN':{
@@ -755,7 +755,7 @@ alloyproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# 3e5Saturation Velocity of Electrons 1.5e5
 'VSATP':6e5 #6e5 Saturation Velocity of Holes 1.5e5
 },
@@ -774,9 +774,9 @@ alloyproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-2.1#Average Valence Band Energy or the absolute energy level
 },
 'MgZnO':{
@@ -794,9 +794,9 @@ alloyproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-2.1#Average Valence Band Energy or the absolute energy level
 },
 'CdZnO':{
@@ -814,9 +814,9 @@ alloyproperty = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-2.1#Average Valence Band Energy or the absolute energy level
 }
 }
@@ -844,9 +844,9 @@ alloyproperty4 = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-2.1#Average Valence Band Energy or the absolute energy level
 },
 'AlGaInN':{#BxCyD1-x-yA=AlxInyGa1-x-yN
@@ -868,9 +868,9 @@ alloyproperty4 = {
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':2.0,
-'BETAP':1.0,# Parameter in calculatation of the Field Dependant Mobility
+'BETAP':1.0,# Parameter in the calculation of the Field Dependant Mobility
 'VSATN':3e5,# Saturation Velocity of Electrons
-'VSATP':6e5 , # Saturation Velocity of Holes
+'VSATP':6e5, # Saturation Velocity of Holes
 'AVb_E':-2.1#Average Valence Band Energy or the absolute energy level
 }
 }
