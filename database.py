@@ -562,7 +562,7 @@ materialproperty = {
 'AVb_E':-7.03#Average Valence Band Energy or the absolute energy level
 },
 'Ge':{
-'m_e':0.22,
+'m_e':1.59,
 'm_hh':0.33,
 'm_lh':0.043,
 'epsilonStatic':10.06,
