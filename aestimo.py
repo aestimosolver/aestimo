@@ -2339,8 +2339,10 @@ def Poisson_Schrodinger(model):
         Half_Eg[i] = (fi_e[i] - fi_h[i]) / 2
         Eg_[i] = fi_e[i] - fi_h[i]
 
-        fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
-        fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+        # fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+        # fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+        fi_e[i] = fi_e[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
+        fi_h[i] = fi_h[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
 
     if dx > min(Ld_n_p[:]) and 1 == 2:
         logger.error(
@@ -2851,8 +2853,10 @@ def Poisson_Schrodinger_new(model):
         Half_Eg[i] = (fi_e[i] - fi_h[i]) / 2
         Eg_[i] = fi_e[i] - fi_h[i]
 
-        fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
-        fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+        # fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+        # fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+        fi_e[i] = fi_e[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
+        fi_h[i] = fi_h[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
 
     if dx > min(Ld_n_p[:]) and 1 == 2:
         logger.error(
@@ -3313,8 +3317,10 @@ def Poisson_Schrodinger_DD(result, model):
         if dop[i] == 1:
             dop[i] *= ni[i]
         Half_Eg[i] = (fi_e[i] - fi_h[i]) / 2
-        fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
-        fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+        # fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+        # fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+        fi_e[i] = fi_e[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
+        fi_h[i] = fi_h[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
     n = result.nf_result / ni
     p = result.pf_result / ni
     if dx > min(Ld_n_p[:]) and 1 == 2:
@@ -3734,8 +3740,10 @@ def Poisson_Schrodinger_DD_test(result, model):
         Ld_n_p[i] = sqrt(eps[i] * Vt / (q * abs(dop[i])))
         Ldi[i] = sqrt(eps[i] * Vt / (q * ni[i]))
         Half_Eg[i] = (fi_e[i] - fi_h[i]) / 2
-        fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
-        fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+        fi_e[i] = fi_e[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
+        fi_h[i] = fi_h[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
+        # fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+        # fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
     n = result.nf_result / ni
     p = result.pf_result / ni
     if dx > min(Ld_n_p[:]) and 1 == 2:
@@ -4172,8 +4180,10 @@ def Poisson_Schrodinger_DD_test_2(result, model):
         if dop[i] == 1:
             dop[i] *= ni[i]
         Half_Eg[i] = (fi_e[i] - fi_h[i]) / 2
-        fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
-        fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+        fi_e[i] = fi_e[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
+        fi_h[i] = fi_h[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
+        # fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
+        # fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
     n = result.nf_result / ni
     p = result.pf_result / ni
     if dx > min(Ld_n_p[:]) and 1 == 2:
