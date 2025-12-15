@@ -1,0 +1,73 @@
+{
+    "layers": [
+        {
+            "material": "InP",
+            "mole": "0.0",
+            "thickness": "200.0",
+            "doping": "5.0e+17",
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "InGaAsP",
+            "mole": "0.923",
+            "thickness": "2.0",
+            "doping": "5.0e+17",
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "InGaAsP",
+            "mole": "0.485",
+            "thickness": "2.0",
+            "doping": "0.0e+00",
+            "doping_type": "p",
+            "type": "well"
+        },
+        {
+            "material": "InGaAsP",
+            "mole": "0.923",
+            "thickness": "3.8",
+            "doping": "0.0e+00",
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "InGaAsP",
+            "mole": "0.485",
+            "thickness": "2.0",
+            "doping": "0.0e+00",
+            "doping_type": "n",
+            "type": "well"
+        },
+        {
+            "material": "InGaAsP",
+            "mole": "0.923",
+            "thickness": "2.0",
+            "doping": "5.0e+17",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "InP",
+            "mole": "0.0",
+            "thickness": "100.0",
+            "doping": "5.0e+17",
+            "doping_type": "n",
+            "type": "barrier"
+        }
+    ],
+    "temp": "300.0",
+    "field": "0.0",
+    "bc_left": "0.0",
+    "bc_right": "0.0",
+    "vmin": "0.0",
+    "vmax": "1.9",
+    "vstep": "0.05",
+    "solver": "2: Schrodinger-Poisson",
+    "grid_step": "0.1",
+    "max_pts": "200000",
+    "mat_sys": "Zincblende",
+    "sub_e": "1",
+    "sub_h": "1"
+}

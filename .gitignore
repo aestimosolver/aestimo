@@ -16,3 +16,7 @@ Thumbs.db
 #########
 *.profile
 *.log
+output/
+__pycache__/
+examples/*/
+!examples/*.json

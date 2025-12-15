@@ -1,0 +1,81 @@
+{
+    "layers": [
+        {
+            "material": "GaN",
+            "mole": "0.0",
+            "thickness": "100.0",
+            "doping": "5.0e+17",
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "AlGaInN",
+            "mole": "0.46",
+            "thickness": "2.0",
+            "doping": "5.0e+17",
+            "doping_type": "p",
+            "type": "well"
+        },
+        {
+            "material": "AlGaInN",
+            "mole": "0.48",
+            "thickness": "5.0",
+            "doping": "5.0e+17",
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "InGaN",
+            "mole": "0.23",
+            "thickness": "2.0",
+            "doping": "0.0e+00",
+            "doping_type": "p",
+            "type": "well"
+        },
+        {
+            "material": "AlGaInN",
+            "mole": "0.48",
+            "thickness": "2.0",
+            "doping": "0.0e+00",
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "InGaN",
+            "mole": "0.23",
+            "thickness": "2.0",
+            "doping": "0.0e+00",
+            "doping_type": "p",
+            "type": "well"
+        },
+        {
+            "material": "AlGaInN",
+            "mole": "0.48",
+            "thickness": "5.0",
+            "doping": "5.0e+17",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "GaN",
+            "mole": "0.0",
+            "thickness": "100.0",
+            "doping": "5.0e+17",
+            "doping_type": "n",
+            "type": "barrier"
+        }
+    ],
+    "temp": "300.0",
+    "field": "0.0",
+    "bc_left": "0.0",
+    "bc_right": "0.0",
+    "vmin": "0.0",
+    "vmax": "2.9",
+    "vstep": "0.05",
+    "solver": "9: Schrodinger-Poisson",
+    "grid_step": "0.5",
+    "max_pts": "200000",
+    "mat_sys": "Wurtzite",
+    "sub_e": "1",
+    "sub_h": "1"
+}

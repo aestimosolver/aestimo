@@ -1,0 +1,33 @@
+{
+    "layers": [
+        {
+            "material": "Si",
+            "mole": "0.1",
+            "thickness": "500",
+            "doping": "1.0e+19",
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "Si",
+            "mole": "0.1",
+            "thickness": "500",
+            "doping": "1.0e+19",
+            "doping_type": "n",
+            "type": "barrier"
+        }
+    ],
+    "temp": "300.0",
+    "field": "0.0",
+    "bc_left": "0.0",
+    "bc_right": "0.0",
+    "vmin": "0.0",
+    "vmax": "2.0",
+    "vstep": "0.05",
+    "solver": "2: Schrodinger-Poisson",
+    "grid_step": "1",
+    "max_pts": "200000",
+    "mat_sys": "Zincblende",
+    "sub_e": "1",
+    "sub_h": "1"
+}

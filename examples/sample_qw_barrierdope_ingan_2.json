@@ -1,0 +1,137 @@
+{
+    "layers": [
+        {
+            "material": "GaN",
+            "mole": "0.3",
+            "thickness": "30.0",
+            "doping": "2.0e+20",
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "AlGaN",
+            "mole": "0.14",
+            "thickness": "100.0",
+            "doping": "1.0e+20",
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "GaN",
+            "mole": "0.3",
+            "thickness": "50.0",
+            "doping": "5.0e+18",
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "AlGaN",
+            "mole": "0.2",
+            "thickness": "20.0",
+            "doping": "1.0e+19",
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "AlGaN",
+            "mole": "0.2",
+            "thickness": "10.0",
+            "doping": "7.0e+16",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "InGaN",
+            "mole": "0.02",
+            "thickness": "4.0",
+            "doping": "7.0e+16",
+            "doping_type": "n",
+            "type": "well"
+        },
+        {
+            "material": "AlGaN",
+            "mole": "0.2",
+            "thickness": "10.0",
+            "doping": "7.0e+16",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "InGaN",
+            "mole": "0.02",
+            "thickness": "4.0",
+            "doping": "7.0e+16",
+            "doping_type": "n",
+            "type": "well"
+        },
+        {
+            "material": "AlGaN",
+            "mole": "0.2",
+            "thickness": "10.0",
+            "doping": "7.0e+16",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "InGaN",
+            "mole": "0.02",
+            "thickness": "4.0",
+            "doping": "7.0e+16",
+            "doping_type": "n",
+            "type": "well"
+        },
+        {
+            "material": "AlGaN",
+            "mole": "0.2",
+            "thickness": "10.0",
+            "doping": "7.0e+16",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "GaN",
+            "mole": "0.3",
+            "thickness": "50.0",
+            "doping": "7.0e+17",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "AlGaN",
+            "mole": "0.14",
+            "thickness": "100.0",
+            "doping": "3.0e+18",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "InGaN",
+            "mole": "0.1",
+            "thickness": "50.0",
+            "doping": "3.0e+18",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "GaN",
+            "mole": "0.3",
+            "thickness": "100.0",
+            "doping": "3.0e+18",
+            "doping_type": "n",
+            "type": "barrier"
+        }
+    ],
+    "temp": "300.0",
+    "field": "0.0",
+    "bc_left": "0.0",
+    "bc_right": "0.0",
+    "vmin": "0.0",
+    "vmax": "3.1",
+    "vstep": "0.5",
+    "solver": "9: Schrodinger-Poisson",
+    "grid_step": "0.5",
+    "max_pts": "200000",
+    "mat_sys": "Wurtzite",
+    "sub_e": "1",
+    "sub_h": "1"
+}
