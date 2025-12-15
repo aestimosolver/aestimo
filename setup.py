@@ -36,7 +36,7 @@ setup(  name='aestimo',
         package_data={'aestimo':['CODE_OF_CONDUCT.md','README.md','COPYING.md',
                                  'aeslibs/*.py',
                                  'tutorials/*','examples/*.py']},
-        install_requires=['numpy>1.7.0','matplotlib','scipy'],
+        install_requires=['numpy>1.7.0','matplotlib','scipy', 'customtkinter'],
         zip_safe=False, #we want users to be able to easily see and edit the scripts
         #setup_requires=['numpy'], #causes problems with pip?
         )
