@@ -4603,7 +4603,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
 
 
 
-def run_aestimo(input_obj, drawFigures=drawFigures):
+def run_aestimo(input_obj, drawFigures=drawFigures, show=True):
     """A utility function that performs the standard simulation run
     for 'normal' input files. Input_obj can be a dict, class, named tuple or 
     module with the attributes needed to create the StructureFrom class, see 
@@ -4633,9 +4633,9 @@ def run_aestimo(input_obj, drawFigures=drawFigures):
     # Write the simulation results in files
     figures = None
     if model.comp_scheme in (2,7,8,10):
-        figures = save_and_plot(result, model, output_directory, drawFigures=drawFigures)
+        figures = save_and_plot(result, model, output_directory, drawFigures=drawFigures, show=show)
     if model.comp_scheme in (7,8,9):
-        figures = save_and_plot2(result_dd, model, output_directory, drawFigures=drawFigures)
+        figures = save_and_plot2(result_dd, model, output_directory, drawFigures=drawFigures, show=show)
     # Add to log
     logger.info("Simulation is finished. All files are closed. Please control the related files.")
     return input_obj, model, result, figures

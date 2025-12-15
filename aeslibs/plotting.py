@@ -13,7 +13,7 @@ Vt = kb * T / q  # [eV]
 J2meV = 1e3 / q  # Joules to meV
 
 
-def save_and_plot2(result, model, output_directory, drawFigures=False):
+def save_and_plot2(result, model, output_directory, drawFigures=False, show=True):
     xaxis = result.xaxis
 
     if not os.path.isdir(output_directory):
@@ -210,7 +210,8 @@ def save_and_plot2(result, model, output_directory, drawFigures=False):
         pl.title("Current vs voltage", fontsize=12)
         pl.legend(("Total Current"), loc="best", fontsize=12)
         pl.grid(True)
-        pl.show()
+        if show:
+            pl.show()
 
         fig3 = pl.figure(figsize=(10, 8))
         pl.suptitle(
@@ -272,7 +273,8 @@ def save_and_plot2(result, model, output_directory, drawFigures=False):
         pl.title("Quasi Fermi Levels (Efn (red) & Efp (bleu)) vs Position", fontsize=12)
         pl.legend(("Efn", "Efp"), loc="best", fontsize=12)
         pl.grid(True)
-        pl.show()
+        if show:
+            pl.show()
     
     if drawFigures:
         return [fig1, fig2, fig3]
@@ -280,7 +282,7 @@ def save_and_plot2(result, model, output_directory, drawFigures=False):
         return
 
 
-def save_and_plot(result, model, output_directory, drawFigures=False):
+def save_and_plot(result, model, output_directory, drawFigures=False, show=True):
 
     xaxis = result.xaxis
     
@@ -442,7 +444,8 @@ def save_and_plot(result, model, output_directory, drawFigures=False):
         pl.ylabel("Electron  & Hole  Densities [1/cm^3]")
         pl.title("Electron (red)& Hole (bleu) Densities vs Position ", fontsize=10)
         pl.grid(True)
-        pl.show()
+        if show:
+            pl.show()
     if drawFigures:
         return [fig1, fig2]
     else:

@@ -15,6 +15,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from aestimo import run_aestimo
 from database import materialproperty, alloyproperty
+import database
+import copy
 
 # Set theme
 customtkinter.set_appearance_mode("Dark")
@@ -86,6 +88,14 @@ class AestimoGUI(customtkinter.CTk):
         self.setup_solver_tab()
         self.setup_results_tab()
         self.setup_console_tab()
+
+        # --- Database Management ---
+        # Keep a deep copy of original dictionaries to allow reset
+        self.default_material_property = copy.deepcopy(database.materialproperty)
+        self.default_alloy_property = copy.deepcopy(database.alloyproperty)
+        
+        self.tab_database = self.tabview.add("Database")
+        self.setup_database_tab()
         
         # Auto-save default project to examples folder
         self.auto_save_default_project()
@@ -564,7 +574,7 @@ class AestimoGUI(customtkinter.CTk):
             # Ideally we'd refactor aestimo to return data objects, but that's huge work.
             # We try standard run.
             
-            input_obj, model, result, figures = run_aestimo(InputObject, drawFigures=True)
+            input_obj, model, result, figures = run_aestimo(InputObject, drawFigures=True, show=False)
             
             # Post results back to main thread
             self.after(0, self.finish_simulation, True, None, figures)
@@ -610,6 +620,180 @@ class AestimoGUI(customtkinter.CTk):
             toolbar = NavigationToolbar2Tk(canvas, fig_tabview.tab(name))
             toolbar.update()
             canvas.get_tk_widget().pack(fill="both", expand=True)
+
+
+    def setup_database_tab(self):
+        self.tab_database.grid_columnconfigure(0, weight=1)
+        self.tab_database.grid_rowconfigure(1, weight=1)
+
+        # Top Bar: Material Selection
+        top_frame = customtkinter.CTkFrame(self.tab_database)
+        top_frame.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
+        
+        customtkinter.CTkLabel(top_frame, text="Select Material/Alloy:").pack(side="left", padx=10)
+        
+        # Combine keys from both dictionaries
+        self.all_materials = sorted(list(database.materialproperty.keys()) + list(database.alloyproperty.keys()))
+        self.db_selector = customtkinter.CTkComboBox(top_frame, values=self.all_materials, command=self.update_material_editor, width=200)
+        self.db_selector.set(self.all_materials[0])
+        self.db_selector.pack(side="left", padx=10)
+
+        # Main Editor Area with Scrollbar
+        self.db_editor_frame = customtkinter.CTkScrollableFrame(self.tab_database, label_text="Properties Editor")
+        self.db_editor_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+        
+        self.db_entries = {} # store entry widgets reference
+
+        # Bottom Bar: Actions
+        action_frame = customtkinter.CTkFrame(self.tab_database)
+        action_frame.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+        
+        customtkinter.CTkButton(action_frame, text="Update In-Memory", command=self.update_db_in_memory, fg_color="#1F6AA5").pack(side="left", padx=10, pady=10)
+        customtkinter.CTkButton(action_frame, text="Save to File", command=self.save_database_to_file, fg_color="green").pack(side="left", padx=10, pady=10)
+        customtkinter.CTkButton(action_frame, text="Load from File", command=self.load_database_from_file, fg_color="#D35400").pack(side="left", padx=10, pady=10)
+        customtkinter.CTkButton(action_frame, text="Reset Defaults", command=self.reset_database_defaults, fg_color="#C0392B").pack(side="right", padx=10, pady=10)
+        
+        # Initial population
+        self.update_material_editor(self.all_materials[0])
+
+    def update_material_editor(self, choice):
+        # Clear existing
+        for widget in self.db_entries.values():
+            widget.destroy() # Actually this destroys the entry, but we need to clear rows inside frame.
+        
+        for widget in self.db_editor_frame.winfo_children():
+            widget.destroy()
+            
+        self.db_entries = {}
+        
+        # Determine source dict
+        if choice in database.materialproperty:
+            data = database.materialproperty[choice]
+            self.current_db_type = "material"
+        elif choice in database.alloyproperty:
+            data = database.alloyproperty[choice]
+            self.current_db_type = "alloy"
+        else:
+            return
+
+        # Generate inputs
+        for i, (key, value) in enumerate(sorted(data.items())):
+            row_frame = customtkinter.CTkFrame(self.db_editor_frame, fg_color="transparent")
+            row_frame.pack(fill="x", padx=5, pady=2)
+            
+            customtkinter.CTkLabel(row_frame, text=key, width=150, anchor="w").pack(side="left")
+            entry = customtkinter.CTkEntry(row_frame)
+            entry.insert(0, str(value))
+            entry.pack(side="left", fill="x", expand=True)
+            
+            self.db_entries[key] = entry
+
+    def update_db_in_memory(self):
+        mat_name = self.db_selector.get()
+        if not mat_name: return
+        
+        try:
+            target_dict = None
+            if self.current_db_type == "material":
+                target_dict = database.materialproperty[mat_name]
+            else:
+                target_dict = database.alloyproperty[mat_name]
+            
+            for key, entry in self.db_entries.items():
+                val_str = entry.get()
+                # Try to infer type: float, int, str
+                # Most are floats.
+                try:
+                    if "." in val_str or "e" in val_str.lower():
+                        val = float(val_str)
+                    else:
+                        try:
+                            val = int(val_str)
+                        except ValueError:
+                            val = val_str # keep as string
+                except ValueError:
+                     val = val_str # fallback
+                
+                target_dict[key] = val
+            
+            self.status_label.configure(text=f"Updated: {mat_name}", text_color="green")
+            tkinter.messagebox.showinfo("Update", f"Updated properties for {mat_name} in memory.")
+            
+        except Exception as e:
+            tkinter.messagebox.showerror("Error", str(e))
+
+    def save_database_to_file(self):
+        file_path = tkinter.filedialog.asksaveasfilename(
+            defaultextension=".json",
+            filetypes=[("Aestimo Database", "*.json")],
+            initialdir=self.examples_dir,
+            title="Save User Database"
+        )
+        if file_path:
+            try:
+                full_db = {
+                    "materialproperty": database.materialproperty,
+                    "alloyproperty": database.alloyproperty
+                }
+                with open(file_path, "w") as f:
+                    json.dump(full_db, f, indent=4)
+                tkinter.messagebox.showinfo("Success", "Database saved successfully.")
+            except Exception as e:
+                tkinter.messagebox.showerror("Error", str(e))
+
+    def load_database_from_file(self):
+        file_path = tkinter.filedialog.askopenfilename(
+            filetypes=[("Aestimo Database", "*.json")],
+            initialdir=self.examples_dir,
+            title="Load User Database"
+        )
+        if file_path:
+            try:
+                with open(file_path, "r") as f:
+                    full_db = json.load(f)
+                
+                if "materialproperty" in full_db:
+                    database.materialproperty.update(full_db["materialproperty"])
+                if "alloyproperty" in full_db:
+                    database.alloyproperty.update(full_db["alloyproperty"])
+                
+                # Refresh current view
+                self.update_material_editor(self.db_selector.get())
+                tkinter.messagebox.showinfo("Success", "Database loaded and updated in memory.")
+            except Exception as e:
+                tkinter.messagebox.showerror("Error", str(e))
+
+    def reset_database_defaults(self):
+        if not tkinter.messagebox.askyesno("Reset", "Are you sure you want to revert all database changes to default?"):
+            return
+            
+        # Restore from deep copies
+        database.materialproperty = copy.deepcopy(self.default_material_property)
+        database.alloyproperty = copy.deepcopy(self.default_alloy_property)
+        
+        # We also need to update the module level variable if possible, 
+        # but since we did `import database`, `database.materialproperty = ...` updates the name in that module object.
+        # But `from database import materialproperty` creates a local name in this file which won't auto-update if we reassign `database.materialproperty`.
+        # However, `aestimo_gui.py` imports them locally too. 
+        # WARNING: In `aestimo_gui.py`, we have `from database import materialproperty, alloyproperty`.
+        # The `add_layer` method uses `materialproperty` global (local to this file) directly.
+        # This means modifying `database.materialproperty` WON'T affect the local `materialproperty` name here unless we update it too.
+        # FIX: We should update the local names or use `database.materialproperty` everywhere.
+        # Better: Update local names here too.
+        
+        # Wait, Python modules: `database.materialproperty` is a dict. mutating it works.
+        # Re-assigning `database.materialproperty = new_dict` breaks reference for others holding the old dict.
+        # Best approach: Clear and update the EXISTING dictionary objects to preserve references.
+        
+        self._restore_dict(database.materialproperty, self.default_material_property)
+        self._restore_dict(database.alloyproperty, self.default_alloy_property)
+
+        self.update_material_editor(self.db_selector.get())
+        tkinter.messagebox.showinfo("Reset", "Database reset to defaults.")
+
+    def _restore_dict(self, target, source):
+        target.clear()
+        target.update(source)
 
     def poll_log_file(self):
         """Simple poller to read aestimo.log and update console"""
