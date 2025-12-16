@@ -468,7 +468,7 @@ class AestimoGUI(customtkinter.CTk):
         try:
             # Set output directory based on project name
             import aestimo
-            output_dir = os.path.join(self.examples_dir, self.project_name)
+            output_dir = os.path.join(self.examples_dir, self.project_name + "_output")
             if not os.path.isdir(output_dir):
                 os.makedirs(output_dir, exist_ok=True)
             aestimo.output_directory = output_dir

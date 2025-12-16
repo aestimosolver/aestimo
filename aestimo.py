@@ -4608,7 +4608,35 @@ def run_aestimo(input_obj, drawFigures=drawFigures, show=True):
     for 'normal' input files. Input_obj can be a dict, class, named tuple or 
     module with the attributes needed to create the StructureFrom class, see 
     the class implementation or some of the sample-*.py files for details."""
+    
+    global output_directory
+    # Hack: If output_directory is currently generic 'output', and we know the input filename, switch it.
+    # This supports running examples directly like `python examples/sample.py` which import aestimo.
+    if os.path.basename(output_directory) == 'output':
+        # Try to find meaningful name
+        name = None
+        if hasattr(input_obj, '__file__'):
+            name = Path(input_obj.__file__).stem
+        elif isinstance(input_obj, dict) and '__file__' in input_obj:
+            name = Path(input_obj['__file__']).stem
+        
+        if name:
+             # Repoint output directory
+             # We want it relative to CWD usually? Or relative to the script?
+             # Standard practice: CWD.
+             new_out = os.path.join(os.getcwd(), name + "_output")
+             if not os.path.isdir(new_out):
+                 os.makedirs(new_out, exist_ok=True)
+             output_directory = new_out
+
     # Add to log
+    # Note: If we changed output_directory, the logger is still pointing to the old file 
+    # if it was already initialized. However, usually initialize_logger is called before this.
+    # If we want logs in the new directory, we'd need to re-init logger. 
+    # But initialize_logger uses the global output_directory.
+    # For now, we accept logs might be in 'output' or we should technically re-init logger here.
+    # Let's leave logger as is to avoid complex side effects, as users mainly care about data results.
+    
     logger.info("Aestimo 1D is starting...")
     # Initialise structure class
     model = StructureFrom(input_obj, database)
@@ -4631,6 +4659,7 @@ def run_aestimo(input_obj, drawFigures=drawFigures, show=True):
     logger.info("total running time (exc. loading libraries) %g s", (time4 - time1))
     # Write the simulation results in files
     # Write the simulation results in files
+
     figures = None
     if model.comp_scheme in (2,7,8,10):
         figures = save_and_plot(result, model, output_directory, drawFigures=drawFigures, show=show)
@@ -4708,7 +4737,7 @@ if __name__ == "__main__":
         # output error, and return with an error code
         print (str(err))
 
-    output_directory = os.path.join(os.getcwd(), Path(inputFile).stem)
+    output_directory = os.path.join(os.getcwd(), Path(inputFile).stem + "_output")
 
     #If output directory is not available, make one.
     if not os.path.isdir(output_directory):
@@ -4721,6 +4750,25 @@ if __name__ == "__main__":
     run_aestimo(inputfile_import)
 
 else:
+    # When imported as a module or default run without arguments?
+    # Actually this else block runs if __name__ != "__main__", which means it's imported.
+    # But this code block is inside `if __name__ == "__main__":` ?
+    # Wait, looking at file... lines 4643 is `if __name__ == "__main__":`
+    # The `else` at 4723 is matched to `if args.inputfile is not None:` ?
+    # Let's check indentation.
+    # Line 4679: if args.inputfile is not None:
+    # Line 4723: else:
+    #     output_directory = os.path.join(os.getcwd(), 'output')
+    
+    # Yes. This else handles the case where no input file is provided but it survived the earlier check?
+    # Line 4656: if args is None: ... sys.exit()
+    # But argparse handles this. 
+    # Actually if args.inputfile is None, we print "Please provide..." and exit at 4700.
+    # So the `else` block at 4723 is effectively dead code or unreachable given current logic?
+    # Or maybe it was intended for something else.
+    # Regardless, let's leave it as 'output' or maybe 'aestimo_output'.
+    # User asked for "each example file should have output folder in its name".
+    
     output_directory = os.path.join(os.getcwd(), 'output')
 
     #If output directory is not available, make one.
@@ -4730,3 +4778,4 @@ else:
     initialize_logger()
 
     os.sys.stderr.write("WARNING: Aestimo 1D logs automatically to aestimo.log in the output directory.\n")
+

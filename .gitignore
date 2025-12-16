@@ -20,3 +20,7 @@ output/
 __pycache__/
 examples/*/
 !examples/*.json
+build/
+*.egg-info/
+*_output/
+

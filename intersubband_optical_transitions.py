@@ -145,7 +145,7 @@ Keep track of whether you are dealing with real or natural frequencies.
 """
 
 import numpy as np
-from scipy.integrate import simps
+from scipy.integrate import simpson as simps
 import matplotlib.pyplot as pl
 from itertools import combinations,permutations
 import types
