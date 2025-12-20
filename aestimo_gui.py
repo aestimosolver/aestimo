@@ -14,7 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from aestimo import run_aestimo
-from database import materialproperty, alloyproperty
+from database import materialproperty, alloyproperty, alloyproperty4
 import database
 import copy
 
@@ -93,6 +93,7 @@ class AestimoGUI(customtkinter.CTk):
         # Keep a deep copy of original dictionaries to allow reset
         self.default_material_property = copy.deepcopy(database.materialproperty)
         self.default_alloy_property = copy.deepcopy(database.alloyproperty)
+        self.default_alloy_property4 = copy.deepcopy(database.alloyproperty4)
         
         self.tab_database = self.tabview.add("Database")
         self.setup_database_tab()
@@ -262,7 +263,7 @@ class AestimoGUI(customtkinter.CTk):
         frame.pack(fill="x", padx=5, pady=5)
         
         # Material
-        materials = sorted(list(materialproperty.keys()) + list(alloyproperty.keys()))
+        materials = sorted(list(materialproperty.keys()) + list(alloyproperty.keys()) + list(alloyproperty4.keys()))
         mat_option = customtkinter.CTkOptionMenu(frame, values=materials, width=100)
         mat_option.set(material)
         mat_option.grid(row=0, column=0, padx=5, pady=5)
@@ -466,6 +467,11 @@ class AestimoGUI(customtkinter.CTk):
 
     def run_simulation_worker(self, config):
         try:
+            # Set backend to Agg to avoid main thread loop errors when plotting in thread
+            import matplotlib
+            matplotlib.use('Agg', force=True)
+            import matplotlib.pyplot as plt
+            
             # Set output directory based on project name
             import aestimo
             output_dir = os.path.join(self.examples_dir, self.project_name + "_output")
@@ -632,11 +638,15 @@ class AestimoGUI(customtkinter.CTk):
         
         customtkinter.CTkLabel(top_frame, text="Select Material/Alloy:").pack(side="left", padx=10)
         
-        # Combine keys from both dictionaries
-        self.all_materials = sorted(list(database.materialproperty.keys()) + list(database.alloyproperty.keys()))
+        # Combine keys from all dictionaries
+        self.all_materials = sorted(list(database.materialproperty.keys()) + 
+                                   list(database.alloyproperty.keys()) + 
+                                   list(database.alloyproperty4.keys()))
         self.db_selector = customtkinter.CTkComboBox(top_frame, values=self.all_materials, command=self.update_material_editor, width=200)
         self.db_selector.set(self.all_materials[0])
         self.db_selector.pack(side="left", padx=10)
+        
+        customtkinter.CTkButton(top_frame, text="+ New", command=self.add_new_material_dialog, width=80, fg_color="green").pack(side="left", padx=5)
 
         # Main Editor Area with Scrollbar
         self.db_editor_frame = customtkinter.CTkScrollableFrame(self.tab_database, label_text="Properties Editor")
@@ -673,6 +683,9 @@ class AestimoGUI(customtkinter.CTk):
         elif choice in database.alloyproperty:
             data = database.alloyproperty[choice]
             self.current_db_type = "alloy"
+        elif choice in database.alloyproperty4:
+            data = database.alloyproperty4[choice]
+            self.current_db_type = "quaternary"
         else:
             return
 
@@ -693,11 +706,12 @@ class AestimoGUI(customtkinter.CTk):
         if not mat_name: return
         
         try:
-            target_dict = None
             if self.current_db_type == "material":
                 target_dict = database.materialproperty[mat_name]
-            else:
+            elif self.current_db_type == "alloy":
                 target_dict = database.alloyproperty[mat_name]
+            else:
+                target_dict = database.alloyproperty4[mat_name]
             
             for key, entry in self.db_entries.items():
                 val_str = entry.get()
@@ -733,7 +747,8 @@ class AestimoGUI(customtkinter.CTk):
             try:
                 full_db = {
                     "materialproperty": database.materialproperty,
-                    "alloyproperty": database.alloyproperty
+                    "alloyproperty": database.alloyproperty,
+                    "alloyproperty4": database.alloyproperty4
                 }
                 with open(file_path, "w") as f:
                     json.dump(full_db, f, indent=4)
@@ -756,6 +771,8 @@ class AestimoGUI(customtkinter.CTk):
                     database.materialproperty.update(full_db["materialproperty"])
                 if "alloyproperty" in full_db:
                     database.alloyproperty.update(full_db["alloyproperty"])
+                if "alloyproperty4" in full_db:
+                    database.alloyproperty4.update(full_db["alloyproperty4"])
                 
                 # Refresh current view
                 self.update_material_editor(self.db_selector.get())
@@ -770,6 +787,7 @@ class AestimoGUI(customtkinter.CTk):
         # Restore from deep copies
         database.materialproperty = copy.deepcopy(self.default_material_property)
         database.alloyproperty = copy.deepcopy(self.default_alloy_property)
+        database.alloyproperty4 = copy.deepcopy(self.default_alloy_property4)
         
         # We also need to update the module level variable if possible, 
         # but since we did `import database`, `database.materialproperty = ...` updates the name in that module object.
@@ -787,6 +805,7 @@ class AestimoGUI(customtkinter.CTk):
         
         self._restore_dict(database.materialproperty, self.default_material_property)
         self._restore_dict(database.alloyproperty, self.default_alloy_property)
+        self._restore_dict(database.alloyproperty4, self.default_alloy_property4)
 
         self.update_material_editor(self.db_selector.get())
         tkinter.messagebox.showinfo("Reset", "Database reset to defaults.")
@@ -817,6 +836,52 @@ class AestimoGUI(customtkinter.CTk):
             pass
         finally:
             self.after(2000, self.poll_log_file) # Poll every 2s
+
+    def add_new_material_dialog(self):
+        """Opens a dialog to add a new material entry"""
+        dialog = customtkinter.CTkInputDialog(text="Enter unique name for new material/alloy:", title="New Entry")
+        name = dialog.get_input()
+        
+        if name:
+            if name in self.all_materials:
+                tkinter.messagebox.showerror("Error", "Material name already exists.")
+                return
+            
+            # Simple Selection for Type
+            type_dialog = customtkinter.CTkToplevel(self)
+            type_dialog.title("Select Type")
+            type_dialog.geometry("300x200")
+            type_dialog.after(10, type_dialog.focus_force)
+            
+            customtkinter.CTkLabel(type_dialog, text=f"Select category for '{name}':").pack(pady=20)
+            
+            def select_type(t):
+                if t == "Material":
+                    database.materialproperty[name] = copy.deepcopy(database.materialproperty["GaAs"])
+                elif t == "Alloy":
+                    database.alloyproperty[name] = copy.deepcopy(database.alloyproperty["AlGaAs"])
+                else:
+                    database.alloyproperty4[name] = copy.deepcopy(database.alloyproperty4["InGaAsP"])
+                
+                # Refresh UI
+                self.all_materials = sorted(list(database.materialproperty.keys()) + 
+                                           list(database.alloyproperty.keys()) + 
+                                           list(database.alloyproperty4.keys()))
+                self.db_selector.configure(values=self.all_materials)
+                self.db_selector.set(name)
+                self.update_material_editor(name)
+                
+                # Update Structure Dropdowns (global ref in this file)
+                # Note: add_layer dynamically builds this list, so future adds are okay.
+                # However, existing layers won't see the new values in their OptionMenus 
+                # unless we refresh them all. For now, new layers will have it.
+                
+                type_dialog.destroy()
+                tkinter.messagebox.showinfo("Success", f"Added '{name}' as {t}. Please edit its properties and Save.")
+
+            customtkinter.CTkButton(type_dialog, text="Material (Base)", command=lambda: select_type("Material")).pack(pady=5)
+            customtkinter.CTkButton(type_dialog, text="Alloy (Ternary)", command=lambda: select_type("Alloy")).pack(pady=5)
+            customtkinter.CTkButton(type_dialog, text="Quaternary", command=lambda: select_type("Quaternary")).pack(pady=5)
 
 if __name__ == "__main__":
     app = AestimoGUI()
