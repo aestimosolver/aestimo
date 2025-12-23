@@ -159,15 +159,24 @@ class Structure:
         self.alloy_property_4 = database.alloyproperty4
         totalalloy += alen(self.alloy_property_4)
 
-        logger.info(
-            "Total material number in database: %d", (totalmaterial + totalalloy)
-        )
+        if not hasattr(self, 'mat_crys_strc'):
+             self.mat_crys_strc = getattr(self, 'mat_type', 'Zincblende')
+        
+        if not hasattr(self, 'material'):
+             # If material list is missing, we assume arrays are provided manually
+             # We just need to ensure standard attributes exist
+             self.n_max = getattr(self, 'n_max', 0)
+             if hasattr(self, 'fi') and not hasattr(self, 'fi_e'):
+                 self.fi_e = self.fi
+             return
+
+        self.create_structure_arrays()
 
     def create_structure_arrays(self):
         """ initialise arrays/lists for structure"""
         # self.N_wells_real0=sum(sum(np.char.count(self.material,'w')))
         self.N_wells_real0 = sum(
-            np.char.count([layer[6] for layer in self.material], "w")
+            [1 for layer in self.material if len(layer) > 6 and layer[6] == "w"]
         )
         self.N_layers_real0 = len(
             self.material
@@ -1112,7 +1121,21 @@ class Structure:
                         * 1e-12
                     )
             # wells and barriers boundaries
-            matRole = layer[6]
+            if len(layer) == 5:
+                # [thickness, material, alloy, doping, type]
+                matDope = layer[3]
+                matType = layer[4]
+                matRole = "b"
+            elif len(layer) == 6:
+                # [thickness, material, alloy1, alloy2, doping, type]
+                matDope = layer[4]
+                matType = layer[5]
+                matRole = "b"
+            else:
+                matDope = layer[4] if len(layer) > 4 else 0.0
+                matType = layer[5] if len(layer) > 5 else "n"
+                matRole = layer[6] if len(layer) > 6 else "b"
+
             if matRole == "w":
                 N_wells_real2 += 1
                 Well_boundary2[N_wells_real2, 0] = startindex
@@ -1125,15 +1148,16 @@ class Structure:
                 barrier_boundary[J, 1] = Well_boundary2[J, 0]
                 barrier_len[J] = barrier_boundary[J, 1] - barrier_boundary[J, 0]
             # doping
-
+            if len(self.dop_profile) != self.n_max:
+                self.dop_profile = np.zeros(self.n_max)
             dop_profile = self.dop_profile
-            if layer[5] == "n":
+            if matType == "n":
                 dop[startindex:finishindex] = (
-                    layer[4] * 1e6 + dop_profile[startindex:finishindex] + 1
+                    matDope * 1e6 + dop_profile[startindex:finishindex] + 1
                 )  # charge density in m**-3 (conversion from cm**-3)
-            elif layer[5] == "p":
+            elif matType == "p":
                 dop[startindex:finishindex] = (
-                    -layer[4] * 1e6 + dop_profile[startindex:finishindex] - 1
+                    -matDope * 1e6 + dop_profile[startindex:finishindex] - 1
                 )  # charge density in m**-3 (conversion from cm**-3)
             else:
                 dop[startindex:finishindex] = dop_profile[startindex:finishindex] + 1
@@ -1257,21 +1281,35 @@ class StructureFrom(Structure):
         if type(inputfile) == dict:
             inputfile = AttrDict(inputfile)
         # Parameters for simulation
-        self.Fapp = inputfile.Fapplied
-        self.vmax = inputfile.vmax
-        self.vmin = inputfile.vmin
-        self.Each_Step = inputfile.Each_Step
-        self.surface = inputfile.surface
-        self.T = inputfile.T
-        self.subnumber_h = inputfile.subnumber_h
-        self.subnumber_e = inputfile.subnumber_e
-        self.comp_scheme = inputfile.computation_scheme
-        self.dx = inputfile.gridfactor * 1e-9  # grid in m
-        self.maxgridpoints = inputfile.maxgridpoints
-        self.mat_crys_strc = inputfile.mat_type
+        defaults = {
+            'Fapplied': 0.0,
+            'vmax': 0.0,
+            'vmin': 0.0,
+            'Each_Step': 0.1,
+            'surface': [0.0, 0.0],
+            'T': 300.0,
+            'subnumber_h': 1,
+            'subnumber_e': 1,
+            'computation_scheme': 0,
+            'gridfactor': 0.1,
+            'maxgridpoints': 200000,
+            'mat_type': 'Zincblende',
+            'dop_profile': np.zeros(1),
+            'Quantum_Regions_boundary': np.zeros((1, 2)),
+            'Quantum_Regions': False
+        }
+        for key, default in defaults.items():
+            val = getattr(inputfile, key, default)
+            setattr(self, key if key != 'Fapplied' else 'Fapp', val)
+        
+        # Mapping compatibility
+        self.comp_scheme = self.computation_scheme
+        self.dx = getattr(inputfile, 'gridfactor', 0.1) * 1e-9  # grid in m
+        self.mat_crys_strc = self.mat_type
+        
         # Loading material list
         self.material = inputfile.material
-        self.inputfilename=inputfile
+        self.inputfilename = inputfile
         totallayer = alen(self.material)
 
         # Add to log
@@ -1283,11 +1321,8 @@ class StructureFrom(Structure):
         )  # total thickness (m)
         self.n_max = int(self.x_max / self.dx)
         # Check on n_max
-        max_val = inputfile.maxgridpoints
+        max_val = self.maxgridpoints
 
-        self.dop_profile = inputfile.dop_profile
-        self.Quantum_Regions_boundary = inputfile.Quantum_Regions_boundary
-        self.Quantum_Regions = inputfile.Quantum_Regions
         if self.n_max > max_val:
             logger.error("Grid number is exceeding the max number of %d", max_val)
             sys.exit()
@@ -4021,6 +4056,17 @@ def Poisson_Schrodinger_DD_test(result, model):
 
 
 def Poisson_Schrodinger_DD_test_2(result, model):
+    # Initialize all potential result variables to avoid UnboundLocalError
+    # We must be careful to define them before any potential access
+    n_max = model.n_max
+    Va_t = np.zeros(1)
+    Efn_result = Efp_result = Ei_result = Ec_result = Ev_result = np.zeros(n_max)
+    ro_result = el_field1_result = el_field2_result = nf_result = pf_result = np.zeros(n_max)
+    fi_result = np.zeros(n_max)
+    av_curr = np.zeros(1)
+    EF = fi_va = Ec_result_ = Ev_result_ = None
+    Total_Steps = 1
+    
     fi = result.fi_result
     E_state_general = result.E_state_general
     meff_state_general = result.meff_state_general
@@ -4559,10 +4605,10 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     results.V = V
     results.E_state = E_state
     results.N_state = N_state
-    # results.meff_state = meff_state
+    results.meff_state = meff_state
     results.E_statec = E_statec
     results.N_statec = N_statec
-    # results.meff_statec = meff_statec
+    results.meff_statec = meff_statec
     results.F_general = F_general
     results.E_state_general = idata.E_state_general
     results.N_state_general = N_state_general

@@ -146,7 +146,7 @@ s0['fi'] = bandstructure_profile(alloy_profile(z))   #Bandstructure potential
                  #comp_scheme,meff_scheme,fermi_np_scheme, #model choices
                  #cb_meff_alpha=None,Eg=None,Ep=None,F=None,delta_S0=None, #optional arrays
                  #**kwargs)
-model = aestimo.Structure(**s0)
+model = aestimo.Structure(database, **s0)
 
 ## -----------------------------------------------------------------------------
 

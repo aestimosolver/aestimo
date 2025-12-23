@@ -13,7 +13,7 @@ Vt = kb * T / q  # [eV]
 J2meV = 1e3 / q  # Joules to meV
 
 
-def save_and_plot2(result, model, output_directory, drawFigures=False, show=True):
+def save_and_plot2(result, model, output_directory='output', drawFigures=False, show=True):
     xaxis = result.xaxis
 
     if not os.path.isdir(output_directory):
@@ -279,10 +279,10 @@ def save_and_plot2(result, model, output_directory, drawFigures=False, show=True
     if drawFigures:
         return [fig1, fig2, fig3]
     else:
-        return
+        return [None, None, None]
 
 
-def save_and_plot(result, model, output_directory, drawFigures=False, show=True):
+def save_and_plot(result, model, output_directory='output', drawFigures=False, show=True):
 
     xaxis = result.xaxis
     
@@ -447,6 +447,6 @@ def save_and_plot(result, model, output_directory, drawFigures=False, show=True)
         if show:
             pl.show()
     if drawFigures:
-        return [fig1, fig2]
+        return [fig1, fig2, None]
     else:
-        return
+        return [None, None, None]

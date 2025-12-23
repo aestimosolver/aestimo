@@ -123,7 +123,7 @@ def  DDNnewtonmap (ni,fi_e,fi_h,xaxis,idata,toll,maxit,verbose,model,Vt):
     RHS=-np.hstack(( r1, r2, r3))
 
     ##  Apply BCs
-    RHS=np.delete(RHS, BCnodes, 0)
+    RHS=np.delete(RHS, BCnodes.astype(int), 0)
     nrm = np.linalg.norm(RHS,np.inf)
     res=np.zeros(maxit)
     res[0] = nrm
@@ -150,8 +150,8 @@ def  DDNnewtonmap (ni,fi_e,fi_h,xaxis,idata,toll,maxit,verbose,model,Vt):
         ## Build LHS
         LHS= np.asarray(np.bmat([(A,	B, C),(DDD, E, F),(G, H, I)]))
         ## Apply BCs
-        LHS=np.delete(LHS, BCnodes, 0)
-        LHS=np.delete(LHS, BCnodes, 1)        
+        LHS=np.delete(LHS, BCnodes.astype(int), 0)
+        LHS=np.delete(LHS, BCnodes.astype(int), 1)        
         ## Solve the linearised system
         dutmp= np.linalg.solve(LHS, RHS)#, rcond=None)[0]
         dv    = dutmp[0:totaldofs]
@@ -197,7 +197,7 @@ def  DDNnewtonmap (ni,fi_e,fi_h,xaxis,idata,toll,maxit,verbose,model,Vt):
           RHS=-np.hstack(( r1, r2, r3))
 
           ## Apply BCs
-          RHS=np.delete(RHS, BCnodes, 0)
+          RHS=np.delete(RHS, BCnodes.astype(int), 0)
           nrmtmp=np.linalg.norm(RHS,np.inf)
           
           ## Update the damping coefficient
