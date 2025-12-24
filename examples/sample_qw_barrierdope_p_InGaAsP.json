@@ -11,6 +11,7 @@
         {
             "material": "InGaAsP",
             "mole": "0.923",
+            "mole_y": "0.325",
             "thickness": "2.0",
             "doping": "5.0e+17",
             "doping_type": "p",
@@ -19,6 +20,7 @@
         {
             "material": "InGaAsP",
             "mole": "0.485",
+            "mole_y": "0.979",
             "thickness": "2.0",
             "doping": "0.0e+00",
             "doping_type": "p",
@@ -27,6 +29,7 @@
         {
             "material": "InGaAsP",
             "mole": "0.923",
+            "mole_y": "0.325",
             "thickness": "3.8",
             "doping": "0.0e+00",
             "doping_type": "p",
@@ -35,6 +38,7 @@
         {
             "material": "InGaAsP",
             "mole": "0.485",
+            "mole_y": "0.979",
             "thickness": "2.0",
             "doping": "0.0e+00",
             "doping_type": "n",
@@ -43,6 +47,7 @@
         {
             "material": "InGaAsP",
             "mole": "0.923",
+            "mole_y": "0.325",
             "thickness": "2.0",
             "doping": "5.0e+17",
             "doping_type": "n",

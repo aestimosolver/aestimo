@@ -257,7 +257,7 @@ class AestimoGUI(customtkinter.CTk):
         
         setattr(self, var_name, entry)
 
-    def add_layer(self, material="GaAs", thickness=10, type="barrier", mole=0.0, doping=0.0, doping_type="n"):
+    def add_layer(self, material="GaAs", thickness=10, type="barrier", mole=0.0, mole_y=0.0, doping=0.0, doping_type="n"):
         row = len(self.layer_widgets)
         frame = customtkinter.CTkFrame(self.layers_frame)
         frame.pack(fill="x", padx=5, pady=5)
@@ -274,36 +274,43 @@ class AestimoGUI(customtkinter.CTk):
         mole_entry.insert(0, str(mole))
         mole_entry.grid(row=0, column=2, padx=5)
 
+        # Mole Y (for Quaternary)
+        customtkinter.CTkLabel(frame, text="y=").grid(row=0, column=3)
+        mole_y_entry = customtkinter.CTkEntry(frame, width=50)
+        mole_y_entry.insert(0, str(mole_y))
+        mole_y_entry.grid(row=0, column=4, padx=5)
+
         # Thickness
         tk_entry = customtkinter.CTkEntry(frame, width=70)
         tk_entry.insert(0, str(thickness))
-        tk_entry.grid(row=0, column=3, padx=5)
-        customtkinter.CTkLabel(frame, text="nm").grid(row=0, column=4)
+        tk_entry.grid(row=0, column=5, padx=5)
+        customtkinter.CTkLabel(frame, text="nm").grid(row=0, column=6)
 
         # Doping
         dop_entry = customtkinter.CTkEntry(frame, width=80)
         dop_entry.insert(0, f"{doping:.1e}")
-        dop_entry.grid(row=0, column=5, padx=5)
-        customtkinter.CTkLabel(frame, text="cm⁻³").grid(row=0, column=6)
+        dop_entry.grid(row=0, column=7, padx=5)
+        customtkinter.CTkLabel(frame, text="cm⁻³").grid(row=0, column=8)
 
         # Dop Type
         dop_type_opt = customtkinter.CTkOptionMenu(frame, values=["n", "p", "i"], width=60)
         dop_type_opt.set(doping_type)
-        dop_type_opt.grid(row=0, column=7, padx=5)
+        dop_type_opt.grid(row=0, column=9, padx=5)
 
         # Layer Type
         type_opt = customtkinter.CTkOptionMenu(frame, values=["barrier", "well"], width=90)
         type_opt.set(type)
-        type_opt.grid(row=0, column=8, padx=5)
+        type_opt.grid(row=0, column=10, padx=5)
         
         # Remove
         btn = customtkinter.CTkButton(frame, text="×", width=30, fg_color="#C0392B", command=lambda f=frame: self.remove_layer(f))
-        btn.grid(row=0, column=9, padx=10)
+        btn.grid(row=0, column=11, padx=10)
         
         self.layer_widgets.append({
             "frame": frame,
             "mat": mat_option,
             "mole": mole_entry,
+            "mole_y": mole_y_entry,
             "thick": tk_entry,
             "dop": dop_entry,
             "dop_type": dop_type_opt,
@@ -330,6 +337,7 @@ class AestimoGUI(customtkinter.CTk):
             layers_data.append({
                 "material": w["mat"].get(),
                 "mole": w["mole"].get(),
+                "mole_y": w["mole_y"].get(),
                 "thickness": w["thick"].get(),
                 "doping": w["dop"].get(),
                 "doping_type": w["dop_type"].get(),
@@ -366,6 +374,7 @@ class AestimoGUI(customtkinter.CTk):
                 thickness=float(l["thickness"]), # Ensure float cast if needed later, add_layer takes raw usually but we pass strings to entries
                 type=l["type"],
                 mole=float(l["mole"]),
+                mole_y=float(l.get("mole_y", 0.0)),
                 doping=float(l["doping"]),
                 doping_type=l["doping_type"]
             )
@@ -487,6 +496,7 @@ class AestimoGUI(customtkinter.CTk):
                 th = float(l["thickness"])
                 mat = l["material"]
                 x = float(l["mole"])
+                y = float(l.get("mole_y", 0.0))
                 dop = float(l["doping"])
                 dtype = l["doping_type"] # user visible type 'n','p'
                 ltype = l["type"][0]
@@ -497,7 +507,7 @@ class AestimoGUI(customtkinter.CTk):
                 
                 if dtype == "i": dtype = "n"
                 
-                material_list.append([th, mat, x, 0.0, dop, dtype, ltype])
+                material_list.append([th, mat, x, y, dop, dtype, ltype])
 
             if not material_list:
                 raise ValueError("Structure is empty.")

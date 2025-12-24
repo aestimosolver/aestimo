@@ -11,6 +11,7 @@
         {
             "material": "AlGaInN",
             "mole": "0.48",
+            "mole_y": "0.23",
             "thickness": "2.0",
             "doping": "1.0e+17",
             "doping_type": "p",
@@ -27,6 +28,7 @@
         {
             "material": "AlGaInN",
             "mole": "0.48",
+            "mole_y": "0.23",
             "thickness": "3.0",
             "doping": "0.0e+00",
             "doping_type": "i",
@@ -43,6 +45,7 @@
         {
             "material": "AlGaInN",
             "mole": "0.48",
+            "mole_y": "0.23",
             "thickness": "2.0",
             "doping": "1.0e+17",
             "doping_type": "n",
