@@ -121,6 +121,16 @@ class AestimoGUI(customtkinter.CTk):
                                                        fg_color="gray", width=150)
         self.add_subtrate_btn.pack(side="left", padx=10, pady=5)
 
+        self.preview_btn = customtkinter.CTkButton(tools_frame, text="Preview Bands", 
+                                                   command=self.preview_band_structure, 
+                                                   fg_color="#D35400", hover_color="#A04000", width=120)
+        self.preview_btn.pack(side="left", padx=10, pady=5)
+
+        self.browse_mat_btn = customtkinter.CTkButton(tools_frame, text="Browse Materials", 
+                                                      command=self.open_material_browser, 
+                                                      fg_color="#16A085", hover_color="#117A65", width=140)
+        self.browse_mat_btn.pack(side="left", padx=10, pady=5)
+
         self.clear_btn = customtkinter.CTkButton(tools_frame, text="Clear All", command=self.clear_layers, fg_color="#D94848", hover_color="#A02020", width=80)
         self.clear_btn.pack(side="right", padx=10, pady=5)
 
@@ -636,6 +646,290 @@ class AestimoGUI(customtkinter.CTk):
             toolbar = NavigationToolbar2Tk(canvas, fig_tabview.tab(name))
             toolbar.update()
             canvas.get_tk_widget().pack(fill="both", expand=True)
+            
+            # Interactive Cursor (Hover)
+            # Initialize annotation for each axes
+            for ax in fig.axes:
+                # Create an annotation that starts invisible
+                annot = ax.annotate("", xy=(0,0), xytext=(20,20), textcoords="offset points",
+                                bbox=dict(boxstyle="round", fc="w"),
+                                arrowprops=dict(arrowstyle="->"))
+                annot.set_visible(False)
+                # Store annot in ax object to access in callback
+                ax.annot = annot
+            
+            canvas.mpl_connect("motion_notify_event", lambda event, c=canvas: self.on_plot_hover(event, c))
+
+    def on_plot_hover(self, event, canvas):
+        if event.inaxes:
+            ax = event.inaxes
+            # Check lines
+            found = False
+            for line in ax.get_lines():
+                cont, ind = line.contains(event)
+                if cont:
+                    # Update annotation
+                    x, y = line.get_data()
+                    # Use the first point found
+                    idx = ind["ind"][0]
+                    # Check if annot exists
+                    if hasattr(ax, "annot"):
+                        annot = ax.annot
+                        annot.xy = (x[idx], y[idx])
+                        text = f"x={x[idx]:.2f}\ny={y[idx]:.4f}"
+                        annot.set_text(text)
+                        annot.set_visible(True)
+                        found = True
+                        break # Only show for one line at a time
+            
+            if hasattr(ax, "annot"):
+                # If we didn't find a line, hide the annotation
+                if not found and ax.annot.get_visible():
+                    ax.annot.set_visible(False)
+                    canvas.draw_idle()
+                elif found:
+                    canvas.draw_idle()
+
+
+    def preview_band_structure(self):
+        """Preview band structure without running full simulation"""
+        try:
+            config = self.get_current_configuration()
+            
+            # Reconstruct Material List
+            material_list = []
+            for l in config["layers"]:
+                th = float(l["thickness"])
+                mat = l["material"]
+                x = float(l["mole"])
+                y = float(l.get("mole_y", 0.0))
+                dop = float(l["doping"])
+                dtype = l["doping_type"]
+                ltype = l["type"][0]
+                
+                if dtype == "i": dtype = "n"
+                # For preview, we pass doping but it affects potential via Poisson which isn't solved yet.
+                # Structure class calculates band edges (fi_e, fi_h) purely from material properties (Eg, band offset).
+                # Doping is used for 'dop' array but doesn't shift bands until Poisson is run.
+                # So this shows the "flat band" diagram + built-in potentials if we calculated them, 
+                # but Aestimo Structure just initializes arrays. fi_e/fi_h are band offsets relative to... vacuum? or ref?
+                # Usually relative to a reference.
+                
+                material_list.append([th, mat, x, y, dop, dtype, ltype])
+
+            if not material_list:
+                raise ValueError("Structure is empty.")
+
+            # Build Input Dictionary (mimics InputObject)
+            grid_step = float(config["grid_step"])
+            T_val = float(config["temp"])
+            
+            input_dict = {
+                'material': material_list,
+                'gridfactor': grid_step,
+                'maxgridpoints': int(config["max_pts"]),
+                'mat_type': config["mat_sys"],
+                'T': T_val,
+                'Fapplied': float(config["field"]) * 1e5,
+                'subnumber_e': int(config["sub_e"]),
+                'subnumber_h': int(config["sub_h"]),
+                # Dummy values
+                'computation_scheme': 2,
+                'vmax': 0.0,
+                'vmin': 0.0,
+                'Each_Step': 0.1,
+                'surface': [float(config["bc_left"]), float(config["bc_right"])],
+                'Quantum_Regions': False,
+                'dop_profile': np.array([0.0]) # Structure will resize/ignore
+            }
+            
+            # Initialize Structure
+            import aestimo
+            # We must import database inside or use the one we have
+            # aestimo uses 'from database import ...' so it uses the module.
+            # since we update the module in-memory, it should use our updates.
+            
+            struct = aestimo.StructureFrom(input_dict, aestimo.database)
+            
+            # Plotting
+            x = np.linspace(0, struct.x_max * 1e9, struct.n_max)
+            # q = 1.602176634e-19
+            # aestimo defines q? It does but it's not easily accessible if not in vars.
+            # Using standard constant.
+            q_const = 1.602176634e-19
+            
+            # fi_e, fi_h are in Joules. Convert to eV.
+            ec = struct.fi_e / q_const
+            ev = struct.fi_h / q_const
+            
+            # Add Applied Field tilt?
+            # Structure does NOT add Fapplied field to fi_e/fi_h initially. 
+            # It's added during solver loop usually.
+            # We can add it manually for preview: V = -F*z
+            # F is V/m. z is m.
+            if struct.Fapp != 0:
+                potential_tilt = -struct.Fapp * (x * 1e-9) # V
+                # e*V energy shift? 
+                # Energy E = -e * phi. 
+                # If potential tilts down, electron energy tilts down.
+                # So add potential_tilt (in eV) to bands?
+                # Actually F = -grad(V). V = -F*z.
+                # Band energy E = -q*V = q*F*z.
+                # So we ADD F*z (in eV... wait F is V/m, z is m -> V. )
+                # Ec (eV) = Ec_flat - Potential(V).
+                # Potential(V) = -F*z.
+                # Ec(eV) = Ec_flat + F*z.
+                ec += (struct.Fapp * x * 1e-9)
+                ev += (struct.Fapp * x * 1e-9)
+
+            fig, ax = plt.subplots(figsize=(6, 4))
+            ax.plot(x, ec, label="Ec", color='red')
+            ax.plot(x, ev, label="Ev", color='blue')
+            ax.set_xlabel("Position (nm)")
+            ax.set_ylabel("Energy (eV)")
+            ax.set_title("Band Structure Preview (Flat Band + Field)")
+            ax.legend()
+            ax.grid(True, alpha=0.3)
+            
+            self.display_figures([fig])
+            self.tabview.set("Results")
+            
+        except Exception as e:
+            tkinter.messagebox.showerror("Preview Error", str(e))
+
+    def open_material_browser(self):
+        """Open Material Library Browser window"""
+        # Create popup window
+        browser = customtkinter.CTkToplevel(self)
+        browser.title("Material Library Browser")
+        browser.geometry("900x600")
+        
+        # Left panel - Filters and Material List
+        left_panel = customtkinter.CTkFrame(browser, width=400)
+        left_panel.pack(side="left", fill="both", expand=False, padx=10, pady=10)
+        
+        # Right panel - Visualization
+        right_panel = customtkinter.CTkFrame(browser)
+        right_panel.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+        
+        # Filter controls
+        filter_frame = customtkinter.CTkFrame(left_panel)
+        filter_frame.pack(fill="x", padx=10, pady=10)
+        customtkinter.CTkLabel(filter_frame, text="Filter by Type:", font=customtkinter.CTkFont(weight="bold")).pack(anchor="w", padx=5, pady=5)
+        
+        filter_var = tkinter.StringVar(value="All")
+        
+        filters = ["All", "Binary", "Ternary", "Quaternary"]
+        for filt in filters:
+            customtkinter.CTkRadioButton(filter_frame, text=filt, variable=filter_var, value=filt,
+                                        command=lambda: self.update_material_list(materials_frame, filter_var.get(), plot_canvas, plot_ax)).pack(anchor="w", padx=20, pady=2)
+        
+        # Materials list (scrollable)
+        materials_frame = customtkinter.CTkScrollableFrame(left_panel, label_text="Materials")
+        materials_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Visualization area
+        customtkinter.CTkLabel(right_panel, text="Bandgap vs. Lattice Constant", font=customtkinter.CTkFont(size=14, weight="bold")).pack(pady=5)
+        
+        # Create matplotlib figure
+        fig, ax = plt.subplots(figsize=(5, 4))
+        plot_canvas = FigureCanvasTkAgg(fig, master=right_panel)
+        plot_canvas.get_tk_widget().pack(fill="both", expand=True)
+        plot_ax = ax
+        
+        # Initial population
+        self.update_material_list(materials_frame, "All", plot_canvas, plot_ax)
+        
+    def update_material_list(self, container, filter_type, plot_canvas, plot_ax):
+        """Update material list based on filter"""
+        # Clear existing
+        for widget in container.winfo_children():
+            widget.destroy()
+            
+        # Gather materials
+        materials_data = []
+        
+        # Binary materials
+        if filter_type in ["All", "Binary"]:
+            for mat_name, props in database.materialproperty.items():
+                materials_data.append({
+                    "name": mat_name,
+                    "type": "Binary",
+                    "Eg": props.get("Eg", 0.0),
+                    "a0": props.get("a0", 0.0)
+                })
+        
+        # Ternary alloys (use x=0.5 for visualization)
+        if filter_type in ["All", "Ternary"]:
+            for alloy_name in database.alloyproperty.keys():
+                # Estimate at x=0.5
+                materials_data.append({
+                    "name": alloy_name,
+                    "type": "Ternary",
+                    "Eg": "Variable",
+                    "a0": "Variable"
+                })
+        
+        # Quaternary alloys
+        if filter_type in ["All", "Quaternary"]:
+            for alloy_name in database.alloyproperty4.keys():
+                materials_data.append({
+                    "name": alloy_name,
+                    "type": "Quaternary",
+                    "Eg": "Variable",
+                    "a0": "Variable"
+                })
+        
+        # Display materials
+        for mat in materials_data:
+            card = customtkinter.CTkFrame(container, fg_color=("gray85", "gray25"))
+            card.pack(fill="x", padx=5, pady=5)
+            
+            customtkinter.CTkLabel(card, text=mat["name"], font=customtkinter.CTkFont(size=12, weight="bold")).grid(row=0, column=0, sticky="w", padx=10, pady=5)
+            customtkinter.CTkLabel(card, text=f"Type: {mat['type']}", font=customtkinter.CTkFont(size=10)).grid(row=1, column=0, sticky="w", padx=10)
+            
+            if isinstance(mat["Eg"], (int, float)):
+                customtkinter.CTkLabel(card, text=f"Eg: {mat['Eg']:.3f} eV", font=customtkinter.CTkFont(size=10)).grid(row=2, column=0, sticky="w", padx=10)
+                customtkinter.CTkLabel(card, text=f"a0: {mat['a0']:.3f} Å", font=customtkinter.CTkFont(size=10)).grid(row=3, column=0, sticky="w", padx=10)
+            else:
+                customtkinter.CTkLabel(card, text=f"Eg: {mat['Eg']}", font=customtkinter.CTkFont(size=10)).grid(row=2, column=0, sticky="w", padx=10)
+                customtkinter.CTkLabel(card, text=f"a0: {mat['a0']}", font=customtkinter.CTkFont(size=10)).grid(row=3, column=0, sticky="w", padx=10)
+        
+        # Update plot
+        plot_ax.clear()
+        
+        # Extract plottable data (only binary for now)
+        eg_vals = []
+        a0_vals = []
+        names = []
+        
+        for mat in materials_data:
+            if isinstance(mat["Eg"], (int, float)) and isinstance(mat["a0"], (int, float)):
+                if mat["Eg"] > 0 and mat["a0"] > 0:  # Valid values
+                    eg_vals.append(mat["Eg"])
+                    a0_vals.append(mat["a0"])
+                    names.append(mat["name"])
+        
+        if eg_vals:
+            plot_ax.scatter(a0_vals, eg_vals, s=100, alpha=0.6, c='blue')
+            # Add labels
+            for i, name in enumerate(names):
+                plot_ax.annotate(name, (a0_vals[i], eg_vals[i]), fontsize=8, alpha=0.7, 
+                               xytext=(5, 5), textcoords='offset points')
+            
+            plot_ax.set_xlabel("Lattice Constant a0 (Å)")
+            plot_ax.set_ylabel("Bandgap Eg (eV)")
+            plot_ax.set_title(f"Material Properties ({filter_type})")
+            plot_ax.grid(True, alpha=0.3)
+        else:
+            plot_ax.text(0.5, 0.5, "No plottable data\n(Alloys have variable properties)", 
+                       ha='center', va='center', transform=plot_ax.transAxes, fontsize=12)
+            plot_ax.set_xlabel("Lattice Constant a0 (Å)")
+            plot_ax.set_ylabel("Bandgap Eg (eV)")
+        
+        plot_canvas.draw()
+
+
 
 
     def setup_database_tab(self):

@@ -3,6 +3,7 @@
         {
             "material": "AlGaAs",
             "mole": "0.3",
+            "mole_y": "0.0",
             "thickness": "250.0",
             "doping": "8.0e+16",
             "doping_type": "p",
@@ -11,6 +12,7 @@
         {
             "material": "AlGaAs",
             "mole": "0.3",
+            "mole_y": "0.0",
             "thickness": "50.0",
             "doping": "0.0e+00",
             "doping_type": "n",
@@ -19,6 +21,7 @@
         {
             "material": "GaAs",
             "mole": "0.0",
+            "mole_y": "0.0",
             "thickness": "15.0",
             "doping": "0.0e+00",
             "doping_type": "n",
@@ -27,6 +30,7 @@
         {
             "material": "AlGaAs",
             "mole": "0.3",
+            "mole_y": "0.0",
             "thickness": "5.0",
             "doping": "0.0e+00",
             "doping_type": "n",
@@ -35,6 +39,7 @@
         {
             "material": "AlGaAs",
             "mole": "0.3",
+            "mole_y": "0.0",
             "thickness": "20.0",
             "doping": "8.0e+17",
             "doping_type": "n",
@@ -43,6 +48,7 @@
         {
             "material": "GaAs",
             "mole": "0.0",
+            "mole_y": "0.0",
             "thickness": "15.0",
             "doping": "8.0e+17",
             "doping_type": "n",
