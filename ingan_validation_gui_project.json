@@ -1,0 +1,43 @@
+{
+    "layers": [
+        {
+            "material": "InGaN",
+            "mole": "0.57",
+            "mole_y": "0.0",
+            "thickness": "40.0",
+            "doping": "1e16",
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "InGaN",
+            "mole": "0.57",
+            "mole_y": "0.0",
+            "thickness": "60.0",
+            "doping": "2e17",
+            "doping_type": "n",
+            "type": "barrier"
+        }
+    ],
+    "temp": "300.0",
+    "field": "0.0",
+    "bc_left": "0.0",
+    "bc_right": "0.0",
+    "vmin": "0.0",
+    "vmax": "0.8",
+    "vstep": "0.04",
+    "solver": "7: Standard DD",
+    "grid_step": "1.0",
+    "max_pts": "200000",
+    "mat_sys": "Wurtzite",
+    "sub_e": "2",
+    "sub_h": "2",
+    "exp_file": "examples/experimental_data/ingan_pn_experimental_iv.csv",
+    "area": "5e-4",
+    "rs": "11.7",
+    "rsh": "5000.0",
+    "tat_field": "5.0e6",
+    "taun0": "5.0e-7",
+    "taup0": "5.0e-7",
+    "enable_polarization": true
+}

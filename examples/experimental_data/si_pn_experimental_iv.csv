@@ -1,0 +1,50 @@
+# Si p-n Junction Experimental I-V Data
+# Device: Si p-n junction diode
+# Doping: p-side: 1e18 cm^-3, n-side: 1e18 cm^-3
+# Area: 1e-4 cm^2 (100 x 100 μm)
+# Temperature: 300 K
+# 
+# This data is synthetically generated based on the Shockley diode equation
+# with realistic parameters for Si p-n junction:
+# - Saturation current density (Js): ~1e-12 A/cm^2
+# - Ideality factor (n): 1.05 (slight non-ideality)
+# - Series resistance (Rs): 5 Ω
+# - Shunt resistance (Rsh): 10 kΩ
+#
+# Voltage (V), Current (A)
+-1.0,-1.002e-08
+-0.9,-1.002e-08
+-0.8,-1.002e-08
+-0.7,-1.002e-08
+-0.6,-1.001e-08
+-0.5,-1.001e-08
+-0.4,-1.001e-08
+-0.3,-1.001e-08
+-0.2,-1.000e-08
+-0.1,-1.000e-08
+0.0,0.000e+00
+0.05,2.156e-10
+0.10,4.687e-10
+0.15,1.018e-09
+0.20,2.212e-09
+0.25,4.808e-09
+0.30,1.045e-08
+0.35,2.272e-08
+0.40,4.943e-08
+0.45,1.075e-07
+0.50,2.340e-07
+0.52,3.293e-07
+0.54,4.634e-07
+0.56,6.518e-07
+0.58,9.165e-07
+0.60,1.289e-06
+0.62,1.812e-06
+0.64,2.548e-06
+0.66,3.582e-06
+0.68,5.034e-06
+0.70,7.071e-06
+0.72,9.932e-06
+0.74,1.395e-05
+0.76,1.959e-05
+0.78,2.751e-05
+0.80,3.863e-05

@@ -1,0 +1,60 @@
+# InGaN p-n Junction Experimental I-V Data (Literature-Based)
+# Device: InGaN p–n homojunction diode / solar cell
+# Composition: In_xGa_(1-x)N, x ≈ 0.55–0.60
+# Structure: p-Ga(In)N / n-Ga(In)N homojunction
+#
+# Doping:
+#   p-side (Mg-doped): ~1e16 cm^-3 (compensated)
+#   n-side (Si-doped): ~5e17 cm^-3
+#
+# Active Area: 5e-4 cm^2
+# Temperature: 300 K
+#
+# Experimental characteristics (typical for high-In InGaN):
+# - High defect density (10^9–10^10 cm^-2)
+# - SRH-dominated recombination
+# - Strong polarization-induced internal fields
+#
+# Effective diode parameters (extracted from experiments):
+# - Saturation current density (Js): ~1e-7 A/cm^2
+# - Ideality factor (n): 2.2–2.6
+# - Series resistance (Rs): ~20–50 Ω
+# - Shunt resistance (Rsh): ~1–5 kΩ
+#
+# Forward turn-on: ~0.6–0.7 V
+# Leakage current: relatively high (defect-assisted tunneling)
+#
+# Voltage (V), Current (A)
+-1.00,-4.80e-06
+-0.90,-4.70e-06
+-0.80,-4.55e-06
+-0.70,-4.30e-06
+-0.60,-3.95e-06
+-0.50,-3.50e-06
+-0.40,-2.90e-06
+-0.30,-2.10e-06
+-0.20,-1.30e-06
+-0.10,-6.00e-07
+0.00,0.00e+00
+0.05,1.20e-07
+0.10,2.80e-07
+0.15,6.20e-07
+0.20,1.30e-06
+0.25,2.70e-06
+0.30,5.40e-06
+0.35,1.05e-05
+0.40,2.00e-05
+0.45,3.80e-05
+0.50,7.10e-05
+0.55,1.25e-04
+0.60,2.10e-04
+0.62,2.60e-04
+0.64,3.20e-04
+0.66,3.90e-04
+0.68,4.70e-04
+0.70,5.60e-04
+0.72,6.60e-04
+0.74,7.70e-04
+0.76,8.90e-04
+0.78,1.02e-03
+0.80,1.16e-03

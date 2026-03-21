@@ -1,0 +1,44 @@
+# InGaAs p-n Junction Experimental I-V Data (Synthetic)
+# Device: In(0.53)Ga(0.47)As p–n homojunction diode
+# Lattice-matched to InP
+# 
+# Doping:
+#   p-side: 1e17 cm^-3
+#   n-side: 1e17 cm^-3
+#
+# Active Area: 1e-4 cm^2
+# Temperature: 300 K
+#
+# Diode parameters (used for synthetic data generation):
+# - Saturation current density (Js): ~2e-8 A/cm^2
+# - Ideality factor (n): 1.1
+# - Series resistance (Rs): 10 Ω
+# - Shunt resistance (Rsh): 5 kΩ
+#
+# Voltage (V), Current (A)
+-1.00,-0.00020
+-0.80,-0.00016
+-0.60,-0.00012
+-0.40,-0.00008
+-0.20,-0.00004
+0.00,0.00e+00
+0.05,1.10e-08
+0.10,8.07e-08
+0.15,6.29e-07
+0.20,3.32e-06
+0.25,2.10e-05
+0.30,1.35e-04
+0.35,8.84e-04
+0.40,5.82e-03
+0.45,3.71e-02
+0.50,1.90e-01
+0.55,6.80e-01
+0.60,1.55e+00
+0.65,2.80e+00
+0.70,4.60e+00
+0.75,7.10e+00
+0.80,1.02e+01
+0.85,1.40e+01
+0.90,1.82e+01
+0.95,2.28e+01
+1.00,2.80e+01

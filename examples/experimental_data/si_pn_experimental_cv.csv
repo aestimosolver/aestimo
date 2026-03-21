@@ -1,0 +1,33 @@
+# Si p-n Junction Experimental C-V Data
+# Device: Si p-n junction diode
+# Doping: p-side: 1e18 cm^-3, n-side: 1e18 cm^-3
+# Area: 1e-4 cm^2 (100 x 100 μm)
+# Temperature: 300 K
+#
+# This data is synthetically generated based on the abrupt junction C-V relationship:
+# C = A * sqrt(q * epsilon_s * Na * Nd / (2 * (Na + Nd) * (Vbi - V)))
+# where:
+# - Vbi (built-in voltage): ~0.84 V for Si at 1e18 doping
+# - epsilon_s (Si permittivity): 11.68 * epsilon_0
+#
+# Voltage (V), Capacitance (F)
+-1.0,4.123e-11
+-0.9,4.321e-11
+-0.8,4.545e-11
+-0.7,4.801e-11
+-0.6,5.095e-11
+-0.5,5.436e-11
+-0.4,5.838e-11
+-0.3,6.317e-11
+-0.2,6.899e-11
+-0.1,7.623e-11
+0.0,8.556e-11
+0.1,9.817e-11
+0.2,1.162e-10
+0.3,1.433e-10
+0.4,1.911e-10
+0.5,2.985e-10
+0.6,6.276e-10
+0.65,1.139e-09
+0.70,2.781e-09
+0.75,1.354e-08

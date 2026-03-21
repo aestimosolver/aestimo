@@ -1,0 +1,42 @@
+{
+    "layers": [
+        {
+            "material": "Si",
+            "mole": "0.0",
+            "mole_y": "0.0",
+            "thickness": "2500.0",
+            "doping": "1e18",
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "Si",
+            "mole": "0.0",
+            "mole_y": "0.0",
+            "thickness": "2500.0",
+            "doping": "1e18",
+            "doping_type": "n",
+            "type": "barrier"
+        }
+    ],
+    "temp": "300.0",
+    "field": "0.0",
+    "bc_left": "0.0",
+    "bc_right": "0.0",
+    "vmin": "0.0",
+    "vmax": "0.8",
+    "vstep": "0.01",
+    "solver": "9: SP-DD (Gummel-Newton)",
+    "grid_step": "10.0",
+    "max_pts": "200000",
+    "mat_sys": "Zincblende",
+    "sub_e": "2",
+    "sub_h": "2",
+    "exp_file": "examples/experimental_data/si_pn_experimental_iv.csv",
+    "area": "1e-4",
+    "rs": "2330.0",
+    "rs_mode": "External (Fast)",
+    "rsh": "5e7",
+    "graded_junc": true,
+    "diffusion_len": "10.0"
+}

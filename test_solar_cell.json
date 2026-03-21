@@ -1,0 +1,44 @@
+{
+    "layers": [
+        {
+            "material": "InGaN",
+            "thickness": 250.0,
+            "mole": 0.57,
+            "mole_y": 0.0,
+            "doping": 1e+16,
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "InGaN",
+            "thickness": 250.0,
+            "mole": 0.57,
+            "mole_y": 0.0,
+            "doping": 2e+17,
+            "doping_type": "n",
+            "type": "barrier"
+        }
+    ],
+    "temp": 300.0,
+    "field": 0.0,
+    "bc_left": 0.0,
+    "bc_right": 0.0,
+    "vmin": 0.0,
+    "vmax": -1.8,
+    "vstep": -0.1,
+    "solver": "9: Coupled Newton (Robust)",
+    "grid_step": 5.0,
+    "max_pts": 200000,
+    "mat_type": "Wurtzite",
+    "sub_e": 5,
+    "sub_h": 5,
+    "enable_polarization": false,
+    "tat_field": 1000000000000.0,
+    "device_type": "Solar Cell / Photodetector",
+    "G_optical": 5e+18,
+    "area": 0.0001,
+    "exp_file": "examples/experimental_data/ingan_pn_experimental_iv.csv",
+    "rs": 0.0,
+    "rsh": 1000000000000.0,
+    "rs_mode": "External (Fast)"
+}

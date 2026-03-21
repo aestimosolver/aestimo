@@ -1,0 +1,73 @@
+{
+    "layers": [
+        {
+            "material": "AlGaAs",
+            "mole": "0.3",
+            "thickness": "10.0",
+            "doping": "n",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "AlGaAs",
+            "mole": "0.3",
+            "thickness": "5.0",
+            "doping": "n",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "AlGaAs",
+            "mole": "0.3",
+            "thickness": "5.0",
+            "doping": "n",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "GaAs",
+            "mole": "0",
+            "thickness": "11.0",
+            "doping": "n",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "AlGaAs",
+            "mole": "0.3",
+            "thickness": "5.0",
+            "doping": "n",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "AlGaAs",
+            "mole": "0.3",
+            "thickness": "5.0",
+            "doping": "n",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "AlGaAs",
+            "mole": "0.3",
+            "thickness": "10.0",
+            "doping": "n",
+            "doping_type": "n",
+            "type": "barrier"
+        }
+    ],
+    "temp": "60.0",
+    "field": "0.0",
+    "bc_left": "0.0",
+    "bc_right": "0.6",
+    "vmin": "0.0",
+    "vmax": "1.0",
+    "vstep": "0.05",
+    "solver": "6: Schrodinger-Poisson",
+    "grid_step": "0.1",
+    "max_pts": "200000",
+    "mat_sys": "Zincblende",
+    "sub_e": "3",
+    "sub_h": "1"
+}

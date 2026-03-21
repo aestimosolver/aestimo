@@ -1,0 +1,27 @@
+# Compiled source #
+###################
+*.pyc
+
+# Files Backups #
+#################
+#winmerge
+*.bak
+
+
+# OS generated files #
+######################
+Thumbs.db
+
+# Other #
+#########
+*.profile
+*.log
+output/
+__pycache__/
+examples/*/
+!examples/*.json
+!examples/experimental_data/
+build/
+*.egg-info/
+*_output/
+
