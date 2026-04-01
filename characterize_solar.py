@@ -20,7 +20,7 @@ def analyze_iv_curve(voltage, current, area_cm2=1.0, pin_mw_cm2=100.0):
     v = voltage[sort_idx]
     i = current[sort_idx]
     
-    j = i * 0.1 # A/m^2 to mA/cm^2 (1 A/m^2 = 0.1 mA/cm^2)
+    j = i # i is already in mA/cm² (from aestimo.py fix)
 
     # Spike Filtering (Robustness against numerical artifacts)
     # Solar cells should have J that is fairly smooth and monotonically increasing 
@@ -35,6 +35,13 @@ def analyze_iv_curve(voltage, current, area_cm2=1.0, pin_mw_cm2=100.0):
             valid_limit = idx
             break
             
+    if len(v) < 2:
+        # Return empty metrics if simulation diverged immediately
+        return {
+            'jsc': 0.0, 'voc': 0.0, 'pmpp': 0.0, 'vmpp': 0.0, 'jmpp': 0.0,
+            'ff': 0.0, 'eta': 0.0, 'rs': 0.0, 'rsh': 0.0, 'v': v, 'j': j, 'p': np.zeros_like(j)
+        }
+    
     v = v[:valid_limit]
     j = j[:valid_limit]
     
@@ -69,10 +76,13 @@ def analyze_iv_curve(voltage, current, area_cm2=1.0, pin_mw_cm2=100.0):
     # 5. Efficiency
     eta = (pmpp / pin_mw_cm2) * 100.0 if pin_mw_cm2 > 0 else 0.0
     
-    # 6. Resistances
-    dv = np.gradient(v)
-    dj = np.gradient(j)
-    slope = dj / dv # mA/cm^2 / V
+    # 6. Resistances (Requires at least 2 points)
+    if len(v) >= 2:
+        dv = np.gradient(v)
+        dj = np.gradient(j)
+        slope = dj / dv # mA/cm^2 / V
+    else:
+        slope = np.zeros_like(v)
     
     # Rsh at V=0
     idx_sc = np.argmin(np.abs(v - 0.0))

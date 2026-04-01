@@ -3542,15 +3542,16 @@ def Poisson_Schrodinger_DD(result, model):
 
             Va_t[vindex] = Va+vmin
             logger.info("Voltage Step %d/%d: Va = %g V", vindex + 1, Total_Steps, Va_t[vindex])
-            # previousE0= 2   #(meV) energy of zeroth state for previous iteration(for testing convergence)
+            iteration = 1 # Reset iteration counter for each voltage step
+            # previousE0 = 2
             while flag_conv_2:
                 if iteration % 20 == 0:
                     logger.info("  Iteration %d...", iteration)
                     sys.stdout.flush()
                 
-                # Hard iteration cap for stability
-                if iteration > 1000:
-                    logger.warning("  Timeout: Gummel loop did not converge within 1000 iterations at Va = %g V. Proceeding with current values.", Va_t[vindex])
+                # Hard iteration cap for stability (increased to 2000 for difficult steps)
+                if iteration > 2000:
+                    logger.warning("  Timeout: Gummel loop did not converge within 2000 iterations at Va = %g V. Proceeding with current values.", Va_t[vindex])
                     flag_conv_2 = False
                     break
 
@@ -3621,22 +3622,11 @@ def Poisson_Schrodinger_DD(result, model):
                 Jhole,
             )
             
-            # Scale current to physical units (A/m^2)
-            # Current2 uses normalized n (n/ni) and normalized mobility (mu/max(mu))
-            # J_phys = J_dim * (q * max(mu) * Vt * ni / dx)
-            # We use max(ni) and max(mun) for scaling consistency
-            
-            # Note: Current2 implementation normalizes by max(mun) for both electrons and holes?
-            # Let's check Current2: 
-            # J_const = (1.0 * (mun[i] / np.max(np.abs(mun))) ...
-            # J_const_p = (1.0 * (mup[i] / np.max(np.abs(mun))) ... -> Wait, it divides by max(mun) for holes too?
-            # Yes, line 1675 in Current2 (viewed earlier) used mun for denominator in both.
-            # "np.max(np.abs(mun))"
-            
-            scale_J = q * np.max(np.abs(mun)) * Vt * np.max(ni) / dx
-            
-            Jelec[vindex, :] *= scale_J
-            Jhole[vindex, :] *= scale_J
+            # Note: Current2 now returns physical current density in A/m^2 (SI)
+            # because dx and ni are SI, and mun is converted internally.
+            # Convert to mA/cm^2 for Aestimo GUI/Reports (1 A/m2 = 0.1 mA/cm2)
+            Jelec[vindex, :] *= 0.1
+            Jhole[vindex, :] *= 0.1
 
             # End of main FOR loop for Va increment.
             Jtotal = Jelec + Jhole
@@ -3646,10 +3636,11 @@ def Poisson_Schrodinger_DD(result, model):
             Ec_result_[vindex, :] = fi_e / q - Vt * fi_va[vindex, :]
             Ev_result_[vindex, :] = fi_h / q - Vt * fi_va[vindex, :]
 
-        # Compute av_curr as median of central region (signed — needed for Voc detection)
+        # Compute av_curr as median of the last 10% of nodes (Quasi-Neutral Region)
+        # This is much more stable than the high-field depletion region in the center.
         for vindex in range(Total_Steps):
-            idx_lo = n_max // 4
-            idx_hi = 3 * n_max // 4
+            idx_lo = int(0.9 * n_max)
+            idx_hi = n_max - 1
             av_curr[vindex] = np.median(Jtotal[vindex, idx_lo:idx_hi])
         ##########################################################################
         ##                 END OF NON-EQUILIBRIUM  SOLUTION PART                ##
@@ -3962,7 +3953,7 @@ def Poisson_Schrodinger_DD_test(result, model):
     Half_Eg = np.zeros(n_max)
     for i in range(n_max):
         val_ni = sqrt( Nc[i] * Nv[i] * exp(-(fi_e[i] - fi_h[i]) / (kb * T)) )
-        ni[i] = max(val_ni, 1.0)  # Minimal floor for numerical stability
+        ni[i] = max(val_ni, 1e18)  # Consistent ni_ref scaling
         Ld_n_p[i] = sqrt(eps[i] * Vt / (q * abs(dop[i])))
         Ldi[i] = sqrt(eps[i] * Vt / (q * ni[i]))
         # fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
@@ -4328,9 +4319,9 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     # Rbar is the normalization for generation/recombination rate [m^-3 s^-1]
     Rbar = ns_scale / tbar
     
-    # Pass physical G_optical to solver (m^-3 s^-1)
-    G_opt_phys = getattr(model, 'G_optical', 0.0) 
-    model.G_optical_scaled = G_opt_phys / Rbar # For informative purposes
+    # Pass physical G_optical to solver (Convert cm^-3 s^-1 to m^-3 s^-1)
+    G_opt_phys = getattr(model, 'G_optical', 0.0) * 1e6 
+    model.G_optical_scaled = G_opt_phys / Rbar # For solver normalization (dimensionless)
     print(f"DEBUG: xbar={xbar:.2e} m, tbar={tbar:.2e} s, Rbar={Rbar:.2e} m^-3/s")
     print(f"DEBUG: G_opt_phys={G_opt_phys:.2e}, G_scaled={model.G_optical_scaled:.2e}")
     
@@ -4442,11 +4433,8 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     Half_Eg = np.zeros(n_max)
     for i in range(n_max):
         val_ni = sqrt( Nc[i] * Nv[i] * exp(-(fi_e[i] - fi_h[i]) / (kb * T)) )
-        ni[i] = max(val_ni, 1.0)  # Minimal floor for numerical stability
-        Ld_n_p[i] = sqrt(eps[i] * Vt / (q * abs(dop[i])))
-        Ldi[i] = sqrt(eps[i] * Vt / (q * ni[i]))
-        if dop[i] == 1:
-            dop[i] *= ni[i]
+        ni[i] = max(val_ni, 1e18) # Unified ni_ref scaling
+        # No longer using Ldi here as it is recomputed scaled
         Half_Eg[i] = (fi_e[i] - fi_h[i]) / 2
         # fi_e scaled
         # fi_h scaled
@@ -4525,12 +4513,10 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     # xn = xm+1e-7
     # xp = xm-1e-7
     ## Scaling coefficients
-    xs = len_
-    ns1 = np.linalg.norm(dop, np.inf)
-
-    ns2 = np.linalg.norm(Ppz_Psp_tmp, np.inf)
-
-    ns = max(ns1, ns2)
+    ## SI Scaling coefficients (Unified)
+    xs = len_ # [m]
+    ns = np.linalg.norm(dop, np.inf) if np.linalg.norm(dop, np.inf) > 1e15 else 1e24 # [m-3]
+    Vs = Vt # [V]
         
     class data:
         def __init__(self):
@@ -4558,7 +4544,10 @@ def Poisson_Schrodinger_DD_test_2(result, model):
 
     idata = data()
     odata = data()
-
+    idata.n = nn * ni / ns # Both in m-3
+    idata.p = pp * ni / ns
+    idata.V = fi_out
+    
     Vs = Vt
     us_raw = max(max(mun0), max(mup0)) if max(max(mun0), max(mup0)) > 1e-12 else 0.1
     us = us_raw * 1e-4  # m2/Vs
@@ -4567,14 +4556,15 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     mubar = us  # [m^2 V^{-1} s^{-1}]
     tbar = xbar ** 2 / (mubar * Vbar)  # [s]
     # Rbar is the normalization for generation/recombination rate [m^-3 s^-1]
+    # ns is m-3, tbar is s
     Rbar = ns / tbar
     # CAubar is Auger normalization [m^6 s^-1]
-    CAubar = Rbar / ns ** 3  
+    # R_phys = Cn * n^3 => R_norm = (Cn * ns^2 / (1/tbar)) * n_norm^3
+    CAubar = Rbar / ns ** 2  
     idata.Cn = Cn0 / CAubar
     idata.Cp = Cp0 / CAubar
-    # Pass scaled G_optical to coupled solver
-    G_opt_phys = getattr(model, 'G_optical', 0.0)
-    idata.G_optical = G_opt_phys / Rbar
+    # Using unified SI G_optical (m^-3 s^-1)
+    idata.G_optical = model.G_optical_scaled
     ###############################################################
     if Total_Steps < 2:
         print("Equilibrium only (Total_Steps < 2)")
@@ -4597,16 +4587,14 @@ def Poisson_Schrodinger_DD_test_2(result, model):
             # z
             xin = xaxis / xs
             
-            # Seed each step with equilibrium solution (robust baseline)
-            n_[vindex, :] = nn * ni
-            p_[vindex, :] = pp * ni
-            Fn = Va * (xaxis <= xm)
-            Fp = Fn
-            # Apply Va shift to the left-side electrostatic potential to match quasi-Fermi levels and maintain Ohmicity
-            V_app_dist = Va * (xaxis <= xm)
-            V_[vindex, :] = fi_out * Vt + V_app_dist
-            Fn_[vindex, :] = Fn - Vs * np.log(ni / ns)
-            Fp_[vindex, :] = Fp + Vs * np.log(ni / ns)
+            # Seed each step with equilibrium solution (normalized)
+            n_[vindex, :] = nn # Normalized to ns
+            p_[vindex, :] = pp # Normalized to ns
+            # Non-equilibrium seeds (normalized to Vs = Vt)
+            V_app_norm = (Va / Vs) * (xaxis <= xm)
+            V_[vindex, :] = fi_out + V_app_norm
+            Fn_[vindex, :] = (V_app_norm) - np.log(ni / ns)
+            Fp_[vindex, :] = (V_app_norm) + np.log(ni / ns)
 
             idata.l2 = (Vs * eps[0 : n_max - 1]) / (q * ns * xs ** 2)
             idata.nis = ni / ns
@@ -4623,8 +4611,8 @@ def Poisson_Schrodinger_DD_test_2(result, model):
             idata.TAUP0 = TAUP0 / tbar  # np.inf
             idata.theta = ni / ns
 
-            idata.n = n_[vindex, :] / ns
-            idata.p = p_[vindex, :] / ns
+            idata.n = n_[vindex, :] # Already normalized to ns
+            idata.p = p_[vindex, :] # Already normalized to ns
             idata.V = V_[vindex, :] / Vs
             idata.Fn = Fn_[vindex, :] / Vs
             idata.Fp = Fp_[vindex, :] / Vs
@@ -4712,9 +4700,14 @@ def Poisson_Schrodinger_DD_test_2(result, model):
             best_odata = None
             damp = 0.1 # Reduced damping for high-bias stability
             
+            # Scale before Newton solve
+            idata.n = n_[vindex, :]
+            idata.p = p_[vindex, :]
+            idata.V = V_[vindex, :]
+            
             for rs_it in range(rs_iters):
                 [odata, it, res] = DDNnewtonmap(
-                    ni, fi_e, fi_h, xin, odata, newton_toll, newton_maxit, verbose, model, Vt
+                    ni, fi_e, fi_h, xin, odata, newton_toll, newton_maxit, verbose, model, Vs
                 )
                 
                 if Rs_val <= 1e-6:
@@ -4786,33 +4779,61 @@ def Poisson_Schrodinger_DD_test_2(result, model):
             )
             #
 
+            # Band offsets for Bernoulli current (Normalized by Vs)
+            # fi_e, fi_h are in J. Convert to normalized potential.
+            fi_n_norm = -fi_e / (kb * T)
+            fi_p_norm = -fi_h / (kb * T)
+
             Bp = Ubernoulli(
                 (V_[vindex, 1:n_max] - V_[vindex, 0 : n_max - 1])
-                + (fi_n[1:n_max] - fi_n[0 : n_max - 1]),
+                + (fi_n_norm[1:n_max] - fi_n_norm[0 : n_max - 1]),
                 1,
             )
             Bm = Ubernoulli(
                 (V_[vindex, 1:n_max] - V_[vindex, 0 : n_max - 1])
-                + (fi_p[1:n_max] - fi_p[0 : n_max - 1]),
+                + (fi_p_norm[1:n_max] - fi_p_norm[0 : n_max - 1]),
                 0,
             )
+
+            # Use SI units for current density calculation
+            # xin is in m, mun is cm2/Vs, n_ is normalized by ns
+            # Jn = (mun * 1e-4) * q * (ns * n_) * Vt * (Bp - Bm) / dx
+            # However, aestimo uses a slightly different normalized form.
+            # We standardize to SI: J = q * mu * n * E + q * D * grad(n)
+            
+            # Physical Current Density Calculation (SI Pure [A/m^2])
+            # Formula: J = (q * mu * Vt * ni / dx) * [n_norm_{i+1} * B(dv) - n_norm_i * B(-dv)]
+            # We use physical mobility [m2/Vs] and physical density n_phys = n_norm * ni
+            
+            # Local dx [m] and Vt [V]
+            dx_eff = (xin[1:n_max] - xin[0 : n_max - 1]) * xs
+            
+            # Local mobilities converted to m2/Vs
+            mun_m2 = odata.mun[0 : n_max - 1] * us
+            mup_m2 = odata.mup[0 : n_max - 1] * us
+            
+            # Current components with Scharfetter-Gummel discretization
+            # n_norm here is n_phys / ni (from equi_np_fi or Solver)
             Jn[vindex, 0 : n_max - 1] = (
-                -odata.mun[0 : n_max - 1]
+                (q * mun_m2 * Vt * ns / dx_eff) 
                 * (n_[vindex, 1:n_max] * Bp - n_[vindex, 0 : n_max - 1] * Bm)
-                / (xin[1:n_max] - xin[0 : n_max - 1])
             )
             Jp[vindex, 0 : n_max - 1] = (
-                odata.mup[0 : n_max - 1]
-                * (p_[vindex, 1:n_max] * Bm - p_[vindex, 0 : n_max - 1] * Bp)
-                / (xin[1:n_max] - xin[0 : n_max - 1])
+                (q * mup_m2 * Vt * ns / dx_eff) 
+                * (p_[vindex, 0 : n_max - 1] * Bp - p_[vindex, 1:n_max] * Bm)
             )
-        ## Descaling
+            
+        ## Descaling to physical SI units
+        # Restore carrier and potential scaling for GUI displays
+        # Potential is normalized to Vt, densities to ns (m^-3)
         n_ = n_ * ns
         p_ = p_ * ns
         V_ = V_ * Vs
-        # J = abs (Jp+Jn)*Js
-        Jtotal = (Jp + Jn) * us * q * ns * (Vs / xs)
-        Jtotal[:, n_max - 1] = Jtotal[:, n_max - 2]#+J_Tunnling[:, n_max - 2]
+        Fn_ = Fn_ * Vs
+        Fp_ = Fp_ * Vs
+
+        # Jtotal is in A/m^2 (SI). Convert to mA/cm^2 for Aestimo GUI (1 A/m2 = 0.1 mA/cm2)
+        Jtotal = (Jp + Jn) * 0.1
         #Fn = V_ / Vs - np.log(n_)
         #Fp = V_ / Vs + np.log(p_)
         # Fn_=Fn_*Vs

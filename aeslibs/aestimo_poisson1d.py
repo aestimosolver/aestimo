@@ -2482,35 +2482,37 @@ def Current2(
 ):
     ##########################################################################
     ##                        CALCULATE CURRENT                             ##
-    ##########################################################################
     for i in range(1, n_max - 1):
+        # Physical current density calculation [A/m^2]
+        # J_n = (q * mun * Vt * ni / dx) * [n_{i+1} * B(dv) - n_i * B(-dv)]
+        dx_m = dx  # SI meters
 
-        # Physical current density J [A/m^2]
-        # J_n = (q * mun[m2/Vs] * Vt * ni[m^-3] / dx[m]) * [n_norm_{i+1} * B(...) - n_norm_i * B(...)]
-        # Convert internal units: mobility cm2/Vs -> m2/Vs (*1e-4), dx nm -> m (*1e-9)
-        dx_m = dx * 1e-9                  # nm -> m
-        mun_m2 = mun[i] * 1e-4            # cm2/Vs -> m2/Vs
-        mup_m2 = mup[i] * 1e-4            # cm2/Vs -> m2/Vs
-        J_const = (q * mun_m2 * Vt * ni[i] / dx_m)
+        # mobilities are in cm2/Vs, convert to m2/Vs SI
+        mun_m2 = mun[i] * 1e-4
+        mup_m2 = mup[i] * 1e-4
+
+        # normalized potential difference (phi/Vt)
+        dv = fi[i + 1] - fi[i]
+
+        # Electron current density at midpoint i+1/2
+        # J_n = q * Dn * n_i / dx * [n_{i+1}*B(dv) - n_i*B(-dv)]
+        Jn_const = (q * mun_m2 * Vt * ni[i] / dx_m)
+        Jnip1by2[vindex, i] = Jn_const * (n[i + 1] * Ber(dv) - n[i] * Ber(-dv))
         
-        Jnip1by2[vindex, i] = (
-            J_const * (n[i + 1] * Ber((fi[i + 1] - fi[i])) - n[i] * Ber((fi[i] - fi[i + 1])))
-        )
-        Jnim1by2[vindex, i] = (
-            J_const * (n[i] * Ber((fi[i] - fi[i - 1])) - n[i - 1] * Ber((fi[i - 1] - fi[i])))
-        )
-        Jelec[vindex, i] = (Jnip1by2[vindex, i] + Jnim1by2[vindex, i]) / 2
+        # Hole current density at midpoint i+1/2
+        # J_p = q * Dp * n_i / dx * [p_i * B(dv) - p_{i+1} * B(-dv)]
+        Jp_const = (q * mup_m2 * Vt * ni[i] / dx_m)
+        Jpip1by2[vindex, i] = Jp_const * (p[i] * Ber(dv) - p[i + 1] * Ber(-dv))
 
-        # Hole Current
-        J_const_p = (q * mup_m2 * Vt * ni[i] / dx_m)
-        Jpip1by2[vindex, i] = (
-            J_const_p * (p[i + 1] * Ber((fi[i] - fi[i + 1])) - p[i] * Ber((fi[i + 1] - fi[i])))
-        )
-        Jpim1by2[vindex, i] = (
-            J_const_p * (p[i] * Ber((fi[i - 1] - fi[i])) - p[i - 1] * Ber((fi[i] - fi[i - 1])))
-        )
+        # Interval i-1/2 (Backwards)
+        dv_back = fi[i] - fi[i - 1]
+        Jnim1by2[vindex, i] = Jn_const * (n[i] * Ber(dv_back) - n[i - 1] * Ber(-dv_back))
+        Jpim1by2[vindex, i] = Jp_const * (p[i - 1] * Ber(dv_back) - p[i] * Ber(-dv_back))
+
+        # Node-centered currents (Simple average of interval currents)
+        Jelec[vindex, i] = (Jnip1by2[vindex, i] + Jnim1by2[vindex, i]) / 2
         Jhole[vindex, i] = (Jpip1by2[vindex, i] + Jpim1by2[vindex, i]) / 2
-    ##         Jtotal(vindex) = Jelec
+
     return Jnip1by2, Jnim1by2, Jelec, Jpip1by2, Jpim1by2, Jhole
 
 
@@ -2588,9 +2590,11 @@ def Write_results_non_equi2(
     Efn[n_max - 1] = Efn[n_max - 2]
     Efp[0] = Efp[1]
     Efp[n_max - 1] = Efp[n_max - 2]
+    # Compute av_curr as median of the last 10% of nodes (Quasi-Neutral Region)
+    # This is much more stable than the high-field depletion region in the center.
     for j in range(0, Total_Steps):
-        idx_lo = n_max // 4
-        idx_hi = 3 * n_max // 4
+        idx_lo = int(0.9 * n_max)
+        idx_hi = n_max - 1
         av_curr[j] = np.median(Jtotal[j, idx_lo:idx_hi])
     Ec_result = np.zeros(n_max)
     Ev_result = np.zeros(n_max)

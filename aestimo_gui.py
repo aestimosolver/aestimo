@@ -1068,9 +1068,11 @@ class AestimoGUI(customtkinter.CTk):
                     self.maxgridpoints = int(cfg_dict.get("max_pts", 1000))
                     self.mat_type = cfg_dict.get("mat_system", "Wurtzite")
                     self.material = material_list
-                    self.vmin = float(cfg_dict.get("vmin", 0.0))
-                    self.vmax = min(float(cfg_dict.get("vmax", 1.0)), 2.2) # Clamp to avoid unstable high-voltage spikes
-                    self.Each_Step = float(cfg_dict.get("vstep", 0.05))
+                    # For Solar Study, we MUST sweep forward bias to see the power quadrant.
+                    # 1.1V is usually sufficient for InGaN Voc and more stable for Solver 7.
+                    self.vmin = 0.0
+                    self.vmax = 1.1
+                    self.Each_Step = 0.05  # Finer steps for better gradient and stability
                     self.G_optical = G_override if G_override is not None else float(cfg_dict.get("G_optical", 0.0))
                     self.tat_field = float(cfg_dict.get("tat_field", 1e10))
                     self.device_area_m2 = device_area * 1e-4
@@ -1127,9 +1129,9 @@ class AestimoGUI(customtkinter.CTk):
             light_metrics = analyze_iv_curve(light_data[:,0], light_data[:,1], area_cm2=device_area)
             self.after(0, lambda: self.progress_bar.set(2/total_tasks))
 
-            # Task 3-6: Temperature Sweep
+            # Task 3: Temperature Sweep (200K to 500K for detailed sensor/cell characterization)
             temp_results = []
-            temps = [250, 300, 350, 400]
+            temps = np.arange(200, 525, 25)
             for i, T in enumerate(temps):
                 self.after(0, lambda t=T: self.status_label.configure(text=f"Solar Study: Running {t}K..."))
                 t_in = StudyInputObject(config, f"Temp_{T}", T_override=float(T))
@@ -1211,6 +1213,10 @@ class AestimoGUI(customtkinter.CTk):
 
             print(f"DEBUG: Calling display_figures with {len(final_figures)} std and {len(study_figures)} study figs.")
             self.display_figures(final_figures, study_figures=study_figures)
+            
+            # Update metrics sidebar with the standard 300K characterization
+            metrics_to_show = figures.get('light_metrics') if is_study_data else None
+            self.after(0, lambda m=metrics_to_show: self.update_solar_metrics_from_data(m))
             
             # Reset flag AFTER displaying
             self.solar_study_active = False

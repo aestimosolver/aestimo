@@ -253,8 +253,8 @@ def  DDNnewtonmap (ni,fi_e,fi_h,xaxis,idata,toll,maxit,verbose,model,Vt):
           DDp = Uscharfettergummel(xaxis,n_max,elements,Nelements,idata.mup,1,-Vnew-fi_p)
           
           r1  = L.dot(Vnew) + M.dot(nnew - pnew - dop - Ppz_Psp)
-          r2  = DDn.dot(nnew) + M.dot((pnew * nnew - idata.theta** 2) * fact)
-          r3  = DDp.dot(pnew) + M.dot((pnew * nnew - idata.theta** 2) * fact)
+          r2  = DDn.dot(nnew) + M.dot((pnew * nnew - idata.theta** 2) * fact) - M.dot(np.ones(n_max) * G_opt)
+          r3  = DDp.dot(pnew) + M.dot((pnew * nnew - idata.theta** 2) * fact) - M.dot(np.ones(n_max) * G_opt)
           RHS = -np.hstack(( r1, r2, r3))
 
           ## Apply BCs
