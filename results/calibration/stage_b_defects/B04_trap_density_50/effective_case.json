@@ -1,0 +1,15 @@
+{
+  "source_json": "examples/untitled_project.json",
+  "stage": "stage_b_defects",
+  "case_id": "B04_trap_density_50",
+  "label": "Stage B Defects: trap_density_scale = 50",
+  "overrides": {
+    "bc_right": 0.0,
+    "taun0": 5e-10,
+    "taup0": 5e-10,
+    "trap_density_scale": 50.0
+  },
+  "postprocess": {
+    "external_rs_ohm": 11.7
+  }
+}

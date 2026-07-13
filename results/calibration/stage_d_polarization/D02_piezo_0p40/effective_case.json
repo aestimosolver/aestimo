@@ -1,0 +1,18 @@
+{
+  "source_json": "examples/untitled_project.json",
+  "stage": "stage_d_polarization",
+  "case_id": "D02_piezo_0p40",
+  "label": "Stage D Polarization: piezo scale 0.40",
+  "overrides": {
+    "bc_right": 0.0,
+    "taun0": 5e-10,
+    "taup0": 5e-10,
+    "mun0_scale": 0.7,
+    "mup0_scale": 0.3,
+    "piezoelectric_scale": 0.4,
+    "spontaneous_scale": 1.0
+  },
+  "postprocess": {
+    "external_rs_ohm": 11.7
+  }
+}

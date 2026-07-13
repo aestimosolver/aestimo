@@ -1,0 +1,8 @@
+Baseline Calibration Report
+========================================
+Structure   : In0.57GaN p-n homojunction
+p-layer     : 40 nm  1e16 cm-3
+n-layer     : 60 nm  2e17 cm-3
+Solver      : 9 (DDG Gummel map)
+Illumination: DARK (G=0)
+Polarization: enabled

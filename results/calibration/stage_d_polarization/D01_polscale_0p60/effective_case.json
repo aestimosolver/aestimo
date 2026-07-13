@@ -1,0 +1,17 @@
+{
+  "source_json": "examples/untitled_project.json",
+  "stage": "stage_d_polarization",
+  "case_id": "D01_polscale_0p60",
+  "label": "Stage D Polarization: overall scale 0.60",
+  "overrides": {
+    "bc_right": 0.0,
+    "taun0": 5e-10,
+    "taup0": 5e-10,
+    "mun0_scale": 0.7,
+    "mup0_scale": 0.3,
+    "polarization_scale": 0.6
+  },
+  "postprocess": {
+    "external_rs_ohm": 11.7
+  }
+}

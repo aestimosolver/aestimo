@@ -118,14 +118,20 @@ def  DDGhole_driftdiffusion(psi,xaxis,pg,n,ni,TAUN0,TAUP0,mup,fi_e,fi_h,model,Vt
     
     # Hurkx factor Gamma
     tat_field = getattr(model, 'tat_field', 1e10)
+    trap_density_scale = max(getattr(model, 'trap_density_scale', 1.0), 1e-12)
+    trap_energy_offset_ev = getattr(model, 'trap_energy_offset_ev', 0.0)
     Gamma = np.zeros(n_max)
     if tat_field < 1e9:
         mask_high_field = E_field > 1e4
         ratio = E_field[mask_high_field] / tat_field
         Gamma[mask_high_field] = 2.0 * np.sqrt(3.0 * np.pi) * ratio * np.exp(np.clip(ratio**2, 0, 20))
+    Gamma *= trap_density_scale
 
     ## SRH Recombination term
-    SRHD = (TAUP0 * (n + ni) + TAUN0 * (pg + ni)) / (1.0 + Gamma)
+    trap_arg = np.clip(trap_energy_offset_ev / max(Vt, 1e-12), -40.0, 40.0)
+    n1 = ni * np.exp(trap_arg)
+    p1 = ni * np.exp(-trap_arg)
+    SRHD = (TAUP0 * (n + n1) + TAUN0 * (pg + p1)) / ((1.0 + Gamma) * trap_density_scale)
     SRHL = n / SRHD
     SRHR = ni**2 / SRHD
     

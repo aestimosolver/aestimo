@@ -155,19 +155,15 @@ def load_current_from_avcurr(output_dir, device_area_cm2=1e-4):
     
     data = np.loadtxt(av_curr_file)
     voltages = data[:, 0]
-    J_density = data[:, 1]  # Current density in A/m²
+    J_density = data[:, 1]  # Active scheme-7 output is stored as mA/cm^2.
     
-    # Convert A/m² to A/cm² (factor of 1e-4)
-    J_cm2 = J_density * 1e-4
+    # Convert mA/cm^2 to A/cm^2.
+    J_cm2 = J_density * 1e-3
     
     # Convert to current: I = J × Area
     currents = J_cm2 * device_area_cm2
     
-    # Offset correction (equilibrium noise)
-    # Subtracting the 0V current ensures a clean baseline for log plots
-    if len(currents) > 0:
-        offset = currents[0]
-        currents = currents - offset
+    # (Removed offset correction as it zeroes out the physical Jsc in light simulations)
     
     return voltages, currents
 

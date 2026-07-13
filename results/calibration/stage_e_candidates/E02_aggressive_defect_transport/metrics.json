@@ -1,0 +1,42 @@
+{
+  "stage": "stage_e_candidates",
+  "case_id": "E02_aggressive_defect_transport",
+  "reverse_leakage_at_minus_1V_a_cm2": 1.9999999999766e-09,
+  "ideality_fit": {
+    "window_v": [
+      0.1,
+      0.3
+    ],
+    "points": 4,
+    "ideality_factor": 6.369345589996481,
+    "ln_j_slope_per_v": 6.073108536077373,
+    "ln_j_intercept": -22.89177198807092
+  },
+  "turn_on_0p5Acm2_v": null,
+  "turn_on_0p1Acm2_v": null,
+  "current_density_at_0p60V_a_cm2": 1.1999999999859598e-09,
+  "current_density_at_0p70V_a_cm2": 1.3999999999836199e-09,
+  "forward_curvature_std_n": 6.709966485528441,
+  "local_ideality_trace_points": 16,
+  "left_contact_majority_injection_ratio_at_0p60V": 0.0,
+  "right_contact_majority_injection_ratio_at_0p60V": 0.0,
+  "integrated_srh_tat_forward_0p60V": 1.734762604859956e+26,
+  "integrated_auger_forward_0p60V": 0.0,
+  "defect_dominated_forward_0p60V": true,
+  "reference": {
+    "reverse_leakage_at_minus_1V_a_cm2": 0.0096,
+    "turn_on_0p5Acm2_v": 0.616,
+    "ideality_fit": {
+      "window_v": [
+        0.1,
+        0.3
+      ],
+      "points": 5,
+      "ideality_factor": 2.6171609583194644,
+      "ln_j_slope_per_v": 14.780033665439047,
+      "ln_j_intercept": -8.932412128651576
+    }
+  },
+  "score": 27.83486879784394,
+  "meets_stop_condition": false
+}

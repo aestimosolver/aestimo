@@ -1,0 +1,23 @@
+{
+  "case_id": "R5_partial_polarization",
+  "label": "R5 Partial Polarization Scale 0.6",
+  "official_current_at_minus_1V_a_cm2": 0.0,
+  "whole_probe_current_at_minus_1V_a_cm2": 0.0,
+  "absmax_current_at_minus_1V_a_cm2": 9.881828052866625,
+  "official_zero_like_points": 6,
+  "whole_zero_like_points": 14,
+  "onset_official_v": null,
+  "onset_whole_v": null,
+  "onset_absmax_v": null,
+  "all_bias_targets_reached": true,
+  "timeout_events_total": 0,
+  "max_gummel_iterations": 1997,
+  "min_substep_attempt_v": 0.04999999999999993,
+  "max_abs_field_v_cm_at_profile0": 150902.13388067798,
+  "left_contact_n_cm3_at_profile0": 4.94065645841e-312,
+  "left_contact_p_cm3_at_profile0": 5909620234697007.0,
+  "right_contact_n_cm3_at_profile0": 1.915251213518064e+17,
+  "right_contact_p_cm3_at_profile0": -17.870544308024844,
+  "left_contact_qf_split_eV_at_profile0": -0.9660224740758266,
+  "right_contact_qf_split_eV_at_profile0": -0.876097784106908
+}

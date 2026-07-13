@@ -1,0 +1,24 @@
+{
+  "stage": "r5_polarization_stability",
+  "case_id": "R5_smoothed_interfaces",
+  "label": "R5 Smoothed Polarization Interfaces 1.0 nm",
+  "overrides": {
+    "bc_right": 0.0,
+    "polarization_smoothing_nm": 1.0
+  },
+  "reverse_window": {
+    "vmin": -1.05,
+    "vmax": 0.0,
+    "vstep": 0.05
+  },
+  "merged_config_excerpt": {
+    "bc_left": "0.0",
+    "bc_right": 0.0,
+    "grid_step": "1.0",
+    "tat_field": "5e6",
+    "device_type": "Solar Cell / Photodetector",
+    "photovoltaic_mode": null,
+    "enable_polarization": true,
+    "polarization_smoothing_nm": 1.0
+  }
+}

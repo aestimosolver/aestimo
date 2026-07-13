@@ -1566,6 +1566,8 @@ def Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0, ni, G_opti
         ## Forcing Function for ELECTRON and HOLE Continuity eqns
         # Trap-Assisted Tunneling (TAT) Enhancement (Hurkx Model)
         tat_field = getattr(model, 'tat_field', 1e10)
+        trap_density_scale = max(getattr(model, 'trap_density_scale', 1.0), 1e-12)
+        trap_energy_offset_ev = getattr(model, 'trap_energy_offset_ev', 0.0)
         gamma = 0.0
         if tat_field < 1e9:
             # Local electric field E [V/m]
@@ -1575,6 +1577,7 @@ def Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0, ni, G_opti
             if E_field > 1e4: # Threshold for numerical stability
                 ratio = E_field / tat_field
                 gamma = 2.0 * np.sqrt(3.0 * np.pi) * ratio * np.exp(np.clip(ratio**2, 0, 20))
+        gamma *= trap_density_scale
                 
         # Subtract normalized generation term (G/ni)
         gen_term = G_opt_m3[i] / ni[i]
@@ -1591,9 +1594,11 @@ def Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0, ni, G_opti
         p_safe = np.clip(p[i], 0.0, 1e40)
         
         # Ensure denominator is positive and non-zero
-        n1_norm = np.maximum(ni_phys / ni_ref, 1e-20)
-        p1_norm = np.maximum(ni_phys / ni_ref, 1e-20)
-        denom_srh = TAUP0[i] * (n_safe + n1_norm) + TAUN0[i] * (p_safe + p1_norm)
+        trap_arg = np.clip(trap_energy_offset_ev / max(Vt, 1e-12), -40.0, 40.0)
+        n1_norm = np.maximum((ni_phys / ni_ref) * np.exp(trap_arg), 1e-20)
+        p1_norm = np.maximum((ni_phys / ni_ref) * np.exp(-trap_arg), 1e-20)
+        denom_base = TAUP0[i] * (n_safe + n1_norm) + TAUN0[i] * (p_safe + p1_norm)
+        denom_srh = denom_base / ((1.0 + gamma) * trap_density_scale)
         denom_srh = np.maximum(denom_srh, 1e-20)
         
         # --- Implicit Treatment for Stability ---
@@ -1764,9 +1769,13 @@ def Continuity3(n, p, mun, mup, fi, fi_n, fi_p, Vt, Ldi, n_max, dx, TAUN0, TAUP0
         p_safe = np.clip(p[i], 0.0, 1e40)
         
         # SRH with proper normalization
-        n1_norm = np.maximum(ni_p / ni_r, 1e-20)
-        p1_norm = np.maximum(ni_p / ni_r, 1e-20)
+        trap_density_scale = max(getattr(model, 'trap_density_scale', 1.0), 1e-12)
+        trap_energy_offset_ev = getattr(model, 'trap_energy_offset_ev', 0.0)
+        trap_arg = np.clip(trap_energy_offset_ev / max(Vt, 1e-12), -40.0, 40.0)
+        n1_norm = np.maximum((ni_p / ni_r) * np.exp(trap_arg), 1e-20)
+        p1_norm = np.maximum((ni_p / ni_r) * np.exp(-trap_arg), 1e-20)
         denom_srh = TAUP0[i] * (n_safe + n1_norm) + TAUN0[i] * (p_safe + p1_norm)
+        denom_srh = denom_srh / trap_density_scale
         denom_srh = np.maximum(denom_srh, 1e-20)
         
         # Implicit SRH coefficients

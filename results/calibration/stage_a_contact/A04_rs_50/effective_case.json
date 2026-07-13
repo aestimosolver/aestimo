@@ -1,0 +1,12 @@
+{
+  "source_json": "examples/untitled_project.json",
+  "stage": "stage_a_contact",
+  "case_id": "A04_rs_50",
+  "label": "Stage A Contact: external Rs = 50 Ohm",
+  "overrides": {
+    "bc_right": 0.0
+  },
+  "postprocess": {
+    "external_rs_ohm": 50.0
+  }
+}

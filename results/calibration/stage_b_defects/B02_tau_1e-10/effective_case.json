@@ -1,0 +1,14 @@
+{
+  "source_json": "examples/untitled_project.json",
+  "stage": "stage_b_defects",
+  "case_id": "B02_tau_1e-10",
+  "label": "Stage B Defects: tau = 1e-10 s",
+  "overrides": {
+    "bc_right": 0.0,
+    "taun0": 1e-10,
+    "taup0": 1e-10
+  },
+  "postprocess": {
+    "external_rs_ohm": 11.7
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "stage": "r1_current_extraction",
+  "case_id": "R1_selective_bc0p0",
+  "label": "R1 Selective Contact With bc_right = 0.0 V",
+  "overrides": {
+    "bc_right": 0.0
+  },
+  "reverse_window": {
+    "vmin": -1.05,
+    "vmax": 0.0,
+    "vstep": 0.05
+  },
+  "merged_config_excerpt": {
+    "bc_left": "0.0",
+    "bc_right": 0.0,
+    "grid_step": "1.0",
+    "tat_field": "5e6",
+    "device_type": "Solar Cell / Photodetector",
+    "photovoltaic_mode": null,
+    "enable_polarization": true,
+    "polarization_smoothing_nm": 0.0
+  }
+}

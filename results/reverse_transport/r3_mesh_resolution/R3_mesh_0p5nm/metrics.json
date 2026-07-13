@@ -1,0 +1,23 @@
+{
+  "case_id": "R3_mesh_0p5nm",
+  "label": "R3 Uniform Mesh 0.5 nm",
+  "official_current_at_minus_1V_a_cm2": -1.558976950164815e-11,
+  "whole_probe_current_at_minus_1V_a_cm2": 7.134137840207039e-18,
+  "absmax_current_at_minus_1V_a_cm2": 14.273493698954484,
+  "official_zero_like_points": 1,
+  "whole_zero_like_points": 1,
+  "onset_official_v": null,
+  "onset_whole_v": null,
+  "onset_absmax_v": null,
+  "all_bias_targets_reached": false,
+  "timeout_events_total": 105,
+  "max_gummel_iterations": 10000,
+  "min_substep_attempt_v": 0.0001953125,
+  "max_abs_field_v_cm_at_profile0": 140896.73657620244,
+  "left_contact_n_cm3_at_profile0": 78.12225073685998,
+  "left_contact_p_cm3_at_profile0": 7693829181962096.0,
+  "right_contact_n_cm3_at_profile0": 1.9586335415455565e+17,
+  "right_contact_p_cm3_at_profile0": 3.068768300605726,
+  "left_contact_qf_split_eV_at_profile0": -0.3703193625404837,
+  "right_contact_qf_split_eV_at_profile0": -0.3703193625404837
+}

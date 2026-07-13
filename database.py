@@ -249,6 +249,9 @@ materialproperty = {
 'beta_var': 830, # Varshni beta (K)
 'Bowing_param':3.2,
 'Band_offset':0.63,
+'GA1':6.0,
+'GA2':2.0,
+'GA3':2.0,
 'A1':-6.4,#-6.56 -0.91 5.65 -2.83 -3.13 -4.86
 'A2':-0.5,
 'A3':5.9,
@@ -262,7 +265,10 @@ materialproperty = {
 'D5':-4,
 'D6':-5.65,
 'Ac':-4.60,
+'Av':1.16,
+'B':-1.7,
 'a0_wz':3.189,#3.189 5.185
+'a0':3.189,
 'C11':37.,
 'C12':14.5,
 'C13':10.3,
@@ -274,6 +280,7 @@ materialproperty = {
 'D33':2.291e-12,# 2.291e-12     2.291e-12
 'Psp':-0.029,#-0.029 -0.034 
 'delta_so':0.015,#15.5mev
+'delta':0.015,
 'delta_cr':0.022,#72.9mev
 'a0_sub':3.189,
 'TAUN0':0.1E-6,# Electron SRH lifetime
@@ -300,6 +307,9 @@ materialproperty = {
 'beta_var': 624, # Varshni beta (K)
 'Bowing_param':3.2,
 'Band_offset':0.63,#
+'GA1':6.0,
+'GA2':2.0,
+'GA3':2.0,
 'A1':-9.09,#-9.28 -0.60 8.68 -4.34 -4.32 -6.08
 'A2':-0.63,
 'A3':8.46,
@@ -313,7 +323,10 @@ materialproperty = {
 'D5':-2.33,
 'D6':-5.5,
 'Ac':-1.4,
+'Av':1.0,
+'B':-1.8,
 'a0_wz':3.53,#3.548
+'a0':3.53,
 'C11':22.3,
 'C12':11.5,
 'C13':9.2,
@@ -325,6 +338,7 @@ materialproperty = {
 'D33':6.201e-12,#6.201e-12
 'Psp':-0.032,#-0.032 -0.042 
 'delta_so':0.001,#5mev
+'delta':0.001,
 'delta_cr':0.041,#40mev
 'a0_sub':3.189,
 'TAUN0':5.1e-8,# Electron SRH lifetime
@@ -362,7 +376,10 @@ materialproperty = {
 'D5':-4,
 'D6':3.4,
 'Ac':-7.17,
+'Av':2.47,
+'B':-1.5,
 'a0_wz':3.112,
+'a0':3.112,
 'C11':39.6,
 'C12':14,
 'C13':10.8,
@@ -373,6 +390,7 @@ materialproperty = {
 'D33':5.53e-12,#5.352e-12        5.53e-12
 'Psp':-0.081,#-0.081 −0.09
 'delta_so':0.019,#20.4mev
+'delta':0.019,
 'delta_cr':-0.164,#−58.5mev
 'a0_sub':3.189,
 'TAUN0':0.1E-7,# Electron SRH lifetime

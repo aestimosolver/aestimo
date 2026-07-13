@@ -143,6 +143,8 @@ def  DDNnewtonmap (ni,fi_e,fi_h,xaxis,idata,toll,maxit,verbose,model,Vt):
     # Hurkx field-enhancement factor Gamma
     # Use a high default for tat_field (e.g. 1e10) if not provided to disable TAT
     tat_field = getattr(model, 'tat_field', 1e10) # V/m
+    trap_density_scale = max(getattr(model, 'trap_density_scale', 1.0), 1e-12)
+    trap_energy_offset_ev = getattr(model, 'trap_energy_offset_ev', 0.0)
     
     Gamma = np.zeros(n_max)
     mask_high_field = E_field > 1e4 # Threshold to avoid noise (~100 V/cm)
@@ -151,9 +153,13 @@ def  DDNnewtonmap (ni,fi_e,fi_h,xaxis,idata,toll,maxit,verbose,model,Vt):
         # Gamma = 2 * sqrt(3*pi) * ratio * exp(ratio**2)
         # Simplified phenomenological form often used for soft turn-on:
         Gamma[mask_high_field] = 2.0 * np.sqrt(3.0 * np.pi) * ratio * np.exp(np.clip(ratio**2, 0, 20))
+    Gamma *= trap_density_scale
     
     ## Initialise RHS
-    denomsrh   = idata.TAUN0 * (p + idata.theta) + idata.TAUP0 * (n + idata.theta)
+    theta_n = getattr(idata, 'theta_n', idata.theta)
+    theta_p = getattr(idata, 'theta_p', idata.theta)
+    denomsrh   = idata.TAUN0 * (p + theta_p) + idata.TAUP0 * (n + theta_n)
+    denomsrh   = denomsrh / trap_density_scale
     factauger  = idata.Cn * n + idata.Cp * p
     
     # Apply TAT enhancement to SRH term

@@ -1,0 +1,24 @@
+{
+  "stage": "r3_mesh_resolution",
+  "case_id": "R3_mesh_0p5nm",
+  "label": "R3 Uniform Mesh 0.5 nm",
+  "overrides": {
+    "bc_right": 0.0,
+    "grid_step": 0.5
+  },
+  "reverse_window": {
+    "vmin": -1.05,
+    "vmax": 0.0,
+    "vstep": 0.05
+  },
+  "merged_config_excerpt": {
+    "bc_left": "0.0",
+    "bc_right": 0.0,
+    "grid_step": 0.5,
+    "tat_field": "5e6",
+    "device_type": "Solar Cell / Photodetector",
+    "photovoltaic_mode": null,
+    "enable_polarization": true,
+    "polarization_smoothing_nm": 0.0
+  }
+}

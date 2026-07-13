@@ -1,0 +1,42 @@
+{
+  "stage": "stage_e_candidates",
+  "case_id": "E01_best_chain",
+  "reverse_leakage_at_minus_1V_a_cm2": 1.9999999999766e-09,
+  "ideality_fit": {
+    "window_v": [
+      0.1,
+      0.3
+    ],
+    "points": 4,
+    "ideality_factor": -1.1658747422037643,
+    "ln_j_slope_per_v": -33.1782872306825,
+    "ln_j_intercept": -4.059594057115657
+  },
+  "turn_on_0p5Acm2_v": null,
+  "turn_on_0p1Acm2_v": null,
+  "current_density_at_0p60V_a_cm2": 0.0011333970046931937,
+  "current_density_at_0p70V_a_cm2": 0.0065109633287583095,
+  "forward_curvature_std_n": 3.7267799624996495e+29,
+  "local_ideality_trace_points": 15,
+  "left_contact_majority_injection_ratio_at_0p60V": 0.3620662128865099,
+  "right_contact_majority_injection_ratio_at_0p60V": 0.9610816214607328,
+  "integrated_srh_tat_forward_0p60V": 3.620666732805402e+18,
+  "integrated_auger_forward_0p60V": 3665330735.257489,
+  "defect_dominated_forward_0p60V": true,
+  "reference": {
+    "reverse_leakage_at_minus_1V_a_cm2": 0.0096,
+    "turn_on_0p5Acm2_v": 0.616,
+    "ideality_fit": {
+      "window_v": [
+        0.1,
+        0.3
+      ],
+      "points": 5,
+      "ideality_factor": 2.6171609583194644,
+      "ln_j_slope_per_v": 14.780033665439047,
+      "ln_j_intercept": -8.932412128651576
+    }
+  },
+  "score": 26.505141976338955,
+  "meets_stop_condition": false
+}

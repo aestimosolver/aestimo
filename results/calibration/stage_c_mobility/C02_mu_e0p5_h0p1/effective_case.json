@@ -1,0 +1,16 @@
+{
+  "source_json": "examples/untitled_project.json",
+  "stage": "stage_c_mobility",
+  "case_id": "C02_mu_e0p5_h0p1",
+  "label": "Stage C Mobility: mun x0.5, mup x0.1",
+  "overrides": {
+    "bc_right": 0.0,
+    "taun0": 5e-10,
+    "taup0": 5e-10,
+    "mun0_scale": 0.5,
+    "mup0_scale": 0.1
+  },
+  "postprocess": {
+    "external_rs_ohm": 11.7
+  }
+}

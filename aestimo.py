@@ -4647,9 +4647,9 @@ def Poisson_Schrodinger_DD_test_2(result, model):
             #
             ## Algorithm parameters
             toll = 1e-6  # Gummel convergence tolerance
-            maxit = 1000   # Max Gummel iterations
+            maxit = 50   # Max Gummel iterations
             ptoll = 1e-10  # Poisson solver tolerance
-            pmaxit = 50   # Poisson solver max iterations
+            pmaxit = 20   # Poisson solver max iterations
             verbose = 0   # Quiet mode for performance
                
             [odata, it, res] = DDGgummelmap(

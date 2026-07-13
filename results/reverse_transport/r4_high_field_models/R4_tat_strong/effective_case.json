@@ -1,0 +1,24 @@
+{
+  "stage": "r4_high_field_models",
+  "case_id": "R4_tat_strong",
+  "label": "R4 Stronger Hurkx TAT",
+  "overrides": {
+    "bc_right": 0.0,
+    "tat_field": 1000000.0
+  },
+  "reverse_window": {
+    "vmin": -1.05,
+    "vmax": 0.0,
+    "vstep": 0.05
+  },
+  "merged_config_excerpt": {
+    "bc_left": "0.0",
+    "bc_right": 0.0,
+    "grid_step": "1.0",
+    "tat_field": 1000000.0,
+    "device_type": "Solar Cell / Photodetector",
+    "photovoltaic_mode": null,
+    "enable_polarization": true,
+    "polarization_smoothing_nm": 0.0
+  }
+}

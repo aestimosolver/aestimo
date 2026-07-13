@@ -143,14 +143,20 @@ def DDGelectron_driftdiffusion(psi,xaxis,ng,p,ni,TAUN0,TAUP0,mun,fi_e,fi_h,model
     
     # Hurkx factor Gamma
     tat_field = getattr(model, 'tat_field', 1e10)
+    trap_density_scale = max(getattr(model, 'trap_density_scale', 1.0), 1e-12)
+    trap_energy_offset_ev = getattr(model, 'trap_energy_offset_ev', 0.0)
     Gamma = np.zeros(n_max)
     if tat_field < 1e9:
         mask_high_field = E_field > 1e4
         ratio = E_field[mask_high_field] / tat_field
         Gamma[mask_high_field] = 2.0 * np.sqrt(3.0 * np.pi) * ratio * np.exp(np.clip(ratio**2, 0, 20))
+    Gamma *= trap_density_scale
 
     ## SRH Recombination term
-    SRHD = (TAUP0 * (ng + ni) + TAUN0 * (p + ni)) / (1.0 + Gamma)
+    trap_arg = np.clip(trap_energy_offset_ev / max(Vt, 1e-12), -40.0, 40.0)
+    n1 = ni * np.exp(trap_arg)
+    p1 = ni * np.exp(-trap_arg)
+    SRHD = (TAUP0 * (ng + n1) + TAUN0 * (p + p1)) / ((1.0 + Gamma) * trap_density_scale)
     SRHL = p / SRHD
     SRHR = ni**2 / SRHD
     
