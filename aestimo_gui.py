@@ -1247,19 +1247,17 @@ class AestimoGUI(customtkinter.CTk):
         vmpp = light_m['vmpp']
         jmpp = light_m['jmpp']
 
-        # Standard solar cell superposition convention: J_illuminated(V) = J_dark(V) - J_sc
-        j_std_dark = np.maximum(0.0, dark_m['j'])
-        if len(dark_m['v']) != len(v_light):
-            j_dark_interp = np.interp(v_light, dark_m['v'], j_std_dark)
-        else:
-            j_dark_interp = j_std_dark
-        j_std_light = j_dark_interp - jsc
+        # Diode turn-on extraction under illumination:
+        # J_diode_illu = max(0, J_light_raw - Jsc)
+        # J_std_light = J_diode_illu - Jsc
+        j_diode_illu = np.maximum(0.0, j_light - jsc)
+        j_std_light = j_diode_illu - jsc
 
         fig_jv = Figure(figsize=(6.5, 4.5))
         ax1 = fig_jv.add_subplot(1, 1, 1)
 
         # Plot Dark, Simulated Light, and Ideal Solar Cell curves
-        ax1.plot(v_light, j_dark_interp, 'k-', lw=2, label='Dark Current')
+        ax1.plot(v_light, j_diode_illu, 'k-', lw=2, label='Dark Diode Current')
         ax1.plot(v_light, j_std_light, 'r-', lw=2.5, label='Actual Solar Cell (Simulated)')
 
         # Ideal Shockley Curve for comparison
