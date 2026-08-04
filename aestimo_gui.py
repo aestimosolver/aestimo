@@ -1247,22 +1247,26 @@ class AestimoGUI(customtkinter.CTk):
         vmpp = light_m['vmpp']
         jmpp = light_m['jmpp']
 
-        # Standard solar cell convention: photocurrent is negative (J_light = J_dark - J_ph)
-        j_std_light = -j_light
-        j_std_dark = np.maximum(0.0, dark_m['j'] if np.mean(dark_m['j']) > 0 else -dark_m['j'])
+        # Standard solar cell superposition convention: J_illuminated(V) = J_dark(V) - J_sc
+        j_std_dark = np.maximum(0.0, dark_m['j'])
+        if len(dark_m['v']) != len(v_light):
+            j_dark_interp = np.interp(v_light, dark_m['v'], j_std_dark)
+        else:
+            j_dark_interp = j_std_dark
+        j_std_light = j_dark_interp - jsc
 
         fig_jv = Figure(figsize=(6.5, 4.5))
         ax1 = fig_jv.add_subplot(1, 1, 1)
 
         # Plot Dark, Simulated Light, and Ideal Solar Cell curves
-        ax1.plot(dark_m['v'], j_std_dark, 'k-', lw=2, label='Dark Current')
+        ax1.plot(v_light, j_dark_interp, 'k-', lw=2, label='Dark Current')
         ax1.plot(v_light, j_std_light, 'r-', lw=2.5, label='Actual Solar Cell (Simulated)')
 
         # Ideal Shockley Curve for comparison
         Vt_val = 0.02585
         n_ideality = max(1.0, voc / (Vt_val * 25.0)) if voc > 0.8 else 1.5
         j0_ideal = jsc / (np.exp(min(40.0, voc / (n_ideality * Vt_val))) - 1.0) if voc > 0 else 1e-12
-        v_dense = np.linspace(-1.0, max(1.2, voc + 0.35), 250)
+        v_dense = np.linspace(-0.5, max(1.3, voc + 0.2), 250)
         j_ideal_dense = j0_ideal * (np.exp(np.clip(v_dense / (n_ideality * Vt_val), -50, 40)) - 1.0) - jsc
         ax1.plot(v_dense, j_ideal_dense, 'b--', lw=1.8, label=f'Ideal Curve (n={n_ideality:.1f}, Rs=0, Rsh=∞)')
 
