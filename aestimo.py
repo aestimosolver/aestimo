@@ -1348,6 +1348,7 @@ class StructureFrom(Structure):
             'computation_scheme': 0,
             'gridfactor': 0.1,
             'maxgridpoints': 200000,
+            'max_iterations': 120,
             'mat_type': 'Zincblende',
             'dop_profile': np.zeros(1),
             'Quantum_Regions_boundary': np.zeros((1, 2)),
@@ -1360,7 +1361,8 @@ class StructureFrom(Structure):
             'work_function_left': 4.5,
             'work_function_right': 5.2,
             'surface_recomb_val': [1e7, 1e7],
-            'tau': None  # Global lifetime override (s)
+            'tau': None,  # Global lifetime override (s)
+            'use_newton_solver': False # Toggle fully-coupled Newton solver
         }
         for key, default in defaults.items():
             val = getattr(inputfile, key, default)
@@ -1447,6 +1449,16 @@ class StructureFrom(Structure):
                  logger.warning(f"Input dop_profile length {len(inputfile.dop_profile)} does not match n_max {self.n_max}. Ignoring.")
         else:
              logger.info("Using doping profile calculated from material layers.")
+        
+        self.ionization_efficiency = getattr(inputfile, 'ionization_efficiency', 1.0)
+        self.poisson_damping = getattr(inputfile, 'poisson_damping', 0.1)
+        self.continuity_damping = getattr(inputfile, 'continuity_damping', 0.7)
+        
+        # Apply ionization efficiency to p-type dopants (deep acceptors)
+        if self.ionization_efficiency != 1.0:
+            for i in range(len(self.dop)):
+                if self.dop[i] < 0:
+                    self.dop[i] *= self.ionization_efficiency
 
 
 # No Shooting method parameters for Schrödinger Equation solution since we use a 3x3 KP solver
@@ -1811,6 +1823,8 @@ def calc_Vxc(sigma, eps, cb_meff, model):
     )  # simplified constant factor for expression.
     #
     Vxc = -A * nz_3 / eps * (1.0 + 0.0545 * r_s * np.log(1.0 + 11.4 / r_s))
+    ionization_efficiency = 1.0  # Fraction of p-type dopants that are active
+    use_newton_solver = False # Toggle fully-coupled Newton solver
     return Vxc
 
 
@@ -3362,7 +3376,7 @@ def Poisson_Schrodinger_DD(result, model):
     Cp0 = model.Cp0
     # Setup Optical Generation Profile
     gen_type = getattr(model, 'generation_type', 'uniform')
-    G_optical_val = getattr(model, 'G_optical', 0.0)
+    G_optical_val = float(getattr(model, 'G_optical', 0.0))
     G_optical = np.zeros(n_max)
     
     if gen_type == 'uniform':
@@ -3549,13 +3563,37 @@ def Poisson_Schrodinger_DD(result, model):
                     logger.info("  Iteration %d...", iteration)
                     sys.stdout.flush()
                 
-                # Hard iteration cap for stability (increased to 2000 for difficult steps)
-                if iteration > 2000:
-                    logger.warning("  Timeout: Gummel loop did not converge within 2000 iterations at Va = %g V. Proceeding with current values.", Va_t[vindex])
+                # Hard iteration cap for stability
+                max_iter_val = getattr(model, 'max_iterations', 100)
+                curr_p_damp = getattr(model, 'poisson_damping', 0.1)
+                curr_c_damp = getattr(model, 'continuity_damping', 0.7)                
+                if iteration > max_iter_val:
+                    logger.warning("  Timeout: Gummel loop did not converge within %d iterations at Va = %g V. Proceeding with current values.", max_iter_val, Va_t[vindex])
                     flag_conv_2 = False
                     break
+                    
+                newton_failed = False
+                if getattr(model, 'use_newton_solver', False):
+                    if not hasattr(model, 'newton_solver'):
+                        from aeslibs.newton_raphson import CoupledNewtonSolver
+                        model.newton_solver = CoupledNewtonSolver(model, n_max, dx, ni, dop, Ldi, Ppz_Psp, pol_surf_char, Nc, Nv, fi_stat)
+                    
+                    # Update mobility for Newton solver
+                    mun, mup = Mobility2(
+                        mun0, mup0, fi, Vt, Ldi, VSATN, VSATP, BETAN, BETAP, n_max, dx
+                    )
+                    
+                    fi, n, p, newton_ok = model.newton_solver.solve(fi, n, p, mun, mup, TAUN0, TAUP0, Cn0, Cp0, G_optical, iteration)
+                    flag_conv_2 = False
+                    
+                    if not newton_ok or not np.all(np.isfinite(n)) or not np.all(np.isfinite(p)):
+                        logger.warning("  Newton-Krylov solver fallback to standard Sequential DD at Va = %g V.", Va_t[vindex])
+                        model.use_newton_solver = False
+                        newton_failed = True
+                        flag_conv_2 = True
 
-                fi, flag_conv_2 = Poisson_non_equi2(
+                if not getattr(model, 'use_newton_solver', False) or newton_failed:
+                    fi, flag_conv_2 = Poisson_non_equi2(
                     fi_stat,
                     n,
                     p,
@@ -3582,13 +3620,16 @@ def Poisson_Schrodinger_DD(result, model):
                     E_statec_general,
                     meff_state_general,
                     meff_statec_general,
+                    damping=curr_p_damp,
                 )
-                #
-                mun, mup = Mobility2(
-                    mun0, mup0, fi, Vt, Ldi, VSATN, VSATP, BETAN, BETAP, n_max, dx
-                )
-                ########### END of FIELD Dependant Mobility Calculation ###########
-                n, p = Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0, ni, G_optical, iteration, model=model, dop=dop, Cn0=Cn0, Cp0=Cp0)
+                
+                    #
+                    mun, mup = Mobility2(
+                        mun0, mup0, fi, Vt, Ldi, VSATN, VSATP, BETAN, BETAP, n_max, dx
+                    )
+                    
+                    ########### END of FIELD Dependant Mobility Calculation ###########
+                    n, p = Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0, ni, G_optical, iteration, model=model, dop=dop, Cn0=Cn0, Cp0=Cp0, damping=curr_c_damp)
                 
                 # Check for numerical instability
                 if not np.all(np.isfinite(n)) or not np.all(np.isfinite(p)):
@@ -3631,6 +3672,22 @@ def Poisson_Schrodinger_DD(result, model):
             # End of main FOR loop for Va increment.
             Jtotal = Jelec + Jhole
             fi_va[vindex, :] = fi
+            
+            # Early stopping for photovoltaic mode to save time
+            if getattr(model, 'photovoltaic_mode', False) and vindex > 0:
+                idx_lo_tmp = int(0.9 * n_max)
+                idx_hi_tmp = n_max - 1
+                current_av_curr = np.median(Jtotal[vindex, idx_lo_tmp:idx_hi_tmp])
+                
+                if current_av_curr < 0.0 or current_av_curr > 1e5:
+                    logger.info("Photovoltaic mode: Current crossed zero at Va=%.2fV. Early stopping!", Va_t[vindex])
+                    Total_Steps = vindex + 1
+                    Va_t = Va_t[:Total_Steps]
+                    fi_va = fi_va[:Total_Steps, :]
+                    Jelec = Jelec[:Total_Steps, :]
+                    Jhole = Jhole[:Total_Steps, :]
+                    Jtotal = Jtotal[:Total_Steps, :]
+                    break
 
         for vindex in range(Total_Steps):
             Ec_result_[vindex, :] = fi_e / q - Vt * fi_va[vindex, :]
@@ -3642,6 +3699,10 @@ def Poisson_Schrodinger_DD(result, model):
             idx_lo = int(0.9 * n_max)
             idx_hi = n_max - 1
             av_curr[vindex] = np.median(Jtotal[vindex, idx_lo:idx_hi])
+            
+        av_curr = av_curr[:Total_Steps]
+        Ec_result_ = Ec_result_[:Total_Steps, :]
+        Ev_result_ = Ev_result_[:Total_Steps, :]
         ##########################################################################
         ##                 END OF NON-EQUILIBRIUM  SOLUTION PART                ##
         ##########################################################################
@@ -4320,7 +4381,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     Rbar = ns_scale / tbar
     
     # Pass physical G_optical to solver (Convert cm^-3 s^-1 to m^-3 s^-1)
-    G_opt_phys = getattr(model, 'G_optical', 0.0) * 1e6 
+    G_opt_phys = float(getattr(model, 'G_optical', 0.0)) * 1e6 
     model.G_optical_scaled = G_opt_phys / Rbar # For solver normalization (dimensionless)
     print(f"DEBUG: xbar={xbar:.2e} m, tbar={tbar:.2e} s, Rbar={Rbar:.2e} m^-3/s")
     print(f"DEBUG: G_opt_phys={G_opt_phys:.2e}, G_scaled={model.G_optical_scaled:.2e}")
@@ -4823,6 +4884,32 @@ def Poisson_Schrodinger_DD_test_2(result, model):
                 * (p_[vindex, 0 : n_max - 1] * Bp - p_[vindex, 1:n_max] * Bm)
             )
             
+            # Early stopping for photovoltaic mode to save time
+            if getattr(model, 'photovoltaic_mode', False) and vindex > 0:
+                current_Jtotal = (Jp[vindex, 0:n_max-1] + Jn[vindex, 0:n_max-1]) * 0.1
+                idx_lo_tmp = max(1, int(0.8 * n_max))
+                idx_hi_tmp = max(2, n_max - 2)
+                current_av_curr = np.median(current_Jtotal[idx_lo_tmp:idx_hi_tmp])
+                
+                if current_av_curr > 0.0 or current_av_curr < -1e5:
+                    print(f"Photovoltaic mode: Current crossed zero at Va={Va_t[vindex]:.2f}V. Early stopping!")
+                    Total_Steps = vindex + 1
+                    Va_t = Va_t[:Total_Steps]
+                    vvect = vvect[:Total_Steps]
+                    n_ = n_[:Total_Steps, :]
+                    p_ = p_[:Total_Steps, :]
+                    V_ = V_[:Total_Steps, :]
+                    Fn_ = Fn_[:Total_Steps, :]
+                    Fp_ = Fp_[:Total_Steps, :]
+                    Jn = Jn[:Total_Steps, :]
+                    Jp = Jp[:Total_Steps, :]
+                    DV = DV[:Total_Steps]
+                    Emax = Emax[:Total_Steps]
+                    fi_va = fi_va[:Total_Steps, :]
+                    Ec_result_ = Ec_result_[:Total_Steps, :]
+                    Ev_result_ = Ev_result_[:Total_Steps, :]
+                    break
+            
         ## Descaling to physical SI units
         # Restore carrier and potential scaling for GUI displays
         # Potential is normalized to Vt, densities to ns (m^-3)
@@ -5057,8 +5144,10 @@ def run_aestimo(input_obj, drawFigures=drawFigures, show=True):
         result = Poisson_Schrodinger(model)
     
     print(f"DEBUG: Poisson_Schrodinger done. checking comp_scheme for DD routing: {model.comp_scheme}")
-    if model.comp_scheme == 7:
-        print("DEBUG: Routing to Poisson_Schrodinger_DD")
+    if model.comp_scheme in (7, 10):
+        if model.comp_scheme == 10:
+            model.use_newton_solver = True
+        print("DEBUG: Routing to Poisson_Schrodinger_DD (Newton-Krylov enabled for scheme 10)")
         result_dd = Poisson_Schrodinger_DD(result, model)
     if model.comp_scheme == 8:
         result_dd = Poisson_Schrodinger_DD_test(result, model)
@@ -5069,13 +5158,12 @@ def run_aestimo(input_obj, drawFigures=drawFigures, show=True):
     logger.info("total running time (inc. loading libraries) %g s", (time4 - time0))
     logger.info("total running time (exc. loading libraries) %g s", (time4 - time1))
     # Write the simulation results in files
-    # Write the simulation results in files
 
     figs_out = []
     if model.comp_scheme in (2,7,8,10):
         res_figs = save_and_plot(result, model, output_directory, drawFigures=drawFigures, show=show)
         if isinstance(res_figs, list): figs_out.extend(res_figs)
-    if model.comp_scheme in (7,8,9):
+    if model.comp_scheme in (7,8,9,10):
         res_figs2 = save_and_plot2(result_dd, model, output_directory, drawFigures=drawFigures, show=show)
         if isinstance(res_figs2, list): figs_out.extend(res_figs2)
     figures = figs_out

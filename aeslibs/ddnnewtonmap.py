@@ -87,14 +87,25 @@ def  DDNnewtonmap (ni,fi_e,fi_h,xaxis,idata,toll,maxit,verbose,model,Vt):
     BCnodesp = [0, n_max-1]
     if getattr(model, 'photovoltaic_mode', False):
         # Photovoltaic Mode: Selective Contacts
-        # Fix majority carriers at their respective contacts
-        # Assuming Left (0) is n-contact and Right (n_max-1) is p-contact
-        # This can be made more robust by checking dop sign, but this is the standard flow
-        BCnodesp1 = [n_max] # Fix Electron at Left only (n_max + 0)
-        BCnodesp2 = [3*n_max-1] # Fix Hole at Right only (2*n_max + n_max-1)
+        # Fix majority carriers at their respective contacts based on doping
+        BCnodesp1 = []
+        BCnodesp2 = []
+        dop = getattr(idata, 'dop', None)
         
-        # We need to ensure BCnodes_ has the correct shape for hstack if we use it later
-        # But we can just build BCnodes directly
+        if dop is not None:
+            if dop[0] > 0: # n-type on left
+                BCnodesp1.append(n_max) # Fix Electron at Left
+            else: # p-type on left
+                BCnodesp2.append(2*n_max) # Fix Hole at Left
+                
+            if dop[n_max-1] > 0: # n-type on right
+                BCnodesp1.append(2*n_max - 1) # Fix Electron at Right
+            else: # p-type on right
+                BCnodesp2.append(3*n_max - 1) # Fix Hole at Right
+        else:
+            BCnodesp1 = [n_max] # Fix Electron at Left
+            BCnodesp2 = [3*n_max-1] # Fix Hole at Right
+        
         BCnodes = np.array(BCnodesp + BCnodesp1 + BCnodesp2)
     else:
         # Standard Mode: Ohmic Contacts (Fix all at both ends)
@@ -142,7 +153,7 @@ def  DDNnewtonmap (ni,fi_e,fi_h,xaxis,idata,toll,maxit,verbose,model,Vt):
     
     # Hurkx field-enhancement factor Gamma
     # Use a high default for tat_field (e.g. 1e10) if not provided to disable TAT
-    tat_field = getattr(model, 'tat_field', 1e10) # V/m
+    tat_field = float(getattr(model, 'tat_field', 1e10)) # V/m
     trap_density_scale = max(getattr(model, 'trap_density_scale', 1.0), 1e-12)
     trap_energy_offset_ev = getattr(model, 'trap_energy_offset_ev', 0.0)
     

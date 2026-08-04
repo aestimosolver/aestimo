@@ -1466,7 +1466,7 @@ def Mobility2(mun0, mup0, fi, Vt, Ldi, VSATN, VSATP, BETAN, BETAP, n_max, dx):
     return mun, mup
 
 
-def Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0, ni, G_optical=0.0, iteration=1, model=None, dop=None, Cn0=None, Cp0=None):
+def Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0, ni, G_optical=0.0, iteration=1, model=None, dop=None, Cn0=None, Cp0=None, damping=0.7):
     #################################################################################
     ## 3.2 Solve Continuity Equation for Electron and Holes using LU Decomposition ##
     #################################################################################
@@ -1565,7 +1565,7 @@ def Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0, ni, G_opti
         )
         ## Forcing Function for ELECTRON and HOLE Continuity eqns
         # Trap-Assisted Tunneling (TAT) Enhancement (Hurkx Model)
-        tat_field = getattr(model, 'tat_field', 1e10)
+        tat_field = float(getattr(model, 'tat_field', 1e10))
         trap_density_scale = max(getattr(model, 'trap_density_scale', 1.0), 1e-12)
         trap_energy_offset_ev = getattr(model, 'trap_energy_offset_ev', 0.0)
         gamma = 0.0
@@ -1639,8 +1639,8 @@ def Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0, ni, G_opti
     n[n_max - 1] = tempn
     for i in range(n_max - 2, -1, -1):
         tempn = (vn[i] - cn[i] * n[i + 1]) / (dn[i] if abs(dn[i]) > 1e-30 else 1e-30)
-        # Adding damping for stability (0.7 factor)
-        n[i] = np.clip(0.3 * tempn + 0.7 * n[i], 0.0, 1e40)
+        # Adding damping for stability
+        n[i] = np.clip((1.0 - damping) * tempn + damping * n[i], 0.0, 1e40)
     ####################### END of ELECTRON Continuty Solver ###########
     dp[0] = bp[0]
     for i in range(1, n_max):
@@ -1655,8 +1655,8 @@ def Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0, ni, G_opti
     p[n_max - 1] = tempp
     for i in range(n_max - 2, -1, -1):
         tempp = (vp[i] - cp[i] * p[i + 1]) / (dp[i] if abs(dp[i]) > 1e-30 else 1e-30)
-        # Adding damping for stability (0.7 factor)
-        p[i] = np.clip(0.3 * tempp + 0.7 * p[i], 0.0, 1e40)
+        # Adding damping for stability
+        p[i] = np.clip((1.0 - damping) * tempp + damping * p[i], 0.0, 1e40)
     ####################### END of HOLE Continuty Solver ###########
     return n, p
 
@@ -1864,6 +1864,7 @@ def Poisson_non_equi2(
     E_statec_general,
     meff_state_general,
     meff_statec_general,
+    damping=0.1,
 ):
     ####################################################################
     ## 3.3 Calculate potential fi again with new values of "n" and "p"##
@@ -1911,7 +1912,6 @@ def Poisson_non_equi2(
         v[i] = f[i] - a[i] * v[i - 1] / d[i - 1]
     
     # Backward Substitution with Damping
-    damping = 0.1
     temp = v[n_max - 1] / d[n_max - 1]
     delta[n_max - 1] = temp - fi_out[n_max - 1]
     fi_out[n_max - 1] = fi_out[n_max - 1] + damping * delta[n_max - 1]
@@ -1923,8 +1923,8 @@ def Poisson_non_equi2(
 
     delta_max = np.max(np.abs(delta))
     
-    # Convergence criteria for the outer Gummel loop
-    if delta_max < delta_acc:
+    # 4. Check for convergence #########################################
+    if delta_max > 1.0e-4:
         flag_conv_2 = False
     else:
         flag_conv_2 = True

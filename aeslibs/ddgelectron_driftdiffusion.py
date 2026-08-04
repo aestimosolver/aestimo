@@ -142,7 +142,7 @@ def DDGelectron_driftdiffusion(psi,xaxis,ng,p,ni,TAUN0,TAUP0,mun,fi_e,fi_h,model
     E_field = np.abs(dV) * (Vt / (xs_val if xs_val > 0 else 1e-9))
     
     # Hurkx factor Gamma
-    tat_field = getattr(model, 'tat_field', 1e10)
+    tat_field = float(getattr(model, 'tat_field', 1e10))
     trap_density_scale = max(getattr(model, 'trap_density_scale', 1.0), 1e-12)
     trap_energy_offset_ev = getattr(model, 'trap_energy_offset_ev', 0.0)
     Gamma = np.zeros(n_max)
@@ -196,6 +196,8 @@ def DDGelectron_driftdiffusion(psi,xaxis,ng,p,ni,TAUN0,TAUP0,mun,fi_e,fi_h,model
         
     n = np.zeros(n_max)
     n[mask] = nn
-    n[0]=nl
-    n[len(n)-1]=nr
+    if 0 in BCnodes:
+        n[0] = nl
+    if (n_max-1) in BCnodes:
+        n[-1] = nr
     return n

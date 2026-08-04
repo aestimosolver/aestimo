@@ -117,7 +117,7 @@ def  DDGhole_driftdiffusion(psi,xaxis,pg,n,ni,TAUN0,TAUP0,mup,fi_e,fi_h,model,Vt
     E_field = np.abs(dV) * (Vt / (xs_val if xs_val > 0 else 1e-9))
     
     # Hurkx factor Gamma
-    tat_field = getattr(model, 'tat_field', 1e10)
+    tat_field = float(getattr(model, 'tat_field', 1e10))
     trap_density_scale = max(getattr(model, 'trap_density_scale', 1.0), 1e-12)
     trap_energy_offset_ev = getattr(model, 'trap_energy_offset_ev', 0.0)
     Gamma = np.zeros(n_max)
@@ -168,6 +168,8 @@ def  DDGhole_driftdiffusion(psi,xaxis,pg,n,ni,TAUN0,TAUP0,mup,fi_e,fi_h,model,Vt
         
     p = np.zeros(n_max)
     p[mask] = pp
-    p[0]=pl
-    p[len(p)-1]=pr
+    if 0 in BCnodes:
+        p[0] = pl
+    if (n_max-1) in BCnodes:
+        p[-1] = pr
     return p

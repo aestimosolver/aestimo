@@ -45,35 +45,50 @@ def analyze_iv_curve(voltage, current, area_cm2=1.0, pin_mw_cm2=100.0):
     v = v[:valid_limit]
     j = j[:valid_limit]
     
+    # Determine current sign convention (Aestimo positive collection vs standard negative photocurrent)
+    j_at_0 = float(np.interp(0.0, v, j))
+    # Work with j_work where photocurrent/collection current is POSITIVE
+    sign = 1.0 if j_at_0 >= 0 else -1.0
+    j_work = j * sign
+    
     # 1. Jsc (at V=0)
-    jsc = -np.interp(0.0, v, j) 
+    jsc = float(j_work[np.argmin(np.abs(v))])
     
-    # 2. Voc (at J=0)
-    if np.min(j) < 0 and np.max(j) > 0:
-        voc = np.interp(0.0, j, v)
+    # 2. Voc (Voltage where photogenerated power is zero or current crosses dark baseline)
+    # Check zero crossing of j_work
+    sign_changes = np.where(np.diff(np.sign(j_work)))[0]
+    if len(sign_changes) > 0:
+        idx = sign_changes[0]
+        # Linear interpolation for Voc
+        v1, v2 = v[idx], v[idx+1]
+        j1, j2 = j_work[idx], j_work[idx+1]
+        voc = float(v1 - j1 * (v2 - v1) / (j2 - j1)) if (j2 != j1) else float(v1)
     else:
-        voc = 0.0
+        # If no zero crossing in sweep range, Voc is at maximum voltage or peak power point
+        p_temp = v * j_work
+        mpp_idx_temp = np.argmax(p_temp)
+        voc = float(v[mpp_idx_temp]) if mpp_idx_temp > 0 else float(v[-1])
         
-    # 3. Power Density
-    p_density = v * (-j) # mW/cm^2
+    # 3. Power Density (mW/cm^2)
+    p_density = v * j_work
     
-    # Find MPP
-    valid_mask = (v >= 0) & (v <= (voc if voc > 0 else np.max(v)))
+    # Find MPP in power quadrant (0 <= V <= Voc or entire positive range)
+    valid_mask = (v >= 0)
     if np.any(valid_mask):
         p_valid = p_density[valid_mask]
         v_valid = v[valid_mask]
-        j_valid = j[valid_mask]
+        j_valid = j_work[valid_mask]
         mpp_idx = np.argmax(p_valid)
-        pmpp = p_valid[mpp_idx]
-        vmpp = v_valid[mpp_idx]
-        jmpp = -j_valid[mpp_idx]
+        pmpp = float(p_valid[mpp_idx])
+        vmpp = float(v_valid[mpp_idx])
+        jmpp = float(j_valid[mpp_idx])
     else:
         pmpp, vmpp, jmpp = 0.0, 0.0, 0.0
 
     # 4. Fill Factor
     ff = (pmpp / (voc * jsc) * 100.0) if (voc > 0 and jsc > 0) else 0.0
         
-    # 5. Efficiency
+    # 5. Efficiency (%)
     eta = (pmpp / pin_mw_cm2) * 100.0 if pin_mw_cm2 > 0 else 0.0
     
     # 6. Resistances (Requires at least 2 points)

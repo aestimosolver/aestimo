@@ -276,7 +276,8 @@ class AestimoGUI(customtkinter.CTk):
             "6: SP + Exchange + Non-parabolicity": 6,
             "7: SP-Drift Diffusion (Sequential)": 7,
             "8: SP-Drift Diffusion (Simultaneous)": 8,
-            "9: SP-DD (Gummel-Newton)": 9
+            "9: SP-DD (Gummel-Newton)": 9,
+            "10: Fully-Coupled Newton-Raphson": 10
         }
         self.schema_map_rev = {v: k for k, v in schema_map.items()}
         
@@ -693,7 +694,10 @@ class AestimoGUI(customtkinter.CTk):
         return config
 
     def load_configuration(self, config):
-        """Restores UI state from dictionary"""
+        """Restores UI state from dictionary or JSON file path"""
+        if isinstance(config, str):
+            with open(config, 'r') as f:
+                config = json.load(f)
         # Layers
         self.clear_layers()
         for l in config.get("layers", []):
@@ -1033,6 +1037,7 @@ class AestimoGUI(customtkinter.CTk):
         except Exception as e:
             self.after(0, self.finish_simulation, False, str(e), None)
 
+
     def run_solar_study_worker(self, config):
         try:
             plt.switch_backend('Agg')
@@ -1070,8 +1075,8 @@ class AestimoGUI(customtkinter.CTk):
                     self.material = material_list
                     # For Solar Study, we MUST sweep forward bias to see the power quadrant.
                     # 1.1V is usually sufficient for InGaN Voc and more stable for Solver 7.
-                    self.vmin = 0.0
-                    self.vmax = 1.1
+                    self.vmin = -0.5
+                    self.vmax = 1.0
                     self.Each_Step = 0.05  # Finer steps for better gradient and stability
                     self.G_optical = G_override if G_override is not None else float(cfg_dict.get("G_optical", 0.0))
                     self.tat_field = float(cfg_dict.get("tat_field", 1e10))
@@ -1234,41 +1239,97 @@ class AestimoGUI(customtkinter.CTk):
         light_m = data["light_metrics"]
         temp_res = data["temp_results"]
         
-        # Fig 1: J-V
-        fig_jv = Figure(figsize=(6, 4))
+        # Fig 1: J-V (Textbook Standard Diagram with Annotations & MPP Box)
+        v_light = light_m['v']
+        j_light = light_m['j']
+        jsc = light_m['jsc']
+        voc = light_m['voc']
+        vmpp = light_m['vmpp']
+        jmpp = light_m['jmpp']
+
+        # Standard solar cell convention: photocurrent is negative (J_light = J_dark - J_ph)
+        j_std_light = -j_light
+        j_std_dark = np.maximum(0.0, dark_m['j'] if np.mean(dark_m['j']) > 0 else -dark_m['j'])
+
+        fig_jv = Figure(figsize=(6.5, 4.5))
         ax1 = fig_jv.add_subplot(1, 1, 1)
-        ax1.plot(dark_m['v'], dark_m['j'], 'k--', label='Dark')
-        ax1.plot(light_m['v'], light_m['j'], 'r-', label='Light')
-        ax1.set_xlabel('Voltage (V)')
-        ax1.set_ylabel('Current Density (mA/cm²)')
-        ax1.set_title('Dark vs Illuminated J-V')
-        ax1.legend()
+
+        # Plot Dark, Simulated Light, and Ideal Solar Cell curves
+        ax1.plot(dark_m['v'], j_std_dark, 'k-', lw=2, label='Dark Current')
+        ax1.plot(v_light, j_std_light, 'r-', lw=2.5, label='Actual Solar Cell (Simulated)')
+
+        # Ideal Shockley Curve for comparison
+        Vt_val = 0.02585
+        n_ideality = max(1.0, voc / (Vt_val * 25.0)) if voc > 0.8 else 1.5
+        j0_ideal = jsc / (np.exp(min(40.0, voc / (n_ideality * Vt_val))) - 1.0) if voc > 0 else 1e-12
+        v_dense = np.linspace(-1.0, max(1.2, voc + 0.35), 250)
+        j_ideal_dense = j0_ideal * (np.exp(np.clip(v_dense / (n_ideality * Vt_val), -50, 40)) - 1.0) - jsc
+        ax1.plot(v_dense, j_ideal_dense, 'b--', lw=1.8, label=f'Ideal Curve (n={n_ideality:.1f}, Rs=0, Rsh=∞)')
+
+        # Reference zero axes lines
+        ax1.axhline(0, color='gray', linestyle='--', linewidth=0.8)
+        ax1.axvline(0, color='gray', linestyle='--', linewidth=0.8)
+
+        # Fill Maximum Power Rectangle in 4th quadrant (0 to Vmpp, 0 to -Jmpp)
+        from matplotlib.patches import Rectangle
+        if vmpp > 0 and jmpp > 0:
+            rect = Rectangle((0, -jmpp), vmpp, jmpp, facecolor='gold', alpha=0.5, edgecolor='orange', lw=1.5, zorder=2)
+            ax1.add_patch(rect)
+            ax1.plot([vmpp, vmpp], [-jmpp, 0], color='indigo', linestyle='-', linewidth=0.8)
+            ax1.plot([0, vmpp], [-jmpp, -jmpp], color='indigo', linestyle='-', linewidth=0.8)
+
+        # Circle Markers at key points
+        if jsc > 0:
+            ax1.plot(0, -jsc, 'o', mec='purple', mfc='none', ms=10, mew=2, zorder=5)
+            ax1.annotate('Short Circuit Current', xy=(0, -jsc), xytext=(-0.35, -jsc*1.02),
+                         color='indigo', fontsize=9, fontweight='bold',
+                         arrowprops=dict(arrowstyle='->', color='indigo', lw=1.2))
+
+        if vmpp > 0 and jmpp > 0:
+            ax1.plot(vmpp, -jmpp, 'o', mec='purple', mfc='none', ms=10, mew=2, zorder=5)
+            ax1.annotate('Maximum Power Point', xy=(vmpp, -jmpp), xytext=(vmpp + 0.05, -jmpp*1.05),
+                         color='indigo', fontsize=9, fontweight='bold',
+                         arrowprops=dict(arrowstyle='->', color='indigo', lw=1.2))
+
+        if voc > 0:
+            ax1.plot(voc, 0, 'o', mec='purple', mfc='none', ms=10, mew=2, zorder=5)
+            ax1.annotate('Open Circuit Voltage', xy=(voc, 0), xytext=(voc - 0.2, jsc*0.2),
+                         color='indigo', fontsize=9, fontweight='bold',
+                         arrowprops=dict(arrowstyle='->', color='indigo', lw=1.2))
+
+        ax1.set_xlabel('Voltage [V]', fontweight='bold')
+        ax1.set_ylabel('Current [mA/cm²]', fontweight='bold')
+        ax1.set_title('Dark vs Illuminated J-V', fontweight='bold')
+        ax1.legend(loc='upper left')
         ax1.grid(True, alpha=0.3)
 
         # Fig 2: P-V
+        p_light = light_m['p']
+
         fig_pv = Figure(figsize=(6, 4))
         ax2 = fig_pv.add_subplot(1, 1, 1)
-        ax2.plot(light_m['v'], light_m['p'], 'g-', label='Power')
-        ax2.axvline(light_m['vmpp'], color='orange', ls=':', label=f"MPP: {light_m['pmpp']:.2f} mW/cm²")
-        ax2.set_xlabel('Voltage (V)')
-        ax2.set_ylabel('Power Density (mW/cm²)')
-        ax2.set_title('P-V Characteristic')
+        ax2.plot(v_light, p_light, 'g-', label='Power')
+        if vmpp > 0:
+            ax2.axvline(vmpp, color='orange', ls=':', label=f"MPP: {light_m['pmpp']:.4f} mW/cm²")
+        ax2.set_xlabel('Voltage (V)', fontweight='bold')
+        ax2.set_ylabel('Power Density (mW/cm²)', fontweight='bold')
+        ax2.set_title('P-V Characteristic', fontweight='bold')
         ax2.legend()
         ax2.grid(True, alpha=0.3)
 
-        # Fig 3: Voc vs T
+        # Fig 3: Voc vs T (Solid blue line, no dots)
         fig_voct = Figure(figsize=(6, 4))
         ax3 = fig_voct.add_subplot(1, 1, 1)
-        ax3.plot([r[0] for r in temp_res], [r[1]['voc'] for r in temp_res], 'bo-')
+        ax3.plot([r[0] for r in temp_res], [r[1]['voc'] for r in temp_res], 'b-')
         ax3.set_xlabel('Temperature (K)')
         ax3.set_ylabel('Voc (V)')
         ax3.set_title('Open-Circuit Voltage vs Temperature')
         ax3.grid(True, alpha=0.3)
 
-        # Fig 4: Eff vs T
+        # Fig 4: Eff vs T (Solid red line, no dots)
         fig_efft = Figure(figsize=(6, 4))
         ax4 = fig_efft.add_subplot(1, 1, 1)
-        ax4.plot([r[0] for r in temp_res], [r[1]['eta'] for r in temp_res], 'ro-')
+        ax4.plot([r[0] for r in temp_res], [r[1]['eta'] for r in temp_res], 'r-')
         ax4.set_xlabel('Temperature (K)')
         ax4.set_ylabel('Efficiency (%)')
         ax4.set_title('Efficiency vs Temperature')
