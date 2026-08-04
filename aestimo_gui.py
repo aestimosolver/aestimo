@@ -1282,22 +1282,22 @@ class AestimoGUI(customtkinter.CTk):
             ax1.plot([vmpp, vmpp], [-jmpp, 0], color='indigo', linestyle='-', linewidth=0.8)
             ax1.plot([0, vmpp], [-jmpp, -jmpp], color='indigo', linestyle='-', linewidth=0.8)
 
-        # Circle Markers at key points
+        # Circle Markers & Fine-Tuned Annotations at key points
         if jsc > 0:
             ax1.plot(0, -jsc, 'o', mec='purple', mfc='none', ms=10, mew=2, zorder=5)
-            ax1.annotate('Short Circuit Current', xy=(0, -jsc), xytext=(-0.35, -jsc*1.02),
+            ax1.annotate('Short Circuit Current\n(Jsc)', xy=(0, -jsc), xytext=(-0.40, -jsc*0.65),
                          color='indigo', fontsize=9, fontweight='bold',
                          arrowprops=dict(arrowstyle='->', color='indigo', lw=1.2))
 
         if vmpp > 0 and jmpp > 0:
             ax1.plot(vmpp, -jmpp, 'o', mec='purple', mfc='none', ms=10, mew=2, zorder=5)
-            ax1.annotate('Maximum Power Point', xy=(vmpp, -jmpp), xytext=(vmpp + 0.05, -jmpp*1.05),
+            ax1.annotate('Maximum Power Point\n(MPP)', xy=(vmpp, -jmpp), xytext=(vmpp - 0.38, -jmpp*0.55),
                          color='indigo', fontsize=9, fontweight='bold',
                          arrowprops=dict(arrowstyle='->', color='indigo', lw=1.2))
 
         if voc > 0:
             ax1.plot(voc, 0, 'o', mec='purple', mfc='none', ms=10, mew=2, zorder=5)
-            ax1.annotate('Open Circuit Voltage', xy=(voc, 0), xytext=(voc - 0.2, jsc*0.2),
+            ax1.annotate('Open Circuit Voltage\n(Voc)', xy=(voc, 0), xytext=(voc - 0.28, jsc*0.25),
                          color='indigo', fontsize=9, fontweight='bold',
                          arrowprops=dict(arrowstyle='->', color='indigo', lw=1.2))
 
