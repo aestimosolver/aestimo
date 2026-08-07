@@ -1246,26 +1246,35 @@ class AestimoGUI(customtkinter.CTk):
         vmpp = light_m['vmpp']
         jmpp = light_m['jmpp']
 
-        # Photovoltaic sign formulation:
-        # In Aestimo photovoltaic mode, collected photocurrent is positive (+Jsc at V=0, 0 at Voc, negative for V > Voc)
-        # In standard 4th-quadrant textbook notation, J_std(V) = -J_light(V)
-        j_std_light = -j_light
-        j_diode_illu = np.maximum(0.0, j_std_light + jsc)
+        # Correct 4th-quadrant photovoltaic convention:
+        # Aestimo outputs total carrier current J_raw(V) which is POSITIVE and INCREASING with voltage.
+        # J_raw(V=0) = Jsc (all photocurrent collected at short circuit).
+        # As forward bias increases, dark diode current adds to J_raw.
+        # Standard solar cell curve: J_solar(V) = Jsc - J_raw(V)
+        #   At V=0: J_solar = 0 (Jsc - Jsc = 0)
+        #   For V > 0: J_solar becomes negative (dark current exceeds photocurrent)
+        #   Voc is where J_solar = 0 again after positive excursion --> only occurs if structure
+        #   has a genuine photovoltaic junction. Shift down by Jsc for textbook -Jsc at V=0:
+        #   J_plot(V) = J_solar(V) - Jsc = -J_raw(V)  [gives -Jsc at V=0, more negative for V>0]
+        # NOTE: A curve going DOWN (more negative) as V increases means dark current >> photocurrent
+        # and Voc is very low. A FLAT region then sharp dropoff is the ideal textbook shape.
+        j_std_light = jsc - j_light   # = 0 at V=0, goes negative as dark current grows
+        j_diode_illu = np.maximum(0.0, j_light - jsc)   # dark injection above Jsc
 
         fig_jv = Figure(figsize=(6.5, 4.5))
         ax1 = fig_jv.add_subplot(1, 1, 1)
 
-        # Plot Dark, Simulated Light, and Ideal Solar Cell curves
-        ax1.plot(v_light, j_diode_illu, 'k-', lw=2, label='Dark Diode Current')
-        ax1.plot(v_light, j_std_light, 'r-', lw=2.5, label='Actual Solar Cell (Simulated)')
+        # Plot Dark injection current and Simulated Solar Cell
+        ax1.plot(v_light, j_diode_illu, 'k-', lw=2, label='Dark Injection (J_raw − Jsc)')
+        ax1.plot(v_light, j_std_light, 'r-', lw=2.5, label='Solar Cell J-V (Jsc − J_raw)')
 
-        # Ideal Shockley Curve for comparison
+        # Ideal Shockley Curve for comparison (correct Jsc-referenced)
         Vt_val = 0.02585
-        n_ideality = max(1.0, voc / (Vt_val * 25.0)) if voc > 0.8 else 1.5
-        j0_ideal = jsc / (np.exp(min(40.0, voc / (n_ideality * Vt_val))) - 1.0) if voc > 0 else 1e-12
+        n_ideality = 1.5
+        j0_ideal = jsc / (np.exp(min(40.0, voc / (n_ideality * Vt_val))) - 1.0) if voc > 0.05 else 1e-12
         v_dense = np.linspace(-0.5, max(1.3, voc + 0.2), 250)
-        j_ideal_dense = j0_ideal * (np.exp(np.clip(v_dense / (n_ideality * Vt_val), -50, 40)) - 1.0) - jsc
-        ax1.plot(v_dense, j_ideal_dense, 'b--', lw=1.8, label=f'Ideal Curve (n={n_ideality:.1f}, Rs=0, Rsh=∞)')
+        j_ideal_dense = -(j0_ideal * (np.exp(np.clip(v_dense / (n_ideality * Vt_val), -50, 40)) - 1.0))
+        ax1.plot(v_dense, j_ideal_dense, 'b--', lw=1.8, label=f'Ideal Shockley (n={n_ideality:.1f})'}
 
         # Reference zero axes lines
         ax1.axhline(0, color='gray', linestyle='--', linewidth=0.8)
