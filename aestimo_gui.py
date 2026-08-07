@@ -1272,13 +1272,7 @@ class AestimoGUI(customtkinter.CTk):
         ax1.axhline(0, color='gray', linestyle='--', linewidth=0.8)
         ax1.axvline(0, color='gray', linestyle='--', linewidth=0.8)
 
-        # Fill Maximum Power Rectangle in 4th quadrant (0 to Vmpp, 0 to -Jmpp)
-        from matplotlib.patches import Rectangle
-        if vmpp > 0 and jmpp > 0:
-            rect = Rectangle((0, -jmpp), vmpp, jmpp, facecolor='gold', alpha=0.5, edgecolor='orange', lw=1.5, zorder=2)
-            ax1.add_patch(rect)
-            ax1.plot([vmpp, vmpp], [-jmpp, 0], color='indigo', linestyle='-', linewidth=0.8)
-            ax1.plot([0, vmpp], [-jmpp, -jmpp], color='indigo', linestyle='-', linewidth=0.8)
+
 
         # Circle Markers & Fine-Tuned Annotations at key points
         if jsc > 0:
