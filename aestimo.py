@@ -2489,7 +2489,8 @@ def Poisson_Schrodinger(model):
         )  # Intrinsic carrier concentration [1/m^3]
         if dop[i] == 1:
             dop[i] *= ni[i]
-        Ld_n_p[i] = sqrt(eps[i] * Vt / (q * abs(dop[i])))
+        dop_val = max(abs(dop[i]), 1e6)
+        Ld_n_p[i] = sqrt(eps[i] * Vt / (q * dop_val))
         Ldi[i] = sqrt(eps[i] * Vt / (q * ns * ni[i]))
         Half_Eg[i] = (fi_e[i] - fi_h[i]) / 2
         Eg_[i] = fi_e[i] - fi_h[i]

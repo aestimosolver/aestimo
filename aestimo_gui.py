@@ -1246,11 +1246,11 @@ class AestimoGUI(customtkinter.CTk):
         vmpp = light_m['vmpp']
         jmpp = light_m['jmpp']
 
-        # Diode turn-on extraction under illumination:
-        # J_diode_illu = max(0, J_light_raw - Jsc)
-        # J_std_light = J_diode_illu - Jsc
-        j_diode_illu = np.maximum(0.0, j_light - jsc)
-        j_std_light = j_diode_illu - jsc
+        # Photovoltaic sign formulation:
+        # In Aestimo photovoltaic mode, collected photocurrent is positive (+Jsc at V=0, 0 at Voc, negative for V > Voc)
+        # In standard 4th-quadrant textbook notation, J_std(V) = -J_light(V)
+        j_std_light = -j_light
+        j_diode_illu = np.maximum(0.0, j_std_light + jsc)
 
         fig_jv = Figure(figsize=(6.5, 4.5))
         ax1 = fig_jv.add_subplot(1, 1, 1)
