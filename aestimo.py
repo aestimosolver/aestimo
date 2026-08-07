@@ -3673,13 +3673,13 @@ def Poisson_Schrodinger_DD(result, model):
             Jtotal = Jelec + Jhole
             fi_va[vindex, :] = fi
             
-            # Early stopping for photovoltaic mode to save time
-            if getattr(model, 'photovoltaic_mode', False) and vindex > 0:
+            # Early stopping for photovoltaic mode to save time (only for forward bias Va >= 0.2V after crossing Voc)
+            if getattr(model, 'photovoltaic_mode', False) and vindex > 0 and Va_t[vindex] >= 0.2:
                 idx_lo_tmp = int(0.9 * n_max)
                 idx_hi_tmp = n_max - 1
                 current_av_curr = np.median(Jtotal[vindex, idx_lo_tmp:idx_hi_tmp])
                 
-                if current_av_curr < 0.0 or current_av_curr > 1e5:
+                if current_av_curr < -1e3 or current_av_curr > 1e5:
                     logger.info("Photovoltaic mode: Current crossed zero at Va=%.2fV. Early stopping!", Va_t[vindex])
                     Total_Steps = vindex + 1
                     Va_t = Va_t[:Total_Steps]

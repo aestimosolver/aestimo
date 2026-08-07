@@ -1073,11 +1073,10 @@ class AestimoGUI(customtkinter.CTk):
                     self.maxgridpoints = int(cfg_dict.get("max_pts", 1000))
                     self.mat_type = cfg_dict.get("mat_system", "Wurtzite")
                     self.material = material_list
-                    # For Solar Study, we MUST sweep forward bias to see the power quadrant.
-                    # 1.1V is usually sufficient for InGaN Voc and more stable for Solver 7.
-                    self.vmin = -0.5
-                    self.vmax = 1.0
-                    self.Each_Step = 0.05  # Finer steps for better gradient and stability
+                    # Dynamic Voltage Sweep from Config JSON (vmax=1.6V for AlGaN/InGaN Voc=1.54V)
+                    self.vmin = float(cfg_dict.get("vmin", -0.5))
+                    self.vmax = float(cfg_dict.get("vmax", 1.6))
+                    self.Each_Step = float(cfg_dict.get("vstep", 0.02))
                     self.G_optical = G_override if G_override is not None else float(cfg_dict.get("G_optical", 0.0))
                     self.tat_field = float(cfg_dict.get("tat_field", 1e10))
                     self.device_area_m2 = device_area * 1e-4
