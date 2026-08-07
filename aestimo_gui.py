@@ -1246,69 +1246,71 @@ class AestimoGUI(customtkinter.CTk):
         vmpp = light_m['vmpp']
         jmpp = light_m['jmpp']
 
-        # Correct 4th-quadrant photovoltaic convention:
-        # Aestimo outputs total carrier current J_raw(V) which is POSITIVE and INCREASING with voltage.
-        # J_raw(V=0) = Jsc (all photocurrent collected at short circuit).
-        # As forward bias increases, dark diode current adds to J_raw.
-        # Standard solar cell curve: J_solar(V) = Jsc - J_raw(V)
-        #   At V=0: J_solar = 0 (Jsc - Jsc = 0)
-        #   For V > 0: J_solar becomes negative (dark current exceeds photocurrent)
-        #   Voc is where J_solar = 0 again after positive excursion --> only occurs if structure
-        #   has a genuine photovoltaic junction. Shift down by Jsc for textbook -Jsc at V=0:
-        #   J_plot(V) = J_solar(V) - Jsc = -J_raw(V)  [gives -Jsc at V=0, more negative for V>0]
-        # NOTE: A curve going DOWN (more negative) as V increases means dark current >> photocurrent
-        # and Voc is very low. A FLAT region then sharp dropoff is the ideal textbook shape.
-        j_std_light = jsc - j_light   # = 0 at V=0, goes negative as dark current grows
-        j_diode_illu = np.maximum(0.0, j_light - jsc)   # dark injection above Jsc
+        # 4th-quadrant textbook solar plot presentation:
+        # light_m['j'] is positive collection current (+Jsc at V=0, 0 at Voc).
+        # In 4th-quadrant presentation, J_std = -J_solar, so J_std(0) = -Jsc, J_std(Voc) = 0.
+        j_std_light = -j_light
+
+        # Dark diode current (from dark sweep) shown for reference (using raw dark current)
+        v_dark = dark_m['v']
+        j_dark_raw = dark_m['j']  # raw dark current (positive in forward bias)
 
         fig_jv = Figure(figsize=(6.5, 4.5))
         ax1 = fig_jv.add_subplot(1, 1, 1)
 
-        # Plot Dark injection current and Simulated Solar Cell
-        ax1.plot(v_light, j_diode_illu, 'k-', lw=2, label='Dark Injection (J_raw − Jsc)')
-        ax1.plot(v_light, j_std_light, 'r-', lw=2.5, label='Solar Cell J-V (Jsc − J_raw)')
+        # Plot dark diode and illuminated solar cell curves
+        ax1.plot(v_dark, -j_dark_raw, 'k-', lw=1.5, alpha=0.7, label='Dark Diode J-V')
+        ax1.plot(v_light, j_std_light, 'r-', lw=2.5, label='Illuminated Solar Cell (Simulated)')
 
-        # Ideal Shockley Curve for comparison (correct Jsc-referenced)
+        # Ideal Shockley solar cell curve for reference
+        # J_ideal_std = -(J0*(exp(V/nVt)-1)) starts at 0 for V<<0, = -Jsc at V=0 minus diode
+        # More precisely: J_std_ideal = -(J0*(exp(V/nVt)-1)) - Jsc
+        # which gives -Jsc at V=0 (dark term ~0) and 0 at Voc.
         Vt_val = 0.02585
         n_ideality = 1.5
-        j0_ideal = jsc / (np.exp(min(40.0, voc / (n_ideality * Vt_val))) - 1.0) if voc > 0.05 else 1e-12
-        v_dense = np.linspace(-0.5, max(1.3, voc + 0.2), 250)
-        j_ideal_dense = -(j0_ideal * (np.exp(np.clip(v_dense / (n_ideality * Vt_val), -50, 40)) - 1.0))
-        ax1.plot(v_dense, j_ideal_dense, 'b--', lw=1.8, label=f'Ideal Shockley (n={n_ideality:.1f})'}
+        j0_ideal = jsc / (np.exp(min(40.0, voc / (n_ideality * Vt_val))) - 1.0) if voc > 0.1 else 1e-12
+        v_dense = np.linspace(-0.5, max(voc * 1.2, 1.3), 250)
+        j_ideal_dense = -(j0_ideal * (np.exp(np.clip(v_dense / (n_ideality * Vt_val), -50, 40)) - 1.0)) - jsc
+        ax1.plot(v_dense, j_ideal_dense, 'b--', lw=1.8, label=f'Ideal Shockley (n={n_ideality:.1f})')
 
-        # Reference zero axes lines
+        # Reference axes
         ax1.axhline(0, color='gray', linestyle='--', linewidth=0.8)
         ax1.axvline(0, color='gray', linestyle='--', linewidth=0.8)
 
-
-
-        # Circle Markers & Fine-Tuned Annotations at key points
+        # Annotate key points (all in 4th-quadrant sign: Jsc is negative on y-axis)
         if jsc > 0:
             ax1.plot(0, -jsc, 'o', mec='purple', mfc='none', ms=10, mew=2, zorder=5)
-            ax1.annotate('Short Circuit Current\n(Jsc)', xy=(0, -jsc), xytext=(-0.40, -jsc*0.65),
+            ax1.annotate('Short Circuit Current\n(Jsc)', xy=(0, -jsc), xytext=(-0.40, -jsc * 0.65),
                          color='indigo', fontsize=9, fontweight='bold',
                          arrowprops=dict(arrowstyle='->', color='indigo', lw=1.2))
 
         if vmpp > 0 and jmpp > 0:
             ax1.plot(vmpp, -jmpp, 'o', mec='purple', mfc='none', ms=10, mew=2, zorder=5)
-            ax1.annotate('Maximum Power Point\n(MPP)', xy=(vmpp, -jmpp), xytext=(vmpp - 0.38, -jmpp*0.55),
+            ax1.annotate('Maximum Power Point\n(MPP)', xy=(vmpp, -jmpp),
+                         xytext=(vmpp - 0.38, -jmpp * 0.55),
                          color='indigo', fontsize=9, fontweight='bold',
                          arrowprops=dict(arrowstyle='->', color='indigo', lw=1.2))
 
         if voc > 0:
             ax1.plot(voc, 0, 'o', mec='purple', mfc='none', ms=10, mew=2, zorder=5)
-            ax1.annotate('Open Circuit Voltage\n(Voc)', xy=(voc, 0), xytext=(voc - 0.28, jsc*0.25),
+            ax1.annotate('Open Circuit Voltage\n(Voc)', xy=(voc, 0),
+                         xytext=(voc - 0.28, jsc * 0.25),
                          color='indigo', fontsize=9, fontweight='bold',
                          arrowprops=dict(arrowstyle='->', color='indigo', lw=1.2))
 
+        # Focus plot on power quadrant
+        if jsc > 0:
+            ax1.set_ylim(-1.4 * jsc, 0.6 * jsc)
+            ax1.set_xlim(-0.15, max(voc * 1.4, 0.4))
+
         ax1.set_xlabel('Voltage [V]', fontweight='bold')
-        ax1.set_ylabel('Current [mA/cm²]', fontweight='bold')
-        ax1.set_title('Dark vs Illuminated J-V', fontweight='bold')
-        ax1.legend(loc='upper left')
+        ax1.set_ylabel('Current Density [mA/cm\u00b2]', fontweight='bold')
+        ax1.set_title('Dark vs Illuminated J-V Characteristic', fontweight='bold')
+        ax1.legend(loc='upper right')
         ax1.grid(True, alpha=0.3)
 
         # Fig 2: P-V
-        p_light = light_m['p']
+        p_light = np.maximum(0.0, light_m['p'])
 
         fig_pv = Figure(figsize=(6, 4))
         ax2 = fig_pv.add_subplot(1, 1, 1)

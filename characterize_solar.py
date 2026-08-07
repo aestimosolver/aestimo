@@ -22,16 +22,14 @@ def analyze_iv_curve(voltage, current, area_cm2=1.0, pin_mw_cm2=100.0):
     
     j = i # i is already in mA/cm² (from aestimo.py fix)
 
-    # Spike Filtering (Robustness against numerical artifacts)
-    # Solar cells should have J that is fairly smooth and monotonically increasing 
-    # (becoming less negative) in the power quadrant. Massive negative jumps are artifacts.
-    j_filtered = j.copy()
+    # Spike Filtering: only remove catastrophic numerical divergences
+    # A working solar cell has j_work monotonically decreasing from Jsc (at V=0) to 0 (at Voc).
+    # We should NOT truncate on small decreases. Only cut on unphysically huge spikes.
+    jsc0 = abs(j[0]) if len(j) > 0 else 1e-9
     valid_limit = len(j)
-    jsc0 = abs(j[0])
     for idx in range(1, len(j)):
-        # If current suddenly jumps more than 50% of Jsc in a single step (0.05V), 
-        # or becomes unphysically huge (>100x Jsc), it's likely a numerical divergence.
-        if v[idx] > 0.05 and (j[idx] < j[idx-1] - 0.5 * max(jsc0, 1e-3) or abs(j[idx]) > 1e4):
+        # Block only catastrophic divergences: current > 1e4 * Jsc
+        if abs(j[idx]) > max(1e4 * max(jsc0, 1e-9), 1e6):
             valid_limit = idx
             break
             
@@ -45,39 +43,38 @@ def analyze_iv_curve(voltage, current, area_cm2=1.0, pin_mw_cm2=100.0):
     v = v[:valid_limit]
     j = j[:valid_limit]
     
-    # Determine current sign convention (Aestimo positive collection vs standard negative photocurrent)
-    j_at_0 = float(np.interp(0.0, v, j))
-    # Work with j_work where photocurrent/collection current is POSITIVE
-    sign = 1.0 if j_at_0 >= 0 else -1.0
-    j_work = j * sign
+    # Determine Jsc at V=0
+    idx_0 = np.argmin(np.abs(v))
+    j_0 = float(j[idx_0])
+    jsc = abs(j_0)
     
-    # 1. Jsc (at V=0)
-    jsc = float(j_work[np.argmin(np.abs(v))])
-    
-    # 2. Voc (Voltage where photogenerated power is zero or current crosses dark baseline)
-    # Check zero crossing of j_work
-    sign_changes = np.where(np.diff(np.sign(j_work)))[0]
-    if len(sign_changes) > 0:
-        idx = sign_changes[0]
-        # Linear interpolation for Voc
+    # Check if raw current is INCREASING with voltage (Aestimo total J_raw = Jsc + Jdark)
+    # or DECREASING (net collection current J_solar)
+    idx_fwd = min(idx_0 + 2, len(j) - 1)
+    if j[idx_fwd] > j[idx_0]:
+        # Case B: J_raw is positive and increasing -> Net solar load current J_solar = 2*Jsc - J_raw
+        j_solar = 2.0 * jsc - j
+    else:
+        # Case A: J is already net collection current (decreasing with V)
+        j_solar = j if j_0 >= 0 else -j
+
+    # 1. Voc (Voltage where net photogenerated load current crosses zero)
+    zero_crossings = np.where(np.diff(np.sign(j_solar)))[0]
+    if len(zero_crossings) > 0:
+        idx = zero_crossings[0]
         v1, v2 = v[idx], v[idx+1]
-        j1, j2 = j_work[idx], j_work[idx+1]
+        j1, j2 = j_solar[idx], j_solar[idx+1]
         voc = float(v1 - j1 * (v2 - v1) / (j2 - j1)) if (j2 != j1) else float(v1)
     else:
-        # If no zero crossing in sweep range, Voc is at maximum voltage or peak power point
-        p_temp = v * j_work
-        mpp_idx_temp = np.argmax(p_temp)
-        voc = float(v[mpp_idx_temp]) if mpp_idx_temp > 0 else float(v[-1])
+        voc = float(v[-1]) if v[-1] > 0 else 0.0
         
-    # 3. Power Density (mW/cm^2)
-    p_density = v * j_work
-    
-    # Find MPP in power quadrant (0 <= V <= Voc or entire positive range)
-    valid_mask = (v >= 0)
+    # 2. Power Density (mW/cm^2) in solar quadrant (0 <= V <= Voc)
+    p_solar = v * j_solar
+    valid_mask = (v >= 0) & (v <= (voc if voc > 0 else v[-1]))
     if np.any(valid_mask):
-        p_valid = p_density[valid_mask]
+        p_valid = p_solar[valid_mask]
         v_valid = v[valid_mask]
-        j_valid = j_work[valid_mask]
+        j_valid = j_solar[valid_mask]
         mpp_idx = np.argmax(p_valid)
         pmpp = float(p_valid[mpp_idx])
         vmpp = float(v_valid[mpp_idx])
@@ -85,36 +82,34 @@ def analyze_iv_curve(voltage, current, area_cm2=1.0, pin_mw_cm2=100.0):
     else:
         pmpp, vmpp, jmpp = 0.0, 0.0, 0.0
 
-    # 4. Fill Factor
+    # 3. Fill Factor (%)
     ff = (pmpp / (voc * jsc) * 100.0) if (voc > 0 and jsc > 0) else 0.0
         
-    # 5. Efficiency (%)
+    # 4. Efficiency (%)
     eta = (pmpp / pin_mw_cm2) * 100.0 if pin_mw_cm2 > 0 else 0.0
     
-    # 6. Resistances (Requires at least 2 points)
+    # 5. Resistances (Rsh at V=0, Rs at Voc)
     if len(v) >= 2:
         dv = np.gradient(v)
-        dj = np.gradient(j)
+        dj = np.gradient(j_solar)
         slope = dj / dv # mA/cm^2 / V
     else:
         slope = np.zeros_like(v)
     
-    # Rsh at V=0
     idx_sc = np.argmin(np.abs(v - 0.0))
-    slope_sc = slope[idx_sc]
-    rsh = 1.0 / (slope_sc * 1e-3) if slope_sc > 0 else np.inf
+    slope_sc = abs(slope[idx_sc])
+    rsh = 1.0 / (slope_sc * 1e-3) if slope_sc > 1e-9 else np.inf
         
-    # Rs at Voc
     if voc > 0:
         idx_oc = np.argmin(np.abs(v - voc))
-        slope_oc = slope[idx_oc]
-        rs = 1.0 / (slope_oc * 1e-3) if slope_oc > 0 else 0.0
+        slope_oc = abs(slope[idx_oc])
+        rs = 1.0 / (slope_oc * 1e-3) if slope_oc > 1e-9 else 0.0
     else:
         rs = 0.0
         
     return {
         'jsc': jsc, 'voc': voc, 'pmpp': pmpp, 'vmpp': vmpp, 'jmpp': jmpp,
-        'ff': ff, 'eta': eta, 'rs': rs, 'rsh': rsh, 'v': v, 'j': j, 'p': p_density
+        'ff': ff, 'eta': eta, 'rs': rs, 'rsh': rsh, 'v': v, 'j': j_solar, 'p': p_solar
     }
 
 def run_simulation(config_dict, label):

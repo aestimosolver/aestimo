@@ -4871,31 +4871,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
                 * (p_[vindex, 0 : n_max - 1] * Bp - p_[vindex, 1:n_max] * Bm)
             )
             
-            # Early stopping for photovoltaic mode to save time
-            if getattr(model, 'photovoltaic_mode', False) and vindex > 0:
-                current_Jtotal = (Jp[vindex, 0:n_max-1] + Jn[vindex, 0:n_max-1]) * 0.1
-                idx_lo_tmp = max(1, int(0.8 * n_max))
-                idx_hi_tmp = max(2, n_max - 2)
-                current_av_curr = np.median(current_Jtotal[idx_lo_tmp:idx_hi_tmp])
-                
-                if current_av_curr > 0.0 or current_av_curr < -1e5:
-                    print(f"Photovoltaic mode: Current crossed zero at Va={Va_t[vindex]:.2f}V. Early stopping!")
-                    Total_Steps = vindex + 1
-                    Va_t = Va_t[:Total_Steps]
-                    vvect = vvect[:Total_Steps]
-                    n_ = n_[:Total_Steps, :]
-                    p_ = p_[:Total_Steps, :]
-                    V_ = V_[:Total_Steps, :]
-                    Fn_ = Fn_[:Total_Steps, :]
-                    Fp_ = Fp_[:Total_Steps, :]
-                    Jn = Jn[:Total_Steps, :]
-                    Jp = Jp[:Total_Steps, :]
-                    DV = DV[:Total_Steps]
-                    Emax = Emax[:Total_Steps]
-                    fi_va = fi_va[:Total_Steps, :]
-                    Ec_result_ = Ec_result_[:Total_Steps, :]
-                    Ev_result_ = Ev_result_[:Total_Steps, :]
-                    break
+            # No early stopping - full sweep required for accurate Voc extraction
             
         ## Descaling to physical SI units
         # Restore carrier and potential scaling for GUI displays
@@ -4929,11 +4905,16 @@ def Poisson_Schrodinger_DD_test_2(result, model):
         fi_result = V_[vindex, :]
         # Efn_result,Efp_result=Fn_[vindex,:],Fp_[vindex,:]
         nf_result, pf_result = n_[vindex, :], p_[vindex, :]
-        # Use median of quasi-neutral region near boundary to avoid catastrophic cancellation in depletion zone
-        idx_lo = max(1, int(0.8 * n_max))
-        idx_hi = max(2, n_max - 2)
+        # Use median of p-side (0-20% of device) with sign negated for photovoltaic convention.
+        # In the Newton-Krylov path, Jtotal in the n-side (80-100%) is positive and INCREASES with
+        # forward bias because the dark current adds in the same direction as photocurrent.
+        # The p-side (0-20%) has the correct sign: photocurrent is negative (flows right-to-left
+        # in the n→p conventional direction). Negating gives the standard convention:
+        #   av_curr < 0 at V=0 (= -Jsc), rises toward 0 at Voc, positive for V > Voc.
+        idx_lo = 1
+        idx_hi = max(2, int(0.2 * n_max))
         for k in range(Total_Steps):
-            av_curr[k] = np.median(Jtotal[k, idx_lo:idx_hi])
+            av_curr[k] = -np.median(Jtotal[k, idx_lo:idx_hi])
         for i in range(1, n_max - 1):
             Ec_result[i] = fi_e[i] / q - V_[vindex, i]  # Values from the second Node%
             Ev_result[i] = fi_h[i] / q - V_[vindex, i]  # Values from the second Node%
