@@ -4,106 +4,16 @@
             "material": "GaN",
             "mole": "0.0",
             "mole_y": "0.0",
-            "thickness": "120.0",
-            "doping": "1.0e+19",
+            "thickness": "100.0",
+            "doping": "8.0e+18",
             "doping_type": "p",
             "type": "barrier"
         },
         {
-            "material": "AlGaN",
-            "mole": "0.15",
-            "mole_y": "0.0",
-            "thickness": "10.0",
-            "doping": "1.0e+19",
-            "doping_type": "p",
-            "type": "barrier"
-        },
-        {
-            "material": "AlGaN",
-            "mole": "0.08",
-            "mole_y": "0.0",
-            "thickness": "1.5",
-            "doping": "1.0e+15",
-            "doping_type": "n",
-            "type": "barrier"
-        },
-        {
-            "material": "InGaN",
-            "mole": "0.18",
-            "mole_y": "0.0",
-            "thickness": "3.0",
-            "doping": "1.0e+15",
-            "doping_type": "n",
-            "type": "qw"
-        },
-        {
             "material": "GaN",
             "mole": "0.0",
             "mole_y": "0.0",
-            "thickness": "2.0",
-            "doping": "1.0e+15",
-            "doping_type": "n",
-            "type": "barrier"
-        },
-        {
-            "material": "AlGaN",
-            "mole": "0.08",
-            "mole_y": "0.0",
-            "thickness": "1.5",
-            "doping": "1.0e+15",
-            "doping_type": "n",
-            "type": "barrier"
-        },
-        {
-            "material": "InGaN",
-            "mole": "0.17",
-            "mole_y": "0.0",
-            "thickness": "3.0",
-            "doping": "1.0e+15",
-            "doping_type": "n",
-            "type": "qw"
-        },
-        {
-            "material": "GaN",
-            "mole": "0.0",
-            "mole_y": "0.0",
-            "thickness": "2.0",
-            "doping": "1.0e+15",
-            "doping_type": "n",
-            "type": "barrier"
-        },
-        {
-            "material": "AlGaN",
-            "mole": "0.08",
-            "mole_y": "0.0",
-            "thickness": "1.5",
-            "doping": "1.0e+15",
-            "doping_type": "n",
-            "type": "barrier"
-        },
-        {
-            "material": "InGaN",
-            "mole": "0.16",
-            "mole_y": "0.0",
-            "thickness": "3.0",
-            "doping": "1.0e+15",
-            "doping_type": "n",
-            "type": "qw"
-        },
-        {
-            "material": "GaN",
-            "mole": "0.0",
-            "mole_y": "0.0",
-            "thickness": "2.0",
-            "doping": "1.0e+15",
-            "doping_type": "n",
-            "type": "barrier"
-        },
-        {
-            "material": "AlGaN",
-            "mole": "0.08",
-            "mole_y": "0.0",
-            "thickness": "1.5",
+            "thickness": "2.5",
             "doping": "1.0e+15",
             "doping_type": "n",
             "type": "barrier"
@@ -112,7 +22,7 @@
             "material": "InGaN",
             "mole": "0.15",
             "mole_y": "0.0",
-            "thickness": "3.0",
+            "thickness": "3.5",
             "doping": "1.0e+15",
             "doping_type": "n",
             "type": "qw"
@@ -121,25 +31,16 @@
             "material": "GaN",
             "mole": "0.0",
             "mole_y": "0.0",
-            "thickness": "2.0",
-            "doping": "1.0e+15",
-            "doping_type": "n",
-            "type": "barrier"
-        },
-        {
-            "material": "AlGaN",
-            "mole": "0.08",
-            "mole_y": "0.0",
-            "thickness": "1.5",
+            "thickness": "2.5",
             "doping": "1.0e+15",
             "doping_type": "n",
             "type": "barrier"
         },
         {
             "material": "InGaN",
-            "mole": "0.14",
+            "mole": "0.15",
             "mole_y": "0.0",
-            "thickness": "3.0",
+            "thickness": "3.5",
             "doping": "1.0e+15",
             "doping_type": "n",
             "type": "qw"
@@ -148,25 +49,16 @@
             "material": "GaN",
             "mole": "0.0",
             "mole_y": "0.0",
-            "thickness": "2.0",
-            "doping": "1.0e+15",
-            "doping_type": "n",
-            "type": "barrier"
-        },
-        {
-            "material": "AlGaN",
-            "mole": "0.08",
-            "mole_y": "0.0",
-            "thickness": "1.5",
+            "thickness": "2.5",
             "doping": "1.0e+15",
             "doping_type": "n",
             "type": "barrier"
         },
         {
             "material": "InGaN",
-            "mole": "0.13",
+            "mole": "0.15",
             "mole_y": "0.0",
-            "thickness": "3.0",
+            "thickness": "3.5",
             "doping": "1.0e+15",
             "doping_type": "n",
             "type": "qw"
@@ -175,7 +67,61 @@
             "material": "GaN",
             "mole": "0.0",
             "mole_y": "0.0",
-            "thickness": "2.0",
+            "thickness": "2.5",
+            "doping": "1.0e+15",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "InGaN",
+            "mole": "0.15",
+            "mole_y": "0.0",
+            "thickness": "3.5",
+            "doping": "1.0e+15",
+            "doping_type": "n",
+            "type": "qw"
+        },
+        {
+            "material": "GaN",
+            "mole": "0.0",
+            "mole_y": "0.0",
+            "thickness": "2.5",
+            "doping": "1.0e+15",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "InGaN",
+            "mole": "0.15",
+            "mole_y": "0.0",
+            "thickness": "3.5",
+            "doping": "1.0e+15",
+            "doping_type": "n",
+            "type": "qw"
+        },
+        {
+            "material": "GaN",
+            "mole": "0.0",
+            "mole_y": "0.0",
+            "thickness": "2.5",
+            "doping": "1.0e+15",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "InGaN",
+            "mole": "0.15",
+            "mole_y": "0.0",
+            "thickness": "3.5",
+            "doping": "1.0e+15",
+            "doping_type": "n",
+            "type": "qw"
+        },
+        {
+            "material": "GaN",
+            "mole": "0.0",
+            "mole_y": "0.0",
+            "thickness": "2.5",
             "doping": "1.0e+15",
             "doping_type": "n",
             "type": "barrier"
@@ -184,8 +130,8 @@
             "material": "GaN",
             "mole": "0.0",
             "mole_y": "0.0",
-            "thickness": "120.0",
-            "doping": "1.0e+19",
+            "thickness": "100.0",
+            "doping": "8.0e+18",
             "doping_type": "n",
             "type": "barrier"
         }
@@ -195,8 +141,8 @@
     "bc_left": "0.0",
     "bc_right": "0.0",
     "vmin": "-0.5",
-    "vmax": "1.6",
-    "vstep": "0.02",
+    "vmax": "1.3",
+    "vstep": "0.05",
     "solver": "10: Fully-Coupled Newton-Raphson",
     "grid_step": "1.0",
     "max_pts": "200000",
@@ -212,7 +158,7 @@
     "tat_field": "5e6",
     "taun0": "1e-7",
     "taup0": "1e-7",
-    "G_optical": "2.5e20",
+    "G_optical": "1e20",
     "enable_polarization": true,
     "photovoltaic_mode": true,
     "device_type": "Solar Cell / Photodetector"
