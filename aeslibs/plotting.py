@@ -161,7 +161,7 @@ def save_and_plot2(result, model, output_directory='output', drawFigures=False, 
                     )
         pl.xlabel("x [um]")
         pl.ylabel("Energy [eV]")
-        pl.title("Quasi Fermi Levels (Efn (red) & Efp (bleu)) vs Position", fontsize=12)
+        pl.title("Quasi Fermi Levels (Efn (red) & Efp (blue)) vs Position", fontsize=12)
         pl.legend(("Ec", "Ev", "Ei", "Efn", "Efp"), loc="best", fontsize=12)
         pl.grid(True)
 
@@ -192,7 +192,7 @@ def save_and_plot2(result, model, output_directory='output', drawFigures=False, 
             "b",
         )
         pl.xlabel("x [um]")
-        pl.ylabel("Electric Field 1(red) & 2 (bleu) [MV/cm]")
+        pl.ylabel("Electric Field 1(red) & 2 (blue) [MV/cm]")
         pl.title("Field Profile vs Position ", fontsize=12)
         pl.legend(("Electric Field 1", "Electric Field 2"), loc="best", fontsize=12)
         pl.grid(True)
@@ -235,7 +235,7 @@ def save_and_plot2(result, model, output_directory='output', drawFigures=False, 
         )
         pl.xlabel("x [um]")
         pl.ylabel("Electron  & Hole  Densities [1/cm^3]")
-        pl.title("Electron (red) & Hole (bleu) Densities vs Position ", fontsize=12)
+        pl.title("Electron (red) & Hole (blue) Densities vs Position ", fontsize=12)
         pl.legend(("Electron", "Hole"), loc="best", fontsize=12)
         pl.grid(True)
 
@@ -256,7 +256,7 @@ def save_and_plot2(result, model, output_directory='output', drawFigures=False, 
         )
         pl.xlabel("x [um]")
         pl.ylabel("Energy [eV]")
-        pl.title("Quasi Fermi Levels (Efn (red) & Efp (bleu)) vs Position", fontsize=12)
+        pl.title("Quasi Fermi Levels (Efn (red) & Efp (blue)) vs Position", fontsize=12)
         pl.legend(("Ec", "Ev", "Ei", "Efn", "Efp"), loc="best", fontsize=12)
         pl.grid(True)
 
@@ -274,7 +274,7 @@ def save_and_plot2(result, model, output_directory='output', drawFigures=False, 
         )
         pl.xlabel("x [um]")
         pl.ylabel("Energy [eV]")
-        pl.title("Quasi Fermi Levels (Efn (red) & Efp (bleu)) vs Position", fontsize=12)
+        pl.title("Quasi Fermi Levels (Efn (red) & Efp (blue)) vs Position", fontsize=12)
         pl.legend(("Efn", "Efp"), loc="best", fontsize=12)
         pl.grid(True)
         if show:
@@ -422,7 +422,7 @@ def save_and_plot(result, model, output_directory='output', drawFigures=False, s
         )
         pl.xlabel("x [um]")
         pl.ylabel("Electric Field  [MV/cm]")
-        pl.title("Field Profile 1(red) & 2 (bleu) vs Position ", fontsize=10)
+        pl.title("Field Profile 1(red) & 2 (blue) vs Position ", fontsize=10)
         pl.grid(True)
 
         # Plotting Potential
@@ -446,7 +446,7 @@ def save_and_plot(result, model, output_directory='output', drawFigures=False, s
         )
         pl.xlabel("x [um]")
         pl.ylabel("Electron  & Hole  Densities [1/cm^3]")
-        pl.title("Electron (red)& Hole (bleu) Densities vs Position ", fontsize=10)
+        pl.title("Electron (red)& Hole (blue) Densities vs Position ", fontsize=10)
         pl.grid(True)
         if show:
             pl.show()

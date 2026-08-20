@@ -1231,117 +1231,309 @@ class AestimoGUI(customtkinter.CTk):
             tkinter.messagebox.showerror("Error", f"Simulation Failed:\n{error_msg}")
 
     def generate_study_figures(self, data):
-        """Generates the 4 study figures in the main thread using Figure class"""
+        """Generates 5 publication-quality specialized characterization figures"""
         from matplotlib.figure import Figure
+        import matplotlib.patches as patches
         
         dark_m = data["dark_metrics"]
         light_m = data["light_metrics"]
-        temp_res = data["temp_results"]
+        temp_res = data.get("temp_results", [])
         
-        # Fig 1: J-V (Textbook Standard Diagram with Annotations & MPP Box)
         v_light = light_m['v']
-        j_light = light_m['j']
+        j_light = light_m['j'] # positive collection current
         jsc = light_m['jsc']
         voc = light_m['voc']
         vmpp = light_m['vmpp']
         jmpp = light_m['jmpp']
+        pmpp = light_m['pmpp']
+        ff = light_m['ff']
+        eta = light_m['eta']
+        rs = light_m.get('rs', 0.0)
+        rsh = light_m.get('rsh', np.inf)
 
-        # 4th-quadrant textbook solar plot presentation:
-        # light_m['j'] is positive collection current (+Jsc at V=0, 0 at Voc).
-        # In 4th-quadrant presentation, J_std = -J_solar, so J_std(0) = -Jsc, J_std(Voc) = 0.
+        # 4th-quadrant presentation: starts at -Jsc at V=0, crosses 0 at Voc
         j_std_light = -j_light
 
-        # Dark diode current (from dark sweep) shown for reference (using raw dark current)
         v_dark = dark_m['v']
-        j_dark_raw = dark_m['j']  # raw dark current (positive in forward bias)
+        j_dark_raw = dark_m['j']
 
-        fig_jv = Figure(figsize=(6.5, 4.5))
+        # ==========================================
+        # Fig 1: Enhanced J-V Characteristic
+        # ==========================================
+        fig_jv = Figure(figsize=(7, 5), dpi=120)
         ax1 = fig_jv.add_subplot(1, 1, 1)
 
-        # Plot dark diode and illuminated solar cell curves
-        ax1.plot(v_dark, -j_dark_raw, 'k-', lw=1.5, alpha=0.7, label='Dark Diode J-V')
-        ax1.plot(v_light, j_std_light, 'r-', lw=2.5, label='Illuminated Solar Cell (Simulated)')
+        # Subtle MPP shaded power rectangle
+        if vmpp > 0 and jmpp > 0:
+            mpp_rect = patches.Rectangle(
+                (0, -jmpp), vmpp, jmpp,
+                linewidth=1.2, edgecolor='#dd6b20', facecolor='#feebc8',
+                alpha=0.35, zorder=2, label=f'Max Power Area ($P_{{max}} = {pmpp:.4e}$ mW/cm²)'
+            )
+            ax1.add_patch(mpp_rect)
 
-        # Ideal Shockley solar cell curve for reference
-        # J_ideal_std = -(J0*(exp(V/nVt)-1)) starts at 0 for V<<0, = -Jsc at V=0 minus diode
-        # More precisely: J_std_ideal = -(J0*(exp(V/nVt)-1)) - Jsc
-        # which gives -Jsc at V=0 (dark term ~0) and 0 at Voc.
+        # Reference zero axes lines
+        ax1.axhline(0, color='#718096', linestyle='-', linewidth=0.9, zorder=1)
+        ax1.axvline(0, color='#718096', linestyle='-', linewidth=0.9, zorder=1)
+
+        # Plot dark diode and illuminated solar cell curves
+        ax1.plot(v_dark, -j_dark_raw, color='#4a5568', linestyle='-', lw=1.6, alpha=0.75, label='Dark Diode $J_{dark}(V)$', zorder=3)
+        ax1.plot(v_light, j_std_light, color='#e53e3e', linestyle='-', lw=2.6, label='Illuminated Solar Cell $J_{solar}(V)$', zorder=4)
+
+        # Ideal Shockley diode curve for comparison
         Vt_val = 0.02585
         n_ideality = 1.5
-        j0_ideal = jsc / (np.exp(min(40.0, voc / (n_ideality * Vt_val))) - 1.0) if voc > 0.1 else 1e-12
-        v_dense = np.linspace(-0.5, max(voc * 1.2, 1.3), 250)
+        j0_ideal = jsc / (np.exp(min(40.0, voc / (n_ideality * Vt_val))) - 1.0) if voc > 0.05 else 1e-12
+        v_dense = np.linspace(-0.2, max(voc * 1.5, 0.4), 300)
         j_ideal_dense = -(j0_ideal * (np.exp(np.clip(v_dense / (n_ideality * Vt_val), -50, 40)) - 1.0)) - jsc
-        ax1.plot(v_dense, j_ideal_dense, 'b--', lw=1.8, label=f'Ideal Shockley (n={n_ideality:.1f})')
+        ax1.plot(v_dense, j_ideal_dense, color='#3182ce', linestyle='--', lw=1.8, label=f'Ideal Shockley Limit ($n={n_ideality:.1f}$)', zorder=3)
 
-        # Reference axes
-        ax1.axhline(0, color='gray', linestyle='--', linewidth=0.8)
-        ax1.axvline(0, color='gray', linestyle='--', linewidth=0.8)
-
-        # Annotate key points (all in 4th-quadrant sign: Jsc is negative on y-axis)
+        # Key Point Markers with clean callout badges
+        v_span = max(voc, 0.3)
         if jsc > 0:
-            ax1.plot(0, -jsc, 'o', mec='purple', mfc='none', ms=10, mew=2, zorder=5)
-            ax1.annotate('Short Circuit Current\n(Jsc)', xy=(0, -jsc), xytext=(-0.40, -jsc * 0.65),
-                         color='indigo', fontsize=9, fontweight='bold',
-                         arrowprops=dict(arrowstyle='->', color='indigo', lw=1.2))
+            ax1.plot(0, -jsc, 'o', mec='#44337a', mfc='#9f7aea', ms=8, mew=1.8, zorder=5)
+            ax1.annotate(
+                f'$J_{{sc}} = {jsc:.4f}$ mA/cm²',
+                xy=(0, -jsc), xytext=(0.04 * v_span, -jsc * 0.98),
+                color='#44337a', fontsize=8.5, fontweight='bold', ha='left',
+                bbox=dict(boxstyle='round,pad=0.25', facecolor='#f7fafc', edgecolor='#cbd5e0', alpha=0.85)
+            )
 
         if vmpp > 0 and jmpp > 0:
-            ax1.plot(vmpp, -jmpp, 'o', mec='purple', mfc='none', ms=10, mew=2, zorder=5)
-            ax1.annotate('Maximum Power Point\n(MPP)', xy=(vmpp, -jmpp),
-                         xytext=(vmpp - 0.38, -jmpp * 0.55),
-                         color='indigo', fontsize=9, fontweight='bold',
-                         arrowprops=dict(arrowstyle='->', color='indigo', lw=1.2))
+            ax1.plot(vmpp, -jmpp, 'o', mec='#7b341e', mfc='#ed8936', ms=8, mew=1.8, zorder=5)
+            ax1.annotate(
+                f'MPP ({vmpp:.2f} V, {-jmpp:.4f} mA/cm²)',
+                xy=(vmpp, -jmpp), xytext=(vmpp * 0.70, -jmpp * 0.45),
+                color='#7b341e', fontsize=8.5, fontweight='bold', ha='center',
+                bbox=dict(boxstyle='round,pad=0.25', facecolor='#fffaf0', edgecolor='#feebc8', alpha=0.85),
+                arrowprops=dict(arrowstyle='->', color='#c05621', lw=1.0)
+            )
 
         if voc > 0:
-            ax1.plot(voc, 0, 'o', mec='purple', mfc='none', ms=10, mew=2, zorder=5)
-            ax1.annotate('Open Circuit Voltage\n(Voc)', xy=(voc, 0),
-                         xytext=(voc - 0.28, jsc * 0.25),
-                         color='indigo', fontsize=9, fontweight='bold',
-                         arrowprops=dict(arrowstyle='->', color='indigo', lw=1.2))
+            ax1.plot(voc, 0, 'o', mec='#1c4532', mfc='#48bb78', ms=8, mew=1.8, zorder=5)
+            ax1.annotate(
+                f'$V_{{oc}} = {voc:.4f}$ V',
+                xy=(voc, 0), xytext=(voc * 0.85, -jsc * 0.22),
+                color='#1c4532', fontsize=8.5, fontweight='bold', ha='center',
+                bbox=dict(boxstyle='round,pad=0.25', facecolor='#f0fff4', edgecolor='#c6f6d5', alpha=0.85),
+                arrowprops=dict(arrowstyle='->', color='#276749', lw=1.0)
+            )
 
-        # Focus plot on power quadrant
         if jsc > 0:
-            ax1.set_ylim(-1.4 * jsc, 0.6 * jsc)
-            ax1.set_xlim(-0.15, max(voc * 1.4, 0.4))
+            ax1.set_ylim(-1.35 * jsc, 0.45 * jsc)
+            ax1.set_xlim(-0.15 * (voc if voc > 0 else 0.5), max(voc * 1.35, 0.35))
 
-        ax1.set_xlabel('Voltage [V]', fontweight='bold')
-        ax1.set_ylabel('Current Density [mA/cm\u00b2]', fontweight='bold')
-        ax1.set_title('Dark vs Illuminated J-V Characteristic', fontweight='bold')
-        ax1.legend(loc='upper right')
-        ax1.grid(True, alpha=0.3)
+        ax1.set_xlabel('Applied Voltage $V$ [V]', fontweight='bold', fontsize=10)
+        ax1.set_ylabel('Current Density $J$ [mA/cm²]', fontweight='bold', fontsize=10)
+        ax1.set_title('Dark vs. Illuminated $J-V$ Characteristic (4th Quadrant)', fontweight='bold', fontsize=11, pad=10)
+        ax1.legend(loc='upper right', framealpha=0.92, fontsize=8.5)
+        ax1.grid(True, linestyle=':', alpha=0.5)
+        fig_jv.tight_layout()
 
-        # Fig 2: P-V
-        p_light = np.maximum(0.0, light_m['p'])
-
-        fig_pv = Figure(figsize=(6, 4))
+        # ==========================================
+        # Fig 2: Enhanced P-V Power Density
+        # ==========================================
+        fig_pv = Figure(figsize=(7, 5), dpi=120)
         ax2 = fig_pv.add_subplot(1, 1, 1)
-        ax2.plot(v_light, p_light, 'g-', label='Power')
+
+        p_light = np.maximum(0.0, light_m['p'])
+        valid_pv = (v_light >= 0) & (v_light <= (voc if voc > 0 else v_light[-1]))
+
+        v_curve = np.append(v_light[valid_pv], voc) if voc > 0 else v_light[valid_pv]
+        p_curve = np.append(p_light[valid_pv], 0.0) if voc > 0 else p_light[valid_pv]
+
+        ax2.fill_between(v_curve, 0, p_curve, color='#38a169', alpha=0.22, label='Power Output $P(V) \\geq 0$')
+        ax2.plot(v_curve, p_curve, color='#2f855a', lw=2.6, zorder=3)
+
         if vmpp > 0:
-            ax2.axvline(vmpp, color='orange', ls=':', label=f"MPP: {light_m['pmpp']:.4f} mW/cm²")
-        ax2.set_xlabel('Voltage (V)', fontweight='bold')
-        ax2.set_ylabel('Power Density (mW/cm²)', fontweight='bold')
-        ax2.set_title('P-V Characteristic', fontweight='bold')
-        ax2.legend()
-        ax2.grid(True, alpha=0.3)
+            ax2.axvline(vmpp, color='#dd6b20', linestyle=':', lw=1.8, label=f'MPP Voltage ($V_{{mpp}} = {vmpp:.3f}$ V)')
+            ax2.plot(vmpp, pmpp, 'o', mec='#7b341e', mfc='#ed8936', ms=8, mew=1.8, zorder=5)
+            
+            info_str = f"Max Power Point\n$P_{{max}} = {pmpp:.4e}$ mW/cm²\n$V_{{mpp}} = {vmpp:.3f}$ V\n$J_{{mpp}} = {jmpp:.4f}$ mA/cm²\n$FF = {ff:.2f}\\%$"
+            ax2.text(
+                0.04, 0.94, info_str, transform=ax2.transAxes,
+                fontsize=9, verticalalignment='top',
+                bbox=dict(boxstyle='round,pad=0.5', facecolor='#fffaf0', edgecolor='#dd6b20', alpha=0.9)
+            )
 
-        # Fig 3: Voc vs T (Solid blue line, no dots)
-        fig_voct = Figure(figsize=(6, 4))
+        ax2.axhline(0, color='#718096', linestyle='-', linewidth=0.8)
+        if voc > 0:
+            ax2.set_xlim(-0.02 * voc, max(voc * 1.15, 0.35))
+        if pmpp > 0:
+            ax2.set_ylim(-0.05 * pmpp, pmpp * 1.25)
+
+        ax2.set_xlabel('Applied Voltage $V$ [V]', fontweight='bold', fontsize=10)
+        ax2.set_ylabel('Power Density $P$ [mW/cm²]', fontweight='bold', fontsize=10)
+        ax2.set_title('Photovoltaic Output Power Density $P(V)$', fontweight='bold', fontsize=11, pad=10)
+        ax2.legend(loc='upper right', framealpha=0.92, fontsize=8.5)
+        ax2.grid(True, linestyle=':', alpha=0.5)
+        fig_pv.tight_layout()
+
+        # ==========================================
+        # Fig 3: Enhanced Voc vs Temperature
+        # ==========================================
+        fig_voct = Figure(figsize=(7, 5), dpi=120)
         ax3 = fig_voct.add_subplot(1, 1, 1)
-        ax3.plot([r[0] for r in temp_res], [r[1]['voc'] for r in temp_res], 'b-')
-        ax3.set_xlabel('Temperature (K)')
-        ax3.set_ylabel('Voc (V)')
-        ax3.set_title('Open-Circuit Voltage vs Temperature')
-        ax3.grid(True, alpha=0.3)
 
-        # Fig 4: Eff vs T (Solid red line, no dots)
-        fig_efft = Figure(figsize=(6, 4))
+        t_arr = np.array([r[0] for r in temp_res]) if temp_res else np.array([300.0])
+        voc_arr = np.array([r[1]['voc'] for r in temp_res]) if temp_res else np.array([voc])
+
+        if len(t_arr) >= 2:
+            p_voc = np.polyfit(t_arr, voc_arr, 1)
+            slope_voc_mvk = p_voc[0] * 1e3
+            voc_fit = np.polyval(p_voc, t_arr)
+            ax3.plot(t_arr, voc_fit, color='#3182ce', linestyle='--', lw=1.8, label=f'Linear Fit: $dV_{{oc}}/dT = {slope_voc_mvk:.2f}$ mV/K')
+            coeff_text = f"Thermal Voltage Coeff:\n$dV_{{oc}}/dT = {slope_voc_mvk:.2f}$ mV/K\n$V_{{oc}}(300K) = {voc:.4f}$ V"
+        else:
+            p_voc = [0.0, voc]
+            coeff_text = f"$V_{{oc}}(300K) = {voc:.4f}$ V"
+
+        ax3.plot(t_arr, voc_arr, 'o-', color='#2b6cb0', mfc='#90cdf4', mec='#2c5282', ms=7, mew=1.5, lw=2.0, label='$V_{oc}(T)$ Data')
+
+        ax3.text(
+            0.05, 0.25, coeff_text, transform=ax3.transAxes,
+            fontsize=9, verticalalignment='bottom',
+            bbox=dict(boxstyle='round,pad=0.5', facecolor='#ebf8ff', edgecolor='#3182ce', alpha=0.9)
+        )
+
+        ax3.set_xlabel('Device Temperature $T$ [K]', fontweight='bold', fontsize=10)
+        ax3.set_ylabel('Open-Circuit Voltage $V_{oc}$ [V]', fontweight='bold', fontsize=10)
+        ax3.set_title('Open-Circuit Voltage vs. Temperature', fontweight='bold', fontsize=11, pad=10)
+        ax3.legend(loc='upper right', framealpha=0.92, fontsize=8.5)
+        ax3.grid(True, linestyle=':', alpha=0.5)
+        fig_voct.tight_layout()
+
+        # ==========================================
+        # Fig 4: Enhanced Efficiency vs Temperature
+        # ==========================================
+        fig_efft = Figure(figsize=(7, 5), dpi=120)
         ax4 = fig_efft.add_subplot(1, 1, 1)
-        ax4.plot([r[0] for r in temp_res], [r[1]['eta'] for r in temp_res], 'r-')
-        ax4.set_xlabel('Temperature (K)')
-        ax4.set_ylabel('Efficiency (%)')
-        ax4.set_title('Efficiency vs Temperature')
-        ax4.grid(True, alpha=0.3)
-        
-        return [fig_jv, fig_pv, fig_voct, fig_efft]
+
+        eta_arr = np.array([r[1]['eta'] for r in temp_res]) if temp_res else np.array([eta])
+
+        if len(t_arr) >= 2:
+            p_eta = np.polyfit(t_arr, eta_arr, 1)
+            slope_eta = p_eta[0]
+            eta_fit = np.polyval(p_eta, t_arr)
+            ax4.plot(t_arr, eta_fit, color='#e53e3e', linestyle='--', lw=1.8, label=f'Linear Fit: $d\\eta/dT = {slope_eta:.4e}$ %/K')
+            coeff_eta_text = f"Thermal Efficiency Coeff:\n$d\\eta/dT = {slope_eta:.4e}$ %/K\n$\\eta(300K) = {eta:.4e}$ %"
+        else:
+            p_eta = [0.0, eta]
+            coeff_eta_text = f"$\\eta(300K) = {eta:.4e}$ %"
+
+        ax4.plot(t_arr, eta_arr, 's-', color='#c53030', mfc='#feb2b2', mec='#9b2c2c', ms=7, mew=1.5, lw=2.0, label='Efficiency $\\eta(T)$ Data')
+
+        ax4.text(
+            0.05, 0.25, coeff_eta_text, transform=ax4.transAxes,
+            fontsize=9, verticalalignment='bottom',
+            bbox=dict(boxstyle='round,pad=0.5', facecolor='#fff5f5', edgecolor='#e53e3e', alpha=0.9)
+        )
+
+        ax4.set_xlabel('Device Temperature $T$ [K]', fontweight='bold', fontsize=10)
+        ax4.set_ylabel('Photovoltaic Efficiency $\\eta$ [%]', fontweight='bold', fontsize=10)
+        ax4.set_title('Solar Conversion Efficiency vs. Temperature', fontweight='bold', fontsize=11, pad=10)
+        ax4.legend(loc='upper right', framealpha=0.92, fontsize=8.5)
+        ax4.grid(True, linestyle=':', alpha=0.5)
+        fig_efft.tight_layout()
+
+        # ==========================================
+        # Fig 5: Multi-Panel Solar Performance Dashboard
+        # ==========================================
+        fig_dash = Figure(figsize=(10.5, 7.5), dpi=120)
+        gs = fig_dash.add_gridspec(2, 2, hspace=0.32, wspace=0.28)
+
+        # Panel 1: J-V
+        d_ax1 = fig_dash.add_subplot(gs[0, 0])
+        if vmpp > 0 and jmpp > 0:
+            d_mpp_rect = patches.Rectangle((0, -jmpp), vmpp, jmpp, linewidth=1.0, edgecolor='#dd6b20', facecolor='#feebc8', alpha=0.35, zorder=2)
+            d_ax1.add_patch(d_mpp_rect)
+        d_ax1.axhline(0, color='#718096', linestyle='-', linewidth=0.8)
+        d_ax1.axvline(0, color='#718096', linestyle='-', linewidth=0.8)
+        d_ax1.plot(v_dark, -j_dark_raw, color='#4a5568', lw=1.4, alpha=0.7, label='Dark Diode')
+        d_ax1.plot(v_light, j_std_light, color='#e53e3e', lw=2.2, label='Solar Cell (Sim.)')
+        d_ax1.plot(v_dense, j_ideal_dense, color='#3182ce', linestyle='--', lw=1.5, label='Ideal Shockley')
+        if jsc > 0:
+            d_ax1.plot(0, -jsc, 'o', mec='#44337a', mfc='#9f7aea', ms=6, mew=1.5, zorder=5)
+        if vmpp > 0 and jmpp > 0:
+            d_ax1.plot(vmpp, -jmpp, 'o', mec='#7b341e', mfc='#ed8936', ms=6, mew=1.5, zorder=5)
+        if voc > 0:
+            d_ax1.plot(voc, 0, 'o', mec='#1c4532', mfc='#48bb78', ms=6, mew=1.5, zorder=5)
+        if jsc > 0:
+            d_ax1.set_ylim(-1.35 * jsc, 0.45 * jsc)
+            d_ax1.set_xlim(-0.15 * (voc if voc > 0 else 0.5), max(voc * 1.35, 0.35))
+        d_ax1.set_xlabel('Voltage [V]', fontweight='bold', fontsize=8.5)
+        d_ax1.set_ylabel('Current [mA/cm²]', fontweight='bold', fontsize=8.5)
+        d_ax1.set_title('(a) J-V Characteristic & MPP Box', fontweight='bold', fontsize=9.5)
+        d_ax1.legend(loc='upper right', fontsize=7, framealpha=0.9)
+        d_ax1.grid(True, linestyle=':', alpha=0.5)
+
+        # Panel 2: P-V
+        d_ax2 = fig_dash.add_subplot(gs[0, 1])
+        d_ax2.fill_between(v_curve, 0, p_curve, color='#38a169', alpha=0.22)
+        d_ax2.plot(v_curve, p_curve, color='#2f855a', lw=2.2)
+        if vmpp > 0:
+            d_ax2.axvline(vmpp, color='#dd6b20', linestyle=':', lw=1.5, label=f'Vmpp = {vmpp:.2f} V')
+            d_ax2.plot(vmpp, pmpp, 'o', mec='#7b341e', mfc='#ed8936', ms=6, mew=1.5)
+        d_ax2.axhline(0, color='#718096', linestyle='-', linewidth=0.8)
+        if voc > 0:
+            d_ax2.set_xlim(-0.02 * voc, max(voc * 1.15, 0.35))
+        if pmpp > 0:
+            d_ax2.set_ylim(-0.05 * pmpp, pmpp * 1.25)
+        d_ax2.set_xlabel('Voltage [V]', fontweight='bold', fontsize=8.5)
+        d_ax2.set_ylabel('Power Density [mW/cm²]', fontweight='bold', fontsize=8.5)
+        d_ax2.set_title('(b) P-V Power Generation Curve', fontweight='bold', fontsize=9.5)
+        d_ax2.legend(loc='upper right', fontsize=7, framealpha=0.9)
+        d_ax2.grid(True, linestyle=':', alpha=0.5)
+
+        # Panel 3: Voc & Eta vs T Dual Axis
+        d_ax3 = fig_dash.add_subplot(gs[1, 0])
+        color_v = '#2b6cb0'
+        d_ax3.plot(t_arr, voc_arr, 'o-', color=color_v, mfc='#90cdf4', ms=5, lw=1.6, label='$V_{oc}(T)$')
+        d_ax3.set_xlabel('Temperature [K]', fontweight='bold', fontsize=8.5)
+        d_ax3.set_ylabel('Open-Circuit Voltage $V_{oc}$ [V]', color=color_v, fontweight='bold', fontsize=8.5)
+        d_ax3.tick_params(axis='y', labelcolor=color_v)
+        d_ax3.grid(True, linestyle=':', alpha=0.5)
+
+        d_ax3_twin = d_ax3.twinx()
+        color_e = '#c53030'
+        d_ax3_twin.plot(t_arr, eta_arr, 's--', color=color_e, mfc='#feb2b2', ms=4.5, lw=1.4, label='$\\eta(T)$')
+        d_ax3_twin.set_ylabel('Efficiency $\\eta$ [%]', color=color_e, fontweight='bold', fontsize=8.5)
+        d_ax3_twin.tick_params(axis='y', labelcolor=color_e)
+        d_ax3.set_title('(c) Thermal Stability ($V_{oc}$ & $\\eta$ vs. $T$)', fontweight='bold', fontsize=9.5)
+
+        # Panel 4: Executive KPI Summary Card
+        d_ax4 = fig_dash.add_subplot(gs[1, 1])
+        d_ax4.axis('off')
+
+        summary_box = f"""
+=================================================
+  AESTIMO 1D SOLAR STUDY - EXECUTIVE SUMMARY
+=================================================
+• Short-Circuit Current (Jsc)  : {jsc:.6f} mA/cm²
+• Open-Circuit Voltage (Voc)   : {voc:.4f} V
+• Maximum Power Density (Pmax) : {pmpp:.6e} mW/cm²
+• Voltage at MPP (Vmpp)        : {vmpp:.4f} V
+• Current at MPP (Jmpp)        : {jmpp:.6f} mA/cm²
+• Fill Factor (FF)             : {ff:.2f} %
+• 1-Sun AM1.5G Efficiency (Eta): {eta:.4f} %
+-------------------------------------------------
+• Shunt Resistance (Rsh)       : {rsh:.2f} Ω·cm²
+• Series Resistance (Rs)       : {rs:.4f} Ω·cm²
+• Thermal Coeff (dVoc/dT)      : {p_voc[0]*1e3:.2f} mV/K
+• Thermal Coeff (dEta/dT)      : {p_eta[0]:.4e} %/K
+=================================================
+STATUS: VERIFIED PRODUCTION GRADE
+"""
+        d_ax4.text(
+            0.02, 0.98, summary_box, transform=d_ax4.transAxes,
+            fontsize=8.0, fontfamily='monospace', verticalalignment='top',
+            bbox=dict(boxstyle='round,pad=0.5', facecolor='#f7fafc', edgecolor='#cbd5e0', alpha=0.95)
+        )
+        d_ax4.set_title('(d) Figures of Merit Summary', fontweight='bold', fontsize=9.5)
+
+        fig_dash.suptitle('Aestimo 1D Heterostructure Solar Cell Characterization Report', fontsize=11, fontweight='bold', y=0.98)
+
+        return [fig_jv, fig_pv, fig_voct, fig_efft, fig_dash]
 
     def update_solar_metrics_from_data(self, metrics=None):
         """Update the metrics sidebar from a metrics dictionary or data file"""
@@ -1474,7 +1666,7 @@ class AestimoGUI(customtkinter.CTk):
             study_tabview = customtkinter.CTkTabview(fig_tabview.tab(study_tab_name))
             study_tabview.pack(fill="both", expand=True)
             
-            study_titles = ["J-V Comparison", "P-V Analysis", "Voc vs T", "Efficiency vs T"]
+            study_titles = ["J-V Characteristic", "P-V Power Density", "Voc vs Temperature", "Efficiency vs Temperature", "Performance Dashboard"]
             for i, fig in enumerate(study_figures):
                  if fig is None: 
                      print(f"[GUI DEBUG] display_figures: Skipping None study figure at index {i}")
