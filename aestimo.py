@@ -317,36 +317,36 @@ class Structure:
                 fi_e[startindex:finishindex] = (
                     matprops["Band_offset"] * Eg_T * q
                 )  # Joule
-                if mat_crys_strc == "Zincblende":
-                    a0_sub[startindex:finishindex] = matprops["a0_sub"] * 1e-10
-                    C11[startindex:finishindex] = matprops["C11"] * 1e10
-                    C12[startindex:finishindex] = matprops["C12"] * 1e10
-                    GA1[startindex:finishindex] = matprops["GA1"]
-                    GA2[startindex:finishindex] = matprops["GA2"]
-                    GA3[startindex:finishindex] = matprops["GA3"]
-                    Ac[startindex:finishindex] = matprops["Ac"] * q
-                    Av[startindex:finishindex] = matprops["Av"] * q
-                    B[startindex:finishindex] = matprops["B"] * q
-                    delta[startindex:finishindex] = matprops["delta"] * q
+                is_wz_mat = "A1" in matprops
+                if (mat_crys_strc == "Zincblende" or not is_wz_mat) and "a0_sub" in matprops:
+                    a0_sub[startindex:finishindex] = matprops.get("a0_sub", 5.6533) * 1e-10
+                    C11[startindex:finishindex] = matprops.get("C11", 11.879) * 1e10
+                    C12[startindex:finishindex] = matprops.get("C12", 5.376) * 1e10
+                    GA1[startindex:finishindex] = matprops.get("GA1", 6.8)
+                    GA2[startindex:finishindex] = matprops.get("GA2", 1.9)
+                    GA3[startindex:finishindex] = matprops.get("GA3", 2.73)
+                    Ac[startindex:finishindex] = matprops.get("Ac", -7.17) * q
+                    Av[startindex:finishindex] = matprops.get("Av", 1.16) * q
+                    B[startindex:finishindex] = matprops.get("B", -1.7) * q
+                    delta[startindex:finishindex] = matprops.get("delta", 0.28) * q
                     fi_h[startindex:finishindex] = (
                         -(1 - matprops["Band_offset"]) * Eg_T * q
                     )  # Joule
-  #-0.8*q-(1-matprops['Band_offset'])*matprops['Eg']*q #Joule
                     eps[startindex:finishindex] = matprops["epsilonStatic"] * eps0
-                    a0[startindex:finishindex] = matprops["a0"] * 1e-10
-                    TAUN0[startindex:finishindex] = matprops["TAUN0"]
-                    TAUP0[startindex:finishindex] = matprops["TAUP0"]
+                    a0[startindex:finishindex] = matprops.get("a0", 5.6533) * 1e-10
+                    TAUN0[startindex:finishindex] = matprops.get("TAUN0", 1e-8)
+                    TAUP0[startindex:finishindex] = matprops.get("TAUP0", 1e-8)
                     # Convert mobility from cm^2/Vs to m^2/Vs
-                    mun0[startindex:finishindex] = matprops["mun0"] * 1e-4
-                    mup0[startindex:finishindex] = matprops["mup0"] * 1e-4
+                    mun0[startindex:finishindex] = matprops.get("mun0", 0.1) * 1e-4
+                    mup0[startindex:finishindex] = matprops.get("mup0", 0.02) * 1e-4
 
-                    Cn0[startindex:finishindex] = matprops["Cn0"] * 1e-12
-                    Cp0[startindex:finishindex] = matprops["Cp0"] * 1e-12
-                    BETAN[startindex:finishindex] = matprops["BETAN"]
-                    BETAP[startindex:finishindex] = matprops["BETAP"]
-                    VSATN[startindex:finishindex] = matprops["VSATN"]
-                    VSATP[startindex:finishindex] = matprops["VSATP"]
-                if mat_crys_strc == "Wurtzite":
+                    Cn0[startindex:finishindex] = matprops.get("Cn0", 2.8e-31) * 1e-12
+                    Cp0[startindex:finishindex] = matprops.get("Cp0", 2.8e-32) * 1e-12
+                    BETAN[startindex:finishindex] = matprops.get("BETAN", 2.0)
+                    BETAP[startindex:finishindex] = matprops.get("BETAP", 1.0)
+                    VSATN[startindex:finishindex] = matprops.get("VSATN", 3e5)
+                    VSATP[startindex:finishindex] = matprops.get("VSATP", 6e5)
+                elif mat_crys_strc == "Wurtzite" and is_wz_mat:
                     a0_sub[startindex:finishindex] = matprops["a0_sub"] * 1e-10
                     C11[startindex:finishindex] = matprops["C11"] * 1e10
                     C12[startindex:finishindex] = matprops["C12"] * 1e10
@@ -425,29 +425,30 @@ class Structure:
                 BETAP[startindex:finishindex] = alloyprops["BETAP"]
                 VSATN[startindex:finishindex] = alloyprops["VSATN"]
                 VSATP[startindex:finishindex] = alloyprops["VSATP"]
-                if mat_crys_strc == "Zincblende":
+                is_wz_alloy = ("A1" in mat1 and "A1" in mat2)
+                if mat_crys_strc == "Zincblende" or not is_wz_alloy:
                     C11[startindex:finishindex] = (
-                        x * mat1["C11"] + (1 - x) * mat2["C11"]
+                        x * mat1.get("C11", 11.879) + (1 - x) * mat2.get("C11", 11.879)
                     ) * 1e10
                     C12[startindex:finishindex] = (
-                        x * mat1["C12"] + (1 - x) * mat2["C12"]
+                        x * mat1.get("C12", 5.376) + (1 - x) * mat2.get("C12", 5.376)
                     ) * 1e10
                     GA1[startindex:finishindex] = (
-                        x * mat1["GA1"] + (1 - x) * mat2["GA1"]
+                        x * mat1.get("GA1", 6.8) + (1 - x) * mat2.get("GA1", 6.8)
                     )
                     GA2[startindex:finishindex] = (
-                        x * mat1["GA2"] + (1 - x) * mat2["GA2"]
+                        x * mat1.get("GA2", 1.9) + (1 - x) * mat2.get("GA2", 1.9)
                     )
                     GA3[startindex:finishindex] = (
-                        x * mat1["GA3"] + (1 - x) * mat2["GA3"]
+                        x * mat1.get("GA3", 2.73) + (1 - x) * mat2.get("GA3", 2.73)
                     )
-                    Ac_alloy = x * mat1["Ac"] + (1 - x) * mat2["Ac"]
+                    Ac_alloy = x * mat1.get("Ac", -7.17) + (1 - x) * mat2.get("Ac", -7.17)
                     Ac[startindex:finishindex] = Ac_alloy * q
-                    Av_alloy = x * mat1["Av"] + (1 - x) * mat2["Av"]
+                    Av_alloy = x * mat1.get("Av", 1.16) + (1 - x) * mat2.get("Av", 1.16)
                     Av[startindex:finishindex] = Av_alloy * q
-                    B_alloy = x * mat1["B"] + (1 - x) * mat2["B"]
+                    B_alloy = x * mat1.get("B", -1.7) + (1 - x) * mat2.get("B", -1.7)
                     B[startindex:finishindex] = B_alloy * q
-                    delta_alloy = x * mat1["delta"] + (1 - x) * mat2["delta"]
+                    delta_alloy = x * mat1.get("delta", 0.28) + (1 - x) * mat2.get("delta", 0.28)
                     delta[startindex:finishindex] = delta_alloy * q
                     fi_h[startindex:finishindex] = (
                         -(1 - alloyprops["Band_offset"]) * Eg * q
@@ -456,26 +457,26 @@ class Structure:
                         x * mat1["epsilonStatic"] + (1 - x) * mat2["epsilonStatic"]
                     ) * eps0
                     a0[startindex:finishindex] = (
-                       x  * mat1["a0"] + (1 - x) * mat2["a0"]
+                       x  * mat1.get("a0", 5.6533) + (1 - x) * mat2.get("a0", 5.6533)
                     ) * 1e-10
-                    cb_meff_alpha[startindex:finishindex] = alloyprops["m_e_alpha"] * (
+                    cb_meff_alpha[startindex:finishindex] = alloyprops.get("m_e_alpha", 0.0) * (
                         mat2["m_e"] / cb_meff_alloy
                     )  # non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
 
                     mun0[startindex:finishindex] = (
-                        x * mat1["mun0"] + (1 - x) * mat2["mun0"]
+                        x * mat1.get("mun0", 0.1) + (1 - x) * mat2.get("mun0", 0.1)
                     )
                     mup0[startindex:finishindex] = (
-                        x * mat1["mup0"] + (1 - x) * mat2["mup0"]
+                        x * mat1.get("mup0", 0.02) + (1 - x) * mat2.get("mup0", 0.02)
                     )
 
                     Cn0[startindex:finishindex] = (
-                        x * mat1["Cn0"] + (1 - x) * mat2["Cn0"]
+                        x * mat1.get("Cn0", 2.8e-31) + (1 - x) * mat2.get("Cn0", 2.8e-31)
                     ) * 1e-12
                     Cp0[startindex:finishindex] = (
-                        x * mat1["Cp0"] + (1 - x) * mat2["Cp0"]
+                        x * mat1.get("Cp0", 2.8e-32) + (1 - x) * mat2.get("Cp0", 2.8e-32)
                     ) * 1e-12
-                if mat_crys_strc == "Wurtzite":
+                elif mat_crys_strc == "Wurtzite" and is_wz_alloy:
                     # A1[startindex:finishindex] =vegard1(mat1['A1'],mat1['A1'],x)
                     A1[startindex:finishindex] = x * mat1["A1"] + (1 - x) * mat2["A1"]
                     A2[startindex:finishindex] = x * mat1["A2"] + (1 - x) * mat2["A2"]

@@ -936,7 +936,12 @@ class AestimoGUI(customtkinter.CTk):
             max_pts = int(config_dict["max_pts"])
             sub_e = int(config_dict["sub_e"])
             sub_h = int(config_dict["sub_h"])
-            mat_sys = config_dict["mat_sys"]
+            mat_names = [row[1] for row in material_list]
+            if any(m in ["GaN", "InGaN", "AlGaN", "AlN", "InN", "AlInGaN"] for m in mat_names):
+                mat_sys_default = "Wurtzite"
+            else:
+                mat_sys_default = "Zincblende"
+            mat_sys = config_dict.get("mat_sys", config_dict.get("mat_system", mat_sys_default))
             
             T = float(config_dict["temp"])
             F_app = float(config_dict["field"]) * 1e5
@@ -1110,8 +1115,14 @@ class AestimoGUI(customtkinter.CTk):
                     self.gridfactor = float(cfg_dict.get("grid_step", 1.0))
                     self.dx = self.gridfactor * 1e-9
                     self.maxgridpoints = int(cfg_dict.get("max_pts", 1000))
-                    self.mat_type = cfg_dict.get("mat_system", "Wurtzite")
                     self.material = material_list
+                    # Determine crystal system (Zincblende for GaAs/InP/Si vs Wurtzite for III-Nitrides)
+                    mat_names = [row[1] for row in material_list]
+                    if any(m in ["GaN", "InGaN", "AlGaN", "AlN", "InN", "AlInGaN"] for m in mat_names):
+                        mat_sys_default = "Wurtzite"
+                    else:
+                        mat_sys_default = "Zincblende"
+                    self.mat_type = cfg_dict.get("mat_sys", cfg_dict.get("mat_system", mat_sys_default))
                     # Dynamic Voltage Sweep from Config JSON (vmax=1.6V for AlGaN/InGaN Voc=1.54V)
                     self.vmin = float(cfg_dict.get("vmin", -0.5))
                     self.vmax = float(cfg_dict.get("vmax", 1.6))
@@ -1140,9 +1151,9 @@ class AestimoGUI(customtkinter.CTk):
                     
                     # Missing physical parameters from optimized baseline
                     self.photovoltaic_mode = True
-                    self.enable_polarization = True
-                    self.work_function_left = 7.0
-                    self.work_function_right = 4.0
+                    self.enable_polarization = (self.mat_type == "Wurtzite") and cfg_dict.get("polarization", True)
+                    self.work_function_left = float(cfg_dict.get("bc_left", 5.2 if self.mat_type == "Zincblende" else 7.0))
+                    self.work_function_right = float(cfg_dict.get("bc_right", 4.1 if self.mat_type == "Zincblende" else 4.0))
                     self.surface_recomb = (0, 0)
                     self.Quantum_Regions = False
                     self.Quantum_Regions_boundary = np.zeros((1, 2))
