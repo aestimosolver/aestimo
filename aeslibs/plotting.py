@@ -1,7 +1,46 @@
 import os
+import sys
 import numpy as np
 import matplotlib.pyplot as pl
-import config
+
+# Ensure project root is in sys.path
+root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
+try:
+    import config
+except ImportError:
+    import types
+    config = types.ModuleType("config")
+
+# Robust fallback defaults for all config attributes
+_config_defaults = {
+    'damping': 0.2,
+    'Stern_damping': True,
+    'max_iterations': 80,
+    'convergence_test': 1e-4,
+    'predic_correc': True,
+    'anti_crossing_length': 0.0001,
+    'amort_wave_0': 1.5,
+    'amort_wave_1': 1.5,
+    'strain': True,
+    'piezo': False,
+    'piezo1': True,
+    'quantum_effect': True,
+    'parameters': True,
+    'electricfield_out': True,
+    'potential_out': True,
+    'sigma_out': True,
+    'probability_out': True,
+    'states_out': True,
+    'Drift_Diffusion_out': True,
+    'wavefunction_scalefactor': 400.0
+}
+for _attr, _val in _config_defaults.items():
+    if not hasattr(config, _attr):
+        setattr(config, _attr, _val)
+
 from aeslibs.aestimo_poisson1d import amort_wave
 
 # Defining constants and material parameters
@@ -26,13 +65,13 @@ def save_and_plot2(result, model, output_directory='output', drawFigures=False, 
         )
 
     # Plotting results
-    if config.Drift_Diffusion_out:
+    if getattr(config, 'Drift_Diffusion_out', True):
          saveoutput("av_curr.dat",(result.Va_t, result.av_curr))
     
     for k in range(0, result.Total_Steps):
         vt = result.Va_t[k]
-        if config.Drift_Diffusion_out:
-            if config.sigma_out:
+        if getattr(config, 'Drift_Diffusion_out', True):
+            if getattr(config, 'sigma_out', True):
                 # Use 2D array if available, else fallback to 1D (for backward compatibility or non-sweep)
                 ro_data = result.ro_result_[k,:] if hasattr(result, 'ro_result_') else result.ro_result
                 saveoutput("sigma_eh_%.2f.dat" % vt, (xaxis, ro_data))

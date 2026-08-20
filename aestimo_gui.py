@@ -1,10 +1,49 @@
 
+import os
+import sys
+
+# Ensure project root is always at the top of sys.path
+base_dir = os.path.dirname(os.path.abspath(__file__))
+if base_dir not in sys.path:
+    sys.path.insert(0, base_dir)
+
+try:
+    import config
+except ImportError:
+    import types
+    config = types.ModuleType("config")
+
+# Robust fallback defaults for all config attributes
+_config_defaults = {
+    'damping': 0.2,
+    'Stern_damping': True,
+    'max_iterations': 80,
+    'convergence_test': 1e-4,
+    'predic_correc': True,
+    'anti_crossing_length': 0.0001,
+    'amort_wave_0': 1.5,
+    'amort_wave_1': 1.5,
+    'strain': True,
+    'piezo': False,
+    'piezo1': True,
+    'quantum_effect': True,
+    'parameters': True,
+    'electricfield_out': True,
+    'potential_out': True,
+    'sigma_out': True,
+    'probability_out': True,
+    'states_out': True,
+    'Drift_Diffusion_out': True,
+    'wavefunction_scalefactor': 400.0
+}
+for _attr, _val in _config_defaults.items():
+    if not hasattr(config, _attr):
+        setattr(config, _attr, _val)
+
 import tkinter
 import tkinter.messagebox
 import tkinter.filedialog
 import customtkinter
-import os
-import sys
 import json
 import threading
 import time
@@ -853,7 +892,7 @@ class AestimoGUI(customtkinter.CTk):
         except Exception as e:
             self.finish_simulation(success=False, error_msg=str(e))
 
-    def run_simulation_worker(self, config):
+    def run_simulation_worker(self, config_dict):
         try:
             # Set backend to Agg to avoid main thread loop errors when plotting in thread
             import matplotlib
@@ -871,7 +910,7 @@ class AestimoGUI(customtkinter.CTk):
             
             # Layers
             material_list = []
-            for l in config["layers"]:
+            for l in config_dict["layers"]:
                 th = float(l["thickness"])
                 mat = l["material"]
                 x = float(l["mole"])
@@ -892,22 +931,22 @@ class AestimoGUI(customtkinter.CTk):
                 raise ValueError("Structure is empty.")
             
             # Physics / Solver
-            scheme_id = int(config["solver"].split(":")[0])
-            grid_step = float(config["grid_step"])
-            max_pts = int(config["max_pts"])
-            sub_e = int(config["sub_e"])
-            sub_h = int(config["sub_h"])
-            mat_sys = config["mat_sys"]
+            scheme_id = int(config_dict["solver"].split(":")[0])
+            grid_step = float(config_dict["grid_step"])
+            max_pts = int(config_dict["max_pts"])
+            sub_e = int(config_dict["sub_e"])
+            sub_h = int(config_dict["sub_h"])
+            mat_sys = config_dict["mat_sys"]
             
-            T = float(config["temp"])
-            F_app = float(config["field"]) * 1e5
+            T = float(config_dict["temp"])
+            F_app = float(config_dict["field"]) * 1e5
             
-            val_vmin = float(config["vmin"])
-            val_vmax = float(config["vmax"])
-            val_vstep = float(config["vstep"])
+            val_vmin = float(config_dict["vmin"])
+            val_vmax = float(config_dict["vmax"])
+            val_vstep = float(config_dict["vstep"])
             
-            bc_left = float(config["bc_left"])
-            bc_right = float(config["bc_right"])
+            bc_left = float(config_dict["bc_left"])
+            bc_right = float(config_dict["bc_right"])
 
             # Input Object
             class InputObject:
@@ -925,10 +964,10 @@ class AestimoGUI(customtkinter.CTk):
                 Fapplied = F_app
                 
                 # TAT Field
-                tat_field = float(config.get("tat_field", 1e10))
+                tat_field = float(config_dict.get("tat_field", 1e10))
                 
                 # Solar Cell Optical Generation
-                G_optical = float(config.get("G_optical", 0.0))
+                G_optical = float(config_dict.get("G_optical", 0.0))
                 
                 vmax = val_vmax
                 vmin = val_vmin
@@ -936,8 +975,8 @@ class AestimoGUI(customtkinter.CTk):
                 
                 surface = np.array([bc_left, bc_right])
                 
-                Quantum_Regions = config.get("Quantum_Regions", False)
-                qr_b_str = config.get("Quantum_Regions_boundary", "[[0.0, 0.0]]")
+                Quantum_Regions = config_dict.get("Quantum_Regions", False)
+                qr_b_str = config_dict.get("Quantum_Regions_boundary", "[[0.0, 0.0]]")
                 try:
                     if isinstance(qr_b_str, str):
                         Quantum_Regions_boundary = np.array(json.loads(qr_b_str))
@@ -951,8 +990,8 @@ class AestimoGUI(customtkinter.CTk):
                 # Series Resistance Handling
                 # If Internal mode, pass Rs to model
                 # If External mode, pass 0.0 to model (applied later in validation)
-                rs_val = float(config.get("rs", 0.0))
-                rs_mode = config.get("rs_mode", "External (Fast)")
+                rs_val = float(config_dict.get("rs", 0.0))
+                rs_mode = config_dict.get("rs_mode", "External (Fast)")
                 
                 if rs_mode == "Internal (Self-Consistent)":
                     Rs = rs_val
@@ -960,13 +999,13 @@ class AestimoGUI(customtkinter.CTk):
                     Rs = 0.0
                 
                 # Also pass device area for current density calc
-                device_area_m2 = float(config.get("area", 1e-4)) * 1e-4
+                device_area_m2 = float(config_dict.get("area", 1e-4)) * 1e-4
                 
                 # Optimized physical parameters
                 photovoltaic_mode = True
-                enable_polarization = config.get("polarization", True)
-                work_function_left = float(config.get("bc_left", 7.0))
-                work_function_right = float(config.get("bc_right", 4.0))
+                enable_polarization = config_dict.get("polarization", True)
+                work_function_left = float(config_dict.get("bc_left", 7.0))
+                work_function_right = float(config_dict.get("bc_right", 4.0))
                 surface_recomb = (0, 0)
 
             # Fix annoying class attribute name mismatch if any (T vs T_val)
@@ -977,8 +1016,8 @@ class AestimoGUI(customtkinter.CTk):
             dx_m = grid_step * 1e-9
             n_max = int(tot_thick / dx_m)
             
-            is_graded = config.get("graded_junc", False)
-            diff_len = float(config.get("diffusion_len", "10.0"))
+            is_graded = config_dict.get("graded_junc", False)
+            diff_len = float(config_dict.get("diffusion_len", "10.0"))
             
             if is_graded and len(material_list) == 2:
                 from scipy.special import erf
@@ -1038,13 +1077,13 @@ class AestimoGUI(customtkinter.CTk):
             self.after(0, self.finish_simulation, False, str(e), None)
 
 
-    def run_solar_study_worker(self, config):
+    def run_solar_study_worker(self, config_dict):
         try:
             plt.switch_backend('Agg')
             
             # 1. Setup Material List and shared parameters
             material_list = []
-            for layer in config["layers"]:
+            for layer in config_dict["layers"]:
                 material_list.append([
                     float(layer["thickness"]),
                     layer["material"],
@@ -1055,9 +1094,9 @@ class AestimoGUI(customtkinter.CTk):
                     layer["type"]
                 ])
             
-            grid_step = float(config.get("grid_step", 1.0))
-            max_pts = int(config.get("max_pts", 1000))
-            device_area = float(config.get("area", 1.0)) # cm^2
+            grid_step = float(config_dict.get("grid_step", 1.0))
+            max_pts = int(config_dict.get("max_pts", 1000))
+            device_area = float(config_dict.get("area", 1.0)) # cm^2
 
             # Define helper Inner class for InputObject
             class StudyInputObject:
@@ -1109,15 +1148,14 @@ class AestimoGUI(customtkinter.CTk):
                     self.Quantum_Regions_boundary = np.zeros((1, 2))
                     self.Rs = 0.0
 
-            import config as sim_config
-            sim_config.Drift_Diffusion_out = True
+            config.Drift_Diffusion_out = True
             
             # --- EXECUTION ---
             total_tasks = 6 # Dark, Light, 4 Temps
             
             # Task 1: Dark
             self.after(0, lambda: self.status_label.configure(text="Solar Study: Running Dark I-V..."))
-            dark_in = StudyInputObject(config, "Dark", G_override=0.0)
+            dark_in = StudyInputObject(config_dict, "Dark", G_override=0.0)
             aestimo.output_directory = os.path.join(os.getcwd(), "STUDY_Dark_output")
             _, _, res_dark, _ = run_aestimo(dark_in, drawFigures=False, show=False)
             dark_data = np.loadtxt(os.path.join(aestimo.output_directory, "av_curr.dat"))
@@ -1126,7 +1164,7 @@ class AestimoGUI(customtkinter.CTk):
 
             # Task 2: Light (Standard)
             self.after(0, lambda: self.status_label.configure(text="Solar Study: Running Illuminated I-V..."))
-            light_in = StudyInputObject(config, "Light")
+            light_in = StudyInputObject(config_dict, "Light")
             aestimo.output_directory = os.path.join(os.getcwd(), "STUDY_Light_output")
             _, _, res_light, standard_figures = run_aestimo(light_in, drawFigures=True, show=False)
             light_data = np.loadtxt(os.path.join(aestimo.output_directory, "av_curr.dat"))
@@ -1138,7 +1176,7 @@ class AestimoGUI(customtkinter.CTk):
             temps = np.arange(200, 525, 25)
             for i, T in enumerate(temps):
                 self.after(0, lambda t=T: self.status_label.configure(text=f"Solar Study: Running {t}K..."))
-                t_in = StudyInputObject(config, f"Temp_{T}", T_override=float(T))
+                t_in = StudyInputObject(config_dict, f"Temp_{T}", T_override=float(T))
                 aestimo.output_directory = os.path.join(os.getcwd(), f"STUDY_Temp_{T}_output")
                 run_aestimo(t_in, drawFigures=False, show=False)
                 t_data = np.loadtxt(os.path.join(aestimo.output_directory, "av_curr.dat"))
