@@ -851,8 +851,8 @@ class AestimoGUI(customtkinter.CTk):
         # Physics
         self.set_entry(self.temp_entry, config.get("temp", "300.0"))
         self.set_entry(self.field_entry, config.get("field", "0.0"))
-        self.set_entry(self.bc_left_entry, config.get("bc_left", "0.0"))
-        self.set_entry(self.bc_right_entry, config.get("bc_right", "0.0"))
+        self.set_entry(self.bc_left_entry, config.get("bc_left", config.get("work_function_left", "0.0")))
+        self.set_entry(self.bc_right_entry, config.get("bc_right", config.get("work_function_right", "0.0")))
         self.set_entry(self.vmin_entry, config.get("vmin", "0.0"))
         self.set_entry(self.vmax_entry, config.get("vmax", "1.0"))
         self.set_entry(self.vstep_entry, config.get("vstep", "0.05"))
@@ -861,7 +861,7 @@ class AestimoGUI(customtkinter.CTk):
         self.solver_combo.set(config.get("solver", "2: Schrodinger-Poisson"))
         self.set_entry(self.grid_step_entry, config.get("grid_step", "0.5"))
         self.set_entry(self.max_points_entry, config.get("max_pts", "200000"))
-        self.mat_system_combo.set(config.get("mat_sys", "Zincblende"))
+        self.mat_system_combo.set(config.get("mat_sys", config.get("mat_system", "Zincblende")))
         self.set_entry(self.sub_e_entry, config.get("sub_e", "5"))
         self.set_entry(self.sub_h_entry, config.get("sub_h", "5"))
         
@@ -878,14 +878,14 @@ class AestimoGUI(customtkinter.CTk):
         
         # Validation
         self.set_entry(self.exp_file_entry, config.get("exp_file", "examples/experimental_data/si_pn_experimental_iv.csv"))
-        self.set_entry(self.area_entry, config.get("area", "1e-4"))
-        self.set_entry(self.rs_entry, config.get("rs", "0.0"))
+        self.set_entry(self.area_entry, config.get("area", config.get("device_area", "1e-4")))
+        self.set_entry(self.rs_entry, config.get("rs", config.get("Rs", "0.0")))
         self.rs_mode_combo.set(config.get("rs_mode", "External (Fast)"))
-        self.set_entry(self.rsh_entry, config.get("rsh", "1e12"))
+        self.set_entry(self.rsh_entry, config.get("rsh", config.get("Rsh", "1e12")))
         # Solar Cell
         dev_type = config.get("device_type", "Generic Diode / LED")
         self.device_type_combo.set(dev_type)
-        self.set_entry(self.g_opt_entry, config.get("G_optical", "0.0"))
+        self.set_entry(self.g_opt_entry, config.get("G_optical", config.get("g_optical", "0.0")))
         self.on_device_type_change(dev_type)
         
         # Junction Physics

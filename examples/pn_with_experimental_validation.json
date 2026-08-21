@@ -1,4 +1,5 @@
 {
+    "name": "Silicon PN Diode with Experimental Validation",
     "layers": [
         {
             "material": "Si",

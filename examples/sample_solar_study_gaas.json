@@ -1,38 +1,43 @@
 {
+    "name": "Tobin 1990 GaAs Benchmark Solar Cell",
     "layers": [
         {
+            "name": "p-AlGaAs Window",
             "material": "AlGaAs",
+            "thickness": "30.0",
             "mole": "0.85",
             "mole_y": "0.0",
-            "thickness": "30.0",
-            "doping": "2e18",
+            "doping": "2e+18",
             "doping_type": "p",
             "type": "barrier"
         },
         {
+            "name": "p-GaAs Emitter",
             "material": "GaAs",
-            "mole": "0.0",
-            "mole_y": "0.0",
             "thickness": "500.0",
-            "doping": "2e18",
+            "mole": "0.0",
+            "mole_y": "0.0",
+            "doping": "2e+18",
             "doping_type": "p",
             "type": "barrier"
         },
         {
+            "name": "n-GaAs Base",
             "material": "GaAs",
+            "thickness": "3000.0",
             "mole": "0.0",
             "mole_y": "0.0",
-            "thickness": "2000.0",
-            "doping": "1e17",
+            "doping": "2e+17",
             "doping_type": "n",
-            "type": "barrier"
+            "type": "qw"
         },
         {
-            "material": "GaAs",
-            "mole": "0.0",
+            "name": "n-AlGaAs BSF",
+            "material": "AlGaAs",
+            "thickness": "100.0",
+            "mole": "0.85",
             "mole_y": "0.0",
-            "thickness": "1000.0",
-            "doping": "2e18",
+            "doping": "2e+18",
             "doping_type": "n",
             "type": "barrier"
         }
@@ -42,7 +47,7 @@
     "bc_left": "5.2",
     "bc_right": "4.1",
     "vmin": "-0.2",
-    "vmax": "1.14",
+    "vmax": "1.15",
     "vstep": "0.02",
     "solver": "7: SP-Drift Diffusion (Sequential)",
     "grid_step": "5.0",

@@ -1,26 +1,5 @@
 {
     "name": "Tobin 1990 GaAs Benchmark Solar Cell",
-    "temp": "300.0",
-    "comp_scheme": 7,
-    "computation_scheme": 7,
-    "solver": "7: SP-Drift Diffusion (Sequential)",
-    "device_type": "Solar Cell / Photodetector",
-    "device_area": 1.0,
-    "area": "1.0",
-    "grid_step": "5.0",
-    "max_pts": "2000",
-    "sub_e": "3",
-    "sub_h": "3",
-    "vmin": "-0.2",
-    "vmax": "1.15",
-    "vstep": "0.02",
-    "G_optical": "5.8e+21",
-    "tat_field": "10000000000.0",
-    "photovoltaic_mode": true,
-    "enable_polarization": false,
-    "work_function_left": 5.2,
-    "work_function_right": 4.1,
-    "Rs": 0.0,
     "layers": [
         {
             "name": "p-AlGaAs Window",
@@ -28,7 +7,7 @@
             "thickness": "30.0",
             "mole": "0.85",
             "mole_y": "0.0",
-            "doping": "1e+18",
+            "doping": "2e+18",
             "doping_type": "p",
             "type": "barrier"
         },
@@ -50,7 +29,7 @@
             "mole_y": "0.0",
             "doping": "2e+17",
             "doping_type": "n",
-            "type": "well"
+            "type": "qw"
         },
         {
             "name": "n-AlGaAs BSF",
@@ -63,16 +42,29 @@
             "type": "barrier"
         }
     ],
-    "mat_sys": "Zincblende",
+    "temp": "300.0",
     "field": "0.0",
-    "bc_left": "0.0",
-    "bc_right": "0.0",
+    "bc_left": "5.2",
+    "bc_right": "4.1",
+    "vmin": "-0.2",
+    "vmax": "1.15",
+    "vstep": "0.02",
+    "solver": "7: SP-Drift Diffusion (Sequential)",
+    "grid_step": "5.0",
+    "max_pts": "200000",
+    "mat_sys": "Zincblende",
+    "sub_e": "5",
+    "sub_h": "5",
     "Quantum_Regions": false,
     "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+    "tat_field": "1e10",
     "exp_file": "examples/experimental_data/si_pn_experimental_iv.csv",
+    "area": "1.0",
     "rs": "0.0",
     "rs_mode": "External (Fast)",
     "rsh": "1e12",
+    "device_type": "Solar Cell / Photodetector",
+    "G_optical": "5.8e+21",
     "graded_junc": false,
     "diffusion_len": "10.0"
 }
