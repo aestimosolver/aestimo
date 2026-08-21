@@ -38,5 +38,10 @@
     "rs_mode": "External (Fast)",
     "rsh": "5e7",
     "graded_junc": true,
-    "diffusion_len": "10.0"
+    "diffusion_len": "10.0",
+    "device_type": "Diode Simulation",
+    "Quantum_Regions": false,
+    "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+    "tat_field": "1e10",
+    "G_optical": "0.0"
 }

@@ -1,0 +1,65 @@
+{
+    "layers": [
+        {
+            "material": "AlGaAs",
+            "mole": "0.85",
+            "mole_y": "0.0",
+            "thickness": "30.0",
+            "doping": "2e18",
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "GaAs",
+            "mole": "0.0",
+            "mole_y": "0.0",
+            "thickness": "500.0",
+            "doping": "2e18",
+            "doping_type": "p",
+            "type": "barrier"
+        },
+        {
+            "material": "GaAs",
+            "mole": "0.0",
+            "mole_y": "0.0",
+            "thickness": "2000.0",
+            "doping": "1e17",
+            "doping_type": "n",
+            "type": "barrier"
+        },
+        {
+            "material": "GaAs",
+            "mole": "0.0",
+            "mole_y": "0.0",
+            "thickness": "1000.0",
+            "doping": "2e18",
+            "doping_type": "n",
+            "type": "barrier"
+        }
+    ],
+    "temp": "300.0",
+    "field": "0.0",
+    "bc_left": "5.2",
+    "bc_right": "4.1",
+    "vmin": "-0.2",
+    "vmax": "1.14",
+    "vstep": "0.02",
+    "solver": "7: SP-Drift Diffusion (Sequential)",
+    "grid_step": "5.0",
+    "max_pts": "200000",
+    "mat_sys": "Zincblende",
+    "sub_e": "5",
+    "sub_h": "5",
+    "Quantum_Regions": false,
+    "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+    "tat_field": "1e10",
+    "exp_file": "examples/experimental_data/si_pn_experimental_iv.csv",
+    "area": "1.0",
+    "rs": "0.0",
+    "rs_mode": "External (Fast)",
+    "rsh": "1e12",
+    "device_type": "Solar Study",
+    "G_optical": "5.8e+21",
+    "graded_junc": false,
+    "diffusion_len": "10.0"
+}

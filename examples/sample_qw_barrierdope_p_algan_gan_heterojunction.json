@@ -6,7 +6,8 @@
             "thickness": "14.0",
             "doping": "0.0e+00",
             "doping_type": "i",
-            "type": "barrier"
+            "type": "barrier",
+            "mole_y": "0.0"
         },
         {
             "material": "AlGaN",
@@ -14,7 +15,8 @@
             "thickness": "30.0",
             "doping": "0.0e+00",
             "doping_type": "i",
-            "type": "barrier"
+            "type": "barrier",
+            "mole_y": "0.0"
         },
         {
             "material": "GaN",
@@ -22,7 +24,8 @@
             "thickness": "40.0",
             "doping": "0.0e+00",
             "doping_type": "i",
-            "type": "barrier"
+            "type": "barrier",
+            "mole_y": "0.0"
         }
     ],
     "temp": "300.0",
@@ -37,5 +40,17 @@
     "max_pts": "200000",
     "mat_sys": "Wurtzite",
     "sub_e": "1",
-    "sub_h": "1"
+    "sub_h": "1",
+    "device_type": "Generic Diode / LED",
+    "Quantum_Regions": false,
+    "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+    "tat_field": "1e10",
+    "exp_file": "examples/experimental_data/si_pn_experimental_iv.csv",
+    "area": "1e-4",
+    "rs": "0.0",
+    "rs_mode": "External (Fast)",
+    "rsh": "1e12",
+    "G_optical": "0.0",
+    "graded_junc": false,
+    "diffusion_len": "10.0"
 }

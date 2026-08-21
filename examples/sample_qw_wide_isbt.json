@@ -3,56 +3,63 @@
         {
             "material": "AlGaAs",
             "mole": "0.3",
+            "mole_y": "0.0",
             "thickness": "10.0",
-            "doping": "n",
+            "doping": "0.0",
             "doping_type": "n",
             "type": "barrier"
         },
         {
             "material": "AlGaAs",
             "mole": "0.3",
+            "mole_y": "0.0",
             "thickness": "5.0",
-            "doping": "n",
+            "doping": "1e18",
             "doping_type": "n",
             "type": "barrier"
         },
         {
             "material": "AlGaAs",
             "mole": "0.3",
+            "mole_y": "0.0",
             "thickness": "5.0",
-            "doping": "n",
+            "doping": "0.0",
             "doping_type": "n",
             "type": "barrier"
         },
         {
             "material": "GaAs",
-            "mole": "0",
+            "mole": "0.0",
+            "mole_y": "0.0",
             "thickness": "30.0",
-            "doping": "n",
+            "doping": "0.0",
             "doping_type": "n",
-            "type": "barrier"
+            "type": "qw"
         },
         {
             "material": "AlGaAs",
             "mole": "0.3",
+            "mole_y": "0.0",
             "thickness": "5.0",
-            "doping": "n",
+            "doping": "0.0",
             "doping_type": "n",
             "type": "barrier"
         },
         {
             "material": "AlGaAs",
             "mole": "0.3",
+            "mole_y": "0.0",
             "thickness": "5.0",
-            "doping": "n",
+            "doping": "1e18",
             "doping_type": "n",
             "type": "barrier"
         },
         {
             "material": "AlGaAs",
             "mole": "0.3",
+            "mole_y": "0.0",
             "thickness": "10.0",
-            "doping": "n",
+            "doping": "0.0",
             "doping_type": "n",
             "type": "barrier"
         }
@@ -69,5 +76,17 @@
     "max_pts": "200000",
     "mat_sys": "Zincblende",
     "sub_e": "6",
-    "sub_h": "1"
+    "sub_h": "1",
+    "device_type": "Generic Diode / LED",
+    "Quantum_Regions": false,
+    "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+    "tat_field": "1e10",
+    "exp_file": "examples/experimental_data/si_pn_experimental_iv.csv",
+    "area": "1e-4",
+    "rs": "0.0",
+    "rs_mode": "External (Fast)",
+    "rsh": "1e12",
+    "G_optical": "0.0",
+    "graded_junc": false,
+    "diffusion_len": "10.0"
 }

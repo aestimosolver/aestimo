@@ -26,7 +26,7 @@
     "vmin": "0.0",
     "vmax": "0.8",
     "vstep": "0.04",
-    "solver": "7: Standard DD",
+    "solver": "7: SP-Drift Diffusion (Sequential)",
     "grid_step": "1.0",
     "max_pts": "200000",
     "mat_sys": "Wurtzite",
@@ -39,5 +39,12 @@
     "tat_field": "5.0e6",
     "taun0": "5.0e-7",
     "taup0": "5.0e-7",
-    "enable_polarization": true
+    "enable_polarization": true,
+    "device_type": "Diode Simulation",
+    "Quantum_Regions": false,
+    "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+    "rs_mode": "External (Fast)",
+    "G_optical": "0.0",
+    "graded_junc": false,
+    "diffusion_len": "10.0"
 }

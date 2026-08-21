@@ -26,7 +26,7 @@
     "vmin": "0.0",
     "vmax": "1.6",
     "vstep": "0.04",
-    "solver": "7: Standard DD",
+    "solver": "7: SP-Drift Diffusion (Sequential)",
     "grid_step": "1.0",
     "max_pts": "200000",
     "mat_sys": "Wurtzite",
@@ -40,5 +40,11 @@
     "taup0": "5.0e-7",
     "G_optical": "1e+21",
     "enable_polarization": false,
-    "exp_file": ""
+    "exp_file": "",
+    "device_type": "Solar Cell / Photodetector",
+    "Quantum_Regions": false,
+    "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+    "rs_mode": "External (Fast)",
+    "graded_junc": false,
+    "diffusion_len": "10.0"
 }

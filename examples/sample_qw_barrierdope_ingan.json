@@ -6,7 +6,8 @@
             "thickness": "30.0",
             "doping": "2.0e+20",
             "doping_type": "p",
-            "type": "barrier"
+            "type": "barrier",
+            "mole_y": "0.0"
         },
         {
             "material": "AlGaN",
@@ -14,7 +15,8 @@
             "thickness": "100.0",
             "doping": "1.0e+20",
             "doping_type": "p",
-            "type": "barrier"
+            "type": "barrier",
+            "mole_y": "0.0"
         },
         {
             "material": "GaN",
@@ -22,7 +24,8 @@
             "thickness": "50.0",
             "doping": "5.0e+18",
             "doping_type": "p",
-            "type": "barrier"
+            "type": "barrier",
+            "mole_y": "0.0"
         },
         {
             "material": "AlGaN",
@@ -30,7 +33,8 @@
             "thickness": "20.0",
             "doping": "1.0e+19",
             "doping_type": "p",
-            "type": "barrier"
+            "type": "barrier",
+            "mole_y": "0.0"
         },
         {
             "material": "AlGaN",
@@ -38,7 +42,8 @@
             "thickness": "10.0",
             "doping": "7.0e+16",
             "doping_type": "n",
-            "type": "barrier"
+            "type": "barrier",
+            "mole_y": "0.0"
         },
         {
             "material": "InGaN",
@@ -46,7 +51,8 @@
             "thickness": "4.0",
             "doping": "7.0e+16",
             "doping_type": "n",
-            "type": "well"
+            "type": "well",
+            "mole_y": "0.0"
         },
         {
             "material": "AlGaN",
@@ -54,7 +60,8 @@
             "thickness": "10.0",
             "doping": "7.0e+16",
             "doping_type": "n",
-            "type": "barrier"
+            "type": "barrier",
+            "mole_y": "0.0"
         },
         {
             "material": "InGaN",
@@ -62,7 +69,8 @@
             "thickness": "4.0",
             "doping": "7.0e+16",
             "doping_type": "n",
-            "type": "well"
+            "type": "well",
+            "mole_y": "0.0"
         },
         {
             "material": "AlGaN",
@@ -70,7 +78,8 @@
             "thickness": "10.0",
             "doping": "7.0e+16",
             "doping_type": "n",
-            "type": "barrier"
+            "type": "barrier",
+            "mole_y": "0.0"
         },
         {
             "material": "InGaN",
@@ -78,7 +87,8 @@
             "thickness": "4.0",
             "doping": "7.0e+16",
             "doping_type": "n",
-            "type": "well"
+            "type": "well",
+            "mole_y": "0.0"
         },
         {
             "material": "AlGaN",
@@ -86,7 +96,8 @@
             "thickness": "10.0",
             "doping": "7.0e+16",
             "doping_type": "n",
-            "type": "barrier"
+            "type": "barrier",
+            "mole_y": "0.0"
         },
         {
             "material": "GaN",
@@ -94,7 +105,8 @@
             "thickness": "50.0",
             "doping": "7.0e+17",
             "doping_type": "n",
-            "type": "barrier"
+            "type": "barrier",
+            "mole_y": "0.0"
         },
         {
             "material": "AlGaN",
@@ -102,7 +114,8 @@
             "thickness": "100.0",
             "doping": "3.0e+18",
             "doping_type": "n",
-            "type": "barrier"
+            "type": "barrier",
+            "mole_y": "0.0"
         },
         {
             "material": "InGaN",
@@ -110,7 +123,8 @@
             "thickness": "50.0",
             "doping": "3.0e+18",
             "doping_type": "n",
-            "type": "barrier"
+            "type": "barrier",
+            "mole_y": "0.0"
         },
         {
             "material": "GaN",
@@ -118,7 +132,8 @@
             "thickness": "100.0",
             "doping": "3.0e+18",
             "doping_type": "n",
-            "type": "barrier"
+            "type": "barrier",
+            "mole_y": "0.0"
         }
     ],
     "temp": "300.0",
@@ -128,10 +143,22 @@
     "vmin": "0.0",
     "vmax": "3.1",
     "vstep": "0.05",
-    "solver": "9: Schrodinger-Poisson",
+    "solver": "9: SP-DD (Gummel-Newton)",
     "grid_step": "0.5",
     "max_pts": "200000",
     "mat_sys": "Wurtzite",
     "sub_e": "2",
-    "sub_h": "2"
+    "sub_h": "2",
+    "device_type": "Generic Diode / LED",
+    "Quantum_Regions": false,
+    "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+    "tat_field": "1e10",
+    "exp_file": "examples/experimental_data/si_pn_experimental_iv.csv",
+    "area": "1e-4",
+    "rs": "0.0",
+    "rs_mode": "External (Fast)",
+    "rsh": "1e12",
+    "G_optical": "0.0",
+    "graded_junc": false,
+    "diffusion_len": "10.0"
 }
