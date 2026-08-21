@@ -508,8 +508,8 @@ def amort_wave(j, Well_boundary, n_max):
         config.amort_wave_1 * (Well_boundary[j, 1] - Well_boundary[j, 0]) / 2
     )
 
-    I1 = I11 - amort_wave_0  # n_max-70#
-    I2 = I22 + amort_wave_1  # n_max-5#
+    I1 = max(0, I11 - amort_wave_0)
+    I2 = min(n_max, I22 + amort_wave_1)
     return I1, I2, I11, I22
 
 
@@ -1539,38 +1539,82 @@ def Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0, ni, G_opti
         G_opt_m3 = G_optical
         
     pv_mode = getattr(model, 'photovoltaic_mode', False) if model is not None else False
+    s_recomb = getattr(model, 'surface_recomb', (0.0, 0.0)) if model is not None else (0.0, 0.0)
+    try:
+        S_left = float(s_recomb[0]) if hasattr(s_recomb, '__len__') and len(s_recomb) > 0 else float(s_recomb)
+        S_right = float(s_recomb[1]) if hasattr(s_recomb, '__len__') and len(s_recomb) > 1 else float(s_recomb)
+    except:
+        S_left = 0.0
+        S_right = 0.0
 
-    if pv_mode and dop is not None:
-        # --- Selective (PV) Contacts ---
-        # Determine which side is p-type (anode) and which is n-type (cathode)
-        # by checking doping sign at boundaries.
+    # Convert surface recombination velocity from cm/s to m/s
+    S_left_m = S_left * 1e-2
+    S_right_m = S_right * 1e-2
+
+    if dop is not None:
         left_is_p = dop[0] < 0  # p-type doping is stored as negative in aestimo
         right_is_n = dop[n_max - 1] > 0
 
-
-        # --- Anode (left contact) ---
+        # --- Anode (left contact, x=0) ---
+        dv_left = fi[1] - fi[0]
         if left_is_p:
             # Fix holes (majority): Dirichlet
-            ap[0] = 0; bp[0] = 1; cp[0] = 0; fp[0] = p[0]
-            # Float electrons (minority): Neumann zero-flux: n[0] = n[1]
-            an[0] = 0; bn[0] = 1; cn[0] = -1; fn[0] = 0.0
+            ap[0] = 0.0; bp[0] = 1.0; cp[0] = 0.0; fp[0] = p[0]
+            # Minority electrons: Robin boundary with Sn
+            Dn0 = mun_s[0] * Vt  # m2/s
+            gamma_n0 = (S_left_m * dx_m / max(Dn0, 1e-30))
+            if gamma_n0 > 1e6 or not pv_mode:
+                # High recombination limit (Ohmic Dirichlet): n[0] = n_eq
+                an[0] = 0.0; bn[0] = 1.0; cn[0] = 0.0; fn[0] = n[0]
+            else:
+                # Generalized Robin condition: (B(-dv) + gamma) n[0] - B(dv) n[1] = gamma * n_eq
+                an[0] = 0.0
+                bn[0] = Ber(-dv_left) + gamma_n0
+                cn[0] = -Ber(dv_left)
+                fn[0] = gamma_n0 * n[0]
         else:
             # Fix electrons (majority): Dirichlet
-            an[0] = 0; bn[0] = 1; cn[0] = 0; fn[0] = n[0]
-            # Float holes (minority): Neumann zero-flux
-            ap[0] = 0; bp[0] = 1; cp[0] = -1; fp[0] = 0.0
+            an[0] = 0.0; bn[0] = 1.0; cn[0] = 0.0; fn[0] = n[0]
+            # Minority holes: Robin boundary with Sp
+            Dp0 = mup_s[0] * Vt
+            gamma_p0 = (S_left_m * dx_m / max(Dp0, 1e-30))
+            if gamma_p0 > 1e6 or not pv_mode:
+                ap[0] = 0.0; bp[0] = 1.0; cp[0] = 0.0; fp[0] = p[0]
+            else:
+                ap[0] = 0.0
+                bp[0] = Ber(-dv_left) + gamma_p0
+                cp[0] = -Ber(dv_left)
+                fp[0] = gamma_p0 * p[0]
 
-        # --- Cathode (right contact) ---
+        # --- Cathode (right contact, x=L) ---
+        dv_right = fi[n_max - 1] - fi[n_max - 2]
         if right_is_n:
             # Fix electrons (majority): Dirichlet
-            an[n_max-1] = 0; bn[n_max-1] = 1; cn[n_max-1] = 0; fn[n_max-1] = n[n_max-1]
-            # Float holes (minority): Neumann zero-flux: p[n_max-1] = p[n_max-2]
-            ap[n_max-1] = -1; bp[n_max-1] = 1; cp[n_max-1] = 0; fp[n_max-1] = 0.0
+            an[n_max - 1] = 0.0; bn[n_max - 1] = 1.0; cn[n_max - 1] = 0.0; fn[n_max - 1] = n[n_max - 1]
+            # Minority holes: Robin boundary with Sp
+            DpL = mup_s[n_max - 1] * Vt
+            gamma_pL = (S_right_m * dx_m / max(DpL, 1e-30))
+            if gamma_pL > 1e6 or not pv_mode:
+                ap[n_max - 1] = 0.0; bp[n_max - 1] = 1.0; cp[n_max - 1] = 0.0; fp[n_max - 1] = p[n_max - 1]
+            else:
+                # (-B(dv)) p[N-2] + (B(-dv) + gamma) p[N-1] = gamma * p_eq
+                ap[n_max - 1] = -Ber(dv_right)
+                bp[n_max - 1] = Ber(-dv_right) + gamma_pL
+                cp[n_max - 1] = 0.0
+                fp[n_max - 1] = gamma_pL * p[n_max - 1]
         else:
             # Fix holes (majority): Dirichlet
-            ap[n_max-1] = 0; bp[n_max-1] = 1; cp[n_max-1] = 0; fp[n_max-1] = p[n_max-1]
-            # Float electrons (minority): Neumann zero-flux
-            an[n_max-1] = -1; bn[n_max-1] = 1; cn[n_max-1] = 0; fn[n_max-1] = 0.0
+            ap[n_max - 1] = 0.0; bp[n_max - 1] = 1.0; cp[n_max - 1] = 0.0; fp[n_max - 1] = p[n_max - 1]
+            # Minority electrons: Robin boundary with Sn
+            DnL = mun_s[n_max - 1] * Vt
+            gamma_nL = (S_right_m * dx_m / max(DnL, 1e-30))
+            if gamma_nL > 1e6 or not pv_mode:
+                an[n_max - 1] = 0.0; bn[n_max - 1] = 1.0; cn[n_max - 1] = 0.0; fn[n_max - 1] = n[n_max - 1]
+            else:
+                an[n_max - 1] = -Ber(dv_right)
+                bn[n_max - 1] = Ber(-dv_right) + gamma_nL
+                cn[n_max - 1] = 0.0
+                fn[n_max - 1] = gamma_nL * n[n_max - 1]
     else:
         # --- Standard Ohmic Contacts ---
         # Note: ni_ratio2 = (ni_phys / ni_ref)**2

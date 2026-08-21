@@ -45,6 +45,7 @@ import tkinter.messagebox
 import tkinter.filedialog
 import customtkinter
 import json
+import types
 import threading
 import time
 import queue
@@ -86,14 +87,17 @@ class AestimoGUI(customtkinter.CTk):
         # Project State
         self.is_simulating = False
         self.solar_study_active = False # Flag to distinguish full solar characterization
+        self.has_run_new_simulation = False # Track if a simulation has been run in current session
+        self.simulation_history = [] # List of past simulation run dicts for history selector
         self.log_queue = queue.Queue()
+        self.sim_queue = queue.Queue() # Thread-safe queue for async worker results
         self.project_name = "untitled_project"
         self.examples_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "examples"))
 
         # --- Sidebar (Quick Access & Info) ---
         self.sidebar_frame = customtkinter.CTkFrame(self, width=200, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
-        self.sidebar_frame.grid_rowconfigure(6, weight=1)
+        self.sidebar_frame.grid_rowconfigure(5, weight=1)
 
         self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="AESTIMO 1D", font=customtkinter.CTkFont(size=24, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
@@ -101,29 +105,23 @@ class AestimoGUI(customtkinter.CTk):
         self.status_label = customtkinter.CTkLabel(self.sidebar_frame, text="Status: Ready", anchor="w", text_color="gray")
         self.status_label.grid(row=1, column=0, padx=20, pady=(0, 20))
 
-        self.run_button = customtkinter.CTkButton(self.sidebar_frame, text="RUN SIMULATION", 
+        # Single, unified entry point for all simulations
+        self.run_button = customtkinter.CTkButton(self.sidebar_frame, text="START SIMULATION", 
                                                  command=self.start_simulation_thread, 
                                                  height=50, 
                                                  font=customtkinter.CTkFont(size=14, weight="bold"),
                                                  fg_color="#1F6AA5", hover_color="#144870")
         self.run_button.grid(row=2, column=0, padx=20, pady=10)
-
-        self.val_button = customtkinter.CTkButton(self.sidebar_frame, text="RUN VALIDATION", 
-                                                 command=self.run_experimental_validation, 
-                                                 height=50, 
-                                                 font=customtkinter.CTkFont(size=14, weight="bold"),
-                                                 fg_color="#16A085", hover_color="#117A65")
-        self.val_button.grid(row=3, column=0, padx=20, pady=10)
         
         self.save_btn = customtkinter.CTkButton(self.sidebar_frame, text="Save Project", command=self.save_project, fg_color="green", hover_color="darkgreen")
-        self.save_btn.grid(row=4, column=0, padx=20, pady=5)
+        self.save_btn.grid(row=3, column=0, padx=20, pady=5)
         
         self.load_btn = customtkinter.CTkButton(self.sidebar_frame, text="Load Project", command=self.load_project, fg_color="#D35400", hover_color="#A04000")
-        self.load_btn.grid(row=5, column=0, padx=20, pady=5)
+        self.load_btn.grid(row=4, column=0, padx=20, pady=5)
         
         # Progress Bar
         self.progress_bar = customtkinter.CTkProgressBar(self.sidebar_frame, orientation="horizontal")
-        self.progress_bar.grid(row=7, column=0, padx=20, pady=20)
+        self.progress_bar.grid(row=6, column=0, padx=20, pady=20)
         self.progress_bar.set(0)
 
         # --- Main Content Area (Tabs) ---
@@ -156,8 +154,40 @@ class AestimoGUI(customtkinter.CTk):
         # Auto-save default project to examples folder
         self.auto_save_default_project()
         
-        # Start Log Polling
+        # Check if previous results exist for the initial default project
+        try:
+            init_saved = self.load_previous_results_for_project(self.project_name, self.get_current_configuration())
+            if init_saved:
+                self.simulation_history = [init_saved]
+                self.history_combo.configure(values=[init_saved["name"]])
+                self.history_combo.set(init_saved["name"])
+                self.render_history_entry(init_saved)
+        except Exception as e:
+            print(f"[GUI DEBUG] Initial results check: {e}")
+        
+        # Start Log Polling & Sim Queue Polling
         self.after(500, self.poll_log_file)
+        self.after(100, self.poll_sim_queue)
+
+    def poll_sim_queue(self):
+        """Processes async simulation progress and completion messages safely in the main thread."""
+        try:
+            while hasattr(self, 'sim_queue') and not self.sim_queue.empty():
+                item = self.sim_queue.get_nowait()
+                if isinstance(item, tuple) and len(item) == 3:
+                    kind, arg1, arg2 = item
+                    if kind == "progress":
+                        if arg1 and hasattr(self, 'status_label'):
+                            self.status_label.configure(text=arg1)
+                        if arg2 is not None and hasattr(self, 'progress_bar'):
+                            self.progress_bar.set(arg2)
+                    elif kind == "finish":
+                        err_msg, figs = arg2
+                        self.finish_simulation(arg1, err_msg, figs)
+        except Exception as e:
+            print(f"[GUI ERROR] Error polling sim queue: {e}")
+        finally:
+            self.after(100, self.poll_sim_queue)
 
     def setup_structure_tab(self):
         """Setup the Layer Editor"""
@@ -276,9 +306,13 @@ class AestimoGUI(customtkinter.CTk):
         # Group: Device Type & Solar Parameters
         device_frame = customtkinter.CTkFrame(frame)
         device_frame.pack(fill="x", padx=10, pady=10)
-        customtkinter.CTkLabel(device_frame, text="Device Type (Solar/Detector)", font=customtkinter.CTkFont(weight="bold")).pack(anchor="w", padx=10, pady=5)
+        customtkinter.CTkLabel(device_frame, text="Simulation Device / Mode", font=customtkinter.CTkFont(weight="bold")).pack(anchor="w", padx=10, pady=5)
         
-        self.device_type_combo = customtkinter.CTkComboBox(device_frame, values=["Generic Diode / LED", "Solar Cell / Photodetector"], command=self.on_device_type_change)
+        self.device_type_combo = customtkinter.CTkComboBox(
+            device_frame, 
+            values=["Generic Diode / LED", "Diode Simulation", "Solar Cell / Photodetector", "Solar Study"], 
+            command=self.on_device_type_change
+        )
         self.device_type_combo.pack(fill="x", padx=10, pady=5)
         self.device_type_combo.set("Solar Cell / Photodetector")
         
@@ -289,12 +323,7 @@ class AestimoGUI(customtkinter.CTk):
         customtkinter.CTkLabel(self.solar_options_frame, text="Solar Parameters", font=customtkinter.CTkFont(weight="bold")).pack(pady=5)
         self.create_input_row(self.solar_options_frame, "Optical Gen Rate (cm⁻³s⁻¹):", "g_opt_entry", "1e21")
         
-        self.solar_study_btn = customtkinter.CTkButton(self.solar_options_frame, text="RUN FULL SOLAR STUDY", 
-                                                      command=self.start_solar_study_thread,
-                                                      fg_color="#D35400", hover_color="#A04000")
-        self.solar_study_btn.pack(pady=10, padx=20)
-        
-        # Initial state: hidden if default is not solar
+        # Initial state: configure visible frames based on selection
         self.on_device_type_change(self.device_type_combo.get())
 
     def setup_solver_tab(self):
@@ -373,18 +402,36 @@ class AestimoGUI(customtkinter.CTk):
         self.create_input_row(tat_frame, "TAT Field (V/m, 1e10=off):", "tat_field_entry", "5e6")
     def on_device_type_change(self, choice):
         if hasattr(self, 'solar_options_frame'):
-            if choice == "Solar Cell / Photodetector":
+            if choice in ["Solar Cell / Photodetector", "Solar Study"]:
                 self.solar_options_frame.pack(fill="x", padx=10, pady=10)
             else:
                 self.solar_options_frame.pack_forget()
+
     def setup_results_tab(self):
-        """Results Display"""
+        """Results Display with Full Simulation Run History Selector"""
         self.tab_results.grid_columnconfigure(0, weight=1)
-        self.tab_results.grid_rowconfigure(0, weight=1)
+        self.tab_results.grid_rowconfigure(1, weight=1)
         
+        # History Control Bar (Top)
+        self.history_bar = customtkinter.CTkFrame(self.tab_results, fg_color="transparent")
+        self.history_bar.grid(row=0, column=0, sticky="ew", padx=10, pady=(5, 5))
+        self.history_bar.grid_columnconfigure(1, weight=1)
+        
+        customtkinter.CTkLabel(self.history_bar, text="Simulation Run:", font=customtkinter.CTkFont(weight="bold")).grid(row=0, column=0, padx=(5, 10), sticky="w")
+        self.history_combo = customtkinter.CTkComboBox(
+            self.history_bar, 
+            values=["No simulations run yet"], 
+            width=360, 
+            command=self.on_history_run_selected
+        )
+        self.history_combo.grid(row=0, column=1, padx=5, sticky="w")
+        
+        self.history_info_label = customtkinter.CTkLabel(self.history_bar, text="", text_color="gray", anchor="w")
+        self.history_info_label.grid(row=0, column=2, padx=15, sticky="w")
+
         # Main Container (Vertical Split if solar metrics present)
         self.results_main_frame = customtkinter.CTkFrame(self.tab_results)
-        self.results_main_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        self.results_main_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0, 10))
         self.results_main_frame.grid_columnconfigure(0, weight=3) # Plot area
         self.results_main_frame.grid_columnconfigure(1, weight=1) # Metrics area (right)
         self.results_main_frame.grid_rowconfigure(0, weight=1)
@@ -395,11 +442,62 @@ class AestimoGUI(customtkinter.CTk):
         
         # A container for Solar Metrics
         self.solar_metrics_frame = customtkinter.CTkScrollableFrame(self.results_main_frame, label_text="Solar Cell Metrics")
-        # Hidden by default, shown only when relevant
-        # self.solar_metrics_frame.grid(row=0, column=1, sticky="nsew", padx=2, pady=2)
         
         # Placeholder
-        customtkinter.CTkLabel(self.results_container, text="Run a simulation to see results here.").pack(expand=True)
+        self.results_placeholder = customtkinter.CTkLabel(self.results_container, text="Run a simulation or load a project to see results here.")
+        self.results_placeholder.pack(expand=True)
+
+    def on_history_run_selected(self, choice):
+        """Switches the active results display to the selected historical run"""
+        if not self.simulation_history:
+            return
+        for entry in self.simulation_history:
+            if entry.get("name") == choice or entry.get("id") == choice:
+                self.render_history_entry(entry)
+                break
+
+    def render_history_entry(self, entry):
+        """Renders the figures, metrics, and metadata for a specific history entry"""
+        if not entry:
+            return
+        
+        # Update metadata info label
+        ts = entry.get("timestamp", "")
+        dev = entry.get("device_type", "Simulation")
+        proj = entry.get("project_name", "")
+        if hasattr(self, 'history_info_label'):
+            self.history_info_label.configure(text=f"[{dev}] Project: {proj}  (Time: {ts})")
+            
+        # Display figures
+        figures = list(entry.get("figures", []))
+        val_fig = entry.get("val_fig")
+        study_figures = entry.get("study_figures", [])
+        
+        # If diode validation figure exists and not in figures list, append it
+        if val_fig is not None and val_fig not in figures:
+            figures.append(val_fig)
+            
+        self.display_figures(figures, study_figures=study_figures, entry_config=entry.get("config"))
+        
+        # Update metrics panel
+        metrics = entry.get("metrics")
+        if metrics:
+            self.solar_metrics_frame.grid(row=0, column=1, sticky="nsew", padx=2, pady=2)
+            self.update_solar_metrics_from_data(metrics)
+        else:
+            self.solar_metrics_frame.grid_forget()
+            
+        # If diode validation report exists, also update the Validation tab
+        val_report = entry.get("val_report")
+        if val_report and hasattr(self, 'val_report_text'):
+            self.val_report_text.delete("1.0", "end")
+            self.val_report_text.insert("end", val_report)
+            if val_fig and hasattr(self, 'val_plot_container'):
+                for w in self.val_plot_container.winfo_children():
+                    w.destroy()
+                canvas = FigureCanvasTkAgg(val_fig, master=self.val_plot_container)
+                canvas.draw()
+                canvas.get_tk_widget().pack(fill="both", expand=True)
 
     def setup_console_tab(self):
         self.tab_console.grid_columnconfigure(0, weight=1)
@@ -830,8 +928,175 @@ class AestimoGUI(customtkinter.CTk):
                 # Extract project name from filename
                 self.project_name = os.path.splitext(os.path.basename(file_path))[0]
                 self.status_label.configure(text=f"Loaded: {self.project_name}", text_color="green")
+                
+                # Auto-detect and display previous simulation results for this uploaded/loaded example
+                saved_entry = self.load_previous_results_for_project(self.project_name, config)
+                if saved_entry:
+                    if not self.has_run_new_simulation:
+                        self.simulation_history = [saved_entry]
+                        self.history_combo.configure(values=[saved_entry["name"]])
+                        self.history_combo.set(saved_entry["name"])
+                        self.render_history_entry(saved_entry)
+                        self.tabview.set("Results")
+                    else:
+                        if not any(e.get("name") == saved_entry["name"] for e in self.simulation_history):
+                            self.simulation_history.append(saved_entry)
+                            self.history_combo.configure(values=[e["name"] for e in self.simulation_history])
             except Exception as e:
                 tkinter.messagebox.showerror("Load Error", str(e))
+
+    def load_previous_results_for_project(self, project_name, config_dict=None):
+        """Checks for existing simulation output for the project and reconstructs figures/metrics."""
+        possible_dirs = [
+            os.path.join(self.examples_dir, project_name + "_output"),
+            os.path.join(os.getcwd(), project_name + "_output"),
+            os.path.join(os.getcwd(), "examples", project_name + "_output"),
+            os.path.join(os.getcwd(), f"BENCH_{project_name}_Light_output"),
+            os.path.join(os.getcwd(), "STUDY_Light_output"),
+            os.path.join(os.getcwd(), "output"),
+            os.path.join(os.getcwd(), "PRO_GUI_SIM_ASYNC_output")
+        ]
+        
+        found_dir = None
+        for d in possible_dirs:
+            if os.path.isdir(d):
+                files = os.listdir(d)
+                if any(f.endswith(".dat") for f in files):
+                    found_dir = d
+                    break
+                    
+        if not found_dir:
+            return None
+            
+        print(f"[GUI DEBUG] Found previous simulation results in: {found_dir}")
+        try:
+            from matplotlib.figure import Figure
+            import numpy as np
+            
+            figures = []
+            
+            # 1. Band Diagram
+            pot_file = None
+            for pf in ["potential.dat", "potn_eh_0.00.dat", "potn_eh_equi_cond.dat"]:
+                candidate = os.path.join(found_dir, pf)
+                if os.path.exists(candidate):
+                    pot_file = candidate
+                    break
+            if pot_file:
+                pot_data = np.loadtxt(pot_file)
+                if pot_data.ndim == 2 and pot_data.shape[1] >= 3:
+                    fig_pot = Figure(figsize=(6, 4))
+                    ax = fig_pot.add_subplot(1, 1, 1)
+                    x_nm = pot_data[:, 0] * 1e9 if np.max(pot_data[:, 0]) < 1e-4 else pot_data[:, 0] * 1e6
+                    x_unit = "nm" if np.max(pot_data[:, 0]) < 1e-4 else "μm"
+                    ax.plot(x_nm, pot_data[:, 1], 'b-', label='Conduction Band $E_c$')
+                    ax.plot(x_nm, pot_data[:, 2], 'r-', label='Valence Band $E_v$')
+                    ax.set_xlabel(f"Position ({x_unit})")
+                    ax.set_ylabel("Energy (eV)")
+                    ax.set_title("Energy Band Diagram")
+                    ax.legend()
+                    ax.grid(True, alpha=0.3)
+                    figures.append(fig_pot)
+                
+            # 2. Charge Density
+            np_file = None
+            for nf in ["np.dat", "np_data0_0.00.dat", "np_data0_equi_cond.dat"]:
+                candidate = os.path.join(found_dir, nf)
+                if os.path.exists(candidate):
+                    np_file = candidate
+                    break
+            if np_file:
+                np_data = np.loadtxt(np_file)
+                if np_data.ndim == 2 and np_data.shape[1] >= 3:
+                    fig_np = Figure(figsize=(6, 4))
+                    ax = fig_np.add_subplot(1, 1, 1)
+                    x_nm = np_data[:, 0] * 1e9 if np.max(np_data[:, 0]) < 1e-4 else np_data[:, 0] * 1e6
+                    x_unit = "nm" if np.max(np_data[:, 0]) < 1e-4 else "μm"
+                    ax.semilogy(x_nm, np.abs(np_data[:, 1]) + 1e-30, 'b-', label='Electrons $n$')
+                    ax.semilogy(x_nm, np.abs(np_data[:, 2]) + 1e-30, 'r-', label='Holes $p$')
+                    ax.set_xlabel(f"Position ({x_unit})")
+                    ax.set_ylabel("Carrier Density (cm⁻³)")
+                    ax.set_title("Free Carrier Concentration")
+                    ax.legend()
+                    ax.grid(True, alpha=0.3)
+                    figures.append(fig_np)
+                
+            # 3. Electric Field
+            ef_file = None
+            for ef in ["efield.dat", "efield_eh_0.00.dat", "efield_eh_equi_cond.dat"]:
+                candidate = os.path.join(found_dir, ef)
+                if os.path.exists(candidate):
+                    ef_file = candidate
+                    break
+            if ef_file:
+                ef_data = np.loadtxt(ef_file)
+                if ef_data.ndim == 2 and ef_data.shape[1] >= 2:
+                    fig_ef = Figure(figsize=(6, 4))
+                    ax = fig_ef.add_subplot(1, 1, 1)
+                    x_nm = ef_data[:, 0] * 1e9 if np.max(ef_data[:, 0]) < 1e-4 else ef_data[:, 0] * 1e6
+                    x_unit = "nm" if np.max(ef_data[:, 0]) < 1e-4 else "μm"
+                    ax.plot(x_nm, ef_data[:, 1], 'purple', label='Electric Field')
+                    ax.set_xlabel(f"Position ({x_unit})")
+                    ax.set_ylabel("Electric Field (V/m)")
+                    ax.set_title("Electric Field Distribution")
+                    ax.legend()
+                    ax.grid(True, alpha=0.3)
+                    figures.append(fig_ef)
+                
+            # 4. Current vs Voltage
+            metrics = None
+            iv_file = os.path.join(found_dir, "av_curr.dat")
+            if os.path.exists(iv_file):
+                iv_data = np.loadtxt(iv_file)
+                if iv_data.ndim == 2 and iv_data.shape[0] > 1:
+                    fig_iv = Figure(figsize=(6, 4))
+                    ax = fig_iv.add_subplot(1, 1, 1)
+                    ax.plot(iv_data[:, 0], iv_data[:, 1], 'r.-', label='Terminal Current')
+                    ax.axhline(0, color='gray', lw=0.5)
+                    ax.set_xlabel("Applied Voltage (V)")
+                    ax.set_ylabel("Current Density (mA/cm²)")
+                    ax.set_title("I-V Characteristic")
+                    ax.legend()
+                    ax.grid(True, alpha=0.3)
+                    figures.append(fig_iv)
+                    
+                    area_cm2 = float(config_dict.get("area", 1.0)) if config_dict else 1.0
+                    from characterize_solar import analyze_iv_curve
+                    metrics = analyze_iv_curve(iv_data[:, 0], iv_data[:, 1], area_cm2=area_cm2)
+                    if metrics and metrics.get('voc', 0) > 0:
+                        fig_pv = Figure(figsize=(6, 4))
+                        ax_pv = fig_pv.add_subplot(1, 1, 1)
+                        ax_pv.plot(metrics['v'], metrics['p'], 'g-', label='Power Density')
+                        ax_pv.axvline(metrics['vmpp'], color='orange', ls=':', label=f"MPP: {metrics['pmpp']:.2f} mW/cm²")
+                        ax_pv.axhline(0, color='black', lw=0.5)
+                        ax_pv.set_xlabel("Voltage (V)")
+                        ax_pv.set_ylabel("Power Density (mW/cm²)")
+                        ax_pv.set_title("P-V Characteristic")
+                        ax_pv.legend()
+                        ax_pv.grid(True, alpha=0.3)
+                        figures.append(fig_pv)
+                        
+            if not figures:
+                return None
+                
+            dev_type = config_dict.get("device_type", "Generic Diode / LED") if config_dict else "Saved Results"
+            saved_entry = {
+                "id": f"Saved Results ({project_name})",
+                "name": f"Saved Results ({project_name})",
+                "device_type": dev_type,
+                "timestamp": "Loaded from file",
+                "project_name": project_name,
+                "config": config_dict,
+                "figures": figures,
+                "study_figures": [],
+                "metrics": metrics,
+                "val_fig": None,
+                "val_report": None
+            }
+            return saved_entry
+        except Exception as e:
+            print(f"[GUI DEBUG] Error loading previous results for {project_name}: {e}")
+            return None
 
     def auto_save_default_project(self):
         """Automatically save the default project configuration to examples folder"""
@@ -850,47 +1115,265 @@ class AestimoGUI(customtkinter.CTk):
 
     # --- Async Simulation Logic ---
     def start_simulation_thread(self):
+        """Single, unified entry point for launching any simulation run."""
         if self.is_simulating:
             return
             
         self.is_simulating = True
         self.run_button.configure(state="disabled")
-        self.progress_bar.configure(mode="indeterminate")
-        self.progress_bar.start()
-        self.status_label.configure(text="Status: Simulating...", text_color="orange")
         
         # Gather inputs in main thread
         try:
             self.last_config = self.get_current_configuration()
+            dev_type = self.last_config.get("device_type", "Generic Diode / LED")
             
-            thread = threading.Thread(target=self.run_simulation_worker, args=(self.last_config,))
+            if dev_type == "Solar Study":
+                self.progress_bar.configure(mode="determinate")
+                self.progress_bar.set(0)
+                self.status_label.configure(text="Status: Running Solar Study...", text_color="orange")
+                thread = threading.Thread(target=self.run_solar_study_worker, args=(self.last_config,))
+            elif dev_type == "Diode Simulation":
+                self.progress_bar.configure(mode="indeterminate")
+                self.progress_bar.start()
+                self.status_label.configure(text="Status: Running Diode Simulation...", text_color="orange")
+                thread = threading.Thread(target=self.run_diode_simulation_worker, args=(self.last_config,))
+            else:
+                self.progress_bar.configure(mode="indeterminate")
+                self.progress_bar.start()
+                self.status_label.configure(text="Status: Simulating...", text_color="orange")
+                thread = threading.Thread(target=self.run_simulation_worker, args=(self.last_config,))
+                
             thread.daemon = True
             thread.start()
         except Exception as e:
             self.finish_simulation(success=False, error_msg=str(e))
 
-    def start_solar_study_thread(self):
-        """Starts the full solar characterization sweep (Dark, Light, Temp)"""
-        print("[GUI DEBUG] start_solar_study_thread: Start button clicked.")
-        if self.is_simulating:
-            return
-            
-        self.is_simulating = True
-        self.solar_study_btn.configure(state="disabled")
-        self.run_button.configure(state="disabled")
-        self.progress_bar.configure(mode="determinate")
-        self.progress_bar.set(0)
-        self.status_label.configure(text="Status: Running Solar Study...", text_color="orange")
-        
+    def run_diode_simulation_worker(self, config_dict):
+        """Runs diode simulation and performs experimental/analytical validation comparison."""
         try:
-            config = self.get_current_configuration()
-            self.last_config = config
+            import matplotlib
+            matplotlib.use('Agg', force=True)
+            import matplotlib.pyplot as plt
+            from matplotlib.figure import Figure
+            import aestimo
+            from aeslibs.experimental_validation import (
+                load_experimental_data, load_current_from_avcurr,
+                compute_error_metrics, generate_validation_report,
+                apply_parasitic_resistances, calculate_ideality_factor
+            )
             
-            thread = threading.Thread(target=self.run_solar_study_worker, args=(config,))
-            thread.daemon = True
-            thread.start()
+            # Set output directory based on project name
+            output_dir = os.path.join(self.examples_dir, self.project_name + "_output")
+            if not os.path.isdir(output_dir):
+                os.makedirs(output_dir, exist_ok=True)
+            aestimo.output_directory = output_dir
+            
+            # Layers
+            material_list = []
+            for l in config_dict["layers"]:
+                th = float(l["thickness"])
+                mat = l["material"]
+                x = float(l["mole"])
+                y = float(l.get("mole_y", 0.0))
+                dop = float(l["doping"])
+                dtype = l["doping_type"]
+                if dtype == "i": dtype = "n"
+                ltype = l["type"][0]
+                material_list.append([th, mat, x, y, dop, dtype, ltype])
+
+            if not material_list:
+                raise ValueError("Structure is empty.")
+            
+            # Physics / Solver
+            scheme_id = int(config_dict["solver"].split(":")[0])
+            grid_step = float(config_dict["grid_step"])
+            max_pts = int(config_dict["max_pts"])
+            sub_e = int(config_dict["sub_e"])
+            sub_h = int(config_dict["sub_h"])
+            mat_names = [row[1] for row in material_list]
+            if any(m in ["GaN", "InGaN", "AlGaN", "AlN", "InN", "AlInGaN"] for m in mat_names):
+                mat_sys_default = "Wurtzite"
+            else:
+                mat_sys_default = "Zincblende"
+            mat_sys = config_dict.get("mat_sys", config_dict.get("mat_system", mat_sys_default))
+            
+            T = float(config_dict["temp"])
+            F_app = float(config_dict["field"]) * 1e5
+            val_vmin = float(config_dict["vmin"])
+            val_vmax = float(config_dict["vmax"])
+            val_vstep = float(config_dict["vstep"])
+            
+            # Build InputObject
+            InputObject = types.SimpleNamespace()
+            InputObject.T = T
+            InputObject.F = F_app
+            InputObject.material = material_list
+            InputObject.computation_scheme = scheme_id
+            InputObject.comp_scheme = scheme_id
+            InputObject.gridfactor = grid_step
+            InputObject.dx = grid_step * 1e-9
+            InputObject.maxgridpoints = max_pts
+            InputObject.mat_type = mat_sys
+            InputObject.subnumber_e = sub_e
+            InputObject.subnumber_h = sub_h
+            InputObject.vmin = val_vmin
+            InputObject.vmax = val_vmax
+            InputObject.Each_Step = val_vstep
+            InputObject.G_optical = float(config_dict.get("G_optical", 0.0))
+            InputObject.Rs = float(config_dict.get("rs", 0.0)) if config_dict.get("rs_mode") == "Internal (Self-Consistent)" else 0.0
+            InputObject.photovoltaic_mode = True
+            InputObject.enable_polarization = (mat_sys == "Wurtzite") and config_dict.get("polarization", True)
+            InputObject.work_function_left = float(config_dict.get("bc_left", 5.2 if mat_sys == "Zincblende" else 7.0))
+            InputObject.work_function_right = float(config_dict.get("bc_right", 4.1 if mat_sys == "Zincblende" else 4.0))
+            InputObject.surface_recomb = (0, 0)
+            InputObject.Quantum_Regions = config_dict.get("Quantum_Regions", False)
+            InputObject.Quantum_Regions_boundary = np.zeros((1, 2))
+            
+            # Doping profile
+            tot_m = sum(row[0] for row in material_list) * 1e-9
+            dx_m = grid_step * 1e-9
+            n_max = int(tot_m / dx_m)
+            
+            is_graded = config_dict.get("graded_junc", False)
+            diff_len = float(config_dict.get("diffusion_len", "10.0"))
+            
+            if is_graded and len(material_list) == 2:
+                from scipy.special import erf
+                junc_pos_nm = material_list[0][0]
+                xaxis_nm = np.linspace(0, sum(m[0] for m in material_list), n_max)
+                d0 = material_list[0][4]
+                if material_list[0][5] == 'p': d0 = -d0
+                d1 = material_list[1][4]
+                if material_list[1][5] == 'p': d1 = -d1
+                d0 *= 1e6
+                d1 *= 1e6
+                dop_arr = (d1 + d0)/2.0 + (d1 - d0)/2.0 * erf((xaxis_nm - junc_pos_nm) / diff_len)
+                for i in range(len(material_list)):
+                    material_list[i][4] = 0.0
+            else:
+                dop_arr = np.zeros(n_max)
+                curr = 0
+                for row in material_list:
+                    th_m = row[0] * 1e-9
+                    val = row[4]
+                    dtype = row[5]
+                    if dtype == 'p': val = -val
+                    steps = int(th_m / dx_m)
+                    end = min(curr + steps, n_max)
+                    dop_arr[curr:end] = val * 1e6
+                    curr = end
+            
+            InputObject.dop_profile = dop_arr
+            InputObject.__file__ = os.path.abspath("PRO_GUI_SIM_ASYNC.py")
+            
+            # Run core simulation
+            input_obj, model, result, figures = run_aestimo(InputObject, drawFigures=True, show=False)
+            
+            # 2. Validation & Diode Analysis
+            exp_file = config_dict.get("exp_file", "examples/experimental_data/si_pn_experimental_iv.csv")
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            if not os.path.exists(exp_file):
+                rel_path = os.path.join(script_dir, exp_file)
+                if os.path.exists(rel_path):
+                    exp_file = rel_path
+                    
+            area_cm2 = float(config_dict.get("area", 1e-4))
+            output_dir = getattr(aestimo, 'output_directory', os.path.join(os.getcwd(), "PRO_GUI_SIM_ASYNC_output"))
+            calc_v_int, calc_i_int = load_current_from_avcurr(output_dir, device_area_cm2=area_cm2)
+            
+            rs = float(config_dict.get("rs", 0.0))
+            rsh = float(config_dict.get("rsh", 1e12))
+            rs_mode = config_dict.get("rs_mode", "External (Fast)")
+            
+            if rs_mode == "Internal (Self-Consistent)":
+                calc_v, calc_i = apply_parasitic_resistances(calc_v_int, calc_i_int, Rs=0.0, Rsh=rsh)
+            else:
+                calc_v, calc_i = apply_parasitic_resistances(calc_v_int, calc_i_int, Rs=rs, Rsh=rsh)
+                
+            fig_val = Figure(figsize=(12, 4))
+            ax1 = fig_val.add_subplot(1, 3, 1)
+            ax2 = fig_val.add_subplot(1, 3, 2)
+            ax3 = fig_val.add_subplot(1, 3, 3)
+            
+            report = ""
+            metrics = {}
+            if os.path.exists(exp_file):
+                exp_voltage, exp_current = load_experimental_data(exp_file)
+                sim_current_interp = np.interp(exp_voltage, calc_v, calc_i)
+                forward_mask = exp_voltage >= 0.1
+                metrics = compute_error_metrics(exp_current[forward_mask], sim_current_interp[forward_mask])
+                v_mid_exp, n_exp = calculate_ideality_factor(exp_voltage, exp_current, temperature=T)
+                v_mid_sim, n_sim = calculate_ideality_factor(calc_v, calc_i, temperature=T)
+                if len(n_sim) > 0:
+                    metrics['avg_n'] = np.mean(n_sim)
+                report = generate_validation_report(metrics)
+                
+                # Linear
+                ax1.plot(exp_voltage, exp_current, 'ko', label='Experimental', markersize=4, alpha=0.6)
+                ax1.plot(calc_v, calc_i, 'r-', label='Simulation', linewidth=2)
+                ax1.set_xlabel("Voltage (V)")
+                ax1.set_ylabel("Current (A)")
+                ax1.set_title("I-V (Linear)")
+                ax1.legend()
+                ax1.grid(True, alpha=0.3)
+                
+                # Semi-log
+                ax2.semilogy(exp_voltage, np.abs(exp_current) + 1e-30, 'ko', label='Experimental', markersize=4, alpha=0.6)
+                ax2.semilogy(calc_v, np.abs(calc_i) + 1e-30, 'r-', label='Simulation', linewidth=2)
+                ax2.set_xlabel("Voltage (V)")
+                ax2.set_ylabel("Current (log A)")
+                ax2.set_title("I-V (Semi-log)")
+                ax2.legend()
+                ax2.grid(True, alpha=0.3)
+                
+                # Ideality factor
+                if len(n_exp) > 0:
+                    ax3.plot(v_mid_exp, n_exp, 'ko-', label='Exp n', markersize=3, alpha=0.6)
+                if len(n_sim) > 0:
+                    ax3.plot(v_mid_sim, n_sim, 'r-', label='Sim n', linewidth=2)
+                ax3.set_xlabel("Voltage (V)")
+                ax3.set_ylabel("Ideality Factor (n)")
+                ax3.set_title("Ideality Factor")
+                ax3.set_ylim(0.5, 3.5)
+                ax3.legend()
+                ax3.grid(True, alpha=0.3)
+            else:
+                ax1.plot(calc_v, calc_i, 'r-', label='Simulation', linewidth=2)
+                ax1.set_xlabel("Voltage (V)")
+                ax1.set_ylabel("Current (A)")
+                ax1.set_title("I-V (Linear)")
+                ax1.grid(True, alpha=0.3)
+                
+                ax2.semilogy(calc_v, np.abs(calc_i) + 1e-30, 'r-', label='Simulation', linewidth=2)
+                ax2.set_xlabel("Voltage (V)")
+                ax2.set_ylabel("Current (log A)")
+                ax2.set_title("I-V (Semi-log)")
+                ax2.grid(True, alpha=0.3)
+                
+                v_mid_sim, n_sim = calculate_ideality_factor(calc_v, calc_i, temperature=T)
+                if len(n_sim) > 0:
+                    ax3.plot(v_mid_sim, n_sim, 'r-', label='Sim n', linewidth=2)
+                ax3.set_xlabel("Voltage (V)")
+                ax3.set_ylabel("Ideality Factor (n)")
+                ax3.set_title("Ideality Factor")
+                ax3.grid(True, alpha=0.3)
+                report = "--- Diode Simulation Complete (No experimental file loaded) ---"
+                
+            fig_val.tight_layout()
+            
+            diode_data = {
+                "standard_figures": figures if isinstance(figures, list) else [],
+                "val_fig": fig_val,
+                "val_report": report,
+                "metrics": metrics,
+                "config": config_dict
+            }
+            
+            self.sim_queue.put(("finish", True, (None, diode_data)))
         except Exception as e:
-            self.finish_simulation(success=False, error_msg=str(e))
+            import traceback
+            traceback.print_exc()
+            self.sim_queue.put(("finish", False, (str(e), None)))
 
     def run_simulation_worker(self, config_dict):
         try:
@@ -1075,11 +1558,11 @@ class AestimoGUI(customtkinter.CTk):
             
             input_obj, model, result, figures = run_aestimo(InputObject, drawFigures=True, show=False)
             
-            # Post results back to main thread
-            self.after(0, self.finish_simulation, True, None, figures)
+            # Post results back to main thread via thread-safe queue
+            self.sim_queue.put(("finish", True, (None, figures)))
 
         except Exception as e:
-            self.after(0, self.finish_simulation, False, str(e), None)
+            self.sim_queue.put(("finish", False, (str(e), None)))
 
 
     def run_solar_study_worker(self, config_dict):
@@ -1162,90 +1645,99 @@ class AestimoGUI(customtkinter.CTk):
             config.Drift_Diffusion_out = True
             
             # --- EXECUTION ---
-            total_tasks = 6 # Dark, Light, 4 Temps
+            temps = [250, 300, 350, 400]
+            total_tasks = 2 + len(temps) # Dark, Light, Temps
             
             # Task 1: Dark
-            self.after(0, lambda: self.status_label.configure(text="Solar Study: Running Dark I-V..."))
+            self.sim_queue.put(("progress", "Solar Study: Running Dark I-V...", 1/total_tasks))
             dark_in = StudyInputObject(config_dict, "Dark", G_override=0.0)
             aestimo.output_directory = os.path.join(os.getcwd(), "STUDY_Dark_output")
             _, _, res_dark, _ = run_aestimo(dark_in, drawFigures=False, show=False)
             dark_data = np.loadtxt(os.path.join(aestimo.output_directory, "av_curr.dat"))
             dark_metrics = analyze_iv_curve(dark_data[:,0], dark_data[:,1], area_cm2=device_area)
-            self.after(0, lambda: self.progress_bar.set(1/total_tasks))
 
             # Task 2: Light (Standard)
-            self.after(0, lambda: self.status_label.configure(text="Solar Study: Running Illuminated I-V..."))
+            self.sim_queue.put(("progress", "Solar Study: Running Illuminated I-V...", 2/total_tasks))
             light_in = StudyInputObject(config_dict, "Light")
             aestimo.output_directory = os.path.join(os.getcwd(), "STUDY_Light_output")
             _, _, res_light, standard_figures = run_aestimo(light_in, drawFigures=True, show=False)
             light_data = np.loadtxt(os.path.join(aestimo.output_directory, "av_curr.dat"))
             light_metrics = analyze_iv_curve(light_data[:,0], light_data[:,1], area_cm2=device_area)
-            self.after(0, lambda: self.progress_bar.set(2/total_tasks))
 
-            # Task 3: Temperature Sweep (200K to 500K for detailed sensor/cell characterization)
+            # Task 3: Temperature Sweep (250K to 400K for detailed sensor/cell characterization)
             temp_results = []
-            temps = np.arange(200, 525, 25)
             for i, T in enumerate(temps):
-                self.after(0, lambda t=T: self.status_label.configure(text=f"Solar Study: Running {t}K..."))
+                self.sim_queue.put(("progress", f"Solar Study: Running {T}K...", (3+i)/total_tasks))
                 t_in = StudyInputObject(config_dict, f"Temp_{T}", T_override=float(T))
                 aestimo.output_directory = os.path.join(os.getcwd(), f"STUDY_Temp_{T}_output")
                 run_aestimo(t_in, drawFigures=False, show=False)
                 t_data = np.loadtxt(os.path.join(aestimo.output_directory, "av_curr.dat"))
                 m = analyze_iv_curve(t_data[:,0], t_data[:,1], area_cm2=device_area)
                 temp_results.append((T, m))
-                self.after(0, lambda idx=i: self.progress_bar.set((3+idx)/total_tasks))
 
             # Prepare result data
             study_data = {
                 "dark_metrics": dark_metrics,
                 "light_metrics": light_metrics,
                 "temp_results": temp_results,
-                "config": config,
+                "config": config_dict,
                 "standard_figures": standard_figures
             }
             
-            self.after(0, self.finish_simulation, True, None, study_data)
+            self.sim_queue.put(("finish", True, (None, study_data)))
 
         except Exception as e:
             import traceback
             traceback.print_exc()
-            self.after(0, self.finish_simulation, False, str(e), None)
-        finally:
-            self.after(0, lambda: self.solar_study_btn.configure(state="normal"))
+            self.sim_queue.put(("finish", False, (str(e), None)))
 
     def finish_simulation(self, success, error_msg=None, figures=None):
         self.is_simulating = False
         self.progress_bar.stop()
         self.run_button.configure(state="normal")
         
-        # Check if this is a Solar Study (passed as data dict)
+        # Check if this is a Solar Study or Diode Simulation
         is_study_data = isinstance(figures, dict) and "light_metrics" in figures
+        is_diode_data = isinstance(figures, dict) and "val_fig" in figures
         
         if success:
+            self.has_run_new_simulation = True
             self.status_label.configure(text="Status: Simulation Complete", text_color="green")
             
             final_figures = []
             study_figures = []
+            val_fig = None
+            val_report = None
+            metrics_to_show = None
+            
             if is_study_data:
                 print(f"[GUI DEBUG] finish_simulation: Detected FULL SOLAR STUDY data.")
                 self.solar_study_active = True
                 study_figures = self.generate_study_figures(figures)
-                print(f"[GUI DEBUG] finish_simulation: Generated {len(study_figures)} specialized characterization plots.")
-                # Use standard figures from the study if provided
                 if "standard_figures" in figures:
                     final_figures = figures["standard_figures"]
-                    print(f"[GUI DEBUG] finish_simulation: Found {len(final_figures)} standard physics plots to show.")
+                metrics_to_show = figures.get('light_metrics')
+            elif is_diode_data:
+                print(f"[GUI DEBUG] finish_simulation: Detected DIODE SIMULATION & VALIDATION data.")
+                self.solar_study_active = False
+                final_figures = figures.get("standard_figures", [])
+                val_fig = figures.get("val_fig")
+                val_report = figures.get("val_report")
+                metrics_to_show = None
             else:
                 print(f"[GUI DEBUG] finish_simulation: Detected STANDARD simulation data.")
                 self.solar_study_active = False
                 final_figures = figures if isinstance(figures, list) else []
 
             # Check for Solar Analysis (Standard Run Only)
-            is_solar = hasattr(self, 'last_config') and self.last_config.get("device_type") == "Solar Cell / Photodetector"
-            if is_solar and not is_study_data:
+            dev_type = self.last_config.get("device_type", "Generic Diode / LED") if hasattr(self, 'last_config') else "Simulation"
+            is_solar = dev_type in ["Solar Cell / Photodetector", "Solar Study"]
+            
+            if dev_type == "Solar Cell / Photodetector" and not is_study_data:
                 print("DEBUG: Standard Solar Run. Calculating metrics and appending P-V plot.")
                 metrics = self.update_solar_metrics()
                 if metrics:
+                    metrics_to_show = metrics
                     try:
                         from matplotlib.figure import Figure
                         fig_pv = Figure(figsize=(6, 4))
@@ -1261,19 +1753,41 @@ class AestimoGUI(customtkinter.CTk):
                         final_figures.append(fig_pv)
                     except Exception as e:
                         print(f"Error generating solar plot: {e}")
-            elif not is_solar:
-                self.solar_metrics_frame.grid_forget()
 
-            print(f"DEBUG: Calling display_figures with {len(final_figures)} std and {len(study_figures)} study figs.")
-            self.display_figures(final_figures, study_figures=study_figures)
+            # Register run into full history
+            from datetime import datetime
+            import copy
+            run_num = len(self.simulation_history) + 1
+            ts = datetime.now().strftime("%H:%M:%S")
+            run_name = f"Run {run_num}: {dev_type} ({ts})"
             
-            # Update metrics sidebar with the standard 300K characterization
-            metrics_to_show = figures.get('light_metrics') if is_study_data else None
-            self.after(0, lambda m=metrics_to_show: self.update_solar_metrics_from_data(m))
+            run_entry = {
+                "id": run_name,
+                "name": run_name,
+                "device_type": dev_type,
+                "timestamp": ts,
+                "project_name": self.project_name,
+                "config": copy.deepcopy(self.last_config) if hasattr(self, 'last_config') else {},
+                "figures": final_figures,
+                "study_figures": study_figures,
+                "metrics": metrics_to_show,
+                "val_fig": val_fig,
+                "val_report": val_report,
+            }
+            self.simulation_history.append(run_entry)
+            
+            # Update history combo box with all runs
+            history_names = [e["name"] for e in self.simulation_history]
+            self.history_combo.configure(values=history_names)
+            self.history_combo.set(run_name)
+            
+            # Render selected history entry
+            self.render_history_entry(run_entry)
+            self.tabview.set("Results")
             
             # Reset flag AFTER displaying
             self.solar_study_active = False
-            tkinter.messagebox.showinfo("Success", "Simulation completed successfully.")
+            tkinter.messagebox.showinfo("Success", f"{dev_type} completed successfully.")
         else:
             self.status_label.configure(text="Status: Error", text_color="red")
             self.solar_study_active = False
@@ -1661,7 +2175,7 @@ STATUS: VERIFIED PRODUCTION GRADE
             
         return metrics
 
-    def display_figures(self, figures, study_figures=None):
+    def display_figures(self, figures, study_figures=None, entry_config=None):
         # Clear previous
         for widget in self.results_container.winfo_children():
             widget.destroy()
@@ -1674,10 +2188,19 @@ STATUS: VERIFIED PRODUCTION GRADE
         fig_tabview.pack(fill="both", expand=True)
         
         # Determine titles dynamically for main figures
-        is_solar = hasattr(self, 'last_config') and self.last_config.get("device_type") == "Solar Cell / Photodetector"
+        dev_type = ""
+        if entry_config:
+            dev_type = entry_config.get("device_type", "")
+        elif hasattr(self, 'last_config') and self.last_config:
+            dev_type = self.last_config.get("device_type", "")
+            
+        is_solar = dev_type in ["Solar Cell / Photodetector", "Solar Study"]
+        is_diode = dev_type == "Diode Simulation"
         
-        if is_solar:
-             titles = ["Band Diagram", "Charge Density", "Field", "I-V / Sweep", "Solar Analysis", "Other"]
+        if is_diode:
+            titles = ["Band Diagram", "Charge Density", "Field", "I-V / Sweep", "Diode Validation", "Other"]
+        elif is_solar:
+            titles = ["Band Diagram", "Charge Density", "Field", "I-V / Sweep", "Solar Analysis", "Other"]
         else:
             titles = ["Band Diagram", "Charge Density", "Field", "I-V / Sweep", "Other"]
         

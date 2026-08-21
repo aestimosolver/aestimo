@@ -1226,14 +1226,14 @@ class Structure:
             for J in range(2, N_wells_virtual2 - 1):
                 if barrier_len[J] * dx <= anti_crossing_length:
                     brr += 1
-            brr_vec = np.zeros(brr)
+            brr_vec = np.zeros(brr, dtype=int)
             brr2 = 0
             for J in range(2, N_wells_virtual2 - 1):
                 if barrier_len[J] * dx <= anti_crossing_length:
                     brr2 += 1
-                    brr_vec[brr2 - 1] = J + 1 - brr2
+                    brr_vec[brr2 - 1] = int(J + 1 - brr2)
             for I in range(0, brr):
-                barrier_boundary = np.delete(barrier_boundary, brr_vec[I], 0)
+                barrier_boundary = np.delete(barrier_boundary, int(brr_vec[I]), 0)
             N_wells_virtual = N_wells_virtual - brr
             Well_boundary = np.resize(Well_boundary, (N_wells_virtual, 2))
             for J in range(0, N_wells_virtual):

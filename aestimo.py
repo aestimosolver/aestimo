@@ -1227,14 +1227,14 @@ class Structure:
             for J in range(2, N_wells_virtual2 - 1):
                 if barrier_len[J] * dx <= anti_crossing_length:
                     brr += 1
-            brr_vec = np.zeros(brr)
+            brr_vec = np.zeros(brr, dtype=int)
             brr2 = 0
             for J in range(2, N_wells_virtual2 - 1):
                 if barrier_len[J] * dx <= anti_crossing_length:
                     brr2 += 1
-                    brr_vec[brr2 - 1] = J + 1 - brr2
+                    brr_vec[brr2 - 1] = int(J + 1 - brr2)
             for I in range(0, brr):
-                barrier_boundary = np.delete(barrier_boundary, brr_vec[I], 0)
+                barrier_boundary = np.delete(barrier_boundary, int(brr_vec[I]), 0)
             N_wells_virtual = N_wells_virtual - brr
             Well_boundary = np.resize(Well_boundary, (N_wells_virtual, 2))
             for J in range(0, N_wells_virtual):
@@ -2136,8 +2136,8 @@ def calc_E_state_general(
 
 def Main_Str_Array(model):
     n_max = model.n_max
-    # HUPMAT1=np.zeros((n_max*3, n_max*3))
-    # HUPMATC1=np.zeros((n_max, n_max))
+    HUPMAT1 = np.zeros((n_max * 3, n_max * 3))
+    HUPMATC1 = np.zeros((n_max, n_max))
     x_max = model.dx * n_max
     m_hh, m_lh, m_so, VNIT, ZETA, CNIT, Ppz_Psp, EPC, pol_surf_char = Strain_and_Masses(
         model
@@ -2168,7 +2168,8 @@ def Main_Str_Array(model):
     )
     KP = 0.0
     KPINT = 0.01
-    if model.mat_crys_strc == "Zincblende" and (model.N_wells_virtual - 2 != 0):
+    mat_crys = str(model.mat_crys_strc).lower()
+    if "zincblende" in mat_crys and (model.N_wells_virtual - 2 != 0):
         HUPMAT1 = VBMAT1(
             KP,
             AP1,
@@ -2188,7 +2189,7 @@ def Main_Str_Array(model):
             KPINT,
         )
         HUPMATC1 = CBMAT(KP, Pce, model.cb_meff / m_e, x_max, n_max, AC1, UNIM, KPINT)
-    if model.mat_crys_strc == "Wurtzite" and (model.N_wells_virtual - 2 != 0):
+    elif "wurtzite" in mat_crys and (model.N_wells_virtual - 2 != 0):
         HUPMAT1 = -VBMAT2(
             KP,
             AP1,
@@ -2335,7 +2336,8 @@ def Poisson_Schrodinger(model):
     x_max = dx * n_max
     RATIO = m_e / hbar ** 2 * (x_max) ** 2
     HUPMAT3_reduced_list = []
-    if model.N_wells_virtual - 2 != 0:
+    has_quantum = getattr(config, 'quantum_effect', True) and (not getattr(model, 'photovoltaic_mode', False) or getattr(model, 'Quantum_Regions', False))
+    if (model.N_wells_virtual - 2 != 0) and has_quantum:
         HUPMAT1, HUPMATC1, m_hh, m_lh, m_so, Ppz_Psp, pol_surf_char = Main_Str_Array(
             model
         )
@@ -2533,7 +2535,7 @@ def Poisson_Schrodinger(model):
         print("Iteration:", iteration)
         # Add to log
         logger.info("Iteration: %d", iteration)
-        if model.N_wells_virtual - 2 != 0:
+        if (model.N_wells_virtual - 2 != 0) and has_quantum:
             if config.predic_correc and iteration == 1:
                 (
                     E_statec_general,
@@ -2655,7 +2657,7 @@ def Poisson_Schrodinger(model):
             if delta_max1 / q < convergence_test0:  # Convergence test
                 # print('error=',abs(E_state_general[1,0]-previousE0)/1e3)
                 # if abs(E_state_general[1,0]-previousE0)/1e3 < convergence_test: #Convergence test
-                if model.N_wells_virtual - 2 != 0:
+                if (model.N_wells_virtual - 2 != 0) and has_quantum:
                     (
                         E_statec_general,
                         E_state_general,
@@ -2691,7 +2693,7 @@ def Poisson_Schrodinger(model):
             delta1 = Vnew_general - previousfi0
             delta_max1 = max(abs(delta1[:]))
             if delta_max1 / q < convergence_test0:  # Convergence test
-                if model.N_wells_virtual - 2 != 0:
+                if (model.N_wells_virtual - 2 != 0) and has_quantum:
                     (
                         E_statec_general,
                         E_state_general,
@@ -3734,7 +3736,8 @@ def Poisson_Schrodinger_DD(result, model):
         )
         fitot = fi_h - Vt * q * fi
         fitotc = fi_e - Vt * q * fi
-        if model.N_wells_virtual - 2 != 0:
+        has_quantum = getattr(config, 'quantum_effect', True) and (not getattr(model, 'photovoltaic_mode', False) or getattr(model, 'Quantum_Regions', False))
+        if (model.N_wells_virtual - 2 != 0) and has_quantum:
 
             (
                 E_statec_general,

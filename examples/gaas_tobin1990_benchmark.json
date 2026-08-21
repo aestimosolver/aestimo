@@ -1,0 +1,67 @@
+{
+  "name": "Tobin 1990 GaAs Benchmark Solar Cell",
+  "mat_system": "Zincblende",
+  "temp": 300.0,
+  "comp_scheme": 7,
+  "computation_scheme": 7,
+  "solver": "7: Gummel's Scheme",
+  "device_type": "Solar Cell / Photodetector",
+  "device_area": 1.0,
+  "area": 1.0,
+  "grid_step": 5.0,
+  "max_pts": 2000,
+  "sub_e": 3,
+  "sub_h": 3,
+  "vmin": -0.2,
+  "vmax": 1.15,
+  "vstep": 0.02,
+  "G_optical": 5.8e+21,
+  "tat_field": 10000000000.0,
+  "photovoltaic_mode": true,
+  "enable_polarization": false,
+  "work_function_left": 5.2,
+  "work_function_right": 4.1,
+  "Rs": 0.0,
+  "layers": [
+    {
+      "name": "p-AlGaAs Window",
+      "material": "AlGaAs",
+      "thickness": 30.0,
+      "mole": 0.85,
+      "mole_y": 0.0,
+      "doping": 1e+18,
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "name": "p-GaAs Emitter",
+      "material": "GaAs",
+      "thickness": 500.0,
+      "mole": 0.0,
+      "mole_y": 0.0,
+      "doping": 2e+18,
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "name": "n-GaAs Base",
+      "material": "GaAs",
+      "thickness": 3000.0,
+      "mole": 0.0,
+      "mole_y": 0.0,
+      "doping": 2e+17,
+      "doping_type": "n",
+      "type": "well"
+    },
+    {
+      "name": "n-AlGaAs BSF",
+      "material": "AlGaAs",
+      "thickness": 100.0,
+      "mole": 0.85,
+      "mole_y": 0.0,
+      "doping": 2e+18,
+      "doping_type": "n",
+      "type": "barrier"
+    }
+  ]
+}
