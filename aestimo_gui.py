@@ -1033,6 +1033,28 @@ class AestimoGUI(customtkinter.CTk):
 
         is_tobin = "tobin" in str(output_dir).lower() or (config_dict and ("tobin" in str(config_dict).lower() or "gaas" in str(config_dict).lower()))
 
+        # Check for experimental reference data file
+        exp_file = config_dict.get("exp_file") if config_dict else None
+        exp_v, exp_j = None, None
+        if exp_file:
+            if not os.path.exists(exp_file):
+                cand = os.path.join(self.examples_dir, "experimental_data", os.path.basename(exp_file))
+                if os.path.exists(cand):
+                    exp_file = cand
+            if os.path.exists(exp_file):
+                try:
+                    raw_exp = np.loadtxt(exp_file, delimiter=',', comments='#')
+                    exp_v = raw_exp[:, 0]
+                    if raw_exp.shape[1] >= 3:
+                        exp_j = raw_exp[:, 2] # Direct current density in mA/cm²
+                    else:
+                        exp_j = (raw_exp[:, 1] / area_cm2) * 1e3 # Convert A to mA/cm²
+                    # Ensure sign convention matches 4th quadrant (J < 0 for generation)
+                    if exp_j[0] > 0 and len(exp_j) > 1 and exp_j[-1] < exp_j[0]:
+                        exp_j = -exp_j
+                except Exception as e:
+                    print(f"[GUI DEBUG] Could not parse exp_file {exp_file}: {e}")
+
         # ---------------------------------------------------------
         # 1. Figure: J-V Characteristic
         # ---------------------------------------------------------
@@ -1040,14 +1062,17 @@ class AestimoGUI(customtkinter.CTk):
         ax_jv = fig_jv.add_subplot(1, 1, 1)
 
         if is_tobin:
-            v_ref = np.linspace(0.0, 1.14, 300)
             jsc_ref = 27.80
             voc_ref = 1.028
-            Vt = 0.02569
-            n_id = 1.025
-            j0_ref = jsc_ref / (np.exp(voc_ref / (n_id * Vt)) - 1.0)
-            j_ref = -jsc_ref + j0_ref * (np.exp(np.clip(v_ref / (n_id * Vt), -40, 40)) - 1.0)
-            ax_jv.plot(v_ref, j_ref, color='#1e3a8a', lw=2.5, label='Tobin 1990 Expt. (Target)', zorder=3)
+            if exp_v is not None and exp_j is not None:
+                ax_jv.plot(exp_v, exp_j, color='#1e3a8a', lw=2.5, label='Tobin 1990 Expt. (Target CSV)', zorder=3)
+            else:
+                v_ref = np.linspace(0.0, 1.14, 300)
+                Vt = 0.02569
+                n_id = 1.025
+                j0_ref = jsc_ref / (np.exp(voc_ref / (n_id * Vt)) - 1.0)
+                j_ref = -jsc_ref + j0_ref * (np.exp(np.clip(v_ref / (n_id * Vt), -40, 40)) - 1.0)
+                ax_jv.plot(v_ref, j_ref, color='#1e3a8a', lw=2.5, label='Tobin 1990 Expt. (Target)', zorder=3)
             ax_jv.plot([0], [-jsc_ref], 's', color='#1e3a8a', ms=7, label=f'Expt. Jsc ({jsc_ref:.2f} mA/cm²)', zorder=5)
             ax_jv.plot([voc_ref], [0], '^', color='#047857', ms=8, label=f'Expt. Voc ({voc_ref:.3f} V)', zorder=5)
 
