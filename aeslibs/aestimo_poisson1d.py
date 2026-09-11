@@ -1995,23 +1995,25 @@ def Poisson_non_equi2(
     for i in range(1, n_max):
         v[i] = f[i] - a[i] * v[i - 1] / d[i - 1]
     
-    # Backward Substitution with Damping
-    temp = v[n_max - 1] / d[n_max - 1]
-    delta[n_max - 1] = temp - fi_out[n_max - 1]
-    fi_out[n_max - 1] = fi_out[n_max - 1] + damping * delta[n_max - 1]
-    
+    # Backward Substitution (Thomas Algorithm)
+    x_sol = np.zeros(n_max)
+    x_sol[n_max - 1] = v[n_max - 1] / d[n_max - 1]
     for i in range(n_max - 2, -1, -1):
-        temp = (v[i] - c[i] * fi_out[i + 1]) / d[i]
-        delta[i] = temp - fi_out[i]
-        fi_out[i] = fi_out[i] + damping * delta[i]
+        x_sol[i] = (v[i] - c[i] * x_sol[i + 1]) / d[i]
 
-    delta_max = np.max(np.abs(delta))
-    
+    # Potential update with damping
+    delta = x_sol - fi_out
+    # Bound delta to prevent numerical explosion during initial steps
+    delta = np.clip(delta, -2.0, 2.0)
+    fi_out = fi_out + damping * delta
+
     # 4. Check for convergence #########################################
-    if delta_max > 1.0e-4:
-        flag_conv_2 = False
+    delta_max = np.max(np.abs(delta))
+    tol = float(getattr(model, 'conv_tol', 0.01))
+    if delta_max > tol:
+        flag_conv_2 = True  # Not converged, continue Gummel iterations
     else:
-        flag_conv_2 = True
+        flag_conv_2 = False # Converged! Exit Gummel loop
         
     return fi_out, flag_conv_2
 

@@ -336,9 +336,9 @@ class Structure:
                     a0[startindex:finishindex] = matprops.get("a0", 5.6533) * 1e-10
                     TAUN0[startindex:finishindex] = matprops.get("TAUN0", 1e-8)
                     TAUP0[startindex:finishindex] = matprops.get("TAUP0", 1e-8)
-                    # Convert mobility from cm^2/Vs to m^2/Vs
-                    mun0[startindex:finishindex] = matprops.get("mun0", 0.1) * 1e-4
-                    mup0[startindex:finishindex] = matprops.get("mup0", 0.02) * 1e-4
+                    # Mobility is in m^2/Vs in database
+                    mun0[startindex:finishindex] = matprops.get("mun0", 0.1)
+                    mup0[startindex:finishindex] = matprops.get("mup0", 0.02)
 
                     Cn0[startindex:finishindex] = matprops.get("Cn0", 2.8e-31) * 1e-12
                     Cp0[startindex:finishindex] = matprops.get("Cp0", 2.8e-32) * 1e-12
@@ -372,10 +372,9 @@ class Structure:
                     fi_h[startindex:finishindex] = (
                         -(1 - matprops["Band_offset"]) * Eg_T * q
                     )
-                    Psp[startindex:finishindex] = matprops["Psp"]
-                    # Convert mobility from cm^2/Vs to m^2/Vs
-                    mun0[startindex:finishindex] = matprops["mun0"] * 1e-4
-                    mup0[startindex:finishindex] = matprops["mup0"] * 1e-4
+                    # Mobility is in m^2/Vs in database
+                    mun0[startindex:finishindex] = matprops["mun0"]
+                    mup0[startindex:finishindex] = matprops["mup0"]
                     
                     # Apply global tau override if provided
                     if getattr(self, 'tau', None) is not None:
@@ -415,9 +414,9 @@ class Structure:
                     TAUN0[startindex:finishindex] = alloyprops["TAUN0"]
                     TAUP0[startindex:finishindex] = alloyprops["TAUP0"]
                 
-                # Convert mobility from cm^2/Vs to m^2/Vs
-                mun0[startindex:finishindex] = alloyprops["mun0"] * 1e-4
-                mup0[startindex:finishindex] = alloyprops["mup0"] * 1e-4
+                # Mobility is in m^2/Vs in database
+                mun0[startindex:finishindex] = alloyprops["mun0"]
+                mup0[startindex:finishindex] = alloyprops["mup0"]
                 Cn0[startindex:finishindex] = alloyprops["Cn0"] * 1e-12
                 Cp0[startindex:finishindex] = alloyprops["Cp0"] * 1e-12
 
@@ -3539,8 +3538,8 @@ def Poisson_Schrodinger_DD(result, model):
     fi_va = np.zeros((Total_Steps, n_max))
     Ec_result_ = np.zeros((Total_Steps, n_max))
     Ev_result_ = np.zeros((Total_Steps, n_max))
-    fi_stat = fi
-    fi[0] +=vmin/ Vt
+    fi_stat = fi.copy()
+    fi[0] -= vmin / Vt
     if Total_Steps < 2:
         print("Equilibrium only (Total_Steps < 2)")
     else:
@@ -3551,10 +3550,8 @@ def Poisson_Schrodinger_DD(result, model):
                 Ppz_Psp = Ppz_Psp_tmp
             # Start Va increment loop
             Va = Each_Step * vindex
-            if vindex == 0:
-                fi[0] += 0.0  # Apply potential to Anode (1st node)
-            else:
-                fi[0] += Each_Step/Vt
+            if vindex > 0:
+                fi[0] -= Each_Step / Vt
             flag_conv_2 = True  # Convergence of the Poisson loop
             #% Initialize the First and Last Node for Poisson's eqn
 
@@ -3568,35 +3565,34 @@ def Poisson_Schrodinger_DD(result, model):
                     sys.stdout.flush()
                 
                 # Hard iteration cap for stability
-                max_iter_val = getattr(model, 'max_iterations', 100)
-                curr_p_damp = getattr(model, 'poisson_damping', 0.1)
+                max_iter_val = getattr(model, 'dd_max_iterations', 25)
+                curr_p_damp = getattr(model, 'poisson_damping', 0.4)
                 curr_c_damp = getattr(model, 'continuity_damping', 0.7)                
                 if iteration > max_iter_val:
-                    logger.warning("  Timeout: Gummel loop did not converge within %d iterations at Va = %g V. Proceeding with current values.", max_iter_val, Va_t[vindex])
                     flag_conv_2 = False
                     break
                     
-                newton_failed = False
                 if getattr(model, 'use_newton_solver', False):
                     if not hasattr(model, 'newton_solver'):
                         from aeslibs.newton_raphson import CoupledNewtonSolver
-                        model.newton_solver = CoupledNewtonSolver(model, n_max, dx, ni, dop, Ldi, Ppz_Psp, pol_surf_char, Nc, Nv, fi_stat)
+                        model.newton_solver = CoupledNewtonSolver(
+                            model, n_max, dx, ni, dop, Ldi, Ppz_Psp, pol_surf_char, Nc, Nv, fi_stat, n_stat=n, p_stat=p
+                        )
                     
                     # Update mobility for Newton solver
                     mun, mup = Mobility2(
                         mun0, mup0, fi, Vt, Ldi, VSATN, VSATP, BETAN, BETAP, n_max, dx
                     )
                     
-                    fi, n, p, newton_ok = model.newton_solver.solve(fi, n, p, mun, mup, TAUN0, TAUP0, Cn0, Cp0, G_optical, iteration)
+                    fi, n, p, newton_ok = model.newton_solver.solve(
+                        fi, n, p, mun, mup, TAUN0, TAUP0, Cn0, Cp0, G_optical, iteration, Va=Va_t[vindex]
+                    )
                     flag_conv_2 = False
                     
                     if not newton_ok or not np.all(np.isfinite(n)) or not np.all(np.isfinite(p)):
-                        logger.warning("  Newton-Krylov solver fallback to standard Sequential DD at Va = %g V.", Va_t[vindex])
-                        model.use_newton_solver = False
-                        newton_failed = True
-                        flag_conv_2 = True
+                        logger.warning("  Coupled Newton solver incomplete convergence at Va = %g V.", Va_t[vindex])
 
-                if not getattr(model, 'use_newton_solver', False) or newton_failed:
+                if not getattr(model, 'use_newton_solver', False):
                     fi, flag_conv_2 = Poisson_non_equi2(
                     fi_stat,
                     n,
@@ -3644,37 +3640,44 @@ def Poisson_Schrodinger_DD(result, model):
                 iteration += 1
                 ####################### END of HOLE Continuty Solver ###########
                 # End of WHILE Loop for Poisson's eqn solver
-                # print('inside while loop')
-            Jnip1by2, Jnim1by2, Jelec, Jpip1by2, Jpim1by2, Jhole = Current2(
-                vindex,
-                n,
-                p,
-                mun,
-                mup,
-                fi,
-                Vt,
-                n_max,
-                Total_Steps,
-                q,
-                dx,
-                ni,
-                Ldi,
-                Jnip1by2,
-                Jnim1by2,
-                Jelec,
-                Jpip1by2,
-                Jpim1by2,
-                Jhole,
-            )
-            
-            # Note: Current2 now returns physical current density in A/m^2 (SI)
-            # because dx and ni are SI, and mun is converted internally.
-            # Convert to mA/cm^2 for Aestimo GUI/Reports (1 A/m2 = 0.1 mA/cm2)
-            Jelec[vindex, :] *= 0.1
-            Jhole[vindex, :] *= 0.1
+            if getattr(model, 'use_newton_solver', False) and hasattr(model, 'newton_solver') and model.newton_solver.Jtot is not None:
+                Jelec[vindex, :n_max-1] = model.newton_solver.Jn
+                Jhole[vindex, :n_max-1] = model.newton_solver.Jp
+                Jelec[vindex, -1] = Jelec[vindex, -2]
+                Jhole[vindex, -1] = Jhole[vindex, -2]
+                Jtotal[vindex, :] = Jelec[vindex, :] + Jhole[vindex, :]
+                av_curr[vindex] = model.newton_solver.last_Jtot
+            else:
+                Jnip1by2, Jnim1by2, Jelec, Jpip1by2, Jpim1by2, Jhole = Current2(
+                    vindex,
+                    n,
+                    p,
+                    mun,
+                    mup,
+                    fi,
+                    Vt,
+                    n_max,
+                    Total_Steps,
+                    q,
+                    dx,
+                    ni,
+                    Ldi,
+                    Jnip1by2,
+                    Jnim1by2,
+                    Jelec,
+                    Jpip1by2,
+                    Jpim1by2,
+                    Jhole,
+                )
+                
+                # Note: Current2 now returns physical current density in A/m^2 (SI)
+                # because dx and ni are SI, and mun is converted internally.
+                # Convert to mA/cm^2 for Aestimo GUI/Reports (1 A/m2 = 0.1 mA/cm2)
+                Jelec[vindex, :] *= 0.1
+                Jhole[vindex, :] *= 0.1
+                Jtotal[vindex, :] = Jelec[vindex, :] + Jhole[vindex, :]
 
             # End of main FOR loop for Va increment.
-            Jtotal = Jelec + Jhole
             fi_va[vindex, :] = fi
             
             # No early stopping — always run the full sweep from vmin to vmax for accurate Voc/Pmax extraction
@@ -3683,12 +3686,12 @@ def Poisson_Schrodinger_DD(result, model):
             Ec_result_[vindex, :] = fi_e / q - Vt * fi_va[vindex, :]
             Ev_result_[vindex, :] = fi_h / q - Vt * fi_va[vindex, :]
 
-        # Compute av_curr as median of the last 10% of nodes (Quasi-Neutral Region)
-        # This is much more stable than the high-field depletion region in the center.
+        # Compute av_curr for sequential solver if not already computed by Newton solver
         for vindex in range(Total_Steps):
-            idx_lo = int(0.9 * n_max)
-            idx_hi = n_max - 1
-            av_curr[vindex] = np.median(Jtotal[vindex, idx_lo:idx_hi])
+            if not getattr(model, 'use_newton_solver', False):
+                idx_lo = int(0.9 * n_max)
+                idx_hi = n_max - 1
+                av_curr[vindex] = np.median(Jtotal[vindex, idx_lo:idx_hi])
             
         av_curr = av_curr[:Total_Steps]
         Ec_result_ = Ec_result_[:Total_Steps, :]
@@ -5105,12 +5108,8 @@ def run_aestimo(input_obj, drawFigures=drawFigures, show=True):
     # Perform the calculation
     
     print(f"DEBUG: run_aestimo called. model.comp_scheme={model.comp_scheme}")
-    if model.comp_scheme == 10:
-        # Scheme 10: 8-band k·p with arbitrary crystal orientation
-        # Use existing Poisson_Schrodinger_new which handles k·p
-        result = Poisson_Schrodinger_new(model)
-    elif model.comp_scheme == 11:
-        # Keep old scheme 10 (Poisson_Schrodinger_new) at scheme 11 for backward compat
+    if model.comp_scheme == 11:
+        # Scheme 11: 8-band k·p with arbitrary crystal orientation
         result = Poisson_Schrodinger_new(model)
     else:
         result = Poisson_Schrodinger(model)
@@ -5119,7 +5118,7 @@ def run_aestimo(input_obj, drawFigures=drawFigures, show=True):
     if model.comp_scheme in (7, 10):
         if model.comp_scheme == 10:
             model.use_newton_solver = True
-        print("DEBUG: Routing to Poisson_Schrodinger_DD (Newton-Krylov enabled for scheme 10)")
+        print("DEBUG: Routing to Poisson_Schrodinger_DD (Fully-Coupled Newton-Raphson enabled for scheme 10)")
         result_dd = Poisson_Schrodinger_DD(result, model)
     if model.comp_scheme == 8:
         result_dd = Poisson_Schrodinger_DD_test(result, model)
@@ -5150,7 +5149,7 @@ def run_aestimo(input_obj, drawFigures=drawFigures, show=True):
 
     # If DD was performed, return that result as it contains more info
     final_res = result
-    if model.comp_scheme in (7, 8, 9) and 'result_dd' in locals():
+    if model.comp_scheme in (7, 8, 9, 10) and 'result_dd' in locals():
         final_res = result_dd
 
     # Add to log

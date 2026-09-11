@@ -48,15 +48,17 @@ def analyze_iv_curve(voltage, current, area_cm2=1.0, pin_mw_cm2=100.0):
     j_0 = float(j[idx_0])
     jsc = abs(j_0)
     
-    # Check if raw current is INCREASING with voltage (Aestimo total J_raw = Jsc + Jdark)
-    # or DECREASING (net collection current J_solar)
-    idx_fwd = min(idx_0 + 2, len(j) - 1)
-    if j[idx_fwd] > j[idx_0]:
-        # Case B: J_raw is positive and increasing -> Net solar load current J_solar = 2*Jsc - J_raw
-        j_solar = 2.0 * jsc - j
+    # Net solar load current J_solar (positive at V=0 equal to Jsc, decreasing to 0 at Voc)
+    if j_0 < 0:
+        # Standard physical convention: J(0) = -Jsc, increasing toward 0 at Voc
+        j_solar = -j
     else:
-        # Case A: J is already net collection current (decreasing with V)
-        j_solar = j if j_0 >= 0 else -j
+        # Positive current convention
+        idx_fwd = min(idx_0 + 2, len(j) - 1)
+        if j[idx_fwd] > j[idx_0]:
+            j_solar = 2.0 * jsc - j
+        else:
+            j_solar = j
 
     # 1. Voc (Voltage where net photogenerated load current crosses zero)
     zero_crossings = np.where(np.diff(np.sign(j_solar)))[0]
@@ -87,8 +89,8 @@ def analyze_iv_curve(voltage, current, area_cm2=1.0, pin_mw_cm2=100.0):
         
     # 4. Efficiency (%)
     eta = (pmpp / pin_mw_cm2) * 100.0 if pin_mw_cm2 > 0 else 0.0
-    
-    # 5. Resistances (Rsh at V=0, Rs at Voc)
+
+    # 5. Resistances (Rsh at V=0, Rs at Voc) from intrinsic numerical data
     if len(v) >= 2:
         dv = np.gradient(v)
         dj = np.gradient(j_solar)

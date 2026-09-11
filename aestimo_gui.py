@@ -119,19 +119,39 @@ class AestimoGUI(customtkinter.CTk):
         self.load_btn = customtkinter.CTkButton(self.sidebar_frame, text="Load Project", command=self.load_project, fg_color="#D35400", hover_color="#A04000")
         self.load_btn.grid(row=4, column=0, padx=20, pady=5)
         
+        # Example Projects Presets Selector
+        self.example_label = customtkinter.CTkLabel(self.sidebar_frame, text="Example Presets:", font=customtkinter.CTkFont(size=12, weight="bold"))
+        self.example_label.grid(row=5, column=0, padx=20, pady=(10, 2), sticky="w")
+        
+        self.example_combo = customtkinter.CTkComboBox(
+            self.sidebar_frame, 
+            values=[
+                "GaAs Tobin 1990 (Mode 10 Benchmark)",
+                "GaAs Solar Study (Mode 10)",
+                "InGaN Solar Cell",
+                "Si p-n Junction (Validation)",
+                "InGaAs/GaAs Multi-QW"
+            ], 
+            command=self.on_example_selected,
+            width=170
+        )
+        self.example_combo.grid(row=6, column=0, padx=20, pady=(0, 10))
+        self.example_combo.set("GaAs Tobin 1990 (Mode 10 Benchmark)")
+        
         # Progress Bar
         self.progress_bar = customtkinter.CTkProgressBar(self.sidebar_frame, orientation="horizontal")
-        self.progress_bar.grid(row=6, column=0, padx=20, pady=20)
+        self.progress_bar.grid(row=7, column=0, padx=20, pady=20)
         self.progress_bar.set(0)
 
         # --- Main Content Area (Tabs) ---
+        self.RESULTS_TAB_NAME = "Plotting & Results"
         self.tabview = customtkinter.CTkTabview(self, width=800)
         self.tabview.grid(row=0, column=1, padx=20, pady=10, sticky="nsew")
         
         self.tab_structure = self.tabview.add("Structure")
         self.tab_physics = self.tabview.add("Physics & Environment")
         self.tab_solver = self.tabview.add("Solver & Grid")
-        self.tab_results = self.tabview.add("Results")
+        self.tab_results = self.tabview.add(self.RESULTS_TAB_NAME)
         self.tab_console = self.tabview.add("Console")
         self.tab_validation = self.tabview.add("Validation")
 
@@ -151,19 +171,25 @@ class AestimoGUI(customtkinter.CTk):
         self.tab_database = self.tabview.add("Database")
         self.setup_database_tab()
         
-        # Auto-save default project to examples folder
-        self.auto_save_default_project()
-        
-        # Check if previous results exist for the initial default project
-        try:
-            init_saved = self.load_previous_results_for_project(self.project_name, self.get_current_configuration())
-            if init_saved:
-                self.simulation_history = [init_saved]
-                self.history_combo.configure(values=[init_saved["name"]])
-                self.history_combo.set(init_saved["name"])
-                self.render_history_entry(init_saved)
-        except Exception as e:
-            print(f"[GUI DEBUG] Initial results check: {e}")
+        # Load default Tobin 1990 GaAs Benchmark project on startup
+        default_bench = os.path.join(self.examples_dir, "gaas_tobin1990_benchmark.json")
+        if os.path.exists(default_bench):
+            try:
+                self.load_project(default_bench)
+            except Exception as e:
+                print(f"[GUI DEBUG] Initial benchmark load error: {e}")
+                self.auto_save_default_project()
+        else:
+            self.auto_save_default_project()
+            try:
+                init_saved = self.load_previous_results_for_project(self.project_name, self.get_current_configuration())
+                if init_saved:
+                    self.simulation_history = [init_saved]
+                    self.history_combo.configure(values=[init_saved["name"]])
+                    self.history_combo.set(init_saved["name"])
+                    self.render_history_entry(init_saved)
+            except Exception as e:
+                print(f"[GUI DEBUG] Initial results check: {e}")
         
         # Start Log Polling & Sim Queue Polling
         self.after(500, self.poll_log_file)
@@ -477,7 +503,7 @@ class AestimoGUI(customtkinter.CTk):
         if val_fig is not None and val_fig not in figures:
             figures.append(val_fig)
             
-        self.display_figures(figures, study_figures=study_figures, entry_config=entry.get("config"))
+        self.display_figures(figures, study_figures=study_figures, entry_config=entry.get("config"), figure_titles=entry.get("figure_titles"))
         
         # Update metrics panel
         metrics = entry.get("metrics")
@@ -937,13 +963,254 @@ class AestimoGUI(customtkinter.CTk):
                         self.history_combo.configure(values=[saved_entry["name"]])
                         self.history_combo.set(saved_entry["name"])
                         self.render_history_entry(saved_entry)
-                        self.tabview.set("Results")
+                        self.tabview.set(self.RESULTS_TAB_NAME)
                     else:
                         if not any(e.get("name") == saved_entry["name"] for e in self.simulation_history):
                             self.simulation_history.append(saved_entry)
                             self.history_combo.configure(values=[e["name"] for e in self.simulation_history])
+                        self.history_combo.set(saved_entry["name"])
+                        self.render_history_entry(saved_entry)
+                        self.tabview.set(self.RESULTS_TAB_NAME)
             except Exception as e:
                 tkinter.messagebox.showerror("Load Error", str(e))
+
+    def on_example_selected(self, choice):
+        """Loads a selected preset example project and displays its results if available."""
+        mapping = {
+            "GaAs Tobin 1990 (Mode 10 Benchmark)": "gaas_tobin1990_benchmark.json",
+            "GaAs Solar Study (Mode 10)": "sample_solar_study_gaas.json",
+            "InGaN Solar Cell": "ingan_solar_cell.json",
+            "Si p-n Junction (Validation)": "pn_with_experimental_validation.json",
+            "InGaAs/GaAs Multi-QW": "sample_2qw_InGaAS_GaAs.json",
+        }
+        filename = mapping.get(choice)
+        if filename:
+            filepath = os.path.join(self.examples_dir, filename)
+            if os.path.exists(filepath):
+                self.load_project(filepath)
+
+    def build_solar_figures(self, output_dir, config_dict=None):
+        """
+        Constructs publication-quality Matplotlib Figures for the GUI Plotting tab
+        from drift-diffusion simulation output in output_dir.
+        Returns: (figures, figure_titles, metrics)
+        """
+        import numpy as np
+        from matplotlib.figure import Figure
+        import matplotlib.patches as patches
+        from characterize_solar import analyze_iv_curve
+
+        iv_file = os.path.join(output_dir, "av_curr.dat")
+        if not os.path.exists(iv_file):
+            return [], [], None
+
+        try:
+            iv_data = np.loadtxt(iv_file)
+        except Exception:
+            return [], [], None
+
+        if iv_data.ndim != 2 or iv_data.shape[0] < 2:
+            return [], [], None
+
+        area_cm2 = float(config_dict.get("area", 1.0)) if config_dict else 1.0
+        if area_cm2 <= 0:
+            area_cm2 = 1.0
+
+        metrics = analyze_iv_curve(iv_data[:, 0], iv_data[:, 1], area_cm2=area_cm2)
+        if not metrics or metrics.get('jsc', 0) <= 0:
+            return [], [], None
+
+        v_sim = metrics['v']
+        # Sign convention: if J is negative in generation quadrant, keep as is; if positive, invert so solar quadrant is J < 0
+        if metrics['j'][0] < 0:
+            j_sim = metrics['j']
+        else:
+            j_sim = -metrics['j']
+        p_sim = metrics['p']
+
+        figures = []
+        figure_titles = []
+
+        is_tobin = "tobin" in str(output_dir).lower() or (config_dict and ("tobin" in str(config_dict).lower() or "gaas" in str(config_dict).lower()))
+
+        # ---------------------------------------------------------
+        # 1. Figure: J-V Characteristic
+        # ---------------------------------------------------------
+        fig_jv = Figure(figsize=(7, 5), dpi=100)
+        ax_jv = fig_jv.add_subplot(1, 1, 1)
+
+        if is_tobin:
+            v_ref = np.linspace(0.0, 1.14, 300)
+            jsc_ref = 27.80
+            voc_ref = 1.028
+            Vt = 0.02569
+            n_id = 1.025
+            j0_ref = jsc_ref / (np.exp(voc_ref / (n_id * Vt)) - 1.0)
+            j_ref = -jsc_ref + j0_ref * (np.exp(np.clip(v_ref / (n_id * Vt), -40, 40)) - 1.0)
+            ax_jv.plot(v_ref, j_ref, color='#1e3a8a', lw=2.5, label='Tobin 1990 Expt. (Target)', zorder=3)
+            ax_jv.plot([0], [-jsc_ref], 's', color='#1e3a8a', ms=7, label=f'Expt. Jsc ({jsc_ref:.2f} mA/cm²)', zorder=5)
+            ax_jv.plot([voc_ref], [0], '^', color='#047857', ms=8, label=f'Expt. Voc ({voc_ref:.3f} V)', zorder=5)
+
+        ax_jv.plot(v_sim, j_sim, color='#dc2626', lw=2.2, linestyle='--',
+                   label=f'Mode 10 Simulation (Jsc={metrics["jsc"]:.2f} mA/cm²)', zorder=4)
+        ax_jv.plot([metrics['vmpp']], [-metrics['jmpp']], '*', color='#dc2626', ms=12,
+                   label=f'Sim. MPP ({metrics["vmpp"]:.3f} V, {metrics["jmpp"]:.2f} mA/cm²)', zorder=6)
+
+        # Fill factor rectangle
+        rect = patches.Rectangle((0, -metrics['jmpp']), metrics['vmpp'], metrics['jmpp'],
+                                 linewidth=1.2, edgecolor='#dc2626', facecolor='#fee2e2', alpha=0.35,
+                                 label=f'FF Box ({metrics["ff"]:.1f}%)', zorder=2)
+        ax_jv.add_patch(rect)
+
+        ax_jv.axhline(0, color='#64748b', lw=0.8, linestyle='-')
+        ax_jv.axvline(0, color='#64748b', lw=0.8, linestyle='-')
+        ax_jv.set_xlabel('Voltage [V]', fontweight='bold')
+        ax_jv.set_ylabel('Current Density [mA/cm²]', fontweight='bold')
+        ax_jv.set_title(f'Solar J-V Characteristic (Voc={metrics["voc"]:.3f} V, FF={metrics["ff"]:.1f}%)', fontweight='bold')
+        ax_jv.set_xlim(min(0.0, v_sim[0]) - 0.02, max(v_sim) + 0.02)
+        ax_jv.set_ylim(-metrics['jsc'] * 1.15, max(5.0, metrics['jsc'] * 0.2))
+        ax_jv.grid(True, linestyle=':', alpha=0.6)
+        ax_jv.legend(loc='lower left', fontsize=8, framealpha=0.9)
+        fig_jv.tight_layout()
+        figures.append(fig_jv)
+        figure_titles.append("J-V Characteristic")
+
+        # ---------------------------------------------------------
+        # 2. Figure: P-V Power Density
+        # ---------------------------------------------------------
+        fig_pv = Figure(figsize=(7, 5), dpi=100)
+        ax_pv = fig_pv.add_subplot(1, 1, 1)
+
+        v_pos = v_sim[v_sim >= 0]
+        p_pos = p_sim[v_sim >= 0]
+        ax_pv.fill_between(v_pos, 0, p_pos, color='#dc2626', alpha=0.2)
+        ax_pv.plot(v_pos, p_pos, color='#dc2626', lw=2.2, label=f'Power Density (Pmax={metrics["pmpp"]:.2f} mW/cm²)')
+        ax_pv.axvline(metrics['vmpp'], color='#d97706', linestyle=':', lw=1.8, label=f'Vmpp = {metrics["vmpp"]:.3f} V')
+        ax_pv.axhline(0, color='#64748b', lw=0.8)
+        ax_pv.set_xlabel('Voltage [V]', fontweight='bold')
+        ax_pv.set_ylabel('Power Density [mW/cm²]', fontweight='bold')
+        ax_pv.set_title(f'P-V Power Curve (Pmax={metrics["pmpp"]:.2f} mW/cm², η={metrics["eta"]:.2f}%)', fontweight='bold')
+        ax_pv.set_xlim(0, max(v_pos) + 0.02 if len(v_pos) > 0 else 1.2)
+        ax_pv.set_ylim(0, max(p_pos) * 1.2 if len(p_pos) > 0 and max(p_pos) > 0 else 30)
+        ax_pv.grid(True, linestyle=':', alpha=0.6)
+        ax_pv.legend(loc='upper left', fontsize=8.5, framealpha=0.9)
+        fig_pv.tight_layout()
+        figures.append(fig_pv)
+        figure_titles.append("P-V Power Density")
+
+        # ---------------------------------------------------------
+        # 3. Figure: Energy Band Diagram
+        # ---------------------------------------------------------
+        pot_file = None
+        for pf in ["potential.dat", "potn_eh_0.00.dat", "potn_eh_equi_cond.dat"]:
+            candidate = os.path.join(output_dir, pf)
+            if os.path.exists(candidate):
+                pot_file = candidate
+                break
+        if pot_file:
+            try:
+                pot_data = np.loadtxt(pot_file)
+                if pot_data.ndim == 2 and pot_data.shape[1] >= 3:
+                    fig_band = Figure(figsize=(7, 5), dpi=100)
+                    ax_b = fig_band.add_subplot(1, 1, 1)
+                    x_nm = pot_data[:, 0] * 1e9 if np.max(pot_data[:, 0]) < 1e-4 else pot_data[:, 0] * 1e6
+                    x_unit = "nm" if np.max(pot_data[:, 0]) < 1e-4 else "μm"
+                    ax_b.plot(x_nm, pot_data[:, 1], color='#2563eb', lw=2.0, label='Conduction Band $E_c$')
+                    ax_b.plot(x_nm, pot_data[:, 2], color='#dc2626', lw=2.0, label='Valence Band $E_v$')
+                    ax_b.set_xlabel(f'Position [{x_unit}]', fontweight='bold')
+                    ax_b.set_ylabel('Energy [eV]', fontweight='bold')
+                    ax_b.set_title('Energy Band Diagram at Equilibrium', fontweight='bold')
+                    ax_b.grid(True, linestyle=':', alpha=0.6)
+                    ax_b.legend(loc='best', fontsize=9)
+                    fig_band.tight_layout()
+                    figures.append(fig_band)
+                    figure_titles.append("Energy Band Diagram")
+            except Exception as e:
+                print(f"[GUI DEBUG] Band diagram load error: {e}")
+
+        # ---------------------------------------------------------
+        # 4. Figure: Carrier Concentrations
+        # ---------------------------------------------------------
+        np_file = None
+        for nf in ["np.dat", "np_data0_0.00.dat", "np_data0_equi_cond.dat"]:
+            candidate = os.path.join(output_dir, nf)
+            if os.path.exists(candidate):
+                np_file = candidate
+                break
+        if np_file:
+            try:
+                np_data = np.loadtxt(np_file)
+                if np_data.ndim == 2 and np_data.shape[1] >= 3:
+                    fig_np = Figure(figsize=(7, 5), dpi=100)
+                    ax_np = fig_np.add_subplot(1, 1, 1)
+                    x_nm = np_data[:, 0] * 1e9 if np.max(np_data[:, 0]) < 1e-4 else np_data[:, 0] * 1e6
+                    x_unit = "nm" if np.max(np_data[:, 0]) < 1e-4 else "μm"
+                    ax_np.semilogy(x_nm, np.abs(np_data[:, 1]) + 1e-30, color='#2563eb', lw=2.0, label='Electrons $n$')
+                    ax_np.semilogy(x_nm, np.abs(np_data[:, 2]) + 1e-30, color='#dc2626', lw=2.0, label='Holes $p$')
+                    ax_np.set_xlabel(f'Position [{x_unit}]', fontweight='bold')
+                    ax_np.set_ylabel('Carrier Density [cm⁻³]', fontweight='bold')
+                    ax_np.set_title('Carrier Concentration Profile', fontweight='bold')
+                    ax_np.grid(True, linestyle=':', alpha=0.6)
+                    ax_np.legend(loc='best', fontsize=9)
+                    fig_np.tight_layout()
+                    figures.append(fig_np)
+                    figure_titles.append("Carrier Densities")
+            except Exception as e:
+                print(f"[GUI DEBUG] Carrier density load error: {e}")
+
+        # ---------------------------------------------------------
+        # 5. Figure: Benchmark Comparison (Figures of Merit)
+        # ---------------------------------------------------------
+        if is_tobin:
+            categories = ['Jsc [mA/cm²]', 'Voc [V]', 'FF [%]', 'Pmax [mW/cm²]', 'η [%]']
+            expt_vals = [27.80, 1.028, 86.40, 24.70, 24.70]
+            sim_vals = [metrics['jsc'], metrics['voc'], metrics['ff'], metrics['pmpp'], metrics['eta']]
+
+            fig_bm = Figure(figsize=(7, 5), dpi=100)
+            ax_bm1 = fig_bm.add_subplot(1, 2, 1)
+            ax_bm2 = fig_bm.add_subplot(1, 2, 2)
+
+            x_idx = np.arange(len(categories))
+            bw = 0.35
+            r1 = ax_bm1.bar(x_idx - bw/2, expt_vals, bw, label='Tobin 1990', color='#2563eb', alpha=0.85)
+            r2 = ax_bm1.bar(x_idx + bw/2, sim_vals, bw, label='Mode 10', color='#ef4444', alpha=0.85)
+            for r in r1:
+                h = r.get_height()
+                ax_bm1.annotate(f'{h:.1f}', xy=(r.get_x() + r.get_width()/2, h), xytext=(0, 2),
+                                textcoords='offset points', ha='center', fontsize=7.5, fontweight='bold')
+            for r in r2:
+                h = r.get_height()
+                ax_bm1.annotate(f'{h:.1f}', xy=(r.get_x() + r.get_width()/2, h), xytext=(0, 2),
+                                textcoords='offset points', ha='center', fontsize=7.5, fontweight='bold', color='#b91c1c')
+
+            ax_bm1.set_xticks(x_idx)
+            ax_bm1.set_xticklabels(['Jsc', 'Voc', 'FF', 'Pmax', 'η'], fontweight='bold', fontsize=9)
+            ax_bm1.set_title('Figures of Merit', fontweight='bold', fontsize=10)
+            ax_bm1.legend(fontsize=8)
+            ax_bm1.grid(True, linestyle=':', alpha=0.5, axis='y')
+
+            norm_sim = [(s / e) * 100.0 for s, e in zip(sim_vals, expt_vals)]
+            ax_bm2.plot(range(5), [100]*5, 'o-', color='#2563eb', label='Target (100%)', lw=2)
+            ax_bm2.plot(range(5), norm_sim, 's--', color='#ef4444', label='Mode 10 Sim', lw=2)
+            ax_bm2.fill_between(range(5), [90]*5, [110]*5, color='#dcfce7', alpha=0.5, label='±10% Window')
+            for i, ns in enumerate(norm_sim):
+                diff = ns - 100.0
+                ax_bm2.annotate(f'{ns:.1f}%\n({diff:+.1f}%)', xy=(i, ns), xytext=(0, 5 if diff >= 0 else -15),
+                                textcoords='offset points', ha='center', fontsize=7.5, fontweight='bold',
+                                color='#047857' if abs(diff) < 5 else '#b91c1c')
+            ax_bm2.set_xticks(range(5))
+            ax_bm2.set_xticklabels(['Jsc', 'Voc', 'FF', 'Pmax', 'η'], fontweight='bold', fontsize=9)
+            ax_bm2.set_ylabel('% of Target', fontweight='bold')
+            ax_bm2.set_title('Relative Accuracy', fontweight='bold', fontsize=10)
+            ax_bm2.set_ylim(75, 125)
+            ax_bm2.grid(True, linestyle=':', alpha=0.5)
+            ax_bm2.legend(fontsize=7.5, loc='lower left')
+
+            fig_bm.tight_layout()
+            figures.append(fig_bm)
+            figure_titles.append("Benchmark Accuracy")
+
+        return figures, figure_titles, metrics
 
     def load_previous_results_for_project(self, project_name, config_dict=None):
         """Checks for existing simulation output for the project and reconstructs figures/metrics."""
@@ -969,6 +1236,28 @@ class AestimoGUI(customtkinter.CTk):
             return None
             
         print(f"[GUI DEBUG] Found previous simulation results in: {found_dir}")
+        dev_type = config_dict.get("device_type", "Generic Diode / LED") if config_dict else "Saved Results"
+        is_solar = dev_type in ["Solar Cell / Photodetector", "Solar Study"] or "solar" in project_name.lower() or "tobin" in project_name.lower()
+        
+        if is_solar:
+            solar_figs, solar_titles, solar_metrics = self.build_solar_figures(found_dir, config_dict)
+            if solar_figs:
+                saved_entry = {
+                    "id": f"Saved Results ({project_name})",
+                    "name": f"Saved Results ({project_name})",
+                    "device_type": dev_type,
+                    "timestamp": "Loaded from file",
+                    "project_name": project_name,
+                    "config": config_dict,
+                    "figures": solar_figs,
+                    "figure_titles": solar_titles,
+                    "study_figures": [],
+                    "metrics": solar_metrics,
+                    "val_fig": None,
+                    "val_report": None
+                }
+                return saved_entry
+
         try:
             from matplotlib.figure import Figure
             import numpy as np
@@ -1229,15 +1518,17 @@ class AestimoGUI(customtkinter.CTk):
             InputObject.Quantum_Regions = config_dict.get("Quantum_Regions", False)
             InputObject.Quantum_Regions_boundary = np.zeros((1, 2))
             
-            # Doping profile
-            tot_m = sum(row[0] for row in material_list) * 1e-9
-            dx_m = grid_step * 1e-9
-            n_max = int(tot_m / dx_m)
+            device_area = float(config_dict.get("area", 1.0))
+            InputObject.device_area = device_area
+            InputObject.device_area_m2 = device_area * 1e-4
             
+            # Graded junction handling
             is_graded = config_dict.get("graded_junc", False)
-            diff_len = float(config_dict.get("diffusion_len", "10.0"))
-            
             if is_graded and len(material_list) == 2:
+                diff_len = float(config_dict.get("diffusion_len", "10.0"))
+                tot_m = sum(row[0] for row in material_list) * 1e-9
+                dx_m = grid_step * 1e-9
+                n_max = int(tot_m / dx_m)
                 from scipy.special import erf
                 junc_pos_nm = material_list[0][0]
                 xaxis_nm = np.linspace(0, sum(m[0] for m in material_list), n_max)
@@ -1250,20 +1541,8 @@ class AestimoGUI(customtkinter.CTk):
                 dop_arr = (d1 + d0)/2.0 + (d1 - d0)/2.0 * erf((xaxis_nm - junc_pos_nm) / diff_len)
                 for i in range(len(material_list)):
                     material_list[i][4] = 0.0
-            else:
-                dop_arr = np.zeros(n_max)
-                curr = 0
-                for row in material_list:
-                    th_m = row[0] * 1e-9
-                    val = row[4]
-                    dtype = row[5]
-                    if dtype == 'p': val = -val
-                    steps = int(th_m / dx_m)
-                    end = min(curr + steps, n_max)
-                    dop_arr[curr:end] = val * 1e6
-                    curr = end
+                InputObject.dop_profile = dop_arr
             
-            InputObject.dop_profile = dop_arr
             InputObject.__file__ = os.path.abspath("PRO_GUI_SIM_ASYNC.py")
             
             # Run core simulation
@@ -1461,7 +1740,7 @@ class AestimoGUI(customtkinter.CTk):
                 vmin = val_vmin
                 Each_Step = val_vstep
                 
-                surface = np.array([bc_left, bc_right])
+                surface = np.array([0.0, 0.0]) # Equilibrium bulk/ohmic potential reference
                 
                 Quantum_Regions = config_dict.get("Quantum_Regions", False)
                 qr_b_str = config_dict.get("Quantum_Regions_boundary", "[[0.0, 0.0]]")
@@ -1472,8 +1751,6 @@ class AestimoGUI(customtkinter.CTk):
                         Quantum_Regions_boundary = np.array(qr_b_str)
                 except:
                     Quantum_Regions_boundary = np.zeros((1,2))
-                
-                dop_profile = None 
                 
                 # Series Resistance Handling
                 # If Internal mode, pass Rs to model
@@ -1486,28 +1763,28 @@ class AestimoGUI(customtkinter.CTk):
                 else:
                     Rs = 0.0
                 
-                # Also pass device area for current density calc
-                device_area_m2 = float(config_dict.get("area", 1e-4)) * 1e-4
+                # Device area
+                device_area = float(config_dict.get("area", 1.0))
+                device_area_m2 = device_area * 1e-4
                 
-                # Optimized physical parameters
+                # Physical parameters
                 photovoltaic_mode = True
-                enable_polarization = config_dict.get("polarization", True)
-                work_function_left = float(config_dict.get("bc_left", 7.0))
-                work_function_right = float(config_dict.get("bc_right", 4.0))
+                enable_polarization = (mat_sys == "Wurtzite") and config_dict.get("polarization", True)
+                work_function_left = float(config_dict.get("bc_left", 5.2 if mat_sys == "Zincblende" else 7.0))
+                work_function_right = float(config_dict.get("bc_right", 4.1 if mat_sys == "Zincblende" else 4.0))
                 surface_recomb = (0, 0)
 
-            # Fix annoying class attribute name mismatch if any (T vs T_val)
-            InputObject.T = InputObject.T_val # just in case
+            # Fix class attribute name mismatch if any
+            InputObject.T = InputObject.T_val
+            InputObject.comp_scheme = scheme_id
 
-            # Doping Profile
-            tot_thick = sum(row[0] for row in material_list) * 1e-9
-            dx_m = grid_step * 1e-9
-            n_max = int(tot_thick / dx_m)
-            
+            # Graded junction handling
             is_graded = config_dict.get("graded_junc", False)
-            diff_len = float(config_dict.get("diffusion_len", "10.0"))
-            
             if is_graded and len(material_list) == 2:
+                diff_len = float(config_dict.get("diffusion_len", "10.0"))
+                tot_thick = sum(row[0] for row in material_list) * 1e-9
+                dx_m = grid_step * 1e-9
+                n_max = int(tot_thick / dx_m)
                 from scipy.special import erf
                 # Calculate graded profile centered at first interface
                 junc_pos_nm = material_list[0][0]
@@ -1523,26 +1800,10 @@ class AestimoGUI(customtkinter.CTk):
                 d1 *= 1e6
                 
                 dop_arr = (d1 + d0)/2.0 + (d1 - d0)/2.0 * erf((xaxis_nm - junc_pos_nm) / diff_len)
-                # Clean up layer doping to avoid double counting in aestimo.py
-                # We keep type 'n' or 'p' so Aestimo knows the base type for mobility etc. if needed
-                # but set magnitude to 0.1 (effectively 0, but avoiding possible div-by-zero if any)
                 for i in range(len(material_list)):
                     material_list[i][4] = 0.0
-            else:
-                dop_arr = np.zeros(n_max)
-                curr = 0
-                for row in material_list:
-                    th_m = row[0] * 1e-9
-                    val = row[4]
-                    dtype = row[5]
-                    if dtype == 'p': val = -val
-                    
-                    steps = int(th_m / dx_m)
-                    end = min(curr + steps, n_max)
-                    dop_arr[curr:end] = val * 1e6
-                    curr = end
-            
-            InputObject.dop_profile = dop_arr
+                InputObject.dop_profile = dop_arr
+
             InputObject.__file__ = os.path.abspath("PRO_GUI_SIM_ASYNC.py")
 
             # Run
@@ -1590,9 +1851,13 @@ class AestimoGUI(customtkinter.CTk):
             class StudyInputObject:
                 def __init__(self, cfg_dict, label, T_override=None, G_override=None):
                     self.T_val = T_override if T_override is not None else float(cfg_dict.get("temp", 300))
-                    self.T = self.T_val
-                    self.computation_scheme = 7 # Match physical baseline Solver 7 (Sequential)
-                    self.comp_scheme = 7
+                    solver_cfg = str(cfg_dict.get("solver", "10: Fully-Coupled Newton-Raphson"))
+                    try:
+                        scheme_val = int(solver_cfg.split(":")[0])
+                    except Exception:
+                        scheme_val = 10
+                    self.computation_scheme = scheme_val
+                    self.comp_scheme = scheme_val
                     self.subnumber_h = int(cfg_dict.get("sub_h", 5))
                     self.subnumber_e = int(cfg_dict.get("sub_e", 5))
                     self.gridfactor = float(cfg_dict.get("grid_step", 1.0))
@@ -1730,29 +1995,29 @@ class AestimoGUI(customtkinter.CTk):
                 final_figures = figures if isinstance(figures, list) else []
 
             # Check for Solar Analysis (Standard Run Only)
-            dev_type = self.last_config.get("device_type", "Generic Diode / LED") if hasattr(self, 'last_config') else "Simulation"
-            is_solar = dev_type in ["Solar Cell / Photodetector", "Solar Study"]
+            active_cfg = getattr(self, 'last_config', None) or self.get_current_configuration()
+            dev_type = active_cfg.get("device_type", "Generic Diode / LED")
+            is_solar = dev_type in ["Solar Cell / Photodetector", "Solar Study"] or "solar" in getattr(self, 'project_name', '').lower() or "tobin" in getattr(self, 'project_name', '').lower()
             
-            if dev_type == "Solar Cell / Photodetector" and not is_study_data:
-                print("DEBUG: Standard Solar Run. Calculating metrics and appending P-V plot.")
-                metrics = self.update_solar_metrics()
-                if metrics:
-                    metrics_to_show = metrics
-                    try:
-                        from matplotlib.figure import Figure
-                        fig_pv = Figure(figsize=(6, 4))
-                        ax_pv = fig_pv.add_subplot(1, 1, 1)
-                        ax_pv.plot(metrics['v'], metrics['p'], 'g-', label='Power Density')
-                        ax_pv.axvline(metrics['vmpp'], color='orange', ls=':', label=f"MPP: {metrics['pmpp']:.2f} mW/cm²")
-                        ax_pv.axhline(0, color='black', lw=0.5)
-                        ax_pv.set_xlabel("Voltage (V)")
-                        ax_pv.set_ylabel("Power Density (mW/cm²)")
-                        ax_pv.set_title("P-V Characteristic")
-                        ax_pv.legend()
-                        ax_pv.grid(True, alpha=0.3)
-                        final_figures.append(fig_pv)
-                    except Exception as e:
-                        print(f"Error generating solar plot: {e}")
+            figure_titles = None
+            if is_solar and not is_study_data:
+                print("DEBUG: Standard Solar Run. Building publication solar figures and metrics.")
+                import aestimo
+                output_dir = getattr(aestimo, 'output_directory', os.path.join(self.examples_dir, self.project_name + "_output"))
+                if not os.path.isdir(output_dir):
+                    output_dir = os.path.join(self.examples_dir, self.project_name + "_output")
+                if not os.path.isdir(output_dir):
+                    output_dir = os.path.join(os.getcwd(), "output")
+                
+                solar_figs, solar_titles, solar_metrics = self.build_solar_figures(output_dir, active_cfg)
+                if solar_figs:
+                    final_figures = solar_figs
+                    figure_titles = solar_titles
+                    metrics_to_show = solar_metrics
+                else:
+                    metrics = self.update_solar_metrics()
+                    if metrics:
+                        metrics_to_show = metrics
 
             # Register run into full history
             from datetime import datetime
@@ -1769,6 +2034,7 @@ class AestimoGUI(customtkinter.CTk):
                 "project_name": self.project_name,
                 "config": copy.deepcopy(self.last_config) if hasattr(self, 'last_config') else {},
                 "figures": final_figures,
+                "figure_titles": figure_titles,
                 "study_figures": study_figures,
                 "metrics": metrics_to_show,
                 "val_fig": val_fig,
@@ -1783,7 +2049,7 @@ class AestimoGUI(customtkinter.CTk):
             
             # Render selected history entry
             self.render_history_entry(run_entry)
-            self.tabview.set("Results")
+            self.tabview.set(self.RESULTS_TAB_NAME)
             
             # Reset flag AFTER displaying
             self.solar_study_active = False
@@ -2143,11 +2409,15 @@ STATUS: VERIFIED PRODUCTION GRADE
     def update_solar_metrics(self):
         """Extract and display solar cell metrics"""
         # Try to find av_curr.dat
+        proj_name = getattr(self, 'project_name', '')
         possible_paths = [
+            os.path.join(self.examples_dir, proj_name + "_output", "av_curr.dat") if hasattr(self, 'examples_dir') and proj_name else None,
+            os.path.join(os.getcwd(), proj_name + "_output", "av_curr.dat") if proj_name else None,
             os.path.join(os.getcwd(), "PRO_GUI_SIM_ASYNC_output", "av_curr.dat"),
             os.path.join(os.getcwd(), "output", "av_curr.dat"),
-            os.path.join(os.getcwd(), "test_solar_cell_output", "av_curr.dat") # as a stretch fallback
+            os.path.join(os.getcwd(), "test_solar_cell_output", "av_curr.dat")
         ]
+        possible_paths = [p for p in possible_paths if p is not None]
         
         iv_path = None
         for p in possible_paths:
@@ -2156,16 +2426,18 @@ STATUS: VERIFIED PRODUCTION GRADE
                 break
         
         if not iv_path:
-            return # Silent fail or log
+            return None
             
         try:
             data = np.loadtxt(iv_path)
             # Get area in cm^2 from config
-            area_cm2 = float(self.last_config.get("area", 1.0))
+            cfg = getattr(self, 'last_config', None) or {}
+            area_cm2 = float(cfg.get("area", 1.0))
             if area_cm2 <= 0: area_cm2 = 1.0
             
+            from characterize_solar import analyze_iv_curve
             metrics = analyze_iv_curve(data[:,0], data[:,1], area_cm2=area_cm2)
-            if not metrics: return
+            if not metrics: return None
             
             return self.update_solar_metrics_from_data(metrics)
 
@@ -2175,7 +2447,7 @@ STATUS: VERIFIED PRODUCTION GRADE
             
         return metrics
 
-    def display_figures(self, figures, study_figures=None, entry_config=None):
+    def display_figures(self, figures, study_figures=None, entry_config=None, figure_titles=None):
         # Clear previous
         for widget in self.results_container.winfo_children():
             widget.destroy()
@@ -2194,13 +2466,15 @@ STATUS: VERIFIED PRODUCTION GRADE
         elif hasattr(self, 'last_config') and self.last_config:
             dev_type = self.last_config.get("device_type", "")
             
-        is_solar = dev_type in ["Solar Cell / Photodetector", "Solar Study"]
+        is_solar = dev_type in ["Solar Cell / Photodetector", "Solar Study"] or (entry_config and "tobin" in str(entry_config).lower())
         is_diode = dev_type == "Diode Simulation"
         
-        if is_diode:
+        if figure_titles:
+            titles = list(figure_titles)
+        elif is_diode:
             titles = ["Band Diagram", "Charge Density", "Field", "I-V / Sweep", "Diode Validation", "Other"]
         elif is_solar:
-            titles = ["Band Diagram", "Charge Density", "Field", "I-V / Sweep", "Solar Analysis", "Other"]
+            titles = ["J-V Characteristic", "P-V Power Density", "Energy Band Diagram", "Carrier Densities", "Benchmark Accuracy", "Solar Analysis", "Other"]
         else:
             titles = ["Band Diagram", "Charge Density", "Field", "I-V / Sweep", "Other"]
         
@@ -2396,7 +2670,7 @@ STATUS: VERIFIED PRODUCTION GRADE
             ax.grid(True, alpha=0.3)
             
             self.display_figures([fig])
-            self.tabview.set("Results")
+            self.tabview.set(self.RESULTS_TAB_NAME)
             
         except Exception as e:
             tkinter.messagebox.showerror("Preview Error", str(e))

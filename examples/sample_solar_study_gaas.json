@@ -42,14 +42,14 @@
             "type": "barrier"
         }
     ],
-    "temp": "300.0",
+    "temp": "298.15",
     "field": "0.0",
     "bc_left": "5.2",
     "bc_right": "4.1",
-    "vmin": "-0.2",
-    "vmax": "1.15",
+    "vmin": "0.0",
+    "vmax": "1.14",
     "vstep": "0.02",
-    "solver": "7: SP-Drift Diffusion (Sequential)",
+    "solver": "10: Fully-Coupled Newton-Raphson",
     "grid_step": "5.0",
     "max_pts": "200000",
     "mat_sys": "Zincblende",
@@ -62,9 +62,9 @@
     "area": "1.0",
     "rs": "0.0",
     "rs_mode": "External (Fast)",
-    "rsh": "1e12",
+    "rsh": "5e5",
     "device_type": "Solar Study",
-    "G_optical": "5.8e+21",
+    "G_optical": "6.759e+20",
     "graded_junc": false,
     "diffusion_len": "10.0"
 }
