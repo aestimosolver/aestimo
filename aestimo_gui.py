@@ -129,7 +129,9 @@ class AestimoGUI(customtkinter.CTk):
                 "GaAs Tobin 1990 (Mode 10 Benchmark)",
                 "GaAs Solar Study (Mode 10)",
                 "InGaN Solar Cell",
+                "Optimal 6-QW InGaN/GaN Solar Cell",
                 "Si p-n Junction (Validation)",
+                "Silicon Diode (Mode 10)",
                 "InGaAs/GaAs Multi-QW"
             ], 
             command=self.on_example_selected,
@@ -980,7 +982,9 @@ class AestimoGUI(customtkinter.CTk):
             "GaAs Tobin 1990 (Mode 10 Benchmark)": "gaas_tobin1990_benchmark.json",
             "GaAs Solar Study (Mode 10)": "sample_solar_study_gaas.json",
             "InGaN Solar Cell": "ingan_solar_cell.json",
+            "Optimal 6-QW InGaN/GaN Solar Cell": "optimal_mqw_solar_cell.json",
             "Si p-n Junction (Validation)": "pn_with_experimental_validation.json",
+            "Silicon Diode (Mode 10)": "sample_pn.json",
             "InGaAs/GaAs Multi-QW": "sample_2qw_InGaAS_GaAs.json",
         }
         filename = mapping.get(choice)
