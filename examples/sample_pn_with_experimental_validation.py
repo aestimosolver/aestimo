@@ -18,13 +18,13 @@ import os
 import sys
 from os import path
 
-# Detect if we are in root or examples dir to fix paths
-root_dir = os.getcwd()
-if os.path.exists(os.path.join(root_dir, 'aeslibs')):
-    sys.path.append(root_dir)
-else:
-    # try moving up if in examples
-    sys.path.append(path.join(path.dirname(__file__), '..'))
+# Ensure local workspace takes priority over site-packages
+script_dir = os.path.dirname(os.path.abspath(__file__))
+repo_root = os.path.abspath(os.path.join(script_dir, '..'))
+if repo_root not in sys.path:
+    sys.path.insert(0, repo_root)
+if os.getcwd() not in sys.path:
+    sys.path.insert(0, os.getcwd())
 
 try:
     from aeslibs.experimental_validation import load_experimental_metadata
@@ -40,8 +40,9 @@ except ImportError:
 T = 300.0  # Kelvin
 
 # COMPUTATIONAL SCHEME
-# 9: Schrodinger-Poisson-Drift_Diffusion using Gummel & Newton map
-computation_scheme = 9
+# 10: Fully-Coupled Newton-Raphson drift-diffusion solver
+computation_scheme = 10
+comp_scheme = 10
 
 # QUANTUM
 # Total subband number to be calculated

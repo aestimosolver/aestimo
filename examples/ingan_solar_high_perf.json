@@ -27,7 +27,7 @@
     "vmin": "0.0",
     "vmax": "1.6",
     "vstep": "0.05",
-    "solver": "7: SP-Drift Diffusion (Sequential)",
+    "solver": "10: Fully-Coupled Newton-Raphson",
     "grid_step": "1.0",
     "max_pts": "200000",
     "mat_sys": "Wurtzite",

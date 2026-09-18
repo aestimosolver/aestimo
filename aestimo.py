@@ -1374,9 +1374,12 @@ class StructureFrom(Structure):
         
         self.Vt = Vt # Thermal voltage
         # Mapping compatibility
-        # If comp_scheme is provided in input, use it; otherwise use computation_scheme
-        self.comp_scheme = getattr(inputfile, 'comp_scheme', self.computation_scheme)
-        print(f"DEBUG: Structure initialized. photovoltaic_mode={self.photovoltaic_mode}, comp_scheme={self.comp_scheme}")
+        # If comp_scheme is provided in input (and not None), use it; otherwise use computation_scheme
+        cs = getattr(inputfile, 'comp_scheme', None)
+        if cs is None:
+            cs = getattr(inputfile, 'computation_scheme', getattr(self, 'computation_scheme', 0))
+        self.comp_scheme = int(cs)
+        self.computation_scheme = self.comp_scheme
         print(f"DEBUG: Structure initialized. photovoltaic_mode={self.photovoltaic_mode}, comp_scheme={self.comp_scheme}")
         self.dx = getattr(inputfile, 'gridfactor', 0.1) * 1e-9  # grid in m
         self.mat_crys_strc = self.mat_type
@@ -1441,7 +1444,7 @@ class StructureFrom(Structure):
         else:
              logger.info("DEBUG: self.dop_profile NOT FOUND")
              
-        if hasattr(inputfile, 'dop_profile') and len(inputfile.dop_profile) > 1:
+        if hasattr(inputfile, 'dop_profile') and len(inputfile.dop_profile) > 1 and np.any(inputfile.dop_profile != 0):
             if len(inputfile.dop_profile) == self.n_max:
                 self.dop = inputfile.dop_profile
                 logger.info("Overriding doping profile from input configuration.")
@@ -3829,15 +3832,7 @@ def Poisson_Schrodinger_DD(result, model):
     results.Ec_result_ = Ec_result_
     results.Ev_result_ = Ev_result_
     
-    # Scheme 10: Add k·p specific outputs (band structure, DOS, gain)
-    if model.comp_scheme == 10:
-        try:
-            print("Calculating k·p band structure...")
-            kp_results = calculate_kp_bandstructure(model, results)
-            results.kp_bandstructure = kp_results
-            print("k·p band structure calculation complete.")
-        except Exception as e:
-            print(f"Warning: Could not calculate k·p band structure: {e}")
+
     
     return results
 

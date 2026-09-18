@@ -26,7 +26,7 @@
     "vmin": "0.0",
     "vmax": "0.01",
     "vstep": "0.01",
-    "solver": "9: SP-DD (Gummel-Newton)",
+    "solver": "10: Fully-Coupled Newton-Raphson",
     "grid_step": "2.0",
     "max_pts": "200000",
     "mat_sys": "Wurtzite",

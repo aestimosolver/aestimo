@@ -21,8 +21,9 @@ T = 300.0 #Kelvin
 # 7: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson then  poisson and DD)
 # 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD)
 # 9: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel & Newton map
-# 10: Schrodinger-Poisson under testing using Newton iteration (will replace scheme 2)
-computation_scheme = 2
+# 10: Fully-Coupled Newton-Raphson drift-diffusion solver
+computation_scheme = 10
+comp_scheme = 10
 
 # Non-parabolic effective mass function
 # 0: no energy dependence
@@ -79,7 +80,9 @@ inputfilename = "sample_pn2"
 from os import path
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
-    import sys
-    sys.path.append(path.join(path.dirname(__file__), '..'))
+    import sys, os
+    repo_root = path.abspath(path.join(path.dirname(__file__), '..'))
+    if repo_root not in sys.path:
+        sys.path.insert(0, repo_root)
     import aestimo
     aestimo.run_aestimo(input_obj)
