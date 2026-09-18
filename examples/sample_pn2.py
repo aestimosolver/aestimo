@@ -40,23 +40,15 @@ subnumber_e = 1
 subnumber_h = 1
 # APPLIED ELECTRIC FIELD
 Fapplied =  0.0# (V/m)2.5e7/50e-9
-vmax= 2.0
+vmax= 0.8
 vmin= 0.0
-Each_Step=0.05# For 1D, z-axis is choosen
-gridfactor = 1
+Each_Step=0.02# For 1D, z-axis is choosen
+gridfactor = 5.0
 maxgridpoints = 200000 #for controlling the size
 mat_type='Zincblende'
 # REGIONS
-# Region input is a two-dimensional list input.
-# An example:
-# Si p-n diode. Firstly lets picturize the regional input.
-#         | Thickness (nm) | Material | Alloy fraction | Doping(cm^-3) | n or p type |
-# Layer 0 |      250.0     |   Si     |      0         |     1e16      |     n       |
-# Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
-#
-# To input this list in Gallium, we use lists as:
-material =[[500, 'Si', 0.1, 0.0, 1e+19, 'p','b'],
-            [500, 'Si', 0.1, 0.0, 1e+19, 'n','b']]
+material = [[1000.0, 'Si', 0.0, 0.0, 1.0e+16, 'p', 'b'],
+            [1000.0, 'Si', 0.0, 0.0, 1.0e+16, 'n', 'b']]
 
 
 material1 =[[350, 'InGaAs', 0.1, 0.0, 1e+16, 'p','b'],

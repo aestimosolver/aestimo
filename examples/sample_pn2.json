@@ -2,18 +2,18 @@
     "layers": [
         {
             "material": "Si",
-            "mole": "0.1",
-            "thickness": "500",
-            "doping": "1.0e+19",
+            "mole": "0.0",
+            "thickness": "1000.0",
+            "doping": "1.0e+16",
             "doping_type": "p",
             "type": "barrier",
             "mole_y": "0.0"
         },
         {
             "material": "Si",
-            "mole": "0.1",
-            "thickness": "500",
-            "doping": "1.0e+19",
+            "mole": "0.0",
+            "thickness": "1000.0",
+            "doping": "1.0e+16",
             "doping_type": "n",
             "type": "barrier",
             "mole_y": "0.0"
@@ -24,10 +24,10 @@
     "bc_left": "0.0",
     "bc_right": "0.0",
     "vmin": "0.0",
-    "vmax": "2.0",
-    "vstep": "0.05",
+    "vmax": "0.8",
+    "vstep": "0.02",
     "solver": "10: Fully-Coupled Newton-Raphson",
-    "grid_step": "1",
+    "grid_step": "5.0",
     "max_pts": "200000",
     "mat_sys": "Zincblende",
     "sub_e": "1",

@@ -468,52 +468,48 @@ def plot_iv_comparison(exp_voltage, exp_current, sim_voltage, sim_current,
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     
-    # Linear scale plot
+    # Linear scale plot (Current in mA)
     ax1.plot(exp_voltage, exp_current * 1e3, 'o', label='Experimental', 
-             markersize=6, alpha=0.7)
-    ax1.plot(sim_voltage, sim_current * 1e3, '-', label='Simulation', 
-             linewidth=2)
+             markersize=5, markerfacecolor='none', markeredgecolor='black', markeredgewidth=1.2)
+    ax1.plot(sim_voltage, sim_current * 1e3, '-', label='Simulation (Mode 10)', 
+             color='#003366', linewidth=2.0)
     ax1.set_xlabel('Voltage (V)', fontsize=12)
     ax1.set_ylabel('Current (mA)', fontsize=12)
-    ax1.set_title('I-V Characteristics (Linear Scale)', fontsize=14)
-    ax1.grid(True, alpha=0.3)
-    ax1.legend(fontsize=10)
+    ax1.set_title('I-V Characteristics (Linear Scale)', fontsize=13, fontweight='bold')
+    ax1.grid(True, which='both', linestyle='--', alpha=0.4)
+    ax1.legend(fontsize=10, loc='best')
     
     # Restrict X-axis to experimental range for clarity
     v_min, v_max = exp_voltage.min(), exp_voltage.max()
     padding = (v_max - v_min) * 0.05
     ax1.set_xlim(v_min - padding, v_max + padding)
 
-    # Y-axis fitting (Linear)
-    i_min, i_max = exp_current.min(), exp_current.max()
+    # Y-axis fitting (Linear in mA)
+    i_min, i_max = exp_current.min() * 1e3, exp_current.max() * 1e3
     padding_i = (i_max - i_min) * 0.1
     ax1.set_ylim(i_min - padding_i, i_max + padding_i)
     
-    # Semi-log plot (for forward bias)
-    forward_mask_exp = exp_current > 0
-    forward_mask_sim = sim_current > 0
+    # Semi-log plot (for absolute current magnitude in mA)
+    exp_i_abs = np.abs(exp_current) * 1e3
+    sim_i_abs = np.abs(sim_current) * 1e3
     
-    if np.any(forward_mask_exp):
-        ax2.semilogy(exp_voltage[forward_mask_exp], 
-                     exp_current[forward_mask_exp] * 1e3, 
-                     'o', label='Experimental', markersize=6, alpha=0.7)
-    if np.any(forward_mask_sim):
-        ax2.semilogy(sim_voltage[forward_mask_sim], 
-                     sim_current[forward_mask_sim] * 1e3, 
-                     '-', label='Simulation', linewidth=2)
+    ax2.semilogy(exp_voltage, exp_i_abs, 'o', label='Experimental',
+                 markersize=5, markerfacecolor='none', markeredgecolor='black', markeredgewidth=1.2)
+    ax2.semilogy(sim_voltage, sim_i_abs, '-', label='Simulation (Mode 10)', 
+                 color='#003366', linewidth=2.0)
     
     ax2.set_xlabel('Voltage (V)', fontsize=12)
-    ax2.set_ylabel('Current (mA, log scale)', fontsize=12)
-    ax2.set_title('I-V Characteristics (Semi-log)', fontsize=14)
-    ax2.grid(True, alpha=0.3, which='both')
-    ax2.legend(fontsize=10)
+    ax2.set_ylabel('|Current| (mA, log scale)', fontsize=12)
+    ax2.set_title('I-V Characteristics (Semi-log)', fontsize=13, fontweight='bold')
+    ax2.grid(True, which='both', linestyle='--', alpha=0.4)
+    ax2.legend(fontsize=10, loc='best')
     ax2.set_xlim(v_min - padding, v_max + padding)
     
-    # Y-axis fitting (Log)
-    exp_i_pos = np.abs(exp_current[exp_current > 0])
-    if len(exp_i_pos) > 0:
-        y_min_log = exp_i_pos.min() / 5
-        y_max_log = exp_i_pos.max() * 5
+    # Y-axis fitting (Log in mA)
+    pos_exp = exp_i_abs[exp_i_abs > 1e-12]
+    if len(pos_exp) > 0:
+        y_min_log = max(pos_exp.min() / 3, 1e-10)
+        y_max_log = pos_exp.max() * 3
         ax2.set_ylim(y_min_log, y_max_log)
     
     plt.tight_layout()
@@ -558,28 +554,28 @@ def plot_cv_comparison(exp_voltage, exp_capacitance, sim_voltage, sim_capacitanc
     
     # C-V plot
     ax1.plot(exp_voltage, exp_capacitance * 1e12, 'o', label='Experimental',
-             markersize=6, alpha=0.7)
+             markersize=5, markerfacecolor='none', markeredgecolor='black', markeredgewidth=1.2)
     ax1.plot(sim_voltage, sim_capacitance * 1e12, '-', label='Simulation',
-             linewidth=2)
+             color='#003366', linewidth=2.0)
     ax1.set_xlabel('Voltage (V)', fontsize=12)
     ax1.set_ylabel('Capacitance (pF)', fontsize=12)
-    ax1.set_title('C-V Characteristics', fontsize=14)
-    ax1.grid(True, alpha=0.3)
-    ax1.legend(fontsize=10)
+    ax1.set_title('C-V Characteristics', fontsize=13, fontweight='bold')
+    ax1.grid(True, which='both', linestyle='--', alpha=0.4)
+    ax1.legend(fontsize=10, loc='best')
     
     # 1/C² plot (Mott-Schottky)
     C_sq_inv_exp = 1 / (exp_capacitance**2)
     C_sq_inv_sim = 1 / (sim_capacitance**2 + 1e-30)  # avoid division by zero
     
     ax2.plot(exp_voltage, C_sq_inv_exp * 1e-20, 'o', label='Experimental',
-             markersize=6, alpha=0.7)
+             markersize=5, markerfacecolor='none', markeredgecolor='black', markeredgewidth=1.2)
     ax2.plot(sim_voltage, C_sq_inv_sim * 1e-20, '-', label='Simulation',
-             linewidth=2)
+             color='#003366', linewidth=2.0)
     ax2.set_xlabel('Voltage (V)', fontsize=12)
     ax2.set_ylabel('1/C² (×10²⁰ F⁻²)', fontsize=12)
-    ax2.set_title('Mott-Schottky Plot', fontsize=14)
-    ax2.grid(True, alpha=0.3)
-    ax2.legend(fontsize=10)
+    ax2.set_title('Mott-Schottky Plot', fontsize=13, fontweight='bold')
+    ax2.grid(True, which='both', linestyle='--', alpha=0.4)
+    ax2.legend(fontsize=10, loc='best')
     
     plt.tight_layout()
     
@@ -676,21 +672,25 @@ def run_validation_workflow(input_obj, output_dir):
     print("="*60)
     
     exp_file = get_val(input_obj, 'experimental_iv_file', None)
-    if not exp_file or not os.path.exists(exp_file):
-        # Fallback search path logic
+    if not exp_file:
+        print("No experimental data file specified for validation. Skipping.")
+        return
+    if not os.path.exists(exp_file):
+        # Fallback search path logic for specified file
+        fname = os.path.basename(exp_file)
         paths_to_try = [
-            exp_file if exp_file else "",
-            os.path.join("examples", "experimental_data", "si_pn_experimental_iv.csv"),
-            os.path.join("..", "examples", "experimental_data", "si_pn_experimental_iv.csv")
+            os.path.join("examples", exp_file),
+            os.path.join("examples", "experimental_data", fname),
+            os.path.join("..", "examples", "experimental_data", fname)
         ]
         found = False
         for p in paths_to_try:
-            if p and os.path.exists(p):
+            if os.path.exists(p):
                 exp_file = p
                 found = True
                 break
         if not found:
-            print(f"Warning: Experimental file not found. Settings: {get_val(input_obj, 'experimental_iv_file', 'None')}")
+            print(f"Warning: Experimental file '{exp_file}' not found. Skipping validation.")
             return
 
     area = get_val(input_obj, 'device_area', 1e-4)

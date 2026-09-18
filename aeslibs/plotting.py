@@ -247,36 +247,41 @@ def save_and_plot2(result, model, output_directory='output', drawFigures=False, 
         # Plotting State(s)
         # figure(3)
         pl.subplot(2, 2, 4)
-        pl.plot(result.Va_t , result.av_curr * 1e-4)
-        pl.xlabel("Va [V]")
-        pl.ylabel("Total Current Density [Amp/cm^2]")
-        pl.title("Current vs voltage", fontsize=12)
-        pl.legend(("Total Current"), loc="best", fontsize=12)
-        pl.grid(True)
+        pl.plot(result.Va_t, result.av_curr, 'b-', linewidth=2.0)
+        pl.xlabel("Applied Bias (V)", fontsize=11)
+        pl.ylabel("Total Current Density (mA/cm²)", fontsize=11)
+        pl.title("J-V Characteristic", fontsize=12, fontweight='bold')
+        pl.grid(True, which='both', linestyle='--', alpha=0.4)
         if show:
             pl.show()
 
         fig3 = pl.figure(figsize=(10, 8))
         pl.suptitle(
-            "1D Drift Diffusion Model Results - at Applied Bias (%.2f)"
+            "1D Drift Diffusion Model Results - at Applied Bias (%.2f V)"
             % vt,
             fontsize=12,
         )
         pl.subplots_adjust(hspace=0.4, wspace=0.4)
         pl.subplot(2, 2, 1)
-        pl.plot(
+        pl.semilogy(
             xaxis * 1e6,
-            result.nf_result * 1e-6,
-            "r",
-            xaxis * 1e6,
-            result.pf_result * 1e-6,
-            "b",
+            np.maximum(result.nf_result * 1e-6, 1.0),
+            "r-",
+            label="Electron (n)",
+            linewidth=1.8,
         )
-        pl.xlabel("x [um]")
-        pl.ylabel("Electron  & Hole  Densities [1/cm^3]")
-        pl.title("Electron (red) & Hole (blue) Densities vs Position ", fontsize=12)
-        pl.legend(("Electron", "Hole"), loc="best", fontsize=12)
-        pl.grid(True)
+        pl.semilogy(
+            xaxis * 1e6,
+            np.maximum(result.pf_result * 1e-6, 1.0),
+            "b-",
+            label="Hole (p)",
+            linewidth=1.8,
+        )
+        pl.xlabel("Position (µm)", fontsize=11)
+        pl.ylabel("Carrier Density (cm⁻³)", fontsize=11)
+        pl.title("Carrier Concentrations (Semi-log)", fontsize=12, fontweight='bold')
+        pl.legend(loc="best", fontsize=10)
+        pl.grid(True, which='both', linestyle='--', alpha=0.4)
 
         pl.subplot(2, 2, 2)
         pl.plot(

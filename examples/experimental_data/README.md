@@ -18,15 +18,16 @@ This data is synthetically generated using the Shockley diode equation with real
 - Saturation current density (Js): 1×10⁻¹² A/cm²
 - Ideality factor (n): 1.05 (slight non-ideality from generation-recombination)
 - Series resistance (Rs): 5 Ω
-- Shunt resistance (Rsh): 10 kΩ
+- Shunt resistance (Rsh): 100 MΩ
 
 **Format:**
 ```
 # Comments start with #
 Voltage (V), Current (A)
--1.0,-1.002e-08
-0.0,0.000e+00
-0.5,2.340e-07
+-1.00,-1.000e-08
+0.00,0.000e+00
+0.50,1.499e-08
+0.80,5.676e-04
 ...
 ```
 

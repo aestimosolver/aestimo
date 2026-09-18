@@ -99,9 +99,9 @@ print(f"  - Device Area: {device_area:.2e} cm^2")
 print(f"  - Doping (p): {doping_p:.2e} cm^-3")
 print(f"  - Doping (n): {doping_n:.2e} cm^-3")
 
-# Parasitic Resistances (Optimized)
-Rs_ext = 2330.0  # Series Resistance (Ohm) - High value to match low Exp current
-Rsh_ext = 5e7   # Shunt Resistance (Ohm) - To match subthreshold leakage
+# Parasitic Resistances (Physical Benchmark)
+Rs_ext = 5.0    # Series Resistance (Ohm) - Physical contact and bulk resistance
+Rsh_ext = 1e8   # Shunt Resistance (Ohm) - 100 MOhm low leakage shunt
 
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION

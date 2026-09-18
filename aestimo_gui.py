@@ -132,6 +132,8 @@ class AestimoGUI(customtkinter.CTk):
                 "Optimal 6-QW InGaN/GaN Solar Cell",
                 "Si p-n Junction (Validation)",
                 "Silicon Diode (Mode 10)",
+                "InGaN p-n Junction (Validation)",
+                "InGaAs p-n Junction (Validation)",
                 "InGaAs/GaAs Multi-QW"
             ], 
             command=self.on_example_selected,
@@ -304,7 +306,6 @@ class AestimoGUI(customtkinter.CTk):
         customtkinter.CTkLabel(row, text="Exp. I-V File:", width=150, anchor="w").pack(side="left")
         self.exp_file_entry = customtkinter.CTkEntry(row)
         self.exp_file_entry.pack(side="left", fill="x", expand=True)
-        self.exp_file_entry.insert(0, "examples/experimental_data/si_pn_experimental_iv.csv")
         customtkinter.CTkButton(row, text="Browse", width=60, command=self.browse_exp_file).pack(side="left", padx=5)
         
         self.create_input_row(exp_frame, "Device Area (cm²):", "area_entry", "5e-4")
@@ -647,23 +648,29 @@ class AestimoGUI(customtkinter.CTk):
             for w in self.val_plot_container.winfo_children(): w.destroy()
             fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(14, 4))
             
-            # Linear Plot
-            ax1.plot(exp_voltage, exp_current, 'ko', label='Experimental', markersize=4, alpha=0.6)
-            ax1.plot(calc_v, calc_i, 'r-', label='Simulation', linewidth=2)
+            # Linear Plot (Current in mA)
+            ax1.plot(exp_voltage, exp_current * 1e3, 'o', label='Experimental', 
+                     markersize=5, markerfacecolor='none', markeredgecolor='black', markeredgewidth=1.2)
+            ax1.plot(calc_v, calc_i * 1e3, '-', label='Simulation (Mode 10)', 
+                     color='#003366', linewidth=2.0)
             ax1.set_xlabel("Voltage (V)")
-            ax1.set_ylabel("Current (A)")
-            ax1.set_title("I-V (Linear)")
-            ax1.legend()
-            ax1.grid(True, alpha=0.3)
+            ax1.set_ylabel("Current (mA)")
+            ax1.set_title("I-V (Linear Scale)", fontweight='bold')
+            ax1.legend(loc='best')
+            ax1.grid(True, which='both', linestyle='--', alpha=0.4)
             
-            # Semi-log Plot
-            ax2.semilogy(exp_voltage, np.abs(exp_current), 'ko', label='Experimental', markersize=4, alpha=0.6)
-            ax2.semilogy(calc_v, np.abs(calc_i), 'r-', label='Simulation', linewidth=2)
+            # Semi-log Plot (Current in mA)
+            exp_i_abs = np.abs(exp_current) * 1e3
+            sim_i_abs = np.abs(calc_i) * 1e3
+            ax2.semilogy(exp_voltage, exp_i_abs, 'o', label='Experimental', 
+                         markersize=5, markerfacecolor='none', markeredgecolor='black', markeredgewidth=1.2)
+            ax2.semilogy(calc_v, sim_i_abs, '-', label='Simulation (Mode 10)', 
+                         color='#003366', linewidth=2.0)
             ax2.set_xlabel("Voltage (V)")
-            ax2.set_ylabel("Current (log A)")
-            ax2.set_title("I-V (Semi-log)")
-            ax2.legend()
-            ax2.grid(True, alpha=0.3)
+            ax2.set_ylabel("|Current| (mA, log scale)")
+            ax2.set_title("I-V (Semi-log)", fontweight='bold')
+            ax2.legend(loc='best')
+            ax2.grid(True, which='both', linestyle='--', alpha=0.4)
             
             # --- Fix: Clip all plots to experimental range (X and Y) ---
             v_min, v_max = exp_voltage.min(), exp_voltage.max()
@@ -671,30 +678,32 @@ class AestimoGUI(customtkinter.CTk):
             ax1.set_xlim(v_min - padding_v, v_max + padding_v)
             ax2.set_xlim(v_min - padding_v, v_max + padding_v)
             
-            # Y-Axis fitting (Linear)
-            i_min, i_max = exp_current.min(), exp_current.max()
+            # Y-Axis fitting (Linear in mA)
+            i_min, i_max = exp_current.min() * 1e3, exp_current.max() * 1e3
             padding_i = (i_max - i_min) * 0.1
             ax1.set_ylim(i_min - padding_i, i_max + padding_i)
             
-            # Y-Axis fitting (Log)
-            exp_i_pos = np.abs(exp_current[exp_current > 0])
-            if len(exp_i_pos) > 0:
-                y_min_log = exp_i_pos.min() / 5
-                y_max_log = exp_i_pos.max() * 5
+            # Y-Axis fitting (Log in mA)
+            pos_exp = exp_i_abs[exp_i_abs > 1e-12]
+            if len(pos_exp) > 0:
+                y_min_log = max(pos_exp.min() / 3, 1e-10)
+                y_max_log = pos_exp.max() * 3
                 ax2.set_ylim(y_min_log, y_max_log)
             
             # Ideality Factor Plot
             if len(n_exp) > 0:
-                ax3.plot(v_mid_exp, n_exp, 'ko', label='Exp. n(V)', markersize=4, alpha=0.6)
+                ax3.plot(v_mid_exp, n_exp, 'o', label='Exp. n(V)', 
+                         markersize=5, markerfacecolor='none', markeredgecolor='black', markeredgewidth=1.2)
             if len(n_sim) > 0:
-                ax3.plot(v_mid_sim, n_sim, 'r-', label='Sim. n(V)', linewidth=2)
+                ax3.plot(v_mid_sim, n_sim, '-', label='Sim. n(V)', 
+                         color='#003366', linewidth=2.0)
             ax3.set_xlabel("Voltage (V)")
             ax3.set_ylabel("Ideality Factor n")
-            ax3.set_title("Ideality Factor Analysis")
+            ax3.set_title("Ideality Factor Analysis", fontweight='bold')
             ax3.set_ylim(0.5, 3.5)
             ax3.set_xlim(v_min - padding_v, v_max + padding_v)
-            ax3.legend()
-            ax3.grid(True, alpha=0.3)
+            ax3.legend(loc='best')
+            ax3.grid(True, which='both', linestyle='--', alpha=0.4)
             
             plt.tight_layout()
             
@@ -905,7 +914,7 @@ class AestimoGUI(customtkinter.CTk):
         self.set_entry(self.tat_field_entry, tat_f)
         
         # Validation
-        self.set_entry(self.exp_file_entry, config.get("exp_file", "examples/experimental_data/si_pn_experimental_iv.csv"))
+        self.set_entry(self.exp_file_entry, config.get("exp_file", ""))
         self.set_entry(self.area_entry, config.get("area", config.get("device_area", "1e-4")))
         self.set_entry(self.rs_entry, config.get("rs", config.get("Rs", "0.0")))
         self.rs_mode_combo.set(config.get("rs_mode", "External (Fast)"))
@@ -985,6 +994,8 @@ class AestimoGUI(customtkinter.CTk):
             "Optimal 6-QW InGaN/GaN Solar Cell": "optimal_mqw_solar_cell.json",
             "Si p-n Junction (Validation)": "pn_with_experimental_validation.json",
             "Silicon Diode (Mode 10)": "sample_pn.json",
+            "InGaN p-n Junction (Validation)": "pn_with_experimental_validation_ingan.json",
+            "InGaAs p-n Junction (Validation)": "pn_with_experimental_validation_ingaas.json",
             "InGaAs/GaAs Multi-QW": "sample_2qw_InGaAS_GaAs.json",
         }
         filename = mapping.get(choice)
@@ -1578,9 +1589,9 @@ class AestimoGUI(customtkinter.CTk):
             input_obj, model, result, figures = run_aestimo(InputObject, drawFigures=True, show=False)
             
             # 2. Validation & Diode Analysis
-            exp_file = config_dict.get("exp_file", "examples/experimental_data/si_pn_experimental_iv.csv")
+            exp_file = config_dict.get("exp_file", "")
             script_dir = os.path.dirname(os.path.abspath(__file__))
-            if not os.path.exists(exp_file):
+            if exp_file and not os.path.exists(exp_file):
                 rel_path = os.path.join(script_dir, exp_file)
                 if os.path.exists(rel_path):
                     exp_file = rel_path
@@ -1605,7 +1616,7 @@ class AestimoGUI(customtkinter.CTk):
             
             report = ""
             metrics = {}
-            if os.path.exists(exp_file):
+            if exp_file and os.path.exists(exp_file):
                 exp_voltage, exp_current = load_experimental_data(exp_file)
                 sim_current_interp = np.interp(exp_voltage, calc_v, calc_i)
                 forward_mask = exp_voltage >= 0.1
@@ -1616,51 +1627,60 @@ class AestimoGUI(customtkinter.CTk):
                     metrics['avg_n'] = np.mean(n_sim)
                 report = generate_validation_report(metrics)
                 
-                # Linear
-                ax1.plot(exp_voltage, exp_current, 'ko', label='Experimental', markersize=4, alpha=0.6)
-                ax1.plot(calc_v, calc_i, 'r-', label='Simulation', linewidth=2)
+                # Linear (Current in mA)
+                ax1.plot(exp_voltage, exp_current * 1e3, 'o', label='Experimental', 
+                         markersize=5, markerfacecolor='none', markeredgecolor='black', markeredgewidth=1.2)
+                ax1.plot(calc_v, calc_i * 1e3, '-', label='Simulation (Mode 10)', 
+                         color='#003366', linewidth=2.0)
                 ax1.set_xlabel("Voltage (V)")
-                ax1.set_ylabel("Current (A)")
-                ax1.set_title("I-V (Linear)")
-                ax1.legend()
-                ax1.grid(True, alpha=0.3)
+                ax1.set_ylabel("Current (mA)")
+                ax1.set_title("I-V (Linear Scale)", fontweight='bold')
+                ax1.legend(loc='best')
+                ax1.grid(True, which='both', linestyle='--', alpha=0.4)
                 
-                # Semi-log
-                ax2.semilogy(exp_voltage, np.abs(exp_current) + 1e-30, 'ko', label='Experimental', markersize=4, alpha=0.6)
-                ax2.semilogy(calc_v, np.abs(calc_i) + 1e-30, 'r-', label='Simulation', linewidth=2)
+                # Semi-log (Current in mA)
+                ax2.semilogy(exp_voltage, np.abs(exp_current) * 1e3, 'o', label='Experimental', 
+                             markersize=5, markerfacecolor='none', markeredgecolor='black', markeredgewidth=1.2)
+                ax2.semilogy(calc_v, np.abs(calc_i) * 1e3, '-', label='Simulation (Mode 10)', 
+                             color='#003366', linewidth=2.0)
                 ax2.set_xlabel("Voltage (V)")
-                ax2.set_ylabel("Current (log A)")
-                ax2.set_title("I-V (Semi-log)")
-                ax2.legend()
-                ax2.grid(True, alpha=0.3)
+                ax2.set_ylabel("|Current| (mA, log scale)")
+                ax2.set_title("I-V (Semi-log)", fontweight='bold')
+                ax2.legend(loc='best')
+                ax2.grid(True, which='both', linestyle='--', alpha=0.4)
                 
                 # Ideality factor
                 if len(n_exp) > 0:
-                    ax3.plot(v_mid_exp, n_exp, 'ko-', label='Exp n', markersize=3, alpha=0.6)
+                    ax3.plot(v_mid_exp, n_exp, 'o', label='Exp n', 
+                             markersize=5, markerfacecolor='none', markeredgecolor='black', markeredgewidth=1.2)
                 if len(n_sim) > 0:
-                    ax3.plot(v_mid_sim, n_sim, 'r-', label='Sim n', linewidth=2)
+                    ax3.plot(v_mid_sim, n_sim, '-', label='Sim n', 
+                             color='#003366', linewidth=2.0)
                 ax3.set_xlabel("Voltage (V)")
                 ax3.set_ylabel("Ideality Factor (n)")
-                ax3.set_title("Ideality Factor")
+                ax3.set_title("Ideality Factor", fontweight='bold')
                 ax3.set_ylim(0.5, 3.5)
-                ax3.legend()
-                ax3.grid(True, alpha=0.3)
+                ax3.legend(loc='best')
+                ax3.grid(True, which='both', linestyle='--', alpha=0.4)
             else:
-                ax1.plot(calc_v, calc_i, 'r-', label='Simulation', linewidth=2)
+                ax1.plot(calc_v, calc_i * 1e3, '-', label='Simulation (Mode 10)', 
+                         color='#003366', linewidth=2.0)
                 ax1.set_xlabel("Voltage (V)")
-                ax1.set_ylabel("Current (A)")
-                ax1.set_title("I-V (Linear)")
-                ax1.grid(True, alpha=0.3)
+                ax1.set_ylabel("Current (mA)")
+                ax1.set_title("I-V (Linear Scale)", fontweight='bold')
+                ax1.grid(True, which='both', linestyle='--', alpha=0.4)
                 
-                ax2.semilogy(calc_v, np.abs(calc_i) + 1e-30, 'r-', label='Simulation', linewidth=2)
+                ax2.semilogy(calc_v, np.abs(calc_i) * 1e3 + 1e-30, '-', label='Simulation (Mode 10)', 
+                             color='#003366', linewidth=2.0)
                 ax2.set_xlabel("Voltage (V)")
-                ax2.set_ylabel("Current (log A)")
-                ax2.set_title("I-V (Semi-log)")
-                ax2.grid(True, alpha=0.3)
+                ax2.set_ylabel("|Current| (mA, log scale)")
+                ax2.set_title("I-V (Semi-log)", fontweight='bold')
+                ax2.grid(True, which='both', linestyle='--', alpha=0.4)
                 
                 v_mid_sim, n_sim = calculate_ideality_factor(calc_v, calc_i, temperature=T)
                 if len(n_sim) > 0:
-                    ax3.plot(v_mid_sim, n_sim, 'r-', label='Sim n', linewidth=2)
+                    ax3.plot(v_mid_sim, n_sim, '-', label='Sim n', 
+                             color='#003366', linewidth=2.0)
                 ax3.set_xlabel("Voltage (V)")
                 ax3.set_ylabel("Ideality Factor (n)")
                 ax3.set_title("Ideality Factor")

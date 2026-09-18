@@ -63,7 +63,7 @@
     "Quantum_Regions_boundary": "[[300.0, 315.0]]",
     "device_type": "Generic Diode / LED",
     "tat_field": "1e10",
-    "exp_file": "examples/experimental_data/si_pn_experimental_iv.csv",
+    "exp_file": "",
     "area": "1e-4",
     "rs": "0.0",
     "rs_mode": "External (Fast)",
