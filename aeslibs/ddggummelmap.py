@@ -73,6 +73,56 @@ from .ddgelectron_driftdiffusion import DDGelectron_driftdiffusion
 from .ddghole_driftdiffusion import DDGhole_driftdiffusion
 from .func_lib import DDGp2phip,DDGn2phin
 
+def apply_photovoltaic_BCs(fermin, fermip, V, n_max, model, V_applied, idata):
+    """
+    Apply photovoltaic (selective contact) boundary conditions.
+    
+    For solar cells, contacts have different work functions that create
+    a built-in potential difference, enabling open-circuit voltage.
+    
+    Parameters:
+    -----------
+    fermin : array [n_max, 2]
+        Electron quasi-Fermi potential
+    fermip : array [n_max, 2]
+        Hole quasi-Fermi potential  
+    V : array [n_max]
+        Electrostatic potential
+    n_max : int
+        Number of grid points
+    model : object
+        Device model with PV parameters
+    V_applied : float
+        Applied voltage (V)
+    idata : object
+        Contains initial equilibrium boundary values idata.Fn, idata.Fp
+    """
+    if not getattr(model, 'photovoltaic_mode', False):
+        return fermin, fermip
+    
+    dop = getattr(model, 'dop', None)
+    if dop is None:
+        dop_left = 1.0 # n-type
+        dop_right = -1.0 # p-type
+    else:
+        dop_left = dop[0]
+        dop_right = dop[n_max-1]
+
+    # Left contact
+    if dop_left > 0: # n-type contact (cathode)
+        fermin[0, 1] = idata.Fn[0]
+    else: # p-type contact (anode)
+        fermip[0, 1] = idata.Fp[0]
+        
+    # Right contact
+    if dop_right > 0: # n-type contact (cathode)
+        fermin[n_max-1, 1] = idata.Fn[n_max-1]
+    else: # p-type contact (anode)
+        fermip[n_max-1, 1] = idata.Fp[n_max-1]
+    
+    return fermin, fermip
+
+
 def DDGgummelmap (n_max,xaxis,idata,odata,toll,maxit,ptoll,pmaxit,verbose,ni,fi_e,fi_h,model,Vt):
 
     odata  = idata
@@ -104,39 +154,29 @@ def DDGgummelmap (n_max,xaxis,idata,odata,toll,maxit,ptoll,pmaxit,verbose,ni,fi_
         
         #print("here_2")
         
-        """
-        print("vout=",vout[:,1])
-        print("electron_density=",electron_density[:,1])
-        print("hole_density=",hole_density[:,1])
-        
-        
-        check_point_7 
-        """
                                                         	
         if (verbose>1):
           print (1,"\n\nupdating electron qfl\n\n")
         electron_density[:,2]=DDGelectron_driftdiffusion(vout[:,1], xaxis, electron_density[:,1],hole_density[:,1],idata.nis,idata.TAUN0,idata.TAUP0,idata.mun,fi_e,fi_h,model,Vt,idata)
         
         fermin[:,1] = DDGn2phin(vout[:,1],electron_density[:,2])
-        fermin[0,1]   = idata.Fn[0]
-        fermin[n_max-1,1] = idata.Fn[len(idata.Fn)-1]
         
-       
         if (verbose>1):
           print("updating hole qfl\n\n")
         hole_density[:,2] = DDGhole_driftdiffusion(vout[:,1], xaxis, hole_density[:,1],electron_density[:,1],idata.nis,idata.TAUN0,idata.TAUP0,idata.mup,fi_e,fi_h,model,Vt,idata)
         
         fermip[:,1] = DDGp2phip(vout[:,1],hole_density[:,2])
-        fermip[0,1]   = idata.Fp[0]
-        """ 
-        print("vout=",vout[:,1])
-        print("electron_density=",electron_density[:,2])
-        print("hole_density=",hole_density[:,2])
+
+        if not getattr(model, 'photovoltaic_mode', False):
+            fermin[0,1]   = idata.Fn[0]
+            fermin[n_max-1,1] = idata.Fn[len(idata.Fn)-1]
+            fermip[0,1]   = idata.Fp[0]
+            fermip[n_max-1,1] = idata.Fp[len(idata.Fp)-1]
         
-        
-        check_point_14 
-        """
-        fermip[n_max-1,1] = idata.Fp[len(idata.Fp)-1]
+        # Apply photovoltaic boundary conditions if enabled
+        # This will override the ohmic BCs above when photovoltaic_mode=True
+        V_applied = getattr(idata, 'V_applied', 0.0)  # Applied voltage for this iteration
+        fermin, fermip = apply_photovoltaic_BCs(fermin, fermip, vout[:,1], n_max, model, V_applied, idata)
         
         if (verbose>1):
           print("checking for convergence\n\n")
@@ -145,7 +185,7 @@ def DDGgummelmap (n_max,xaxis,idata,odata,toll,maxit,ptoll,pmaxit,verbose,ni,fi_
         nrv = np.linalg.norm (vout[:,1]-vout[:,0],np.inf)
         nrm[i] = max([nrfn,nrfp,nrv])
         if (verbose>1):
-          print (" max(|phin_(k+1)-phinn_(k)| , |phip_(k+1)-phip_(k)| , |v_(k+1)- v_(k)| )= %d \n"%nrm[i])
+          print (" max(|phin_(k+1)-phinn_(k)| , |phip_(k+1)-phip_(k)| , |v_(k+1)- v_(k)| )= %e \n"%nrm[i])
         #print("norm=",nrm[i],toll)
         if (nrm[i]<toll):
         		break

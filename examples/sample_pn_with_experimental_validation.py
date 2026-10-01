@@ -8,10 +8,29 @@
 # 
 # The simulation uses:
 # - Drift-Diffusion solver (scheme 9: Gummel & Newton map)
-# - Si p-n junction with matched doping profile
+# - Si p-n junction with matched doping profile (loaded from exp file)
 # - Voltage sweep to generate I-V characteristics
 # - Automatic comparison with experimental data
 # ----------------------------------------------------------------------
+
+import numpy as np
+import os
+import sys
+from os import path
+
+# Ensure local workspace takes priority over site-packages
+script_dir = os.path.dirname(os.path.abspath(__file__))
+repo_root = os.path.abspath(os.path.join(script_dir, '..'))
+if repo_root not in sys.path:
+    sys.path.insert(0, repo_root)
+if os.getcwd() not in sys.path:
+    sys.path.insert(0, os.getcwd())
+
+try:
+    from aeslibs.experimental_validation import load_experimental_metadata
+except ImportError:
+    # Fallback if aeslibs not found in path
+    def load_experimental_metadata(f): return {}
 
 # ----------------
 # GENERAL SETTINGS
@@ -21,8 +40,9 @@
 T = 300.0  # Kelvin
 
 # COMPUTATIONAL SCHEME
-# 9: Schrodinger-Poisson-Drift_Diffusion using Gummel & Newton map
-computation_scheme = 9
+# 10: Fully-Coupled Newton-Raphson drift-diffusion solver
+computation_scheme = 10
+comp_scheme = 10
 
 # QUANTUM
 # Total subband number to be calculated
@@ -34,7 +54,54 @@ subnumber_e = 2
 Fapplied = 0.0  # Applied electric field (V/m)
 vmax = 0.80     # Maximum voltage (V)
 vmin = 0.0      # Minimum voltage (V)
-Each_Step = 0.02  # Voltage step (V)
+Each_Step = 0.01  # Voltage step (V)
+
+# --------------------------------
+# EXPERIMENTAL CONFIGURATION
+# --------------------------------
+# Set to True to enable experimental data comparison
+enable_experimental_validation = True
+
+# Path to experimental I-V data file
+# Default path assuming running from project root
+experimental_iv_file = "examples/experimental_data/si_pn_experimental_iv.csv"
+
+if not os.path.exists(experimental_iv_file):
+     # Robust path finding
+     script_dir = os.path.dirname(os.path.abspath(__file__))
+     
+     # Check 1: script_dir/experimental_data/... (if script is in examples folder)
+     candidate1 = os.path.join(script_dir, "experimental_data", "si_pn_experimental_iv.csv")
+     
+     # Check 2: script_dir/examples/experimental_data/... (if script is in root)
+     candidate2 = os.path.join(script_dir, "examples", "experimental_data", "si_pn_experimental_iv.csv")
+     
+     if os.path.exists(candidate1):
+         experimental_iv_file = candidate1
+     elif os.path.exists(candidate2):
+         experimental_iv_file = candidate2
+
+# DYNAMIC PARAMETER LOADING
+# Validate that we match the experiment dimensions
+print(f"Reading metadata from: {experimental_iv_file}")
+metadata = load_experimental_metadata(experimental_iv_file)
+
+# Default values if metadata missing
+default_area = 1e-4
+default_doping = 1e18
+
+# Load values
+device_area = metadata.get('area_cm2', default_area)
+doping_p = metadata.get('doping_p', default_doping)
+doping_n = metadata.get('doping_n', default_doping)
+
+print(f"  - Device Area: {device_area:.2e} cm^2")
+print(f"  - Doping (p): {doping_p:.2e} cm^-3")
+print(f"  - Doping (n): {doping_n:.2e} cm^-3")
+
+# Parasitic Resistances (Physical Benchmark)
+Rs_ext = 5.0    # Series Resistance (Ohm) - Physical contact and bulk resistance
+Rsh_ext = 1e8   # Shunt Resistance (Ohm) - 100 MOhm low leakage shunt
 
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
@@ -47,29 +114,15 @@ mat_type = 'Zincblende'
 
 # DEVICE STRUCTURE
 # Si p-n junction with symmetric doping
-# Doping levels matched to experimental device: 1e18 cm^-3
+# Doping levels matched to experimental device dynamically
 material = [
-    [2500.0, 'Si', 0.0, 0.0, 1e18, 'p', 'b'],  # p-side
-    [2500.0, 'Si', 0.0, 0.0, 1e18, 'n', 'b']   # n-side
+    [2500.0, 'Si', 0.0, 0.0, doping_p, 'p', 'b'],  # p-side
+    [2500.0, 'Si', 0.0, 0.0, doping_n, 'n', 'b']   # n-side
 ]
-
-# EXPERIMENTAL VALIDATION SETTINGS
-# Set to True to enable experimental data comparison
-enable_experimental_validation = True
-
-# Path to experimental I-V data file
-experimental_iv_file = "examples/experimental_data/si_pn_experimental_iv.csv"
-
-# Device parameters for current calculation
-device_area = 1e-4  # cm² (100 x 100 μm)
 
 # ---------------------------------------- 
 # STANDARD SETUP (DO NOT MODIFY)
 # ----------------------------------------
-import numpy as np
-import os
-from os import path
-
 x_max = sum([layer[0] for layer in material])
 
 def round2int(x):
@@ -88,21 +141,19 @@ inputfilename = "sample_pn_with_experimental_validation"
 # ----------------------------------------
 if __name__ == "__main__":
     input_obj = vars()
-    import sys
-    sys.path.append(path.join(path.dirname(__file__), '..'))
     
     # Run the simulation
     import aestimo
     print("="*60)
-    print("Running Si p-n Junction Simulation with Experimental Validation")
+    print("Running Si p-n Junction Simulation")
     print("="*60)
     print(f"Device structure: {len(material)} layers")
     print(f"Total device length: {x_max} nm")
     print(f"Voltage range: {vmin}V to {vmax}V (step: {Each_Step}V)")
-    print(f"Doping: p-side = {material[0][4]:.1e} cm⁻³, n-side = {material[1][4]:.1e} cm⁻³")
     print("="*60)
     
     # Run simulation
+    # Pass input_obj to run_aestimo
     results = aestimo.run_aestimo(input_obj)
     
     print("\nSimulation completed!")
@@ -116,65 +167,46 @@ if __name__ == "__main__":
         print("="*60)
         
         try:
-            # Import validation module
-            sys.path.append(path.join(path.dirname(__file__), '..', 'aeslibs'))
-            from experimental_validation import (
+            from aeslibs.experimental_validation import (
                 load_experimental_data,
-                calculate_current_from_simulation,
+                load_current_from_avcurr,
+                apply_parasitic_resistances,
                 compute_error_metrics,
                 plot_iv_comparison,
                 generate_validation_report
             )
             
             # Load experimental data
-            print(f"\nLoading experimental data from: {experimental_iv_file}")
+            print(f"\nLoading experimental data...")
             exp_voltage, exp_current = load_experimental_data(experimental_iv_file)
             print(f"Loaded {len(exp_voltage)} experimental data points")
             print(f"Voltage range: {exp_voltage.min():.2f}V to {exp_voltage.max():.2f}V")
             
             # Extract simulation results
-            # Note: This is a simplified extraction. Actual implementation depends
-            # on the output format from aestimo.run_aestimo()
-            
             print("\nExtracting simulation results...")
             output_dir = f"{inputfilename}_output"
             
-            # Check if output directory exists
             if os.path.exists(output_dir):
-                # List all voltage output files
-                voltage_files = sorted([f for f in os.listdir(output_dir) 
-                                      if f.startswith('potn_eh_') and f.endswith('.dat')])
+                # Extract actual currents from simulation output
+                # Using load_current_from_avcurr to get reliable total current
+                calc_v_int, calc_i_int = load_current_from_avcurr(output_dir, device_area_cm2=device_area)
                 
-                print(f"Found {len(voltage_files)} simulation voltage points")
+                print(f"Extracted {len(calc_v_int)} simulation points.")
                 
-                # For this demo, create a simple placeholder simulation result
-                # In a real implementation, you would parse the actual simulation output
-                sim_voltages = np.arange(vmin, vmax + Each_Step/2, Each_Step)
+                # Apply Parasitic Resistances (External Rs mode)
+                print(f"\nApplying Parasitic Resistances:")
+                print(f"- Rs: {Rs_ext} Ohm")
+                print(f"- Rsh: {Rsh_ext:.1e} Ohm")
                 
-                # Create dummy simulation data for demonstration
-                # This should be replaced with actual current calculation from simulation
-                # using the calculate_current_from_simulation function with real data
-                print("\nNOTE: Using placeholder simulation currents for demonstration.")
-                print("      Real implementation would extract carrier densities from")
-                print(f"      output files in {output_dir}/ and calculate actual currents.")
+                calc_v, calc_i = apply_parasitic_resistances(calc_v_int, calc_i_int, Rs=Rs_ext, Rsh=Rsh_ext)
                 
-                # Placeholder: Simple diode equation for demonstration
-                Is = 1e-12 * device_area  # Saturation current
-                eta = 1.1  # Ideality factor
-                Vt = 0.0259  # Thermal voltage at 300K
-                sim_currents = Is * (np.exp(sim_voltages / (eta * Vt)) - 1)
+                # Interpolate simulation to experimental voltage points for metrics
+                sim_current_interp = np.interp(exp_voltage, calc_v, calc_i)
                 
-                # Interpolate simulation to experimental voltage points
-                sim_current_interp = np.interp(exp_voltage, sim_voltages, sim_currents)
-                
-                # Compute error metrics
-                print("\nComputing error metrics...")
-                # Only use forward bias for comparison (V >= 0)
-                forward_mask = exp_voltage >= 0
-                metrics = compute_error_metrics(
-                    exp_current[forward_mask],
-                    sim_current_interp[forward_mask]
-                )
+                # Compute error metrics (Focus on active region V > 0.1V)
+                print("\nComputing error metrics (Active region V > 0.1V)...")
+                mask = exp_voltage >= 0.1
+                metrics = compute_error_metrics(exp_current[mask], sim_current_interp[mask])
                 
                 # Generate validation report
                 report_path = path.join(output_dir, "validation_report.txt")
@@ -185,13 +217,14 @@ if __name__ == "__main__":
                 print(f"\nGenerating I-V comparison plot...")
                 plot_iv_comparison(
                     exp_voltage, exp_current,
-                    sim_voltages, sim_currents,
+                    calc_v, calc_i,
                     output_path=plot_path,
                     show=False
                 )
                 
                 print("\n" + "="*60)
                 print("Validation complete!")
+                print(f"- Metrics: Log-RMSE = {metrics.get('log_rmse', 'N/A'):.4f}")
                 print(f"- Validation report: {report_path}")
                 print(f"- Comparison plot: {plot_path}")
                 print("="*60)
@@ -202,7 +235,6 @@ if __name__ == "__main__":
         
         except Exception as e:
             print(f"\nError during experimental validation: {e}")
-            print("Continuing without validation...")
             import traceback
             traceback.print_exc()
     

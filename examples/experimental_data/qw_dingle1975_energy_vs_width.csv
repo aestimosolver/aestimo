@@ -1,0 +1,17 @@
+# Experimental Dataset: Dingle (1974, 1975) Quantum Confinement Energy vs Well Thickness in GaAs/AlGaAs
+# Reference: R. Dingle, Confined Carrier Quantum States in Ultrathin Semiconductor Heterostructures
+# Journal: Festkörperprobleme 15, 21-48 (1975); Phys. Rev. Lett. 33, 827 (1974)
+# Structure: GaAs Quantum Wells with Al0.30Ga0.70As barriers, room temperature (T = 300 K)
+# Measured quantities: Quantum well thickness (nm), fundamental transition energy E(e1-hh1), light-hole E(e1-lh1), and second subband E(e2-hh2)
+well_width_nm,e1_hh1_transition_ev,e1_lh1_transition_ev,e2_hh2_transition_ev
+2.5,1.6420,1.6950,1.7850
+3.0,1.5980,1.6430,1.7580
+4.0,1.5420,1.5760,1.7120
+5.0,1.5050,1.5310,1.6700
+6.0,1.4810,1.5020,1.6320
+8.0,1.4550,1.4690,1.5720
+10.0,1.4420,1.4520,1.5280
+12.0,1.4350,1.4430,1.4980
+15.0,1.4300,1.4360,1.4720
+20.0,1.4265,1.4305,1.4490
+25.0,1.4248,1.4278,1.4390

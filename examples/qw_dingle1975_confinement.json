@@ -1,0 +1,84 @@
+{
+  "project_name": "qw_dingle1975_confinement",
+  "device_name": "Dingle 1975 GaAs/AlGaAs Confinement Energy vs Well Width",
+  "device_type": "Quantum Well (QW) Characterization & Validation",
+  "layers": [
+    {
+      "material": "AlGaAs",
+      "thickness": 50.0,
+      "type": "barrier",
+      "mole": 0.30,
+      "mole_y": 0.0,
+      "doping": 0.0,
+      "doping_type": "i"
+    },
+    {
+      "material": "GaAs",
+      "thickness": 10.0,
+      "type": "well",
+      "mole": 0.0,
+      "mole_y": 0.0,
+      "doping": 0.0,
+      "doping_type": "i"
+    },
+    {
+      "material": "AlGaAs",
+      "thickness": 50.0,
+      "type": "barrier",
+      "mole": 0.30,
+      "mole_y": 0.0,
+      "doping": 0.0,
+      "doping_type": "i"
+    }
+  ],
+  "temp": 300.0,
+  "field": 0.0,
+  "bc_left": 0.0,
+  "bc_right": 0.0,
+  "vmin": 0.0,
+  "vmax": 1.5,
+  "vstep": 0.05,
+  "solver": "0: Schrodinger",
+  "grid_step": 0.1,
+  "max_pts": 200000,
+  "mat_sys": "Zincblende",
+  "sub_e": 3,
+  "sub_h": 3,
+  "enable_qw_solver": true,
+  "qw_num_e": 3,
+  "qw_num_h": 3,
+  "qw_coupling_mode": "Coupled MQW",
+  "qw_self_consistent": false,
+  "qw_max_iter": 20,
+  "qw_damping": 0.2,
+  "Quantum_Regions": false,
+  "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+  "tat_field": "1e10",
+  "exp_file": "examples/experimental_data/qw_dingle1975_energy_vs_width.csv",
+  "area": "1e-4",
+  "rs": "0.0",
+  "rs_mode": "External (Fast)",
+  "rsh": "1e12",
+  "graded_junc": false,
+  "diffusion_len": "10.0",
+  "parameter_provenance": {
+    "well_material": {
+      "value": "GaAs",
+      "tier": "EXPERIMENTAL",
+      "source": "Dingle et al., Phys. Rev. Lett. 33, 827 (1974)",
+      "notes": "Epitaxial MBE active well"
+    },
+    "barrier_composition_x": {
+      "value": 0.30,
+      "tier": "EXPERIMENTAL",
+      "source": "Dingle, Festkörperprobleme 15, 21 (1975)",
+      "notes": "AlGaAs barrier mole fraction"
+    },
+    "subband_transition_measurement": {
+      "value": "Optical absorption and photoluminescence at 300 K",
+      "tier": "EXPERIMENTAL",
+      "source": "Dingle, Festkörperprobleme 15, 21 (1975)",
+      "notes": "e1-hh1, e1-lh1, e2-hh2 peaks"
+    }
+  }
+}

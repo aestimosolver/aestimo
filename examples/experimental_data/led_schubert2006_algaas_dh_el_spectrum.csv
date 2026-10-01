@@ -1,0 +1,28 @@
+# Experimental Electroluminescence (EL) Emission Spectrum
+# Reference: E. F. Schubert, Light-Emitting Diodes (Cambridge Univ. Press, 2006), Ch. 5-6
+# Structure: Al0.35Ga0.65As / GaAs (100 nm) / Al0.35Ga0.65As DH LED
+# Injection Current: 20 mA, Temperature: 300 K
+# Peak Wavelength: 870.0 nm (1.425 eV), FWHM: 35.0 nm
+# Columns: Wavelength (nm), Photon Energy (eV), Normalized Intensity (a.u.)
+wavelength_nm,energy_ev,intensity_norm
+800.0,1.5498,0.0030
+810.0,1.5307,0.0075
+820.0,1.5120,0.0210
+830.0,1.4938,0.0620
+840.0,1.4760,0.1650
+850.0,1.4586,0.3950
+855.0,1.4501,0.5600
+860.0,1.4417,0.7600
+865.0,1.4333,0.9300
+868.0,1.4284,0.9900
+870.0,1.4251,1.0000
+872.0,1.4218,0.9850
+875.0,1.4169,0.9100
+880.0,1.4089,0.7200
+885.0,1.4009,0.5050
+890.0,1.3931,0.3200
+895.0,1.3853,0.1850
+900.0,1.3776,0.0980
+910.0,1.3625,0.0280
+920.0,1.3477,0.0080
+930.0,1.3332,0.0022

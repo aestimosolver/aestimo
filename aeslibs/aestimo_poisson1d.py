@@ -25,11 +25,51 @@ needs from this book:
 Computational electronics : semiclassical and quantum device modeling and simulation. by:
     [Dragica Vasileska; Stephen M Goodnick; Gerhard Klimeck]
 """
+import os
+import sys
 import numpy as np
 import matplotlib.pyplot as pl
 from math import exp, log, sqrt
 
-import config
+# Ensure project root is in sys.path
+root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
+try:
+    import config
+except ImportError:
+    import types
+    config = types.ModuleType("config")
+
+# Robust fallback defaults for all config attributes
+_config_defaults = {
+    'damping': 0.2,
+    'Stern_damping': True,
+    'max_iterations': 80,
+    'convergence_test': 1e-4,
+    'predic_correc': True,
+    'anti_crossing_length': 0.0001,
+    'amort_wave_0': 1.5,
+    'amort_wave_1': 1.5,
+    'strain': True,
+    'piezo': False,
+    'piezo1': True,
+    'quantum_effect': True,
+    'parameters': True,
+    'electricfield_out': True,
+    'potential_out': True,
+    'sigma_out': True,
+    'probability_out': True,
+    'states_out': True,
+    'Drift_Diffusion_out': True,
+    'wavefunction_scalefactor': 400.0
+}
+for _attr, _val in _config_defaults.items():
+    if not hasattr(config, _attr):
+        setattr(config, _attr, _val)
+
+from .func_lib import CaugheyThomasMobility
 
 # Defining constants and material parameters
 q = 1.602176e-19  # C
@@ -383,14 +423,22 @@ def fd1(Ei, Ef, model):  # use
     """integral of Fermi Dirac Equation for energy independent density of states.
     Ei [meV], Ef [meV], T [K]"""
     T = model.T
-    return kb * T * log(exp(meV2J * (Ei - Ef) / (kb * T)) + 1)
+    # Prevent overflow by limiting the exponent argument
+    arg = meV2J * (Ei - Ef) / (kb * T)
+    if arg > 700:  # exp(700) is near float64 overflow
+        return kb * T * arg  # For large positive arg, exp(arg) >> 1, so result ≈ kb*T*arg
+    return kb * T * log(exp(arg) + 1)
 
 
 def fd2(Ei, Ef, model):
     """integral of Fermi Dirac Equation for energy independent density of states.
     Ei [meV], Ef [meV], T [K]"""
     T = model.T
-    return kb * T * log(exp(meV2J * (Ef - Ei) / (kb * T)) + 1)
+    # Prevent overflow by limiting the exponent argument
+    arg = meV2J * (Ef - Ei) / (kb * T)
+    if arg > 700:  # exp(700) is near float64 overflow
+        return kb * T * arg  # For large positive arg, exp(arg) >> 1, so result ≈ kb*T*arg
+    return kb * T * log(exp(arg) + 1)
 
 
 def fd3(x):
@@ -460,8 +508,8 @@ def amort_wave(j, Well_boundary, n_max):
         config.amort_wave_1 * (Well_boundary[j, 1] - Well_boundary[j, 0]) / 2
     )
 
-    I1 = I11 - amort_wave_0  # n_max-70#
-    I2 = I22 + amort_wave_1  # n_max-5#
+    I1 = max(0, I11 - amort_wave_0)
+    I2 = min(n_max, I22 + amort_wave_1)
     return I1, I2, I11, I22
 
 
@@ -1122,27 +1170,31 @@ def Current1(
     for i in range(1, n_max - 1):
 
         # Electron Current
+        delta_fi_p = fi[i + 1] - fi[i]
+        delta_fi_m = fi[i] - fi[i - 1]
+        
         Jnip1by2[vindex, i] = (
             (q * mun[i] * Vt / (dx * Ldi))
             * ni
-            * (n[i + 1] * Ber((fi[i + 1] - fi[i])) - n[i] * Ber((fi[i] - fi[i + 1])))
+            * (n[i + 1] * Ber(delta_fi_p) - n[i] * Ber(-delta_fi_p))
         )
         Jnim1by2[vindex, i] = (
             (q * mun[i] * Vt / (dx * Ldi))
             * ni
-            * (n[i] * Ber((fi[i] - fi[i - 1])) - n[i - 1] * Ber((fi[i - 1] - fi[i])))
+            * (n[i] * Ber(delta_fi_m) - n[i - 1] * Ber(-delta_fi_m))
         )
         Jelec[vindex, i] = (Jnip1by2[vindex, i] + Jnim1by2[vindex, i]) / 2
+        
         # Hole Current
         Jpip1by2[vindex, i] = (
             (q * mup[i] * Vt / (dx * Ldi))
             * ni
-            * (p[i + 1] * Ber((fi[i] - fi[i + 1])) - p[i] * Ber((fi[i + 1] - fi[i])))
+            * (p[i + 1] * Ber(-delta_fi_p) - p[i] * Ber(delta_fi_p))
         )
         Jpim1by2[vindex, i] = (
             (q * mup[i] * Vt / (dx * Ldi))
             * ni
-            * (p[i] * Ber((fi[i - 1] - fi[i])) - p[i - 1] * Ber((fi[i] - fi[i - 1])))
+            * (p[i] * Ber(-delta_fi_m) - p[i - 1] * Ber(delta_fi_m))
         )
         Jhole[vindex, i] = (Jpip1by2[vindex, i] + Jpim1by2[vindex, i]) / 2
     ##         Jtotal(vindex) = Jelec
@@ -1433,12 +1485,19 @@ def Mobility2(mun0, mup0, fi, Vt, Ldi, VSATN, VSATP, BETAN, BETAP, n_max, dx):
         Efield[i] = abs(fi[i] - fi[i + 1]) * Vt / (dx)
     Efield[0] = Efield[1]
     Efield[n_max - 1] = Efield[n_max - 2]
+    # Calculate Temperature from Vt (Vt = kb*T/q)
+    T_curr = (Vt * q / kb)
+    scale_T = (T_curr / 300.0) ** (-1.5)
+    
     ## Calculate the Field Dependant Mobility at each Node
     for i in range(0, n_max):
-        pdeno = (mup0[i] * Efield[i] / VSATP[i]) ** BETAP[i]
-        mup[i] = mup0[i] * ((1 / (1 + pdeno)) ** (1 / BETAP[i]))
-        ndeno = (mun0[i] * Efield[i] / VSATN[i]) ** BETAN[i]
-        mun[i] = mun0[i] * ((1 / (1 + ndeno)) ** (1 / BETAN[i]))
+        mun_lowfield = mun0[i] * scale_T
+        mup_lowfield = mup0[i] * scale_T
+        
+        pdeno = (mup_lowfield * Efield[i] / VSATP[i]) ** BETAP[i]
+        mup[i] = mup_lowfield * ((1 / (1 + pdeno)) ** (1 / BETAP[i]))
+        ndeno = (mun_lowfield * Efield[i] / VSATN[i]) ** BETAN[i]
+        mun[i] = mun_lowfield * ((1 / (1 + ndeno)) ** (1 / BETAN[i]))
     mup[0] = mup[1]
     mup[n_max - 1] = mup[n_max - 2]
     mun[0] = mun[1]
@@ -1447,7 +1506,7 @@ def Mobility2(mun0, mup0, fi, Vt, Ldi, VSATN, VSATP, BETAN, BETAP, n_max, dx):
     return mun, mup
 
 
-def Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0):
+def Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0, ni, G_optical=0.0, iteration=1, model=None, dop=None, Cn0=None, Cp0=None, damping=0.7):
     #################################################################################
     ## 3.2 Solve Continuity Equation for Electron and Holes using LU Decomposition ##
     #################################################################################
@@ -1468,41 +1527,114 @@ def Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0):
     betan = np.zeros(n_max)
     betap = np.zeros(n_max)
     fnp = np.zeros(n_max)
-    dx2 = dx * dx
-    an[0] = 0  # Co-ef for electron at Anode
-    bn[0] = 1  # Co-ef for electron at Anode
-    cn[0] = 0  # Co-ef for electron at Anode
-    ap[0] = 0  # Co-ef for hole     at Anode
-    bp[0] = 1  # Co-ef for hole     at Anode
-    cp[0] = 0  # Co-ef for hole     at Anode
-    fnp[0] = (
-        (dx2 / Vt) * (p[0] * n[0] - 1) / (TAUP0[0] * (n[0] + 1) + TAUN0[0] * (p[0] + 1))
-    )
-    fn[0] = n[0]
-    fp[0] = p[0]
-    an[n_max - 1] = 0  # Co-ef for electron at Cathode
-    bn[n_max - 1] = 1  # Co-ef for electron at Cathode
-    cn[n_max - 1] = 0  # Co-ef for electron at Cathode
-    ap[n_max - 1] = 0  # Co-ef for hole     at Cathode
-    bp[n_max - 1] = 1  # Co-ef for hole     at Cathode
-    cp[n_max - 1] = 0  # Co-ef for hole     at Cathode
-    fnp[n_max - 1] = (
-        (dx2 / Vt)
-        * (p[n_max - 1] * n[n_max - 1] - 1)
-        / (
-            TAUP0[n_max - 1] * (n[n_max - 1] + 1)
-            + TAUN0[n_max - 1] * (p[n_max - 1] + 1)
-        )
-    )
-    fn[n_max - 1] = n[n_max - 1]
-    fp[n_max - 1] = p[n_max - 1]
+    dx_m = dx             # dx is already in meters
+    mun_s = mun * 1e-4    # Convert cm2/Vs to m2/Vs
+    mup_s = mup * 1e-4    # Convert cm2/Vs to m2/Vs
+    dx2 = dx_m * dx_m
+    
+    # Handle G_optical (Assume passed from aestimo.py is physical m^-3 s^-1)
+    if np.isscalar(G_optical):
+        G_opt_m3 = np.full(n_max, G_optical)
+    else:
+        G_opt_m3 = G_optical
+        
+    pv_mode = getattr(model, 'photovoltaic_mode', False) if model is not None else False
+    s_recomb = getattr(model, 'surface_recomb', (0.0, 0.0)) if model is not None else (0.0, 0.0)
+    try:
+        S_left = float(s_recomb[0]) if hasattr(s_recomb, '__len__') and len(s_recomb) > 0 else float(s_recomb)
+        S_right = float(s_recomb[1]) if hasattr(s_recomb, '__len__') and len(s_recomb) > 1 else float(s_recomb)
+    except:
+        S_left = 0.0
+        S_right = 0.0
+
+    # Convert surface recombination velocity from cm/s to m/s
+    S_left_m = S_left * 1e-2
+    S_right_m = S_right * 1e-2
+
+    if dop is not None:
+        left_is_p = dop[0] < 0  # p-type doping is stored as negative in aestimo
+        right_is_n = dop[n_max - 1] > 0
+
+        # --- Anode (left contact, x=0) ---
+        dv_left = fi[1] - fi[0]
+        if left_is_p:
+            # Fix holes (majority): Dirichlet
+            ap[0] = 0.0; bp[0] = 1.0; cp[0] = 0.0; fp[0] = p[0]
+            # Minority electrons: Robin boundary with Sn
+            Dn0 = mun_s[0] * Vt  # m2/s
+            gamma_n0 = (S_left_m * dx_m / max(Dn0, 1e-30))
+            if gamma_n0 > 1e6 or not pv_mode:
+                # High recombination limit (Ohmic Dirichlet): n[0] = n_eq
+                an[0] = 0.0; bn[0] = 1.0; cn[0] = 0.0; fn[0] = n[0]
+            else:
+                # Generalized Robin condition: (B(-dv) + gamma) n[0] - B(dv) n[1] = gamma * n_eq
+                an[0] = 0.0
+                bn[0] = Ber(-dv_left) + gamma_n0
+                cn[0] = -Ber(dv_left)
+                fn[0] = gamma_n0 * n[0]
+        else:
+            # Fix electrons (majority): Dirichlet
+            an[0] = 0.0; bn[0] = 1.0; cn[0] = 0.0; fn[0] = n[0]
+            # Minority holes: Robin boundary with Sp
+            Dp0 = mup_s[0] * Vt
+            gamma_p0 = (S_left_m * dx_m / max(Dp0, 1e-30))
+            if gamma_p0 > 1e6 or not pv_mode:
+                ap[0] = 0.0; bp[0] = 1.0; cp[0] = 0.0; fp[0] = p[0]
+            else:
+                ap[0] = 0.0
+                bp[0] = Ber(-dv_left) + gamma_p0
+                cp[0] = -Ber(dv_left)
+                fp[0] = gamma_p0 * p[0]
+
+        # --- Cathode (right contact, x=L) ---
+        dv_right = fi[n_max - 1] - fi[n_max - 2]
+        if right_is_n:
+            # Fix electrons (majority): Dirichlet
+            an[n_max - 1] = 0.0; bn[n_max - 1] = 1.0; cn[n_max - 1] = 0.0; fn[n_max - 1] = n[n_max - 1]
+            # Minority holes: Robin boundary with Sp
+            DpL = mup_s[n_max - 1] * Vt
+            gamma_pL = (S_right_m * dx_m / max(DpL, 1e-30))
+            if gamma_pL > 1e6 or not pv_mode:
+                ap[n_max - 1] = 0.0; bp[n_max - 1] = 1.0; cp[n_max - 1] = 0.0; fp[n_max - 1] = p[n_max - 1]
+            else:
+                # (-B(dv)) p[N-2] + (B(-dv) + gamma) p[N-1] = gamma * p_eq
+                ap[n_max - 1] = -Ber(dv_right)
+                bp[n_max - 1] = Ber(-dv_right) + gamma_pL
+                cp[n_max - 1] = 0.0
+                fp[n_max - 1] = gamma_pL * p[n_max - 1]
+        else:
+            # Fix holes (majority): Dirichlet
+            ap[n_max - 1] = 0.0; bp[n_max - 1] = 1.0; cp[n_max - 1] = 0.0; fp[n_max - 1] = p[n_max - 1]
+            # Minority electrons: Robin boundary with Sn
+            DnL = mun_s[n_max - 1] * Vt
+            gamma_nL = (S_right_m * dx_m / max(DnL, 1e-30))
+            if gamma_nL > 1e6 or not pv_mode:
+                an[n_max - 1] = 0.0; bn[n_max - 1] = 1.0; cn[n_max - 1] = 0.0; fn[n_max - 1] = n[n_max - 1]
+            else:
+                an[n_max - 1] = -Ber(dv_right)
+                bn[n_max - 1] = Ber(-dv_right) + gamma_nL
+                cn[n_max - 1] = 0.0
+                fn[n_max - 1] = gamma_nL * n[n_max - 1]
+    else:
+        # --- Standard Ohmic Contacts ---
+        # Note: ni_ratio2 = (ni_phys / ni_ref)**2
+        # Calculate local ni_ratio2 for boundary conditions
+        ni_phys_0 = getattr(model, 'ni_phys', ni)[0]
+        ni_phys_last = getattr(model, 'ni_phys', ni)[n_max-1]
+        ni_ratio2_0 = (ni_phys_0 / ni[0])**2
+        ni_ratio2_last = (ni_phys_last / ni[n_max-1])**2
+
+        an[0] = 0; bn[0] = 1; cn[0] = 0; fn[0] = n[0]
+        ap[0] = 0; bp[0] = 1; cp[0] = 0; fp[0] = p[0]
+        an[n_max-1] = 0; bn[n_max-1] = 1; cn[n_max-1] = 0; fn[n_max-1] = n[n_max-1]
+        ap[n_max-1] = 0; bp[n_max-1] = 1; cp[n_max-1] = 0; fp[n_max-1] = p[n_max-1]
     # (B) Define the elements of the coefficient matrix for the internal nodes and
     #    initialize the forcing function
     for i in range(1, n_max - 1):
-        munim1by2 = (mun[i - 1] + mun[i]) / 2
-        munip1by2 = (mun[i] + mun[i + 1]) / 2
-        mupim1by2 = (mup[i - 1] + mup[i]) / 2
-        mupip1by2 = (mup[i] + mup[i + 1]) / 2
+        munim1by2 = (mun_s[i - 1] + mun_s[i]) / 2
+        munip1by2 = (mun_s[i] + mun_s[i + 1]) / 2
+        mupim1by2 = (mup_s[i - 1] + mup_s[i]) / 2
+        mupip1by2 = (mup_s[i] + mup_s[i + 1]) / 2
         ## Co-efficients for HOLE Continuity eqn
         ap[i] = mupim1by2 * Ber((fi[i] - fi[i - 1]))
         cp[i] = mupip1by2 * Ber((fi[i] - fi[i + 1]))
@@ -1516,60 +1648,105 @@ def Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0):
             munim1by2 * Ber((fi[i] - fi[i - 1])) + munip1by2 * Ber(fi[i] - fi[i + 1])
         )
         ## Forcing Function for ELECTRON and HOLE Continuity eqns
-        fn[i] = (
-            (dx2 / Vt)
-            * (p[i] * n[i] - 1)
-            / (TAUP0[i] * (n[i] + 1) + TAUN0[i] * (p[i] + 1))
-        )
-        fp[i] = (
-            (dx2 / Vt)
-            * (p[i] * n[i] - 1)
-            / (TAUP0[i] * (n[i] + 1) + TAUN0[i] * (p[i] + 1))
-        )
+        # Trap-Assisted Tunneling (TAT) Enhancement (Hurkx Model)
+        tat_field = float(getattr(model, 'tat_field', 1e10))
+        trap_density_scale = max(getattr(model, 'trap_density_scale', 1.0), 1e-12)
+        trap_energy_offset_ev = getattr(model, 'trap_energy_offset_ev', 0.0)
+        gamma = 0.0
+        if tat_field < 1e9:
+            # Local electric field E [V/m]
+            dfi = (fi[i+1] - fi[i-1]) / 2.0
+            E_field = (Vt / dx_m) * abs(dfi)
+            
+            if E_field > 1e4: # Threshold for numerical stability
+                ratio = E_field / tat_field
+                gamma = 2.0 * np.sqrt(3.0 * np.pi) * ratio * np.exp(np.clip(ratio**2, 0, 20))
+        gamma *= trap_density_scale
+                
+        # Subtract normalized generation term (G/ni)
+        gen_term = G_opt_m3[i] / ni[i]
+        
+        # Generation and Recombination rates calculated below using implicit treatment
+            
+        # Identify normalization vs physical intrinsic carrier density
+        ni_ref = ni[i]
+        ni_phys = getattr(model, 'ni_phys', ni)[i]
+        ni_ratio2 = (ni_phys / ni_ref)**2
+ 
+        # Numerical Stability: Clip normalized carrier densities
+        n_safe = np.clip(n[i], 0.0, 1e40)
+        p_safe = np.clip(p[i], 0.0, 1e40)
+        
+        # Ensure denominator is positive and non-zero
+        trap_arg = np.clip(trap_energy_offset_ev / max(Vt, 1e-12), -40.0, 40.0)
+        n1_norm = np.maximum((ni_phys / ni_ref) * np.exp(trap_arg), 1e-20)
+        p1_norm = np.maximum((ni_phys / ni_ref) * np.exp(-trap_arg), 1e-20)
+        denom_base = TAUP0[i] * (n_safe + n1_norm) + TAUN0[i] * (p_safe + p1_norm)
+        denom_srh = denom_base / ((1.0 + gamma) * trap_density_scale)
+        denom_srh = np.maximum(denom_srh, 1e-20)
+        
+        # --- Implicit Treatment for Stability ---
+        coeff_srh_n = p_safe / denom_srh
+        coeff_srh_p = n_safe / denom_srh
+        rhs_srh = -ni_ratio2 / denom_srh
+        
+        if Cn0 is not None and Cp0 is not None:
+            k_aug = (Cn0[i] * n_safe + Cp0[i] * p_safe) * (ni_ref**2)
+            coeff_aug_n = k_aug * p_safe
+            coeff_aug_p = k_aug * n_safe
+            rhs_aug = -k_aug * ni_ratio2
+        else:
+            coeff_aug_n = coeff_aug_p = rhs_aug = 0.0
+            
+        # Total Coefficient and RHS (scaled by dx2 / Vt)
+        scale_R = (dx2 / Vt)
+        
+        bn[i] -= scale_R * (coeff_srh_n + coeff_aug_n)
+        bp[i] -= scale_R * (coeff_srh_p + coeff_aug_p)
+        
+        # Forcing functions
+        fn[i] = scale_R * (-rhs_srh - rhs_aug - gen_term)
+        fp[i] = scale_R * (-rhs_srh - rhs_aug - gen_term)
+
     # (C)  Start the iterative procedure for the solution of the linearized Continuity
     #     equation for "ELECTRONS" using LU decomposition method:
     dn[0] = bn[0]
     for i in range(1, n_max):
-        betan[i] = an[i] / dn[i - 1]
+        betan[i] = an[i] / (dn[i - 1] if abs(dn[i - 1]) > 1e-30 else 1e-30)
         dn[i] = bn[i] - betan[i] * cn[i - 1]
     # Solution of Lv = f #
     vn[0] = fn[0]
     for i in range(1, n_max):
         vn[i] = fn[i] - betan[i] * vn[i - 1]
     # Solution of U*fi = v #
-    tempn = vn[n_max - 1] / dn[n_max - 1]
-    # deltan[n_max-1] = tempn - n[n_max-1]
+    tempn = vn[n_max - 1] / (dn[n_max - 1] if abs(dn[n_max - 1]) > 1e-30 else 1e-30)
     n[n_max - 1] = tempn
-    for i in range(n_max - 2, -1, -1):  # delta#
-        tempn = (vn[i] - cn[i] * n[i + 1]) / dn[i]
-        #  deltan[i] = tempn - n[i]
-        n[i] = tempn
+    for i in range(n_max - 2, -1, -1):
+        tempn = (vn[i] - cn[i] * n[i + 1]) / (dn[i] if abs(dn[i]) > 1e-30 else 1e-30)
+        # Adding damping for stability
+        n[i] = np.clip((1.0 - damping) * tempn + damping * n[i], 0.0, 1e40)
     ####################### END of ELECTRON Continuty Solver ###########
-    # (D)  Start the iterative procedure for the solution of the linearized Continuity
-    #     equation for "HOLES" using LU decomposition method:
-    # print(max(n[:]))
     dp[0] = bp[0]
     for i in range(1, n_max):
-        betap[i] = ap[i] / dp[i - 1]
+        betap[i] = ap[i] / (dp[i - 1] if abs(dp[i - 1]) > 1e-30 else 1e-30)
         dp[i] = bp[i] - betap[i] * cp[i - 1]
     # Solution of Lv = f #
     vp[0] = fp[0]
     for i in range(1, n_max):
         vp[i] = fp[i] - betap[i] * vp[i - 1]
     # Solution of U*fi = v #
-    tempp = vp[n_max - 1] / dp[n_max - 1]
-    # deltap[n_max-1] = tempp - p[n_max-1]
+    tempp = vp[n_max - 1] / (dp[n_max - 1] if abs(dp[n_max - 1]) > 1e-30 else 1e-30)
     p[n_max - 1] = tempp
-    for i in range(n_max - 2, -1, -1):  # delta#
-        tempp = (vp[i] - cp[i] * p[i + 1]) / dp[i]
-        #   deltap[i] = tempp - p[i]
-        p[i] = tempp
+    for i in range(n_max - 2, -1, -1):
+        tempp = (vp[i] - cp[i] * p[i + 1]) / (dp[i] if abs(dp[i]) > 1e-30 else 1e-30)
+        # Adding damping for stability
+        p[i] = np.clip((1.0 - damping) * tempp + damping * p[i], 0.0, 1e40)
     ####################### END of HOLE Continuty Solver ###########
     return n, p
 
 
 def Mobility3(
-    mun0, mup0, fi, fi_n, fi_p, Vt, Ldi, VSATN, VSATP, BETAN, BETAP, n_max, dx
+    mun0, mup0, fi, fi_n, fi_p, Vt, Ldi, VSATN, VSATP, BETAN, BETAP, n_max, dx, ni, n, p
 ):
     #######################################################################
     #% 3.1 . Calculate Field Dependant Mobility for each value of 'fi'   ##
@@ -1579,17 +1756,18 @@ def Mobility3(
     mup = np.zeros(n_max)
     mun = np.zeros(n_max)
 
-    """
-    ### To test with Constant Mobility without field dependancy.        
-    for i in range(0,n_max):           # Start Loop for Field Dep Mobility 
-        mup[i] = mup0
-        mun[i] = mun0
-    # #           
-    """
-    # [0] Solution of electron current continuity equation:
-    # .................
-    # (1a) Define the elements of the coefficient matrix and
-    # initialize the forcing function:
+    # Use Caughey-Thomas mobility for Silicon
+    # Local carrier concentration as proxy for doping
+    # n and p here are normalized (n/ni), so we multiply by ni
+    mun_ct, mup_ct = CaugheyThomasMobility(n * ni, p * ni, material_type='Si')
+    
+    if mun_ct is not None:
+        mun0_eff = mun_ct
+        mup0_eff = mup_ct
+    else:
+        mun0_eff = mun0
+        mup0_eff = mup0
+
     ## Calculate the Electric Field at each Node
     for i in range(0, n_max - 1):
         Efield[i] = abs(fi[i] - fi[i + 1]) * Vt / (dx)
@@ -1597,10 +1775,10 @@ def Mobility3(
     Efield[n_max - 1] = Efield[n_max - 2]
     ## Calculate the Field Dependant Mobility at each Node
     for i in range(0, n_max):
-        pdeno = (mup0[i] * Efield[i] / VSATP[i]) ** BETAP[i]
-        mup[i] = mup0[i] * ((1 / (1 + pdeno)) ** (1 / BETAP[i]))
-        ndeno = (mun0[i] * Efield[i] / VSATN[i]) ** BETAN[i]
-        mun[i] = mun0[i] * ((1 / (1 + ndeno)) ** (1 / BETAN[i]))
+        pdeno = (mup0_eff[i] * Efield[i] / VSATP[i]) ** BETAP[i]
+        mup[i] = mup0_eff[i] * ((1 / (1 + pdeno)) ** (1 / BETAP[i]))
+        ndeno = (mun0_eff[i] * Efield[i] / VSATN[i]) ** BETAN[i]
+        mun[i] = mun0_eff[i] * ((1 / (1 + ndeno)) ** (1 / BETAN[i]))
     mup[0] = mup[1]
     mup[n_max - 1] = mup[n_max - 2]
     mun[0] = mun[1]
@@ -1608,12 +1786,8 @@ def Mobility3(
     return mun, mup
 
 
-def Continuity3(n, p, mun, mup, fi, fi_n, fi_p, Vt, Ldi, n_max, dx, TAUN0, TAUP0):
-    #################################################################################
-    ## 3.2 Solve Continuity Equation for Electron and Holes using LU Decomposition ##
-    #################################################################################
+def Continuity3(n, p, mun, mup, fi, fi_n, fi_p, Vt, Ldi, n_max, dx, TAUN0, TAUP0, G_opt=0.0, ni=None, ts=1.0, Cn0=None, Cp0=None, model=None):
     # (A) Define the elements of the coefficient matrix and initialize the forcing
-    #    function at the ohmic contacts for ELECTRON and HOLE Continuity
     vp = np.zeros(n_max)
     dp = np.zeros(n_max)
     vn = np.zeros(n_max)
@@ -1628,95 +1802,122 @@ def Continuity3(n, p, mun, mup, fi, fi_n, fi_p, Vt, Ldi, n_max, dx, TAUN0, TAUP0
     an = np.zeros(n_max)
     betan = np.zeros(n_max)
     betap = np.zeros(n_max)
-    dx2 = dx * dx
-    an[0] = 0  # Co-ef for electron at Anode
-    bn[0] = 1  # Co-ef for electron at Anode
-    cn[0] = 0  # Co-ef for electron at Anode
-    ap[0] = 0  # Co-ef for hole     at Anode
-    bp[0] = 1  # Co-ef for hole     at Anode
-    cp[0] = 0  # Co-ef for hole     at Anode
-    # fnp[0] = (Ldi*Ldi*dx2/Vt) * ( p[0]*n[0] - 1 ) / ( TAUP0*(n[0] + 1 ) + TAUN0*(p[0] + 1 ) )
-    fn[0] = n[0]
-    fp[0] = p[0]
-    an[n_max - 1] = 0  # Co-ef for electron at Cathode
-    bn[n_max - 1] = 1  # Co-ef for electron at Cathode
-    cn[n_max - 1] = 0  # Co-ef for electron at Cathode
-    ap[n_max - 1] = 0  # Co-ef for hole     at Cathode
-    bp[n_max - 1] = 1  # Co-ef for hole     at Cathode
-    cp[n_max - 1] = 0  # Co-ef for hole     at Cathode
-    # fnp[n_max-1] = (Ldi*Ldi*dx2/Vt) * ( p[n_max-1]*n[n_max-1] - 1 ) / ( TAUP0*(n[n_max-1] + 1) + TAUN0*(p[n_max-1] + 1) )
-    fn[n_max - 1] = n[n_max - 1]
-    fp[n_max - 1] = p[n_max - 1]
-    # (B) Define the elements of the coefficient matrix for the internal nodes and
-    #    initialize the forcing function
+    dx_m = dx             # dx is already in meters
+    mun_s = mun * 1e-4    # Convert cm2/Vs to m2/Vs
+    mup_s = mup * 1e-4    # Convert cm2/Vs to m2/Vs
+    dx2 = dx_m * dx_m
+    
+    # Identify normalization vs physical intrinsic carrier density
+    ni_ref = ni
+    ni_phys = getattr(model, 'ni_phys', ni)
+    
+    # Optical Generation in m^-3 s^-1
+    # G_opt is passed as m^-3 s^-1 from aestimo.py (G_opt_phys)
+    G_opt_m3 = G_opt
+    
+    # Boundary conditions: Ohmic Contacts (Dirichlet)
+    an[0] = 0; bn[0] = 1; cn[0] = 0; fn[0] = n[0]
+    ap[0] = 0; bp[0] = 1; cp[0] = 0; fp[0] = p[0]
+    an[n_max - 1] = 0; bn[n_max - 1] = 1; cn[n_max - 1] = 0; fn[n_max - 1] = n[n_max - 1]
+    ap[n_max - 1] = 0; bp[n_max - 1] = 1; cp[n_max - 1] = 0; fp[n_max - 1] = p[n_max - 1]
+
+    # (B) Define the elements of the coefficient matrix for internal nodes
     for i in range(1, n_max - 1):
-        munim1by2 = (mun[i - 1] + mun[i]) / 2
-        munip1by2 = (mun[i] + mun[i + 1]) / 2
-        mupim1by2 = (mup[i - 1] + mup[i]) / 2
-        mupip1by2 = (mup[i] + mup[i + 1]) / 2
-        ## Co-efficients for HOLE Continuity eqn
-        ap[i] = mupim1by2 * Ber((fi[i] - fi[i - 1]) + (fi_p[i] - fi_p[i - 1]))
-        cp[i] = mupip1by2 * Ber((fi[i] - fi[i + 1]) + (fi_p[i] - fi_p[i + 1]))
-        bp[i] = -(
-            mupim1by2 * Ber((fi[i - 1] - fi[i]) + (fi_p[i - 1] - fi_p[i]))
-            + mupip1by2 * Ber((fi[i + 1] - fi[i]) + (fi_p[i + 1] - fi_p[i]))
-        )
-        ## Co-efficients for ELECTRON Continuity eqn
+        munim1by2 = (mun_s[i - 1] + mun_s[i]) / 2
+        munip1by2 = (mun_s[i] + mun_s[i + 1]) / 2
+        mupim1by2 = (mup_s[i - 1] + mup_s[i]) / 2
+        mupip1by2 = (mup_s[i] + mup_s[i + 1]) / 2
+        
+        # Coefficients using Bernoulli functions (includes quasi-Fermi potential terms)
+        ## ELECTRON Continuity eqn
         an[i] = munim1by2 * Ber((fi[i - 1] - fi[i]) + (fi_n[i - 1] - fi_n[i]))
         cn[i] = munip1by2 * Ber((fi[i + 1] - fi[i]) + (fi_n[i + 1] - fi_n[i]))
         bn[i] = -(
             munim1by2 * Ber((fi[i] - fi[i - 1]) + (fi_n[i] - fi_n[i - 1]))
             + munip1by2 * Ber((fi[i] - fi[i + 1]) + (fi_n[i] - fi_n[i + 1]))
         )
-        ## Forcing Function for ELECTRON and HOLE Continuity eqns
-        fn[i] = (
-            (dx2 / Vt)
-            * (p[i] * n[i] - 1)
-            / (TAUP0[i] * (n[i] + 1) + TAUN0[i] * (p[i] + 1))
+        ## HOLE Continuity eqn
+        ap[i] = mupim1by2 * Ber((fi[i] - fi[i - 1]) + (fi_p[i] - fi_p[i - 1]))
+        cp[i] = mupip1by2 * Ber((fi[i] - fi[i + 1]) + (fi_p[i] - fi_p[i + 1]))
+        bp[i] = -(
+            mupim1by2 * Ber((fi[i - 1] - fi[i]) + (fi_p[i - 1] - fi_p[i]))
+            + mupip1by2 * Ber((fi[i + 1] - fi[i]) + (fi_p[i + 1] - fi_p[i]))
         )
-        fp[i] = (
-            (dx2 / Vt)
-            * (p[i] * n[i] - 1)
-            / (TAUP0[i] * (n[i] + 1) + TAUN0[i] * (p[i] + 1))
-        )
-    # (C)  Start the iterative procedure for the solution of the linearized Continuity
-    #     equation for "ELECTRONS" using LU decomposition method:
+
+        ## Forcing Function and Implicit Recombination
+        ni_r = ni_ref[i]
+        ni_p = ni_phys[i]
+        ni_ratio2 = (ni_p / ni_r)**2
+        
+        n_safe = np.clip(n[i], 0.0, 1e40)
+        p_safe = np.clip(p[i], 0.0, 1e40)
+        
+        # SRH with proper normalization
+        trap_density_scale = max(getattr(model, 'trap_density_scale', 1.0), 1e-12)
+        trap_energy_offset_ev = getattr(model, 'trap_energy_offset_ev', 0.0)
+        trap_arg = np.clip(trap_energy_offset_ev / max(Vt, 1e-12), -40.0, 40.0)
+        n1_norm = np.maximum((ni_p / ni_r) * np.exp(trap_arg), 1e-20)
+        p1_norm = np.maximum((ni_p / ni_r) * np.exp(-trap_arg), 1e-20)
+        denom_srh = TAUP0[i] * (n_safe + n1_norm) + TAUN0[i] * (p_safe + p1_norm)
+        denom_srh = denom_srh / trap_density_scale
+        denom_srh = np.maximum(denom_srh, 1e-20)
+        
+        # Implicit SRH coefficients
+        coeff_srh_n = p_safe / denom_srh
+        coeff_srh_p = n_safe / denom_srh
+        rhs_srh = -ni_ratio2 / denom_srh
+        
+        # Auger with proper normalization
+        coeff_aug_n = coeff_aug_p = rhs_aug = 0.0
+        if Cn0 is not None and Cp0 is not None:
+            k_aug = (Cn0[i] * n_safe + Cp0[i] * p_safe) * (ni_r**2)
+            coeff_aug_n = k_aug * p_safe
+            coeff_aug_p = k_aug * n_safe
+            rhs_aug = -k_aug * ni_ratio2
+            
+        gen_term = G_opt_m3[i] / ni_r if isinstance(G_opt_m3, np.ndarray) else G_opt_m3 / ni_r
+        
+        # Scale remaining physics (R - G) by dx^2 / Vt [SI units]
+        scale_R = (dx2 / Vt) * ts
+        
+        bn[i] -= scale_R * (coeff_srh_n + coeff_aug_n)
+        bp[i] -= scale_R * (coeff_srh_p + coeff_aug_p)
+        
+        fn[i] = scale_R * (-rhs_srh - rhs_aug - gen_term)
+        fp[i] = scale_R * (-rhs_srh - rhs_aug - gen_term)
+
+    # (C) LU Solver for ELECTRONS
     dn[0] = bn[0]
     for i in range(1, n_max):
-        betan[i] = an[i] / dn[i - 1]
+        betan[i] = an[i] / (dn[i - 1] if abs(dn[i - 1]) > 1e-30 else 1e-30)
         dn[i] = bn[i] - betan[i] * cn[i - 1]
-    # Solution of Lv = f #
     vn[0] = fn[0]
     for i in range(1, n_max):
         vn[i] = fn[i] - betan[i] * vn[i - 1]
-    # Solution of U*fi = v #
-    tempn = vn[n_max - 1] / dn[n_max - 1]
-    # deltan[n_max-1] = tempn - n[n_max-1]
+    tempn = vn[n_max - 1] / (dn[n_max - 1] if abs(dn[n_max - 1]) > 1e-30 else 1e-30)
     n[n_max - 1] = tempn
-    for i in range(n_max - 2, -1, -1):  # delta#
-        tempn = (vn[i] - cn[i] * n[i + 1]) / dn[i]
-        #  deltan[i] = tempn - n[i]
-        n[i] = tempn
-    ####################### END of ELECTRON Continuty Solver ###########
-    # (D)  Start the iterative procedure for the solution of the linearized Continuity
-    #     equation for "HOLES" using LU decomposition method:
+    for i in range(n_max - 2, -1, -1):
+        dn_safe = dn[i] if abs(dn[i]) > 1e-30 else 1e-30
+        tempn = (vn[i] - cn[i] * n[i + 1]) / dn_safe
+        # Adding damping for stability (0.7 factor)
+        n[i] = np.clip(0.3 * tempn + 0.7 * n[i], 0.0, 1e40)
+        
+    # (D) LU Solver for HOLES
     dp[0] = bp[0]
     for i in range(1, n_max):
-        betap[i] = ap[i] / dp[i - 1]
+        betap[i] = ap[i] / (dp[i - 1] if abs(dp[i - 1]) > 1e-30 else 1e-30)
         dp[i] = bp[i] - betap[i] * cp[i - 1]
-    # Solution of Lv = f #
     vp[0] = fp[0]
     for i in range(1, n_max):
         vp[i] = fp[i] - betap[i] * vp[i - 1]
-    # Solution of U*fi = v #
-    tempp = vp[n_max - 1] / dp[n_max - 1]
-    # deltap[n_max-1] = tempp - p[n_max-1]
+    tempp = vp[n_max - 1] / (dp[n_max - 1] if abs(dp[n_max - 1]) > 1e-30 else 1e-30)
     p[n_max - 1] = tempp
-    for i in range(n_max - 2, -1, -1):  # delta#
-        tempp = (vp[i] - cp[i] * p[i + 1]) / dp[i]
-        #   deltap[i] = tempp - p[i]
-        p[i] = tempp
-    ####################### END of HOLE Continuty Solver ###########
+    for i in range(n_max - 2, -1, -1):
+        dp_safe = dp[i] if abs(dp[i]) > 1e-30 else 1e-30
+        tempp = (vp[i] - cp[i] * p[i + 1]) / dp_safe
+        # Adding damping for stability (0.7 factor)
+        p[i] = np.clip(0.3 * tempp + 0.7 * p[i], 0.0, 1e40)
+
     return n, p
 
 
@@ -1747,6 +1948,7 @@ def Poisson_non_equi2(
     E_statec_general,
     meff_state_general,
     meff_statec_general,
+    damping=0.1,
 ):
     ####################################################################
     ## 3.3 Calculate potential fi again with new values of "n" and "p"##
@@ -1761,93 +1963,58 @@ def Poisson_non_equi2(
     a = np.zeros(n_max)
     delta = np.zeros(n_max)
     fi_out = np.zeros(n_max)
-    dop_out = np.zeros(n_max)
-    Ppz_Psp_out = np.zeros(n_max)
-    d = np.zeros(n_max)
-    delta = np.zeros(n_max)
-    fi_out = fi
     dop_out = dop / ni
     Ppz_Psp_out = Ppz_Psp / ni
-    pol_surf_char_out = pol_surf_char / ni
+    fi_out = fi.copy()  # Use current potential as base
     dx2 = dx * dx
     Ldi2 = Ldi * Ldi
     delta_acc = 1.0e-4
-    if model.N_wells_virtual - 2 != 0 and 1 == 2:
-        n, p, fi_non, EF = equi_np_fi3(
-            fi_out,
-            wfh_general,
-            wfe_general,
-            model,
-            E_state_general,
-            E_statec_general,
-            meff_state_general,
-            meff_statec_general,
-            n_max,
-            ni,
-        )
+
     for i in range(1, n_max - 1):
-        a[i] = Ldi2[i] / (dx2)
-        c[i] = Ldi2[i] / (dx2)
-        b[i] = -(2 * Ldi2[i] / (dx2) + n[i] + p[i])
-        f[i] = n[i] - p[i] - dop_out[i] - Ppz_Psp_out[i] - (fi_out[i] * (n[i] + p[i]))
-        # f[i] = n[i] - p[i] - dop_out[i]-(pol_surf_char_out[i+1]-pol_surf_char_out[i-1])/(2*dx) - (fi_out[i]*(n[i] + p[i]))
-    a[0] = 0.0
-    c[0] = 0.0
-    b[0] = 1.0
-    f[0] = fi_out[0]
-    a[n_max - 1] = 0.0
-    c[n_max - 1] = 0.0
-    b[n_max - 1] = 1.0
-    f[n_max - 1] = fi_out[n_max - 1]
-    ## here values of n[i] and p[i] are used in place of exp(fi[i])
-    # Solve for Updated potential given the new value of Forcing
-    # Function using LU decomposition
+        a[i] = Ldi2[i] / dx2
+        c[i] = Ldi2[i] / dx2
+        
+        # Numerical Stability: Limit carrier density impact on matrix conditioning
+        n_p_sum = np.clip(n[i] + p[i], 0.0, 1e40)
+        n_p_diff = np.clip(n[i] - p[i], -1e40, 1e40)
+        
+        b[i] = -(2 * Ldi2[i] / dx2 + n_p_sum)
+        f[i] = n_p_diff - dop_out[i] - Ppz_Psp_out[i] - (fi_out[i] * n_p_sum)
+
+    # Boundary conditions
+    a[0] = 0.0; c[0] = 0.0; b[0] = 1.0; f[0] = fi_out[0]
+    a[n_max-1] = 0.0; c[n_max-1] = 0.0; b[n_max-1] = 1.0; f[n_max-1] = fi_out[n_max-1]
+
+    # LU Decomposition
     d[0] = b[0]
     for i in range(1, n_max):
         d[i] = b[i] - a[i] * c[i - 1] / d[i - 1]
-    # Solution of Lv = f #
+    
+    # Forward Substitution
     v[0] = f[0]
     for i in range(1, n_max):
         v[i] = f[i] - a[i] * v[i - 1] / d[i - 1]
-    # Solution of U*fi = v #
-    temp = v[n_max - 1] / d[n_max - 1]
-    delta[n_max - 1] = temp - fi_out[n_max - 1]
-    fi_out[n_max - 1] = temp
-    for i in range(n_max - 2, -1, -1):  # delta#
-        temp = (v[i] - c[i] * fi_out[i + 1]) / d[i]
-        delta[i] = temp - fi_out[i]
-        fi_out[i] = temp
-    delta_max = 0
-    delta_max = max(abs(delta[:]))
-    # Test convergence and start the loop if necessary else increase
-    # the applied potential
-    # print ('delta_max= ',delta_max)
-    if delta_max < delta_acc:
-        flag_conv_2 = False
+    
+    # Backward Substitution (Thomas Algorithm)
+    x_sol = np.zeros(n_max)
+    x_sol[n_max - 1] = v[n_max - 1] / d[n_max - 1]
+    for i in range(n_max - 2, -1, -1):
+        x_sol[i] = (v[i] - c[i] * x_sol[i + 1]) / d[i]
+
+    # Potential update with damping
+    delta = x_sol - fi_out
+    # Bound delta to prevent numerical explosion during initial steps
+    delta = np.clip(delta, -2.0, 2.0)
+    fi_out = fi_out + damping * delta
+
+    # 4. Check for convergence #########################################
+    delta_max = np.max(np.abs(delta))
+    tol = float(getattr(model, 'conv_tol', 0.01))
+    if delta_max > tol:
+        flag_conv_2 = True  # Not converged, continue Gummel iterations
     else:
-        fi_out0 = fi_out
-        fi_out0 += 0.15 * delta
-        fi_out = fi_out0
-        """"""
-        if model.N_wells_virtual - 2 != 0 and 1 == 2:
-            n, p, fi_non, EF = equi_np_fi3(
-                fi_out,
-                wfh_general,
-                wfe_general,
-                model,
-                E_state_general,
-                E_statec_general,
-                meff_state_general,
-                meff_statec_general,
-                n_max,
-                ni,
-            )
-        for i in range(1, n_max - 1):
-            b[i] = -(2 * Ldi2[i] / (dx2) + n[i] + p[i])
-            f[i] = (
-                n[i] - p[i] - dop_out[i] - Ppz_Psp_out[i] - (fi_out[i] * (n[i] + p[i]))
-            )
-            # f[i] = n[i] - p[i] - dop_out[i]-(pol_surf_char_out[i+1]-pol_surf_char_out[i-1])/(2*dx) - (fi_out[i]*(n[i] + p[i]))
+        flag_conv_2 = False # Converged! Exit Gummel loop
+        
     return fi_out, flag_conv_2
 
 
@@ -2346,6 +2513,11 @@ def Poisson_non_equi3(
     if delta_max < delta_acc:
         flag_conv_2 = False
     else:
+        damping = 0.15
+        fi_out0 = fi_out
+        fi_out0 += damping * delta
+        fi_out = fi_out0
+        
         if model.N_wells_virtual - 2 != 0 and config.quantum_effect:
             n_q, p_q, fi_n, fi_p = equi_np_fi22(
                 vindex,
@@ -2405,34 +2577,37 @@ def Current2(
 ):
     ##########################################################################
     ##                        CALCULATE CURRENT                             ##
-    ##########################################################################
     for i in range(1, n_max - 1):
+        # Physical current density calculation [A/m^2]
+        # J_n = (q * mun * Vt * ni / dx) * [n_{i+1} * B(dv) - n_i * B(-dv)]
+        dx_m = dx  # SI meters
 
-        # Electron Current
-        Jnip1by2[vindex, i] = (
-            (q * mun[i] * Vt / (dx))
-            * ni[i]
-            * (n[i + 1] * Ber((fi[i + 1] - fi[i])) - n[i] * Ber((fi[i] - fi[i + 1])))
-        )
-        Jnim1by2[vindex, i] = (
-            (q * mun[i] * Vt / (dx))
-            * ni[i]
-            * (n[i] * Ber((fi[i] - fi[i - 1])) - n[i - 1] * Ber((fi[i - 1] - fi[i])))
-        )
+        # mobilities are in cm2/Vs, convert to m2/Vs SI
+        mun_m2 = mun[i] * 1e-4
+        mup_m2 = mup[i] * 1e-4
+
+        # normalized potential difference (phi/Vt)
+        dv = fi[i + 1] - fi[i]
+
+        # Electron current density at midpoint i+1/2
+        # J_n = q * Dn * n_i / dx * [n_{i+1}*B(dv) - n_i*B(-dv)]
+        Jn_const = (q * mun_m2 * Vt * ni[i] / dx_m)
+        Jnip1by2[vindex, i] = Jn_const * (n[i + 1] * Ber(dv) - n[i] * Ber(-dv))
+        
+        # Hole current density at midpoint i+1/2
+        # J_p = q * Dp * n_i / dx * [p_i * B(dv) - p_{i+1} * B(-dv)]
+        Jp_const = (q * mup_m2 * Vt * ni[i] / dx_m)
+        Jpip1by2[vindex, i] = Jp_const * (p[i] * Ber(dv) - p[i + 1] * Ber(-dv))
+
+        # Interval i-1/2 (Backwards)
+        dv_back = fi[i] - fi[i - 1]
+        Jnim1by2[vindex, i] = Jn_const * (n[i] * Ber(dv_back) - n[i - 1] * Ber(-dv_back))
+        Jpim1by2[vindex, i] = Jp_const * (p[i - 1] * Ber(dv_back) - p[i] * Ber(-dv_back))
+
+        # Node-centered currents (Simple average of interval currents)
         Jelec[vindex, i] = (Jnip1by2[vindex, i] + Jnim1by2[vindex, i]) / 2
-        # Hole Current
-        Jpip1by2[vindex, i] = (
-            (q * mup[i] * Vt / (dx))
-            * ni[i]
-            * (p[i + 1] * Ber((fi[i] - fi[i + 1])) - p[i] * Ber((fi[i + 1] - fi[i])))
-        )
-        Jpim1by2[vindex, i] = (
-            (q * mup[i] * Vt / (dx))
-            * ni[i]
-            * (p[i] * Ber((fi[i - 1] - fi[i])) - p[i - 1] * Ber((fi[i] - fi[i - 1])))
-        )
         Jhole[vindex, i] = (Jpip1by2[vindex, i] + Jpim1by2[vindex, i]) / 2
-    ##         Jtotal(vindex) = Jelec
+
     return Jnip1by2, Jnim1by2, Jelec, Jpip1by2, Jpim1by2, Jhole
 
 
@@ -2503,14 +2678,19 @@ def Write_results_non_equi2(
     ## Calculate Quasi Fermi Level - Efn Efp
     for i in range(0, n_max):
         Ei[i] = Ec[i] - ((fi_e[i] - fi_h[i]) / (2 * q))
-        Efn[i] = Ei[i] + Vt * log(nf[i] / ni[i] + 1)
-        Efp[i] = Ei[i] - Vt * log(pf[i] / ni[i] + 1)
+        # Use np.log and guards to prevent math domain errors
+        Efn[i] = Ei[i] + Vt * np.log(np.maximum(nf[i] / ni[i] + 1, 1e-20))
+        Efp[i] = Ei[i] - Vt * np.log(np.maximum(pf[i] / ni[i] + 1, 1e-20))
     Efn[0] = Efn[1]
     Efn[n_max - 1] = Efn[n_max - 2]
     Efp[0] = Efp[1]
     Efp[n_max - 1] = Efp[n_max - 2]
+    # Compute av_curr as median of the last 10% of nodes (Quasi-Neutral Region)
+    # This is much more stable than the high-field depletion region in the center.
     for j in range(0, Total_Steps):
-        av_curr[j] = Jtotal[j, 0]
+        idx_lo = int(0.9 * n_max)
+        idx_hi = n_max - 1
+        av_curr[j] = np.median(Jtotal[j, idx_lo:idx_hi])
     Ec_result = np.zeros(n_max)
     Ev_result = np.zeros(n_max)
     Ei_result = np.zeros(n_max)

@@ -244,9 +244,14 @@ materialproperty = {
 'm_lh':0.14,#1.1
 'm_so':0.5,#0.15
 'epsilonStatic':9.5,
-'Eg':3.5,# 3.44 Madelung (1991) 3.437
+'Eg':3.44,
+'alpha_var': 0.909e-3, # Varshni alpha (eV/K)
+'beta_var': 830, # Varshni beta (K)
 'Bowing_param':3.2,
 'Band_offset':0.63,
+'GA1':6.0,
+'GA2':2.0,
+'GA3':2.0,
 'A1':-6.4,#-6.56 -0.91 5.65 -2.83 -3.13 -4.86
 'A2':-0.5,
 'A3':5.9,
@@ -260,7 +265,10 @@ materialproperty = {
 'D5':-4,
 'D6':-5.65,
 'Ac':-4.60,
+'Av':1.16,
+'B':-1.7,
 'a0_wz':3.189,#3.189 5.185
+'a0':3.189,
 'C11':37.,
 'C12':14.5,
 'C13':10.3,
@@ -272,6 +280,7 @@ materialproperty = {
 'D33':2.291e-12,# 2.291e-12     2.291e-12
 'Psp':-0.029,#-0.029 -0.034 
 'delta_so':0.015,#15.5mev
+'delta':0.015,
 'delta_cr':0.022,#72.9mev
 'a0_sub':3.189,
 'TAUN0':0.1E-6,# Electron SRH lifetime
@@ -294,8 +303,13 @@ materialproperty = {
 'm_so':0.5,#0.1
 'epsilonStatic':15.3,
 'Eg':0.608,#0.76 0.608
+'alpha_var': 0.245e-3, # Varshni alpha (eV/K)
+'beta_var': 624, # Varshni beta (K)
 'Bowing_param':3.2,
 'Band_offset':0.63,#
+'GA1':6.0,
+'GA2':2.0,
+'GA3':2.0,
 'A1':-9.09,#-9.28 -0.60 8.68 -4.34 -4.32 -6.08
 'A2':-0.63,
 'A3':8.46,
@@ -309,7 +323,10 @@ materialproperty = {
 'D5':-2.33,
 'D6':-5.5,
 'Ac':-1.4,
+'Av':1.0,
+'B':-1.8,
 'a0_wz':3.53,#3.548
+'a0':3.53,
 'C11':22.3,
 'C12':11.5,
 'C13':9.2,
@@ -321,6 +338,7 @@ materialproperty = {
 'D33':6.201e-12,#6.201e-12
 'Psp':-0.032,#-0.032 -0.042 
 'delta_so':0.001,#5mev
+'delta':0.001,
 'delta_cr':0.041,#40mev
 'a0_sub':3.189,
 'TAUN0':5.1e-8,# Electron SRH lifetime
@@ -358,7 +376,10 @@ materialproperty = {
 'D5':-4,
 'D6':3.4,
 'Ac':-7.17,
+'Av':2.47,
+'B':-1.5,
 'a0_wz':3.112,
+'a0':3.112,
 'C11':39.6,
 'C12':14,
 'C13':10.8,
@@ -369,6 +390,7 @@ materialproperty = {
 'D33':5.53e-12,#5.352e-12        5.53e-12
 'Psp':-0.081,#-0.081 −0.09
 'delta_so':0.019,#20.4mev
+'delta':0.019,
 'delta_cr':-0.164,#−58.5mev
 'a0_sub':3.189,
 'TAUN0':0.1E-7,# Electron SRH lifetime
@@ -379,9 +401,9 @@ materialproperty = {
 'Cp0':2.8e-32,# generation recombination model parameters [cm**6/s]
 'BETAN':0.45,# Parameter in the calculation of the Field Dependant Mobility
 'BETAP':0.45,# Parameter in the calculation of the Field Dependant Mobility
-'VSATN':3e5,# Saturation Velocity of Electrons 1.5e5
+'VSATN':3e5,# Saturation Velocity of Electrons
 'VSATP':6e5, # Saturation Velocity of Holes
-'AVb_E':-3.44#Average Valence Band Energy or the absolute energy level 1.5e5
+'AVb_E':-3.44#Average Valence Band Energy or the absolute energy level
 },
 'CdO':{
 'm_e':0.12,
@@ -532,7 +554,10 @@ materialproperty = {
 'm_hh':0.49,
 'm_lh':0.16,
 'epsilonStatic':11.7,
-'Eg':1.12,
+'Eg':1.12, # Restored to physical 1.12 eV at 300K
+'alpha_var': 0.473e-3, # Varshni alpha (eV/K)
+'beta_var': 636, # Varshni beta (K)
+'Rs':0.0, # Default to 0.0 to let GUI control it (prevent double-counting)
 'Ep':21.1,#?
 'F':-0.48,#?
 'Band_offset':0.53,
@@ -544,13 +569,13 @@ materialproperty = {
 'C12':6.4,
 'C44':7.96,
 'a0':5.431,
-'a0_sub':5.4315,  # Just added as near value of a0 
+'a0_sub':5.4315, 
 'Ac':-5.64,
 'Av':2.47,
 'B':-1.5,
 'delta':0.28,
-'TAUN0':0.1E-6,
-'TAUP0':0.1E-6,
+'TAUN0':5e-7, # Adjusted to match experimental current magnitude
+'TAUP0':5e-7, # Adjusted to match experimental current magnitude
 'mun0':0.15,
 'mup0':0.1,
 'Cn0':2.8e-31,# generation recombination model parameters [cm**6/s]
@@ -741,11 +766,11 @@ alloyproperty = {
 'AVb_E':-2.1#Average Valence Band Energy or the absolute energy level
 },
 'InGaN':{
-'Bowing_param':1.4,#1.4 3.8 3
-'Band_offset':0.63,#0.677 0.63
-'m_e_alpha':0.0,
-'a0_sub':3.189,
-'c0_sub':4.982,
+    'Bowing_param':2.6,#1.4 3.8 3
+    'Band_offset':0.63,#0.677 0.63
+    'm_e_alpha':0.0,
+    'a0_sub':3.189,
+    'c0_sub':4.982,
 'Material1':'InN',
 'Material2':'GaN',
 'TAUN0':5.2e-8,

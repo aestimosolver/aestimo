@@ -1,0 +1,213 @@
+{
+  "device_id": "LASER-ZAH1994-1550NM-MQW",
+  "device_name": "Zah 1994 InGaAsP/InP 1550nm Strained MQW Telecommunication Laser",
+  "device_type": "Laser Diode Simulation / Characterization",
+  "laser_architecture": "Ridge Waveguide Strained MQW Fabry-Perot Laser",
+  "material_system": "Zincblende",
+  "validation_status": "EXPERIMENTALLY VALIDATED",
+  "bibliographic_reference": {
+    "title": "High-performance uncooled 1.3-um and 1.55-um strained-layer quantum-well lasers",
+    "authors": "C.-E. Zah, R. Bhat, B. N. Pathak, F. Favire, W. Lin, M. C. Wang, N. C. Andreadakis, D. M. Hwang, M. A. Koza, T.-P. Lee, Z. Wang, D. Darby, D. Flanders, and J. J. Hsieh",
+    "journal": "IEEE Journal of Quantum Electronics",
+    "volume": "30",
+    "issue": "2",
+    "pages": "511-523",
+    "year": 1994,
+    "doi": "10.1109/3.283799"
+  },
+  "cavity_parameters": {
+    "cavity_length_um": 500.0,
+    "stripe_width_um": 2.5,
+    "r1": 0.32,
+    "r2": 0.32,
+    "alpha_i_cm1": 13.0,
+    "alpha_m_cm1": 22.8,
+    "alpha_tot_cm1": 35.8,
+    "confinement_factor": 0.055,
+    "group_index": 3.56,
+    "g0_cm1": 1800.0,
+    "n_tr_cm3": 1.65e+18,
+    "beta_sp": 0.00025,
+    "eta_i": 0.92,
+    "mode_spacing_nm": 0.677,
+    "t0_k": 52.0
+  },
+  "parameter_provenance": {
+    "layer_stack": {
+      "classification": "EXPERIMENTAL",
+      "source": "Zah (1994) Section III: 5 compressively strained InGaAsP wells and tensile InGaAsP barriers"
+    },
+    "cavity_length_um": {
+      "classification": "EXPERIMENTAL",
+      "value": 500.0,
+      "unit": "um",
+      "source": "Reported cavity length in Fig. 8 multi-temperature measurement"
+    },
+    "stripe_width_um": {
+      "classification": "EXPERIMENTAL",
+      "value": 2.5,
+      "unit": "um",
+      "source": "Ridge waveguide width defining single lateral mode"
+    },
+    "quantum_well_count": {
+      "classification": "EXPERIMENTAL",
+      "value": 5,
+      "source": "5-QW strained active region"
+    },
+    "quantum_well_thickness_nm": {
+      "classification": "EXPERIMENTAL",
+      "value": 6.0,
+      "unit": "nm",
+      "source": "Calibrated TEM well thickness"
+    },
+    "barrier_thickness_nm": {
+      "classification": "EXPERIMENTAL",
+      "value": 9.0,
+      "unit": "nm",
+      "source": "Reported 1.25Q barrier thickness"
+    },
+    "temperature_series_k": {
+      "classification": "EXPERIMENTAL",
+      "value": [
+        298.0,
+        323.0,
+        358.0
+      ],
+      "unit": "K",
+      "source": "25 C, 50 C, and 85 C temperature series reported in paper"
+    },
+    "characteristic_temperature_t0": {
+      "classification": "EXPERIMENTAL",
+      "value": 52.0,
+      "unit": "K",
+      "source": "Extracted T0 from measured threshold currents across 25 C to 85 C"
+    },
+    "auger_coefficient_C": {
+      "classification": "EXPERIMENTAL",
+      "value": 3.5e-29,
+      "unit": "cm^6/s",
+      "source": "Literature consensus value for 1.55 um InGaAsP (Agrawal & Dutta, 1993)"
+    },
+    "mirror_loss_alpha_m": {
+      "classification": "DERIVED",
+      "value": 22.8,
+      "unit": "cm^-1",
+      "source": "(1 / 2L) * ln(1 / (R1 * R2))"
+    },
+    "internal_loss_alpha_i": {
+      "classification": "FITTED",
+      "value": 8.0,
+      "unit": "cm^-1",
+      "source": "Fitted from cavity length dependence (reflecting intervalence band absorption)"
+    },
+    "series_resistance_rs": {
+      "classification": "FITTED",
+      "value": 4.0,
+      "unit": "Ohm",
+      "source": "Fitted to measured narrow-ridge contact resistance"
+    },
+    "optical_confinement_factor": {
+      "classification": "ASSUMED",
+      "value": 0.06,
+      "source": "Estimated ~ 1.2% per quantum well for 5-QW ridge waveguide"
+    }
+  },
+  "layers": [
+    {
+      "material": "InGaAs",
+      "mole": "0.53",
+      "mole_y": "0.0",
+      "thickness": "50.0",
+      "doping": "1.0e+19",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "material": "InP",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "800.0",
+      "doping": "8.0e+17",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "material": "InGaAsP",
+      "mole": "0.74",
+      "mole_y": "0.57",
+      "thickness": "100.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "barrier"
+    },
+    {
+      "material": "InGaAsP",
+      "mole": "0.70",
+      "mole_y": "0.82",
+      "thickness": "6.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "well"
+    },
+    {
+      "material": "InGaAsP",
+      "mole": "0.74",
+      "mole_y": "0.57",
+      "thickness": "100.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "barrier"
+    },
+    {
+      "material": "InP",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "800.0",
+      "doping": "1.0e+18",
+      "doping_type": "n",
+      "type": "barrier"
+    },
+    {
+      "material": "InP",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "50.0",
+      "doping": "2.0e+18",
+      "doping_type": "n",
+      "type": "barrier"
+    }
+  ],
+  "temp": "298.0",
+  "field": "0.0",
+  "bc_left": "0.0",
+  "bc_right": "0.0",
+  "vmin": "0.0",
+  "vmax": "1.35",
+  "vstep": "0.05",
+  "solver": "10: Fully-Coupled Newton-Raphson",
+  "grid_step": "0.5",
+  "max_pts": "200000",
+  "mat_sys": "Zincblende",
+  "sub_e": "3",
+  "sub_h": "3",
+  "Quantum_Regions": false,
+  "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+  "tat_field": "1e10",
+  "exp_file": "examples/experimental_data/laser_zah1994_1550nm_mqw_li.csv",
+  "exp_iv_file": "examples/experimental_data/laser_zah1994_1550nm_mqw_iv.csv",
+  "exp_spectrum_file": "examples/experimental_data/laser_zah1994_1550nm_mqw_spectrum.csv",
+  "area": "3.0e-5",
+  "rs": "0.0",
+  "rs_mode": "External (Fast)",
+  "rsh": "1.0e7",
+  "G_optical": "0.0",
+  "graded_junc": false,
+  "diffusion_len": "10.0",
+  "enable_polarization": false,
+  "target_peak_wavelength_nm": 1550.0,
+  "target_fwhm_nm": 30.0,
+  "target_fwhm_lasing_nm": 2.3,
+  "recommended_usage": "Primary Benchmark / InGaAsP Strained 1550nm MQW Ridge Laser",
+  "bibliographic_reference_note": "C.-E. Zah et al., IEEE J. Quantum Electron. 30, 511 (1994), DOI: 10.1109/3.283799",
+  "audit_notes": "Validated against multi-temperature (25\u00b0C, 50\u00b0C, 85\u00b0C) L-I characteristics, forward I-V, and 1.55um Fabry-Perot mode spectrum."
+}

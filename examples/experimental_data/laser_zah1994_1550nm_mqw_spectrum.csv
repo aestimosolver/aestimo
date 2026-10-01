@@ -1,0 +1,27 @@
+# DIGITIZED_EXPERIMENTAL_DATA
+# Source: C.-E. Zah, R. Bhat, B. N. Pathak, et al., "High-performance uncooled 1.3-um and 1.55-um strained-layer quantum-well lasers"
+# Journal: IEEE Journal of Quantum Electronics, Vol. 30, No. 2, pp. 511-523 (1994)
+# DOI: 10.1109/3.283799
+# Device Identifier: InGaAsP/InP 5-QW Strained Ridge Laser (L = 500 um, w = 2.5 um)
+# Measurement Temperature: 298 K (25 C)
+# Injection Current: I = 20 mA (1.6 x Ith)
+# Peak Emission Wavelength: 1550.0 nm
+# Longitudinal Mode Spacing: Delta_lambda ~ 0.677 nm
+# Units: Wavelength (nm), Normalized Intensity (a.u.)
+wavelength_nm,intensity_norm
+1544.0,0.002
+1545.0,0.005
+1546.0,0.012
+1546.615,0.035
+1547.292,0.080
+1547.969,0.185
+1548.646,0.380
+1549.323,0.740
+1550.000,1.000
+1550.677,0.710
+1551.354,0.350
+1552.031,0.165
+1552.708,0.065
+1553.385,0.025
+1554.5,0.008
+1556.0,0.001
