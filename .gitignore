@@ -26,4 +26,6 @@ dist/
 *.egg-info/
 *_output/
 .vs/
+results/
+STUDY_results/
 

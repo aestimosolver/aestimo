@@ -1,9 +1,0 @@
-{
-  "device_length_nm": 99.0,
-  "ec_drop_eV": 0.32397750000000003,
-  "ev_drop_eV": 0.32397723,
-  "peak_abs_field_mv_cm": 84349.47000000002,
-  "peak_abs_charge_density_C_cm3": 0.03204353,
-  "max_electron_density_cm3": 2034313000.0,
-  "max_hole_density_cm3": 7360330000000000.0
-}
