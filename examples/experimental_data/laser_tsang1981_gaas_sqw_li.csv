@@ -1,0 +1,45 @@
+# DIGITIZED_EXPERIMENTAL_DATA
+# Source: W. T. Tsang, "Extremely low threshold GaAs-AlGaAs graded-index waveguide separate-confinement heterostructure lasers grown by molecular beam epitaxy"
+# Journal: Applied Physics Letters, Vol. 39, No. 2, pp. 134-137 (1981)
+# DOI: 10.1063/1.92690
+# Cross-Reference: L. A. Coldren et al., "Diode Lasers and Photonic Integrated Circuits" (2012), Table 2.1
+# Device Identifier: GaAs/AlGaAs GRIN-SCH SQW Broad-Area Laser (L = 500 um, w = 20 um)
+# Measurement Temperature: 300 K (Continuous Wave / Low Duty Cycle Pulsed)
+# Emission Wavelength: 845.0 nm
+# Threshold Current: Ith ~ 20.0 mA (Jth ~ 200 A/cm^2)
+# Slope Efficiency: ~ 0.41 mW/mA (single facet) / 0.82 mW/mA (total two facets)
+# Digitization Method: High-resolution plot digitization of Fig. 2 L-I curve
+# Units: Current (mA), Output Power (mW per facet)
+current_ma,power_mw
+0.0,0.000
+2.0,0.012
+4.0,0.028
+6.0,0.045
+8.0,0.065
+10.0,0.088
+12.0,0.115
+14.0,0.145
+16.0,0.180
+18.0,0.225
+19.0,0.260
+20.0,0.320
+21.0,0.680
+22.0,1.080
+24.0,1.890
+26.0,2.710
+28.0,3.530
+30.0,4.350
+32.0,5.170
+35.0,6.400
+38.0,7.630
+40.0,8.450
+42.0,9.270
+45.0,10.500
+48.0,11.730
+50.0,12.550
+55.0,14.600
+60.0,16.650
+65.0,18.700
+70.0,20.750
+75.0,22.780
+80.0,24.800

@@ -1,101 +1,104 @@
 {
-    "layers": [
-        {
-            "material": "AlGaAs",
-            "mole": "0.3",
-            "thickness": "250.0",
-            "doping": "1.0e+17",
-            "doping_type": "p",
-            "type": "barrier",
-            "mole_y": "0.0"
-        },
-        {
-            "material": "AlGaAs",
-            "mole": "0.3",
-            "thickness": "50.0",
-            "doping": "0.0e+00",
-            "doping_type": "n",
-            "type": "barrier",
-            "mole_y": "0.0"
-        },
-        {
-            "material": "GaAs",
-            "mole": "0.3",
-            "thickness": "15.0",
-            "doping": "0.0e+00",
-            "doping_type": "n",
-            "type": "well",
-            "mole_y": "0.0"
-        },
-        {
-            "material": "AlGaAs",
-            "mole": "0.3",
-            "thickness": "50.0",
-            "doping": "0.0e+00",
-            "doping_type": "n",
-            "type": "barrier",
-            "mole_y": "0.0"
-        },
-        {
-            "material": "GaAs",
-            "mole": "0.3",
-            "thickness": "15.0",
-            "doping": "0.0e+00",
-            "doping_type": "n",
-            "type": "well",
-            "mole_y": "0.0"
-        },
-        {
-            "material": "AlGaAs",
-            "mole": "0.3",
-            "thickness": "5.0",
-            "doping": "0.0e+00",
-            "doping_type": "n",
-            "type": "barrier",
-            "mole_y": "0.0"
-        },
-        {
-            "material": "AlGaAs",
-            "mole": "0.3",
-            "thickness": "20.0",
-            "doping": "1.0e+18",
-            "doping_type": "n",
-            "type": "barrier",
-            "mole_y": "0.0"
-        },
-        {
-            "material": "GaAs",
-            "mole": "0.3",
-            "thickness": "15.0",
-            "doping": "1.0e+18",
-            "doping_type": "n",
-            "type": "barrier",
-            "mole_y": "0.0"
-        }
-    ],
-    "temp": "300.0",
-    "field": "0.0",
-    "bc_left": "0.0",
-    "bc_right": "0.6",
-    "vmin": "0.0",
-    "vmax": "1.6",
-    "vstep": "0.1",
-    "solver": "9: SP-DD (Gummel-Newton)",
-    "grid_step": "0.5",
-    "max_pts": "200000",
-    "mat_sys": "Zincblende",
-    "sub_e": "3",
-    "sub_h": "3",
-    "device_type": "Generic Diode / LED",
-    "Quantum_Regions": false,
-    "Quantum_Regions_boundary": "[[0.0, 0.0]]",
-    "tat_field": "1e10",
-    "exp_file": "",
-    "area": "1e-4",
-    "rs": "0.0",
-    "rs_mode": "External (Fast)",
-    "rsh": "1e12",
-    "G_optical": "0.0",
-    "graded_junc": false,
-    "diffusion_len": "10.0"
+  "layers": [
+    {
+      "material": "AlGaAs",
+      "mole": "0.3",
+      "thickness": "250.0",
+      "doping": "1.0e+17",
+      "doping_type": "p",
+      "type": "barrier",
+      "mole_y": "0.0"
+    },
+    {
+      "material": "AlGaAs",
+      "mole": "0.3",
+      "thickness": "50.0",
+      "doping": "0.0e+00",
+      "doping_type": "n",
+      "type": "barrier",
+      "mole_y": "0.0"
+    },
+    {
+      "material": "GaAs",
+      "mole": "0.3",
+      "thickness": "15.0",
+      "doping": "0.0e+00",
+      "doping_type": "n",
+      "type": "well",
+      "mole_y": "0.0"
+    },
+    {
+      "material": "AlGaAs",
+      "mole": "0.3",
+      "thickness": "50.0",
+      "doping": "0.0e+00",
+      "doping_type": "n",
+      "type": "barrier",
+      "mole_y": "0.0"
+    },
+    {
+      "material": "GaAs",
+      "mole": "0.3",
+      "thickness": "15.0",
+      "doping": "0.0e+00",
+      "doping_type": "n",
+      "type": "well",
+      "mole_y": "0.0"
+    },
+    {
+      "material": "AlGaAs",
+      "mole": "0.3",
+      "thickness": "5.0",
+      "doping": "0.0e+00",
+      "doping_type": "n",
+      "type": "barrier",
+      "mole_y": "0.0"
+    },
+    {
+      "material": "AlGaAs",
+      "mole": "0.3",
+      "thickness": "20.0",
+      "doping": "1.0e+18",
+      "doping_type": "n",
+      "type": "barrier",
+      "mole_y": "0.0"
+    },
+    {
+      "material": "GaAs",
+      "mole": "0.3",
+      "thickness": "15.0",
+      "doping": "1.0e+18",
+      "doping_type": "n",
+      "type": "barrier",
+      "mole_y": "0.0"
+    }
+  ],
+  "temp": "300.0",
+  "field": "0.0",
+  "bc_left": "0.0",
+  "bc_right": "0.6",
+  "vmin": "0.0",
+  "vmax": "1.6",
+  "vstep": "0.1",
+  "solver": "9: SP-DD (Gummel-Newton)",
+  "grid_step": "0.5",
+  "max_pts": "200000",
+  "mat_sys": "Zincblende",
+  "sub_e": "3",
+  "sub_h": "3",
+  "device_type": "Generic Diode / LED",
+  "Quantum_Regions": false,
+  "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+  "tat_field": "1e10",
+  "exp_file": "",
+  "area": "1e-4",
+  "rs": "0.0",
+  "rs_mode": "External (Fast)",
+  "rsh": "1e12",
+  "G_optical": "0.0",
+  "graded_junc": false,
+  "diffusion_len": "10.0",
+  "validation_status": "MODEL-BASED / NOT EXPERIMENTALLY VALIDATED",
+  "recommended_usage": "Educational / Theoretical Exploration / Numerical Testing",
+  "audit_notes": "Theoretical/idealized semiconductor model without calibration to experimental device data. Suitable for qualitative physical exploration and numerical solver testing."
 }

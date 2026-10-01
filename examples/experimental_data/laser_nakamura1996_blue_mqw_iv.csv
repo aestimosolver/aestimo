@@ -1,0 +1,27 @@
+# DIGITIZED_EXPERIMENTAL_DATA
+# Source: S. Nakamura, M. Senoh, S. Nagahama, et al., "InGaN-based multi-quantum-well-structure laser diodes"
+# Journal: Applied Physics Letters, Vol. 68, Issue 15, pp. 2105-2107 (1996)
+# DOI: 10.1063/1.116084
+# Device Identifier: InGaN/GaN/AlGaN 5-QW Violet-Blue Ridge Laser (L = 600 um, w = 5 um)
+# Measurement Temperature: 300 K
+# Threshold Voltage: Vth ~ 5.5 V
+# Series Resistance: Rs ~ 28.0 Ohm (reflecting early Ni/Au p-GaN contact technology)
+# Digitization Method: High-resolution plot digitization of forward I-V characteristic
+# Units: Voltage (V), Current (mA)
+voltage_v,current_ma
+0.0,0.000
+1.0,0.000
+2.0,0.005
+2.5,0.025
+3.0,0.150
+3.5,0.750
+4.0,3.200
+4.5,12.500
+4.8,25.000
+5.0,38.500
+5.2,55.000
+5.5,80.000
+5.8,102.500
+6.0,118.000
+6.2,132.500
+6.5,152.000

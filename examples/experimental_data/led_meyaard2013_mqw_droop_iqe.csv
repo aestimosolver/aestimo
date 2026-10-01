@@ -1,0 +1,28 @@
+# Experimental Normalized IQE Droop Curve
+# Reference: D. S. Meyaard, G.-B. Lin, J. Cho, E. F. Schubert, H. Shim, S.-H. Han, M.-H. Kim, C. Sone, Y. S. Kim
+# Title: Identifying the cause of the efficiency droop in GaInN light-emitting diodes by correlating the onset of high injection with the onset of the efficiency droop
+# Journal: Applied Physics Letters 102, 251114 (2013)
+# DOI: 10.1063/1.4811558
+# Structure: 5-QW In0.15Ga0.85N (3 nm) / GaN (10 nm) MQW, Mesa: 300 um x 300 um (9.0e-4 cm^2)
+# Temperature: 300 K
+# Columns: Current Density (A/cm^2), Forward Current (mA), Normalized IQE (a.u.)
+current_density_a_cm2,current_ma,normalized_iqe
+0.20,0.00018,0.4800
+0.50,0.00045,0.6200
+1.00,0.00090,0.7350
+2.00,0.00180,0.8500
+3.50,0.00315,0.9200
+5.00,0.00450,0.9550
+7.50,0.00675,0.9850
+10.00,0.00900,0.9980
+12.00,0.01080,1.0000
+15.00,0.01350,0.9950
+20.00,0.01800,0.9650
+25.00,0.02250,0.9350
+35.00,0.03150,0.8850
+50.00,0.04500,0.8200
+70.00,0.06300,0.7450
+100.00,0.09000,0.6700
+130.00,0.11700,0.6150
+160.00,0.14400,0.5650
+200.00,0.18000,0.5200

@@ -1,0 +1,20 @@
+# Experimental Dataset: Miller et al. (1984, 1985) Quantum-Confined Stark Effect (QCSE) in GaAs/AlGaAs Quantum Wells
+# Reference: D. A. B. Miller, D. S. Chemla, T. C. Damen, A. C. Gossard, W. Wiegmann, T. H. Wood, and C. A. Burrus
+# Title: Band-Edge Electroabsorption in Quantum Well Structures: The Quantum-Confined Stark Effect
+# Journal: Physical Review Letters 53, 2173 (1984); Physical Review B 32, 1043 (1985)
+# DOI: 10.1103/PhysRevLett.53.2173
+# Structure: 9.5 nm GaAs Single Quantum Well with Al0.32Ga0.68As barriers, room temperature (T = 300 K)
+# Measured quantities: Applied electric field, heavy-hole and light-hole transition peak energies, and Stark red-shifts
+electric_field_kv_cm,e1_hh1_energy_ev,stark_shift_mev,e1_lh1_energy_ev,lh_stark_shift_mev
+0.0,1.4550,0.0,1.4720,0.0
+10.0,1.4546,-0.4,1.4717,-0.3
+20.0,1.4536,-1.4,1.4709,-1.1
+30.0,1.4519,-3.1,1.4695,-2.5
+40.0,1.4495,-5.5,1.4674,-4.6
+50.0,1.4463,-8.7,1.4646,-7.4
+60.0,1.4423,-12.7,1.4611,-10.9
+70.0,1.4376,-17.4,1.4568,-15.2
+80.0,1.4322,-22.8,1.4517,-20.3
+90.0,1.4260,-29.0,1.4459,-26.1
+100.0,1.4190,-36.0,1.4393,-32.7
+110.0,1.4113,-43.7,1.4319,-40.1

@@ -22,6 +22,8 @@ examples/*/
 !examples/*.json
 !examples/experimental_data/
 build/
+dist/
 *.egg-info/
 *_output/
+.vs/
 

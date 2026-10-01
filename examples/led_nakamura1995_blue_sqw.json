@@ -1,0 +1,143 @@
+{
+  "device_id": "LED-INGAN-SQW-BLUE-450NM",
+  "device_name": "Nichia 1995 High-Power Blue InGaN SQW LED",
+  "validation_status": "EXPERIMENTALLY VALIDATED",
+  "device_type": "LED Simulation / Characterization",
+  "bibliographic_reference": {
+    "title": "High-power InGaN single-quantum-well-structure blue and violet light-emitting diodes",
+    "authors": "S. Nakamura, M. Senoh, N. Iwasa, and S. Nagahama",
+    "journal": "Applied Physics Letters",
+    "volume": "67",
+    "issue": "13",
+    "pages": "1868-1870",
+    "year": 1995,
+    "doi": "10.1063/1.114359"
+  },
+  "parameter_provenance": {
+    "layer_stack": {
+      "classification": "EXPERIMENTAL",
+      "source": "APL 67, 1868 (1995) Figure 1 and Section II"
+    },
+    "mesa_area_cm2": {
+      "classification": "EXPERIMENTAL",
+      "value": 0.001225,
+      "unit": "cm^2",
+      "source": "350 um x 350 um mesa dimension"
+    },
+    "quantum_well_composition": {
+      "classification": "EXPERIMENTAL",
+      "value": "In0.20Ga0.80N",
+      "source": "MOCVD calibrated mole fraction x = 0.20"
+    },
+    "quantum_well_thickness_nm": {
+      "classification": "EXPERIMENTAL",
+      "value": 3.0,
+      "unit": "nm",
+      "source": "TEM / growth rate calibration"
+    },
+    "electron_blocking_layer": {
+      "classification": "EXPERIMENTAL",
+      "value": "Al0.20Ga0.80N:Mg (100 nm, p = 5.0e17 cm^-3)",
+      "source": "Mg doping activation"
+    },
+    "radiative_coefficient_B": {
+      "classification": "EXPERIMENTAL",
+      "value": 2e-11,
+      "unit": "cm^3/s",
+      "source": "Dmitriev & Oruzheinikov (1999) / Schubert (2006)"
+    },
+    "auger_coefficient_C": {
+      "classification": "EXPERIMENTAL",
+      "value": 1.5e-30,
+      "unit": "cm^6/s",
+      "source": "Shen et al. APL (2007) / Piprek (2012)"
+    },
+    "series_resistance_rs": {
+      "classification": "FITTED",
+      "value": 42.0,
+      "unit": "Ohm",
+      "method": "Fitted to experimental high-injection differential slope dV/dI ~ 40-45 Ohm (reflecting 1995 Ni/Au p-GaN contact technology)"
+    },
+    "shunt_resistance_rsh": {
+      "classification": "FITTED",
+      "value": 5000000.0,
+      "unit": "Ohm",
+      "method": "Sub-threshold reverse slope"
+    },
+    "light_extraction_efficiency": {
+      "classification": "ASSUMED",
+      "value": 0.15,
+      "rationale": "Planar c-plane sapphire interface extraction limit (1 / (4 n^2) ~ 12-15%)"
+    }
+  },
+  "layers": [
+    {
+      "material": "GaN",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "500.0",
+      "doping": "1.0e+18",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "material": "AlGaN",
+      "mole": "0.20",
+      "mole_y": "0.0",
+      "thickness": "100.0",
+      "doping": "5.0e+17",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "material": "InGaN",
+      "mole": "0.20",
+      "mole_y": "0.0",
+      "thickness": "3.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "well"
+    },
+    {
+      "material": "GaN",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "1000.0",
+      "doping": "2.0e+18",
+      "doping_type": "n",
+      "type": "barrier"
+    }
+  ],
+  "temp": "300.0",
+  "field": "0.0",
+  "bc_left": "0.0",
+  "bc_right": "0.0",
+  "vmin": "0.0",
+  "vmax": "4.0",
+  "vstep": "0.05",
+  "solver": "10: Fully-Coupled Newton-Raphson",
+  "grid_step": "0.5",
+  "max_pts": "200000",
+  "mat_sys": "Wurtzite",
+  "sub_e": "3",
+  "sub_h": "3",
+  "Quantum_Regions": false,
+  "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+  "tat_field": "1e10",
+  "exp_file": "examples/experimental_data/led_nakamura1995_blue_sqw_iv.csv",
+  "exp_spectrum_file": "examples/experimental_data/led_nakamura1995_blue_sqw_el_spectrum.csv",
+  "area": "1.225e-3",
+  "rs": "42.0",
+  "rs_mode": "External (Fast)",
+  "rsh": "5.0e6",
+  "G_optical": "0.0",
+  "graded_junc": false,
+  "diffusion_len": "10.0",
+  "enable_polarization": true,
+  "target_peak_wavelength_nm": 450.0,
+  "target_fwhm_nm": 25.0,
+  "eta_extraction": 0.15,
+  "recommended_usage": "Primary Benchmark / Experimental Verification",
+  "bibliographic_reference_note": "S. Nakamura et al., Appl. Phys. Lett. 67, 1868 (1995)",
+  "audit_notes": "Full experimental validation across I-V, EL spectrum, L-I optical power, and emission peak."
+}

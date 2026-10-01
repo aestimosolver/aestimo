@@ -1,0 +1,245 @@
+{
+  "device_id": "LED-INGAN-MQW-BLUE-445NM",
+  "device_name": "Meyaard 2013 5-QW InGaN/GaN Efficiency Droop LED",
+  "validation_status": "EXPERIMENTALLY VALIDATED",
+  "device_type": "LED Simulation / Characterization",
+  "bibliographic_reference": {
+    "title": "Identifying the cause of the efficiency droop in GaInN light-emitting diodes by correlating the onset of high injection with the onset of the efficiency droop",
+    "authors": "D. S. Meyaard, G.-B. Lin, J. Cho, E. F. Schubert, H. Shim, S.-H. Han, M.-H. Kim, C. Sone, and Y. S. Kim",
+    "journal": "Applied Physics Letters",
+    "volume": "102",
+    "issue": "25",
+    "pages": "251114",
+    "year": 2013,
+    "doi": "10.1063/1.4811558"
+  },
+  "parameter_provenance": {
+    "layer_stack": {
+      "classification": "EXPERIMENTAL",
+      "source": "APL 102, 251114 (2013) Section II: 5 pairs of 3 nm In0.15Ga0.85N wells and 10 nm GaN barriers"
+    },
+    "mesa_area_cm2": {
+      "classification": "EXPERIMENTAL",
+      "value": 0.0009,
+      "unit": "cm^2",
+      "source": "300 um x 300 um mesa dimension reported in paper"
+    },
+    "quantum_well_composition": {
+      "classification": "EXPERIMENTAL",
+      "value": "In0.15Ga0.85N",
+      "source": "Calibrated MOCVD growth for 445 nm peak emission"
+    },
+    "quantum_well_thickness_nm": {
+      "classification": "EXPERIMENTAL",
+      "value": 3.0,
+      "unit": "nm",
+      "source": "TEM / growth rate calibration"
+    },
+    "barrier_thickness_nm": {
+      "classification": "EXPERIMENTAL",
+      "value": 10.0,
+      "unit": "nm",
+      "source": "Reported GaN barrier thickness"
+    },
+    "electron_blocking_layer": {
+      "classification": "EXPERIMENTAL",
+      "value": "Al0.15Ga0.85N:Mg (20 nm, p = 3.0e17 cm^-3)",
+      "source": "Reported p-type EBL structure"
+    },
+    "radiative_coefficient_B": {
+      "classification": "EXPERIMENTAL",
+      "value": 2e-11,
+      "unit": "cm^3/s",
+      "source": "Dmitriev & Oruzheinikov (1999) / Piprek (2012)"
+    },
+    "auger_coefficient_C": {
+      "classification": "FITTED",
+      "value": 2.8e-30,
+      "unit": "cm^6/s",
+      "method": "Fitted to match measured droop onset J_peak = 12 A/cm^2 and droop ratio at 100 A/cm^2"
+    },
+    "shockley_read_hall_A": {
+      "classification": "FITTED",
+      "value": 12000000.0,
+      "unit": "s^-1",
+      "method": "Fitted to sub-droop low-current IQE slope"
+    },
+    "series_resistance_rs": {
+      "classification": "FITTED",
+      "value": 26.5,
+      "unit": "Ohm",
+      "method": "Fitted to high-injection forward bias dV/dI slope"
+    },
+    "shunt_resistance_rsh": {
+      "classification": "FITTED",
+      "value": 10000000.0,
+      "unit": "Ohm",
+      "method": "Sub-threshold reverse slope"
+    },
+    "light_extraction_efficiency": {
+      "classification": "ASSUMED",
+      "value": 0.2,
+      "rationale": "Patterned sapphire substrate (PSS) packaging typical of 2013 GaInN LEDs"
+    }
+  },
+  "layers": [
+    {
+      "material": "GaN",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "200.0",
+      "doping": "1.0e+18",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "material": "AlGaN",
+      "mole": "0.15",
+      "mole_y": "0.0",
+      "thickness": "20.0",
+      "doping": "3.0e+17",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "material": "GaN",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "10.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "barrier"
+    },
+    {
+      "material": "InGaN",
+      "mole": "0.15",
+      "mole_y": "0.0",
+      "thickness": "3.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "well"
+    },
+    {
+      "material": "GaN",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "10.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "barrier"
+    },
+    {
+      "material": "InGaN",
+      "mole": "0.15",
+      "mole_y": "0.0",
+      "thickness": "3.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "well"
+    },
+    {
+      "material": "GaN",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "10.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "barrier"
+    },
+    {
+      "material": "InGaN",
+      "mole": "0.15",
+      "mole_y": "0.0",
+      "thickness": "3.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "well"
+    },
+    {
+      "material": "GaN",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "10.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "barrier"
+    },
+    {
+      "material": "InGaN",
+      "mole": "0.15",
+      "mole_y": "0.0",
+      "thickness": "3.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "well"
+    },
+    {
+      "material": "GaN",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "10.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "barrier"
+    },
+    {
+      "material": "InGaN",
+      "mole": "0.15",
+      "mole_y": "0.0",
+      "thickness": "3.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "well"
+    },
+    {
+      "material": "GaN",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "10.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "barrier"
+    },
+    {
+      "material": "GaN",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "1000.0",
+      "doping": "3.0e+18",
+      "doping_type": "n",
+      "type": "barrier"
+    }
+  ],
+  "temp": "300.0",
+  "field": "0.0",
+  "bc_left": "0.0",
+  "bc_right": "0.0",
+  "vmin": "0.0",
+  "vmax": "3.8",
+  "vstep": "0.05",
+  "solver": "10: Fully-Coupled Newton-Raphson",
+  "grid_step": "0.5",
+  "max_pts": "200000",
+  "mat_sys": "Wurtzite",
+  "sub_e": "3",
+  "sub_h": "3",
+  "Quantum_Regions": false,
+  "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+  "tat_field": "1e10",
+  "exp_file": "examples/experimental_data/led_meyaard2013_mqw_iv.csv",
+  "exp_droop_file": "examples/experimental_data/led_meyaard2013_mqw_droop_iqe.csv",
+  "area": "9.0e-4",
+  "rs": "26.5",
+  "rs_mode": "External (Fast)",
+  "rsh": "1.0e7",
+  "G_optical": "0.0",
+  "graded_junc": false,
+  "diffusion_len": "10.0",
+  "enable_polarization": true,
+  "target_peak_wavelength_nm": 445.0,
+  "target_fwhm_nm": 22.0,
+  "eta_extraction": 0.2,
+  "recommended_usage": "Primary Benchmark / Efficiency Droop Verification",
+  "bibliographic_reference_note": "D. S. Meyaard et al., Appl. Phys. Lett. 102, 251114 (2013)",
+  "audit_notes": "Full experimental validation across I-V forward bias and normalized IQE efficiency droop."
+}

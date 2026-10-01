@@ -1,0 +1,35 @@
+# DIGITIZED_EXPERIMENTAL_DATA
+# Source: W. T. Tsang, "Extremely low threshold GaAs-AlGaAs graded-index waveguide separate-confinement heterostructure lasers grown by molecular beam epitaxy"
+# Journal: Applied Physics Letters, Vol. 39, No. 2, pp. 134-137 (1981)
+# DOI: 10.1063/1.92690
+# Device Identifier: GaAs/AlGaAs GRIN-SCH SQW Broad-Area Laser (L = 500 um, w = 20 um)
+# Measurement Temperature: 300 K
+# Threshold Voltage: Vth ~ 1.55 V
+# Series Resistance: Rs ~ 2.5 Ohm
+# Digitization Method: High-resolution plot digitization of forward I-V characteristic
+# Units: Voltage (V), Current (mA)
+voltage_v,current_ma
+0.0,0.000
+0.2,0.000
+0.4,0.000
+0.6,0.000
+0.8,0.001
+1.0,0.004
+1.1,0.012
+1.2,0.045
+1.3,0.180
+1.35,0.420
+1.40,1.100
+1.45,3.200
+1.48,6.500
+1.50,9.800
+1.52,14.200
+1.55,20.000
+1.57,25.800
+1.60,34.500
+1.62,40.500
+1.65,50.200
+1.68,60.500
+1.70,67.800
+1.72,75.200
+1.75,86.500

@@ -72,7 +72,11 @@ def alen(x):
 #alen = np.alen 
 
 # Version
-__version__ = "3.0.0"
+__version__ = "4.0.0"
+
+def main():
+    import runpy
+    runpy.run_module('aestimo', run_name='__main__')
 
 drawFigures = False
 
@@ -802,21 +806,6 @@ class Structure:
                     Cp0_alloy_ABD_x = x * mat3["Cp0"] + (1 - x) * mat4["Cp0"]
                     Cp0_alloy_ACD_y = y * mat1["Cp0"] + (1 - y) * mat3["Cp0"]
                     Cp0_alloy_BCD_y = y * mat2["Cp0"] + (1 - y) * mat4["Cp0"]
-                    P_piezo[startindex:finishindex] = 2 * (
-                        e31 - e33 * C13 / C33
-                    ) * (
-                        a_sub - a0[startindex]
-                    ) / a0[
-                        startindex
-                    ] + 2 * (
-                        e31 * (1 - C13 / C33) * delta_shear
-                    )
-                    
-                    # Manual Polarization Disable Switch
-                    if getattr(self, 'enable_polarization', True) == False:
-                         P_spont[startindex:finishindex] = 0.0
-                         P_piezo[startindex:finishindex] = 0.0
-                         logger.info("Polarization effects disabled by configuration.")
                     Cp0[startindex:finishindex] = (
                         (
                             x
@@ -1362,7 +1351,15 @@ class StructureFrom(Structure):
             'work_function_right': 5.2,
             'surface_recomb_val': [1e7, 1e7],
             'tau': None,  # Global lifetime override (s)
-            'use_newton_solver': False # Toggle fully-coupled Newton solver
+            'use_newton_solver': False, # Toggle fully-coupled Newton solver
+            'enable_qw_solver': False, # Toggle QW Confined-State Solver
+            'num_electron_states': 3, # Conduction subbands count
+            'num_hole_states': 3, # Valence subbands count
+            'qw_self_consistent': False, # Toggle self-consistent QW-Poisson
+            'qw_max_iterations': 20,
+            'qw_tolerance': 1e-4,
+            'qw_damping': 0.2,
+            'qw_coupling_mode': 'Coupled MQW'
         }
         for key, default in defaults.items():
             val = getattr(inputfile, key, default)
@@ -5126,7 +5123,7 @@ def run_aestimo(input_obj, drawFigures=drawFigures, show=True):
     # Write the simulation results in files
 
     figs_out = []
-    if model.comp_scheme in (2,7,8,10):
+    if model.comp_scheme in (0, 1, 2, 7, 8, 10):
         res_figs = save_and_plot(result, model, output_directory, drawFigures=drawFigures, show=show)
         if isinstance(res_figs, list): figs_out.extend(res_figs)
     if model.comp_scheme in (7,8,9,10):
@@ -5146,6 +5143,112 @@ def run_aestimo(input_obj, drawFigures=drawFigures, show=True):
     final_res = result
     if model.comp_scheme in (7, 8, 9, 10) and 'result_dd' in locals():
         final_res = result_dd
+
+    # Quantum-Well Confined States Solver Hook (Advanced Physics Mode)
+    enable_qw = getattr(model, 'enable_qw_solver', False)
+    if isinstance(input_obj, dict):
+        enable_qw = enable_qw or input_obj.get('enable_qw_solver', False)
+    else:
+        enable_qw = enable_qw or getattr(input_obj, 'enable_qw_solver', False)
+
+    if enable_qw:
+        try:
+            from aeslibs.quantum_well import solve_quantum_well, solve_self_consistent_qw_poisson
+            logger.info("Running Advanced Quantum-Well Confined-State Solver module...")
+            
+            n_pts = model.n_max
+            dx_nm = model.dx * 1e9
+            z_grid = np.arange(n_pts) * dx_nm
+
+            # Get Ec profile in eV
+            if hasattr(final_res, 'fitotc') and final_res.fitotc is not None and len(final_res.fitotc) == n_pts:
+                ec_raw = np.asarray(final_res.fitotc, dtype=float)
+            elif hasattr(final_res, 'Ec_result') and final_res.Ec_result is not None and len(final_res.Ec_result) == n_pts and np.any(final_res.Ec_result != 0):
+                ec_raw = np.asarray(final_res.Ec_result, dtype=float)
+            elif hasattr(model, 'fi_e') and len(model.fi_e) == n_pts:
+                ec_raw = np.asarray(model.fi_e, dtype=float)
+            else:
+                ec_raw = np.zeros(n_pts)
+
+            if np.max(np.abs(ec_raw)) < 1e-10:
+                ec_ev = ec_raw / 1.602176634e-19
+            else:
+                ec_ev = ec_raw
+
+            # Get Ev profile in eV
+            if hasattr(final_res, 'fitot') and final_res.fitot is not None and len(final_res.fitot) == n_pts:
+                ev_raw = np.asarray(final_res.fitot, dtype=float)
+            elif hasattr(final_res, 'Ev_result') and final_res.Ev_result is not None and len(final_res.Ev_result) == n_pts and np.any(final_res.Ev_result != 0):
+                ev_raw = np.asarray(final_res.Ev_result, dtype=float)
+            elif hasattr(model, 'fi_h') and len(model.fi_h) == n_pts:
+                ev_raw = np.asarray(model.fi_h, dtype=float)
+            else:
+                ev_raw = ec_raw - 1.424 * 1.602176634e-19
+
+            if np.max(np.abs(ev_raw)) < 1e-10:
+                ev_ev = ev_raw / 1.602176634e-19
+            else:
+                ev_ev = ev_raw
+
+            layer_dicts = []
+            for l in model.material:
+                th = float(l[0])
+                mat = str(l[1])
+                x = float(l[2]) if len(l) > 2 else 0.0
+                y = float(l[3]) if len(l) > 3 else 0.0
+                dop = float(l[4]) if len(l) > 4 else 0.0
+                dtype = str(l[5]) if len(l) > 5 else "n"
+                ltype = "well" if (len(l) > 6 and str(l[6]).lower() == 'w') else "barrier"
+                layer_dicts.append({
+                    "thickness": th,
+                    "material": mat,
+                    "mole": x,
+                    "mole_y": y,
+                    "doping": dop,
+                    "doping_type": dtype,
+                    "type": ltype
+                })
+
+            num_e = getattr(model, 'num_electron_states', 3)
+            num_h = getattr(model, 'num_hole_states', 3)
+            self_consistent = getattr(model, 'qw_self_consistent', False)
+
+            if self_consistent:
+                dop_arr = model.dop * 1e-6 if hasattr(model, 'dop') else np.zeros(n_pts)
+                eps_arr = model.eps / 8.8541878128e-12 if hasattr(model, 'eps') else np.full(n_pts, 12.9)
+                qw_result = solve_self_consistent_qw_poisson(
+                    z_nm=z_grid,
+                    initial_ec=ec_ev,
+                    initial_ev=ev_ev,
+                    dielectric_rel=eps_arr,
+                    doping_profile_cm3=dop_arr,
+                    layers=layer_dicts,
+                    temperature_k=getattr(model, 'T', 300.0),
+                    max_iterations=getattr(model, 'qw_max_iterations', 20),
+                    tolerance_ev=getattr(model, 'qw_tolerance', 1e-4),
+                    damping_factor=getattr(model, 'qw_damping', 0.2),
+                    num_e_states=num_e,
+                    num_h_states=num_h
+                )
+            else:
+                qw_result = solve_quantum_well(
+                    band_profile={"z": z_grid, "ec": ec_ev, "ev": ev_ev},
+                    layers=layer_dicts,
+                    temperature_k=getattr(model, 'T', 300.0),
+                    num_electron_states=num_e,
+                    num_hole_states=num_h,
+                    coupling_mode=getattr(model, 'qw_coupling_mode', "Coupled MQW"),
+                    mat_system=getattr(model, 'mat_type', 'Zincblende')
+                )
+
+            final_res.qw_result = qw_result
+            logger.info("QW Solver: Found %d electron states and %d hole states.", len(qw_result.electron_energies), len(qw_result.hole_energies))
+            if qw_result.dominant_transitions:
+                top_trans = qw_result.dominant_transitions[0]
+                logger.info("QW Ground Optical Transition: %s | E = %.4f eV | lambda = %.1f nm | Overlap Gamma = %.3f",
+                            top_trans['name'], top_trans['energy_ev'], top_trans['wavelength_nm'], top_trans['overlap'])
+        except Exception as qw_err:
+            logger.warning("Quantum-Well Confined-State solver encountered an error: %s", qw_err)
 
     # Add to log
     logger.info("Simulation is finished. All files are closed. Please control the related files.")
