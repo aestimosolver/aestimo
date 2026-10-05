@@ -1340,6 +1340,8 @@ class StructureFrom(Structure):
             'max_iterations': 120,
             'dd_max_iterations': 25,
             'dd_residual_tolerance': 0.02,
+            'dd_current_atol': 1e-8,  # mA/cm^2, total-current spatial span
+            'dd_current_rtol': 1e-3,
             'mat_type': 'Zincblende',
             'dop_profile': np.zeros(1),
             'Quantum_Regions_boundary': np.zeros((1, 2)),

@@ -15,13 +15,13 @@ import aestimo
 from aeslibs.newton_raphson import CoupledNewtonSolver, NewtonConvergenceError
 
 
-def run_case(spacing_nm, tolerance, max_voltage=0.4):
+def run_case(spacing_nm, tolerance, max_voltage=0.4, current_atol=1e-8):
     cfg = {k: v for k, v in runpy.run_path(str(ROOT / 'examples/sample_pn.py')).items()
            if not k.startswith('__')}
     nodes = int(2000 / spacing_nm + 0.5)
     cfg.update(gridfactor=spacing_nm, dop_profile=np.zeros(nodes),
                vmax=max_voltage, dd_residual_tolerance=tolerance,
-               dd_max_iterations=100)
+               dd_max_iterations=100, dd_current_atol=current_atol, dd_current_rtol=1e-3)
     steps = []
     original = CoupledNewtonSolver.solve_step
 
@@ -45,7 +45,8 @@ def run_case(spacing_nm, tolerance, max_voltage=0.4):
         except NewtonConvergenceError as exc:
             failure = str(exc)
     return dict(spacing_nm=spacing_nm, nodes=nodes, residual_tolerance=tolerance,
-                max_iterations=100, failure=failure, steps=steps)
+                max_iterations=100, current_atol_mA_cm2=current_atol, current_rtol=1e-3,
+                failure=failure, steps=steps)
 
 
 def compare_cases(cases):
@@ -75,10 +76,13 @@ def run_audit():
         for spacing in (10., 5., 2.5):
             print(f'Mesh audit: dx={spacing:g} nm, tolerance={tolerance:g}', flush=True)
             cases.append(run_case(spacing, tolerance))
+    strict = [run_case(spacing, 0.02, current_atol=1e-9)
+              for spacing in (10., 5., 2.5)]
     return dict(description='Numerical dark Si pn audit, not experimental validation',
                 preset='examples/sample_pn.py', voltage_step_V=0.02,
                 current_unit='mA/cm^2',
-                cases=cases, comparisons=compare_cases(cases))
+                state_precision_bits=int(np.finfo(np.longdouble).nmant + 1),
+                cases=cases, strict_current_cases=strict, comparisons=compare_cases(cases))
 
 
 if __name__ == '__main__':

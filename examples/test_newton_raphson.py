@@ -169,6 +169,69 @@ class TestNewtonSolver(unittest.TestCase):
                          np.full(len(fi), 0.05), solver.TAUN0,
                          solver.TAUP0, 0., 0., 0.)
 
+    def test_equilibrium_flux_is_exactly_zero_with_large_carrier_contrast(self):
+        solver, fi, _, _ = device_solver()
+        n = np.geomspace(1e-12, 1e12, len(fi))
+        p = 1 / n
+        solver.n_eq, solver.p_eq = n.copy(), p.copy()
+        solver._init_equilibrium_state(n, p)
+        solver.compute_currents(fi, n, p)
+        np.testing.assert_array_equal(solver.Jtot, 0.)
+
+    def test_tiny_potential_gradient_retains_small_flux(self):
+        from aeslibs.newton_raphson import Ber
+        solver, fi, _, _ = device_solver()
+        solver.fi_eq = np.zeros_like(fi)
+        n = np.full(len(fi), 1e8)
+        p = np.full(len(fi), 1e-8)
+        solver.n_eq, solver.p_eq = n.copy(), p.copy()
+        solver._init_equilibrium_state(n, p)
+        phi = np.arange(len(fi)) * 1e-17
+        jn, jp = solver._edge_fluxes(phi, n, p)
+        delta = np.diff(phi)
+        np.testing.assert_allclose(jn, -solver.mun_mid * n[1:] * Ber(delta)
+                                   * np.expm1(delta), rtol=1e-14, atol=0)
+        self.assertTrue(np.all(jn != 0))
+        self.assertTrue(np.all(jp != 0))
+
+    def test_stable_flux_matches_direct_sg_away_from_equilibrium(self):
+        from aeslibs.newton_raphson import Ber
+        solver, fi, n, p = device_solver()
+        phi = fi + np.arange(len(fi)) * .8
+        n = n * np.linspace(.2, 2., len(n))
+        p = p * np.linspace(2., .2, len(p))
+        jn, jp = solver._edge_fluxes(phi, n, p)
+        delta = np.diff(phi - solver.fi_eq)
+        psi_n = delta + solver.d_psi_n0
+        psi_p = delta + solver.d_psi_p0
+        np.testing.assert_allclose(jn, solver.mun_mid *
+            (n[1:] * Ber(psi_n) - n[:-1] * Ber(-psi_n)), rtol=1e-12)
+        np.testing.assert_allclose(jp, solver.mup_mid *
+            (p[:-1] * Ber(psi_p) - p[1:] * Ber(-psi_p)), rtol=1e-12)
+
+    def test_residual_acceptance_cannot_bypass_current_conservation(self):
+        solver, fi, n, p = device_solver()
+        def bad_current(*args):
+            solver.Jtot = np.arange(len(fi) - 1, dtype=float)
+            solver.last_Jtot = 1.
+        with patch.object(solver, 'compute_currents', side_effect=bad_current):
+            *_, ok = solver.solve_step(fi, n, p, max_iter=0)
+        self.assertFalse(ok)
+        self.assertFalse(solver.last_diagnostics['current_conserved'])
+        self.assertEqual(solver.last_diagnostics['reason'], 'current conservation not met')
+        self.assertIsNone(solver.Jtot)
+        with self.assertRaises(NewtonConvergenceError):
+            solver.require_convergence(ok, fi, n, p, 0.)
+
+    def test_invalid_current_conservation_controls_are_rejected(self):
+        for name, values in [('dd_current_atol', [0., -1., np.nan, np.inf]),
+                             ('dd_current_rtol', [-1., np.nan, np.inf])]:
+            for value in values:
+                solver, fi, n, p = device_solver()
+                setattr(solver.model, name, value)
+                with self.subTest(name=name, value=value), self.assertRaises(ValueError):
+                    solver.solve_step(fi, n, p)
+
     def test_invalid_iteration_budget_and_tolerance_are_rejected(self):
         solver, fi, n, p = device_solver()
         for budget in (-1, 0.5, None):

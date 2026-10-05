@@ -152,12 +152,35 @@ control and comparisons that cannot substitute a failed finest reference.
 Current conservation, near-equilibrium cancellation and equation scaling are
 release blockers, alongside the existing scientific and installation checks.
 
+## Current conservation and low-current precision
+
+Mode 10 now requires the total-current span over all mesh edges to be within
+`dd_current_atol + dd_current_rtol * abs(interior_median_current)` in addition
+to the residual criterion. Defaults are 1e-8 mA/cm² absolute and 1e-3 relative,
+provisional numerical controls requiring physical review. Failed conservation
+continues Newton updates or raises before export; currents are never flattened.
+
+Continuity and export share a stable SG flux calculation; near-equilibrium
+subtractions use expm1/log1p. Potential/carrier updates use longdouble while
+sparse factorization stays float64. The tested Linux platform has 64 significant
+state bits; Windows and other platforms may offer no extra precision and have
+not been checked. Equations and material parameters are unchanged.
+
+`docs/mode10-current-conservation.md` and `docs/mode10-current-audit.json`
+record the current result; the previous mesh JSON is a historical baseline.
+All nine standard mesh/tolerance cases now complete 21 biases. Three stricter
+absolute-tolerance cases fail honestly near equilibrium. Low-bias grid errors
+and the platform-dependent precision floor remain unresolved. The full example
+suite has **77 passing tests**, including five new flux/conservation regressions.
+
 ## Remaining work before release
 
 1. Extend the Mode 10 audit to mesh convergence, heterogeneous devices and
    illumination/recombination regimes. The residual acceptance and failure
    propagation fixes have been completed, but the new Si mesh audit exposes
-   inadequate current conservation at the inherited default tolerance.
+   inadequate current conservation at the inherited residual-only tolerance.
+   A current-conservation guard and stable flux evaluation now address this;
+   low-current grid accuracy and platform precision still need review.
 2. Establish observable-specific acceptance criteria using measurement uncertainty
    and grid/model convergence. The previous correlation-only rule has been
    replaced; the provisional QW thresholds still require scientific review.

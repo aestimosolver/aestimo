@@ -142,28 +142,18 @@ class CoupledNewtonSolver:
         F[1] = n[0] - self.n_eq[0]
         F[2] = p[0] - self.p_eq[0]
         
-        # Internal field and Bernoulli flux arguments
         dfi = fi[1:] - fi[:-1]
-        delta_dfi = dfi - self.dfi_eq
-        psi_n = delta_dfi + self.d_psi_n0
-        psi_p = delta_dfi + self.d_psi_p0
-        
-        Bn_pos = Ber(psi_n)
-        Bn_neg = Ber(-psi_n)
-        Bp_pos = Ber(psi_p)
-        Bp_neg = Ber(-psi_p)
-        
-        Jn = self.mun_mid * (n[1:] * Bn_pos - n[:-1] * Bn_neg)
-        Jp = self.mup_mid * (p[:-1] * Bp_pos - p[1:] * Bp_neg)
-        
+        Jn, Jp = self._edge_fluxes(fi, n, p)
+
         denom = self.TAUP0 * (n + np.sqrt(self.ni_ratio2)) + self.TAUN0 * (p + np.sqrt(self.ni_ratio2))
         denom = np.maximum(denom, 1e-20)
         U_srh = (n * p - self.ni_ratio2) / denom
         R_minus_G = U_srh - self.G_norm
         
         # Vectorized Poisson residual relative to equilibrium Gauss law
-        F_fi = (self.coef_eps[1:] * (dfi[1:] - self.dfi_eq[1:])
-              - self.coef_eps[:-1] * (dfi[:-1] - self.dfi_eq[:-1])
+        delta = np.diff(fi - self.fi_eq)
+        F_fi = (self.coef_eps[1:] * delta[1:]
+              - self.coef_eps[:-1] * delta[:-1]
               + (p[1:-1] - self.p_eq[1:-1]) - (n[1:-1] - self.n_eq[1:-1]))
         F[3::3][:-1] = F_fi
         
@@ -198,7 +188,7 @@ class CoupledNewtonSolver:
         add(2, 2, 1.0)
         
         dfi = fi[1:] - fi[:-1]
-        delta_dfi = dfi - self.dfi_eq
+        delta_dfi = np.diff(fi - self.fi_eq)
         psi_n = delta_dfi + self.d_psi_n0
         psi_p = delta_dfi + self.d_psi_p0
         
@@ -259,7 +249,7 @@ class CoupledNewtonSolver:
         add(r_last+1, r_last+1, 1.0)
         add(r_last+2, r_last+2, 1.0)
         
-        J_mat = sp.csc_matrix((vals, (rows, cols)), shape=(3*N, 3*N))
+        J_mat = sp.csc_matrix((np.asarray(vals, dtype=float), (rows, cols)), shape=(3*N, 3*N))
         return F, J_mat
 
     def solve_step(self, fi, n, p, Va=0.0, max_iter=25, tol=0.02):
@@ -267,6 +257,17 @@ class CoupledNewtonSolver:
             raise ValueError('max_iter must be a non-negative integer')
         if not np.isfinite(tol) or tol <= 0:
             raise ValueError('tol must be finite and positive')
+        current_atol = getattr(self.model, 'dd_current_atol', 1e-8)
+        current_rtol = getattr(self.model, 'dd_current_rtol', 1e-3)
+        if not np.isfinite(current_atol) or current_atol <= 0:
+            raise ValueError('dd_current_atol must be finite and positive (mA/cm^2)')
+        if not np.isfinite(current_rtol) or current_rtol < 0:
+            raise ValueError('dd_current_rtol must be finite and non-negative')
+        # Keep small updates to majority carriers/potential in extended precision.
+        # Sparse factorization remains float64; longdouble may equal float64 on
+        # some platforms, so conservation still gates acceptance there.
+        fi, n, p = (np.array(value, dtype=np.longdouble, copy=True)
+                    for value in (fi, n, p))
         # A previous voltage step's currents must not survive a failed solve.
         self.Jn = self.Jp = self.Jtot = None
         self.last_Jtot = float('nan')
@@ -293,12 +294,21 @@ class CoupledNewtonSolver:
             if res_norm < tol:
                 self.compute_currents(fi, n, p)
                 if np.all(np.isfinite(self.Jtot)) and np.isfinite(self.last_Jtot):
-                    self.last_diagnostics['reason'] = 'converged'
-                    return fi, n, p, True
-                self.Jn = self.Jp = self.Jtot = None
-                self.last_Jtot = float('nan')
-                self.last_diagnostics['reason'] = 'non-finite current'
-                break
+                    span = float(np.ptp(self.Jtot))
+                    limit = float(current_atol + current_rtol * abs(self.last_Jtot))
+                    self.last_diagnostics.update(current_span_mA_cm2=span,
+                        current_limit_mA_cm2=limit, current_conserved=span <= limit)
+                    if span <= limit:
+                        self.last_diagnostics['reason'] = 'converged'
+                        return fi, n, p, True
+                    self.last_diagnostics['reason'] = 'current conservation not met'
+                    self.Jn = self.Jp = self.Jtot = None
+                    self.last_Jtot = float('nan')
+                else:
+                    self.Jn = self.Jp = self.Jtot = None
+                    self.last_Jtot = float('nan')
+                    self.last_diagnostics['reason'] = 'non-finite current'
+                    break
             if it == max_iter:
                 break
             if not np.all(np.isfinite(J.data)):
@@ -337,20 +347,40 @@ class CoupledNewtonSolver:
             
         return fi, n, p, False
 
+    def _edge_fluxes(self, fi, n, p):
+        """SG flux shared by continuity and export, stable near equilibrium.
+
+        Factor the difference of large opposing drift/diffusion terms into
+        an expm1 of the departure from equilibrium electrochemical balance.
+        Use the usual expression for large departures to avoid overflow.
+        """
+        perturbation = fi - self.fi_eq
+        delta = np.diff(perturbation)
+        psi_n = delta + self.d_psi_n0
+        psi_p = delta + self.d_psi_p0
+        bn, bp = Ber(psi_n), Ber(psi_p)
+        jn = n[1:] * bn - n[:-1] * Ber(-psi_n)
+        jp = p[:-1] * bp - p[1:] * Ber(-psi_p)
+        # Ratios stay positive for accepted states. log1p keeps small changes.
+        def relative_log(value, equilibrium):
+            relative = (value - equilibrium) / equilibrium
+            result = np.log(value / equilibrium)
+            near = np.abs(relative) < 0.5
+            result[near] = np.log1p(relative[near])
+            return result
+        log_n = relative_log(n, self.n_eq)
+        log_p = relative_log(p, self.p_eq)
+        imbalance_n = delta - np.diff(log_n)
+        imbalance_p = delta + np.diff(log_p)
+        near_n = np.abs(imbalance_n) < 0.5
+        near_p = np.abs(imbalance_p) < 0.5
+        jn[near_n] = -n[1:][near_n] * bn[near_n] * np.expm1(imbalance_n[near_n])
+        jp[near_p] = -p[:-1][near_p] * bp[near_p] * np.expm1(imbalance_p[near_p])
+        return self.mun_mid * jn, self.mup_mid * jp
+
     def compute_currents(self, fi, n, p):
-        dfi = fi[1:] - fi[:-1]
-        delta_dfi = dfi - self.dfi_eq
-        psi_n = delta_dfi + self.d_psi_n0
-        psi_p = delta_dfi + self.d_psi_p0
-        
-        Bn_pos = Ber(psi_n)
-        Bn_neg = Ber(-psi_n)
-        Bp_pos = Ber(psi_p)
-        Bp_neg = Ber(-psi_p)
-        
-        Jn = self.mun_mid * (n[1:] * Bn_pos - n[:-1] * Bn_neg)
-        Jp = self.mup_mid * (p[:-1] * Bp_pos - p[1:] * Bp_neg)
-        
+        Jn, Jp = self._edge_fluxes(fi, n, p)
+
         self.Jn = Jn * self.J_scale
         self.Jp = Jp * self.J_scale
         self.Jtot = self.Jn + self.Jp

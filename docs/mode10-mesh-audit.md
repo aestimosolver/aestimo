@@ -1,5 +1,9 @@
 # Mode 10 dark Si pn mesh and tolerance audit
 
+**Historical baseline:** this report and its JSON describe commit `4d3bf8d`,
+before the current-conservation guard. Reproduce this baseline at that commit.
+For current behavior and commands, see `mode10-current-conservation.md`.
+
 This is a numerical investigation, not experimental validation or a grid-convergence certificate.
 It uses `examples/sample_pn.py`: two 1000 nm Si layers, p/n doping 1e17 cm⁻³,
 300 K, dark conditions, voltage 0–0.4 V in 0.02 V steps. Each case starts
