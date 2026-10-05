@@ -44,6 +44,7 @@ import tkinter
 import tkinter.messagebox
 import tkinter.filedialog
 from aeslibs.validation_policy import reviewed_status, reference_status, UNVERIFIED_REFERENCE
+from aeslibs.gui_resources import prepare_gui_examples, resolve_gui_reference
 import customtkinter
 import json
 import types
@@ -131,7 +132,7 @@ class AestimoGUI(customtkinter.CTk):
         self.log_queue = queue.Queue()
         self.sim_queue = queue.Queue() # Thread-safe queue for async worker results
         self.project_name = "untitled_project"
-        self.examples_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "examples"))
+        self.examples_dir = str(prepare_gui_examples())
 
         # UI Performance & Throttling State
         self._suppress_diagram_updates = False
@@ -1087,10 +1088,9 @@ class AestimoGUI(customtkinter.CTk):
         exp_file = self.exp_file_entry.get()
         if not os.path.exists(exp_file):
             # Try relative path
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            rel_path = os.path.join(script_dir, exp_file)
-            if os.path.exists(rel_path):
-                exp_file = rel_path
+            resolved = resolve_gui_reference(exp_file, self.examples_dir)
+            if os.path.exists(resolved):
+                exp_file = resolved
             else:
                 tkinter.messagebox.showerror("Error", f"Experimental file not found: {exp_file}")
                 return
@@ -4018,11 +4018,8 @@ class AestimoGUI(customtkinter.CTk):
             
             # 2. Validation & Diode Analysis
             exp_file = config_dict.get("exp_file", "")
-            script_dir = os.path.dirname(os.path.abspath(__file__))
             if exp_file and not os.path.exists(exp_file):
-                rel_path = os.path.join(script_dir, exp_file)
-                if os.path.exists(rel_path):
-                    exp_file = rel_path
+                exp_file = resolve_gui_reference(exp_file, self.examples_dir)
                     
             area_cm2 = float(config_dict.get("area", 1e-4))
             output_dir = getattr(aestimo, 'output_directory', os.path.join(os.getcwd(), "PRO_GUI_SIM_ASYNC_output"))

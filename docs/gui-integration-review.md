@@ -173,6 +173,40 @@ absolute-tolerance cases fail honestly near equilibrium. Low-bias grid errors
 and the platform-dependent precision floor remain unresolved. The full example
 suite has **77 passing tests**, including five new flux/conservation regressions.
 
+## GUI example resources in installed packages
+
+This increment stays within the GUI integration scope. The previous wheel
+contained zero example JSON files and zero reference CSVs, leaving preset
+selection and reference loading unavailable after installation.
+
+The wheel and sdist now include `aestimo_examples`: 53 project presets, the
+existing audit JSON, 23 CSVs and the reference README. The examples directory
+is mapped to that package without duplicating the source data. Both setup
+metadata paths declare the same package/data mapping.
+
+`aeslibs.gui_resources` locates checkout or installed resources. Installed GUI
+launches copy missing presets/references into `~/Aestimo/examples` (or
+`$AESTIMO_WORKSPACE/examples`) so the existing example-relative save/output
+paths are writable. The copy step preserves existing user files and leaves
+package resources unchanged. Source checkout behavior remains unchanged.
+The GUI's manual and async diode comparison paths now resolve preset-relative
+references through this directory rather than assuming an adjacent source tree.
+
+Verification on Python 3.12:
+
+- **81 example unittest tests pass**, including four resource/path regressions.
+- A wheel was built and installed with `--no-deps` in a temporary target.
+  Checks ran outside the checkout, imported the installed GUI, resolved every
+  preset reference, and verified exact reference bytes and preserved user files.
+  Dependencies came from the test runtime; this was not a fresh dependency install.
+- A wheel rebuilt from the sdist contains matching presets, CSVs and GUI resource
+  code. `aestimo --help` works from the installed target.
+- Both GUI entry points load/call `main` with a mocked window. **No live Tk
+  window, display interaction or target-platform GUI behavior was tested.**
+
+No solver equations, acceptance settings, material parameters or CLI behavior
+are changed in this packaging increment. No PyPI release is published.
+
 ## Remaining work before release
 
 1. Extend the Mode 10 audit to mesh convergence, heterogeneous devices and
@@ -190,8 +224,10 @@ suite has **77 passing tests**, including five new flux/conservation regressions
 4. Review calibration of physical material parameters, including the Si
    bandgap adjustment described in `VALIDATION_RESULTS.md`.
 5. Compare representative legacy Schrödinger-Poisson outputs with master.
-6. Verify wheel data resources, supported Python versions, CLI entry points,
-   and live GUI thread/shutdown behavior on target desktop systems.
+6. Verify other supported Python versions and live GUI thread/shutdown behavior
+   on target desktop systems. Wheel/sdist resource inclusion, installed reference
+   lookup and entry-point wiring have been checked on Python 3.12; live windows
+   and fresh dependency installation remain untested.
 
 Keep this contribution in a draft integration PR until these scientific and
 installation checks have been completed. Do not infer release readiness from

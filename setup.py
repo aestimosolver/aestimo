@@ -41,7 +41,8 @@ setup(
     url='https://github.com/aestimosolver/aestimo',
     license='GPLv3',
     keywords='quantum well semiconductor nanostructure optical transitions drift-diffusion solar laser led',
-    packages=['aeslibs'],
+    packages=['aeslibs', 'aestimo_examples'],
+    package_dir={'aestimo_examples': 'examples'},
     py_modules=[
         'aestimo',
         'aestimo_gui',
@@ -51,6 +52,7 @@ setup(
     ],
     package_data={
         'aeslibs': ['*.py'],
+        'aestimo_examples': ['*.json', 'experimental_data/*.csv', 'experimental_data/README.md'],
     },
     include_package_data=True,
     install_requires=[

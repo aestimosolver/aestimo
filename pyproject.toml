@@ -52,7 +52,8 @@ aestimo-gui = "aestimo_gui:main"
 aestimo-gui-win = "aestimo_gui:main"
 
 [tool.setuptools]
-packages = ["aeslibs"]
+packages = ["aeslibs", "aestimo_examples"]
+package-dir = {aestimo_examples = "examples"}
 py-modules = [
     "aestimo",
     "aestimo_gui",
@@ -63,3 +64,4 @@ py-modules = [
 
 [tool.setuptools.package-data]
 aeslibs = ["*.py"]
+aestimo_examples = ["*.json", "experimental_data/*.csv", "experimental_data/README.md"]
