@@ -1,3 +1,5 @@
+> Historical calibration notes, not independent experimental validation. The Si bandgap was adjusted to fit a reference curve; calibration and numerical execution do not establish material/device accuracy. The reference-origin review is recorded in `docs/reference-data-audit.json`. The figures and numbers below are inherited historical results, not a new benchmark run.
+
 # Validation Results - Final Calibrated Report
 
 ## ✅ Fixed Issues

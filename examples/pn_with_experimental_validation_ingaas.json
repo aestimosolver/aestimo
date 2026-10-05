@@ -45,8 +45,8 @@
   "Quantum_Regions_boundary": "[[0.0, 0.0]]",
   "tat_field": "1e10",
   "G_optical": "0.0",
-  "validation_status": "EXPERIMENTALLY VALIDATED",
+  "validation_status": "SYNTHETIC REFERENCE / NOT EXPERIMENTAL",
   "recommended_usage": "Diode Benchmark / Narrow-Gap Semiconductor",
   "bibliographic_reference_note": "Lattice-matched In0.53Ga0.47As experimental reference dataset",
-  "audit_notes": "Mode 10 validated against InGaAs/InP experimental I-V curve."
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
 }

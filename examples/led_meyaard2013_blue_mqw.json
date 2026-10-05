@@ -1,7 +1,7 @@
 {
   "device_id": "LED-INGAN-MQW-BLUE-445NM",
   "device_name": "Meyaard 2013 5-QW InGaN/GaN Efficiency Droop LED",
-  "validation_status": "EXPERIMENTALLY VALIDATED",
+  "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
   "device_type": "LED Simulation / Characterization",
   "bibliographic_reference": {
     "title": "Identifying the cause of the efficiency droop in GaInN light-emitting diodes by correlating the onset of high injection with the onset of the efficiency droop",
@@ -241,5 +241,5 @@
   "eta_extraction": 0.2,
   "recommended_usage": "Primary Benchmark / Efficiency Droop Verification",
   "bibliographic_reference_note": "D. S. Meyaard et al., Appl. Phys. Lett. 102, 251114 (2013)",
-  "audit_notes": "Full experimental validation across I-V forward bias and normalized IQE efficiency droop."
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
 }

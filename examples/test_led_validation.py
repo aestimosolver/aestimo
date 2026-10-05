@@ -148,13 +148,13 @@ class TestTraceabilityAndReports(unittest.TestCase):
 
         d = record.to_dict()
         self.assertEqual(d["device_id"], "TEST-LED-001")
-        self.assertEqual(d["validation_status"], "EXPERIMENTALLY VALIDATED")
+        self.assertEqual(d["validation_status"], "REFERENCE COMPARISON / PROVENANCE UNVERIFIED")
         self.assertIn("quantum_well_thickness", d["parameter_provenance"])
 
         # Test Markdown report generation
         md = generate_led_validation_report_markdown(record)
         self.assertIn("# Experimental Validation Report: Test InGaN LED", md)
-        self.assertIn("`EXPERIMENTALLY VALIDATED`", md)
+        self.assertIn("`REFERENCE COMPARISON / PROVENANCE UNVERIFIED`", md)
         self.assertIn("HRTEM calibration", md)
 
 
@@ -230,6 +230,9 @@ class TestRepositoryAudit(unittest.TestCase):
 
         self.assertGreaterEqual(len(records), 40)
         valid_statuses = {
+            "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+            "SYNTHETIC REFERENCE / NOT EXPERIMENTAL",
+            "CALIBRATED MODEL / PROVENANCE UNVERIFIED",
             "EXPERIMENTALLY VALIDATED",
             "PARTIALLY VALIDATED",
             "FITTED TO EXPERIMENT",

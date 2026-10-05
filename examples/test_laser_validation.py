@@ -215,13 +215,13 @@ class TestLaserTraceabilityAndReports(unittest.TestCase):
 
         d = record.to_dict()
         self.assertEqual(d["device_id"], "TEST-LASER-001")
-        self.assertEqual(d["validation_status"], "EXPERIMENTALLY VALIDATED")
+        self.assertEqual(d["validation_status"], "REFERENCE COMPARISON / PROVENANCE UNVERIFIED")
         self.assertIn("cavity_parameters", d)
 
         # Markdown report generation
         md = generate_laser_validation_report_markdown(record)
         self.assertIn("# Experimental Validation Report: Test GaAs SQW Laser", md)
-        self.assertIn("`EXPERIMENTALLY VALIDATED`", md)
+        self.assertIn("`REFERENCE COMPARISON / PROVENANCE UNVERIFIED`", md)
         self.assertIn("W. T. Tsang", md)
 
 
@@ -316,7 +316,7 @@ class TestLaserRepositoryAudit(unittest.TestCase):
 
         self.assertEqual(len(found_lasers), 3, "Not all 3 laser devices found in audit!")
         for fname, rec in found_lasers.items():
-            self.assertEqual(rec["validation_status"], "EXPERIMENTALLY VALIDATED", f"{fname} not marked EXPERIMENTALLY VALIDATED")
+            self.assertEqual(rec["validation_status"], "REFERENCE COMPARISON / PROVENANCE UNVERIFIED", f"{fname} not marked EXPERIMENTALLY VALIDATED")
             self.assertIn("Laser", rec["recommended_usage"])
 
 

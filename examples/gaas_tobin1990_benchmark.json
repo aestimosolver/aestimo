@@ -67,8 +67,8 @@
   "G_optical": "6.759e+20",
   "graded_junc": false,
   "diffusion_len": "10.0",
-  "validation_status": "EXPERIMENTALLY VALIDATED",
+  "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
   "recommended_usage": "Primary Benchmark / Photovoltaic Validation",
   "bibliographic_reference_note": "S. P. Tobin et al., IEEE Trans. Electron Dev. 37, 469 (1990)",
-  "audit_notes": "Intrinsic Mode 10 simulation validated against 1-sun AM1.5G J-V experimental measurements."
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
 }

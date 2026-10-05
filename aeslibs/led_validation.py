@@ -9,6 +9,7 @@ and the standardized 4-panel LED plotting suite.
 from __future__ import annotations
 import os
 import json
+from aeslibs.validation_policy import reviewed_status
 import numpy as np
 import matplotlib
 matplotlib.use('Agg', force=True)
@@ -155,7 +156,7 @@ class LEDTraceabilityRecord:
         self.bibliographic_reference = bibliographic_reference or {}
         self.experimental_structure = experimental_structure or {}
         self.parameter_provenance = parameter_provenance or {}
-        self.validation_status = validation_status
+        self.validation_status = reviewed_status(validation_status)
         
         self.simulation_results = {}
         self.experimental_results = {}

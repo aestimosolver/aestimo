@@ -1,6 +1,8 @@
+> Source review is pending. CSV filenames and citations are inherited claims, not proof of measurement provenance. No original figures/tables or digitization projects have been independently matched in this review. See `docs/reference-data-audit.json` for every file's origin classification and SHA-256 fingerprint. Si I–V, Si C–V and InGaAs I–V are synthetic/model references; InGaN I–V is literature-based with unverified extraction. Numerical agreement, calibration history and experimental validation are distinct.
+
 # Experimental Datasets for Device Validation in Aestimo 1D
 
-This directory contains peer-reviewed experimental reference datasets and benchmark calibration files for validating electrical, photovoltaic, and optoelectronic simulations in **Aestimo 1D**.
+This directory contains reference datasets attributed to literature, plus model-generated datasets and benchmark calibration files for validating electrical, photovoltaic, and optoelectronic simulations in **Aestimo 1D**.
 
 ---
 
@@ -25,7 +27,7 @@ This directory contains peer-reviewed experimental reference datasets and benchm
   - Operating voltage: $V_f = 3.6\text{ V}$ at $I = 20\text{ mA}$ ($J = 16.3\text{ A/cm}^2$)
   - Turn-on voltage: $V_{\text{on}} \approx 2.7\text{ V}$
   - Optical output power: $P_{\text{opt}} = 5.0\text{ mW}$ at 20 mA ($\text{EQE} = 9.2\%$)
-- **Validation Status**: `EXPERIMENTALLY VALIDATED`
+- **Validation Status**: `REFERENCE COMPARISON / PROVENANCE UNVERIFIED`
 
 ---
 
@@ -46,7 +48,7 @@ This directory contains peer-reviewed experimental reference datasets and benchm
   - Turn-on voltage: $V_{\text{on}} \approx 2.6\text{ V}$, $V_f \approx 3.32\text{ V}$ at 20 mA ($J = 22.2\text{ A/cm}^2$)
   - Peak emission wavelength: $\lambda_{\text{peak}} = 445.0\text{ nm}$ ($h\nu = 2.786\text{ eV}$)
   - Efficiency droop curve: normalized $\text{IQE}(J)$ peaking at $J_{\text{peak}} \approx 12.0\text{ A/cm}^2$, dropping to $67\%$ at $100\text{ A/cm}^2$ and $52\%$ at $200\text{ A/cm}^2$
-- **Validation Status**: `EXPERIMENTALLY VALIDATED`
+- **Validation Status**: `REFERENCE COMPARISON / PROVENANCE UNVERIFIED`
 
 ---
 
@@ -67,7 +69,7 @@ This directory contains peer-reviewed experimental reference datasets and benchm
   - Turn-on voltage: $V_{\text{on}} \approx 1.35\text{ V}$, $V_f \approx 1.55\text{ V}$ at 20 mA ($J = 32.0\text{ A/cm}^2$)
   - Peak emission wavelength: $\lambda_{\text{peak}} = 870.0\text{ nm}$ ($h\nu = 1.425\text{ eV}$), FWHM $= 35.0\text{ nm}$
   - Internal Quantum Efficiency: $\text{IQE} \approx 85-90\%$
-- **Validation Status**: `EXPERIMENTALLY VALIDATED`
+- **Validation Status**: `REFERENCE COMPARISON / PROVENANCE UNVERIFIED`
 
 ---
 
@@ -91,7 +93,7 @@ This directory contains peer-reviewed experimental reference datasets and benchm
   - Slope efficiency: $SE \approx 0.41\text{ mW/mA}$ per facet ($0.82\text{ mW/mA}$ total), $\eta_d \approx 58\%$
   - Forward threshold voltage: $V_{\text{th}} \approx 1.55\text{ V}$, $R_s \approx 2.5\,\Omega$
   - Emission wavelength: $\lambda_{\text{peak}} = 845.0\text{ nm}$, longitudinal mode spacing $\Delta\lambda \approx 0.198\text{ nm}$
-- **Validation Status**: `EXPERIMENTALLY VALIDATED`
+- **Validation Status**: `REFERENCE COMPARISON / PROVENANCE UNVERIFIED`
 
 ---
 
@@ -113,7 +115,7 @@ This directory contains peer-reviewed experimental reference datasets and benchm
   - Slope efficiency: $SE \approx 0.24\text{ mW/mA}$ per facet ($\eta_d \approx 30\%$)
   - Forward threshold voltage: $V_{\text{th}} \approx 0.95\text{ V}$, $R_s \approx 4.0\,\Omega$
   - Emission wavelength: $\lambda_{\text{peak}} = 1550.0\text{ nm}$, mode spacing $\Delta\lambda \approx 0.677\text{ nm}$
-- **Validation Status**: `EXPERIMENTALLY VALIDATED`
+- **Validation Status**: `REFERENCE COMPARISON / PROVENANCE UNVERIFIED`
 
 ---
 
@@ -135,7 +137,7 @@ This directory contains peer-reviewed experimental reference datasets and benchm
   - Slope efficiency: $SE \approx 0.40\text{ mW/mA}$ per facet, $\eta_d \approx 26\%$
   - Forward threshold voltage: $V_{\text{th}} \approx 5.5\text{ V}$, $R_s \approx 28.0\,\Omega$
   - Emission wavelength: $\lambda_{\text{peak}} = 405.0\text{ nm}$, mode spacing $\Delta\lambda \approx 0.0547\text{ nm}$
-- **Validation Status**: `EXPERIMENTALLY VALIDATED`
+- **Validation Status**: `REFERENCE COMPARISON / PROVENANCE UNVERIFIED`
 
 ---
 
@@ -178,7 +180,7 @@ This directory contains peer-reviewed experimental reference datasets and benchm
   - Heavy-hole exciton transition energy $E(e_1\text{--}hh_1)$ shifting from $1.4550\text{ eV}$ down to $1.4113\text{ eV}$ (Stark red-shift of $-43.7\text{ meV}$).
   - Light-hole exciton transition energy $E(e_1\text{--}lh_1)$ shifting from $1.4720\text{ eV}$ down to $1.4319\text{ eV}$ (Stark red-shift of $-40.1\text{ meV}$).
   - Progressive reduction of electron-hole envelope wavefunction overlap integral $\Gamma_{11}$ due to spatial field-induced separation.
-- **Validation Status**: `EXPERIMENTALLY VALIDATED`
+- **Validation Status**: `REFERENCE COMPARISON / PROVENANCE UNVERIFIED`
 
 ### B. Dingle (1974, 1975) Quantum Confinement Energy vs Well Width in GaAs/AlGaAs
 - **Dataset File**: `qw_dingle1975_energy_vs_width.csv`
@@ -191,7 +193,7 @@ This directory contains peer-reviewed experimental reference datasets and benchm
   - Fundamental transition energy $E(e_1\text{--}hh_1)$ shifting from $1.4248\text{ eV}$ ($L_w = 25\text{ nm}$) to $1.6420\text{ eV}$ ($L_w = 2.5\text{ nm}$).
   - Light-hole transition energy $E(e_1\text{--}lh_1)$ shifting from $1.4278\text{ eV}$ ($L_w = 25\text{ nm}$) to $1.6950\text{ eV}$ ($L_w = 2.5\text{ nm}$).
   - Second subband transition energy $E(e_2\text{--}hh_2)$ shifting from $1.4390\text{ eV}$ ($L_w = 25\text{ nm}$) to $1.7850\text{ eV}$ ($L_w = 2.5\text{ nm}$).
-- **Validation Status**: `EXPERIMENTALLY VALIDATED`
+- **Validation Status**: `REFERENCE COMPARISON / PROVENANCE UNVERIFIED`
 
 ### C. Tsang (1981) Single Quantum Well Photoluminescence Spectrum
 - **Dataset File**: `qw_tsang1981_sqw_photoluminescence.csv`
@@ -201,7 +203,7 @@ This directory contains peer-reviewed experimental reference datasets and benchm
   - $8.0\text{ nm}$ GaAs Single Quantum Well embedded in a parabolic GRIN-SCH optical cavity at $300\text{ K}$.
 - **Reported Experimental Observables**:
   - Room-temperature quantum-well photoluminescence/spontaneous emission peaking at $\lambda = 845.0\text{ nm}$ ($h\nu = 1.467\text{ eV}$) with $\text{FWHM} = 6.0\text{ nm}$.
-- **Validation Status**: `EXPERIMENTALLY VALIDATED`
+- **Validation Status**: `REFERENCE COMPARISON / PROVENANCE UNVERIFIED`
 
 ---
 

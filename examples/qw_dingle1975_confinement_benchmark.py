@@ -183,7 +183,7 @@ def run_benchmark(output_dir=None):
             "exp_stark_shift_mev": m_exp_shift,
             "sim_field": m_fields,
             "sim_stark_shift_mev": -0.0035 * (m_fields ** 2),
-            "r_squared": 0.995,
+
             "rmse_mev": 2.5
         },
         "spectrum_data": {
@@ -192,7 +192,7 @@ def run_benchmark(output_dir=None):
             "sim_wavelength_nm": t_wav,
             "sim_intensity": sim_int,
             "peak_wavelength_nm": peak_w,
-            "r_squared": 0.992
+
         },
         "overlap_matrix": rep_res.overlap_integrals[:3, :3] if rep_res.overlap_integrals.shape[0] >= 3 else np.eye(3)
     }
@@ -212,7 +212,7 @@ def run_benchmark(output_dir=None):
         barrier_width_nm=20.0,
         temperature_k=temp_k,
         electric_field_max_kv_cm=0.0,
-        provenance_classification="EXPERIMENTALLY VALIDATED",
+        provenance_classification="REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
         parameters_provenance={
             "well_thickness_range_nm": {"val": "2.5 - 25.0", "tier": "EXPERIMENTAL", "src": "MBE grown nominal thickness"},
             "barrier_composition_x": {"val": 0.30, "tier": "EXPERIMENTAL", "src": "Dingle 1975 nominal alloy fraction"},
@@ -234,11 +234,11 @@ def run_benchmark(output_dir=None):
     print(f"Validation report saved to: {out_report}")
 
     print("\n" + "=" * 76)
-    print("BENCHMARK COMPLETED SUCCESSFULLY (STATUS: EXPERIMENTALLY VALIDATED)")
+    print("BENCHMARK COMPLETED SUCCESSFULLY (STATUS: REFERENCE COMPARISON / PROVENANCE UNVERIFIED)")
     print("=" * 76)
 
     return {
-        "status": "EXPERIMENTALLY VALIDATED",
+        "status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
         "m_hh1": m_hh1,
         "m_lh1": m_lh1,
         "m_hh2": m_hh2,

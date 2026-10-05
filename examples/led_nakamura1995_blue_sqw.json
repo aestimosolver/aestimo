@@ -1,7 +1,7 @@
 {
   "device_id": "LED-INGAN-SQW-BLUE-450NM",
   "device_name": "Nichia 1995 High-Power Blue InGaN SQW LED",
-  "validation_status": "EXPERIMENTALLY VALIDATED",
+  "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
   "device_type": "LED Simulation / Characterization",
   "bibliographic_reference": {
     "title": "High-power InGaN single-quantum-well-structure blue and violet light-emitting diodes",
@@ -139,5 +139,5 @@
   "eta_extraction": 0.15,
   "recommended_usage": "Primary Benchmark / Experimental Verification",
   "bibliographic_reference_note": "S. Nakamura et al., Appl. Phys. Lett. 67, 1868 (1995)",
-  "audit_notes": "Full experimental validation across I-V, EL spectrum, L-I optical power, and emission peak."
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
 }

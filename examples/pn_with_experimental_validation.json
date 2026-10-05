@@ -45,8 +45,8 @@
   "Quantum_Regions_boundary": "[[0.0, 0.0]]",
   "tat_field": "1e10",
   "G_optical": "0.0",
-  "validation_status": "EXPERIMENTALLY VALIDATED",
+  "validation_status": "SYNTHETIC REFERENCE / NOT EXPERIMENTAL",
   "recommended_usage": "Diode Benchmark / Educational",
   "bibliographic_reference_note": "Established Silicon pn diode experimental reference data",
-  "audit_notes": "Mode 10 Shockley minority diffusion calibrated to real Silicon diode contact parasitics."
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
 }

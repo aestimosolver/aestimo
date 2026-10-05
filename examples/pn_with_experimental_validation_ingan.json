@@ -45,8 +45,8 @@
   "Quantum_Regions_boundary": "[[0.0, 0.0]]",
   "tat_field": "5e6",
   "G_optical": "0.0",
-  "validation_status": "EXPERIMENTALLY VALIDATED",
+  "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
   "recommended_usage": "Diode Benchmark / Nitride Semiconductor",
   "bibliographic_reference_note": "Wurtzite InGaN homojunction experimental reference dataset",
-  "audit_notes": "Mode 10 validated with deep Mg acceptor compensation and polarization physics."
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
 }

@@ -87,18 +87,61 @@ additional smoke check, the unmodified `examples/sample_pn.py` preset completes
 execution and numerical acceptance, not agreement with experiment or device
 accuracy under grid refinement. A live GUI session was not exercised.
 
+## Reference provenance and numerical agreement
+
+The next increment separates numerical agreement from reference provenance.
+The QW report requires both NRMSE ≤ 5% and residual-based R² ≥ 0.95 for
+`METRICS PASSED`. These are provisional comparison thresholds, not a universal
+physical acceptance rule. Pearson r² is displayed separately and never decides
+acceptance; a failed comparison is not automatically called calibrated.
+Invalid, constant or unpaired data are marked `NOT ASSESSABLE`/`NOT ASSESSED`.
+Curve interpolation is restricted to the simulation domain without extrapolation.
+
+QW plot statistics are computed from the actual plotted curve pairs rather than
+literal/default R² and RMSE values. Regenerated Dingle and Miller Markdown
+reports now mark their comparisons `METRICS FAILED`. Previously cached QW PNGs
+with obsolete statistics are removed; regenerate them with the benchmark
+scripts after checkout. Numerical data and solver model parameters are unchanged.
+
+GUI fallback and legacy trace-record labels no longer promote a preset name,
+a requested legacy label or a high score to experimental validation. Unvalidated
+labels also no longer receive the green badge through a substring match.
+The preset audit uses CSV reference origins instead of certifying devices by
+filename. Calibration is identified only when an explicit fitting claim exists.
+
+`docs/reference-data-audit.json` inventories all 23 reference CSVs with SHA-256
+fingerprints and inherited source/extraction claims: 3 synthetic/model references,
+1 literature-based unverified reference, and 19 claimed measurements or
+digitizations awaiting source review. **No original measurement, paper figure,
+table or extraction project has been independently matched in this increment.**
+The source citations are preserved as claims, not newly verified facts.
+Si I–V is model-defined in its header; Si C–V and InGaAs I–V explicitly state
+synthetic origins. None can establish experimental agreement.
+
+Rebuild the inventories using:
+
+```bash
+python examples/audit_reference_data.py
+python examples/audit_device_examples.py
+```
+
+The example unittest suite now has **69 passing tests**. New regressions cover
+perfect correlation with wrong offsets/signs, invalid and constant data, honest
+no-overlap comparisons, plot-score recomputation and source-status distinctions.
+The actual Miller benchmark tests require both inaccurate comparisons to fail.
+The generated reports retain RMSE/MAPE and both types of R² for review.
+
 ## Remaining work before release
 
 1. Extend the Mode 10 audit to mesh convergence, heterogeneous devices and
    illumination/recombination regimes. The residual acceptance and failure
    propagation fixes below have been completed, with limited physical tests.
-2. Replace misleading acceptance rules and validation labels. The Miller QCSE
-   report currently passes a heavy-hole comparison with NRMSE 36.56% and MAPE
-   112% because Pearson correlation is high. Correlation alone is insufficient.
-3. Separate synthetic references, calibrated models and sourced experimental
-   measurements. InGaAs I-V and Si C-V reference files explicitly contain
-   synthetic data. Request figure/page and digitization provenance for CSVs
-   claiming experimental origins.
+2. Establish observable-specific acceptance criteria using measurement uncertainty
+   and grid/model convergence. The previous correlation-only rule has been
+   replaced; the provisional QW thresholds still require scientific review.
+3. Obtain and review original figure/page and extraction projects for all CSVs
+   claiming measurement/digitization origins. Reference origins are now
+   distinguished, but independent experimental validation remains pending.
 4. Review calibration of physical material parameters, including the Si
    bandgap adjustment described in `VALIDATION_RESULTS.md`.
 5. Compare representative legacy Schrödinger-Poisson outputs with master.

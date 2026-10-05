@@ -1,4 +1,4 @@
-# Quantum-Well Experimental Validation Report: Dingle (1975) Quantum Confinement Energy vs Well Thickness
+# Quantum-Well Reference Comparison Report: Dingle (1975) Quantum Confinement Energy vs Well Thickness
 
 ## 1. Bibliographic Provenance & Device Description
 - **Paper Title**: *Confined Carrier Quantum States in Ultrathin Semiconductor Heterostructures*
@@ -9,15 +9,20 @@
 - **Quantum Well Width**: 10.00 nm (Barrier: 20.00 nm)
 - **Temperature**: 300.0 K
 - **Max Applied Field**: 0.0 kV/cm
-- **Provenance Classification**: `EXPERIMENTALLY VALIDATED`
+- **Provenance Classification**: `REFERENCE COMPARISON / PROVENANCE UNVERIFIED`
 
 ## 2. Quantitative Statistical Error Metrics
 
-| Observable / Metric | Points (N) | RMSE (meV) | NRMSE (%) | MAE (meV) | MAPE (%) | Max Error (meV) | Pearson $R^2$ | Validation Status |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **e1_hh1_transition_ev** | 11 | 14.522 | 6.69% | 13.241 | 0.89% | 25.092 | 0.9871 | `PASSED` |
-| **e1_lh1_transition_ev** | 11 | 19.638 | 7.35% | 17.787 | 1.17% | 35.350 | 0.9805 | `PASSED` |
-| **e2_hh2_transition_ev** | 7 | 40.813 | 21.15% | 36.980 | 2.40% | 70.561 | 0.9994 | `PASSED` |
+Numerical agreement requires NRMSE ≤ 5% **and** residual-based R² ≥ 0.95.
+These provisional criteria do not establish experimental validation. Pearson r² is diagnostic only.
+MAPE excludes near-zero references and does not decide acceptance. Constant/invalid data are not assessable.
+No fitting history is inferred from a failed comparison.
+
+| Observable / Metric | Points (N) | RMSE (meV) | NRMSE (%) | MAE (meV) | MAPE (%) | Max Error (meV) | Residual R² | Pearson r² | Agreement Status |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **e1_hh1_transition_ev** | 11 | 14.522 | 6.69% | 13.241 | 0.89% | 25.092 | 0.9587 | 0.9871 | `METRICS FAILED` |
+| **e1_lh1_transition_ev** | 11 | 19.638 | 7.35% | 17.787 | 1.17% | 35.350 | 0.9500 | 0.9805 | `METRICS FAILED` |
+| **e2_hh2_transition_ev** | 7 | 40.813 | 21.15% | 36.980 | 2.40% | 70.561 | 0.6027 | 0.9994 | `METRICS FAILED` |
 
 ## 3. Physics & Numerical Analysis Summary
 - **Solver Model**: BenDaniel-Duke Variable Effective-Mass 1D Schrödinger Equation ($O(N)$ tridiagonal discretization).

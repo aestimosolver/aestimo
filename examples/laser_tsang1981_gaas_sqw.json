@@ -4,7 +4,7 @@
   "device_type": "Laser Diode Simulation / Characterization",
   "laser_architecture": "GRIN-SCH Fabry-Perot Edge-Emitting Laser",
   "material_system": "Zincblende",
-  "validation_status": "EXPERIMENTALLY VALIDATED",
+  "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
   "bibliographic_reference": {
     "title": "Extremely low threshold GaAs-AlGaAs graded-index waveguide separate-confinement heterostructure lasers grown by molecular beam epitaxy",
     "authors": "W. T. Tsang",
@@ -205,5 +205,5 @@
   "target_fwhm_lasing_nm": 0.75,
   "recommended_usage": "Primary Benchmark / GaAs GRIN-SCH SQW Laser Diode (~845nm)",
   "bibliographic_reference_note": "W. T. Tsang, Appl. Phys. Lett. 39, 134 (1981), DOI: 10.1063/1.92690",
-  "audit_notes": "Mode 10 drift-diffusion carrier injection coupled with optical cavity rate equations validated against measured L-I, I-V, and emission spectrum."
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
 }

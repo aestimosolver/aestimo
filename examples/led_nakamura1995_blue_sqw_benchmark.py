@@ -187,7 +187,7 @@ def run_nakamura1995_benchmark():
             "cladding_thickness_nm": 1500.0,
         },
         parameter_provenance=config["parameter_provenance"],
-        validation_status="EXPERIMENTALLY VALIDATED",
+        validation_status=config["validation_status"],
     )
     
     record.set_simulation_results({

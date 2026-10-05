@@ -15,6 +15,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
+from aeslibs.validation_policy import UNVERIFIED_REFERENCE, reviewed_status
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -77,7 +78,9 @@ def compute_qw_error_metrics(
     y_exp = np.asarray(exp_values, dtype=float)
     y_sim = np.asarray(sim_values, dtype=float)
 
-    if len(y_exp) != len(y_sim) or len(y_exp) == 0:
+    if (y_exp.ndim != 1 or y_sim.ndim != 1 or y_exp.shape != y_sim.shape
+            or y_exp.size == 0 or not np.all(np.isfinite(y_exp))
+            or not np.all(np.isfinite(y_sim))):
         return {
             'target_name': target_name,
             'rmse': float('nan'),
@@ -86,7 +89,8 @@ def compute_qw_error_metrics(
             'mape_percent': float('nan'),
             'max_error': float('nan'),
             'r_squared': float('nan'),
-            'n_points': len(y_exp),
+            'pearson_r2': float('nan'),
+            'n_points': 0,
         }
 
     residuals = y_sim - y_exp
@@ -132,6 +136,30 @@ def compute_qw_error_metrics(
     }
 
 
+def assess_qw_comparison(metrics, max_nrmse_percent=5.0, min_r_squared=0.95):
+    """Assess numerical agreement only; neither passing nor failing proves provenance."""
+    required = ('rmse', 'nrmse_percent', 'r_squared')
+    if metrics.get('n_points', 0) < 2 or not all(
+            np.isfinite(metrics.get(key, float('nan'))) for key in required):
+        return 'NOT ASSESSABLE'
+    if (metrics['nrmse_percent'] <= max_nrmse_percent
+            and metrics['r_squared'] >= min_r_squared):
+        return 'METRICS PASSED'
+    return 'METRICS FAILED'
+
+
+def curve_comparison_metrics(reference_x, reference_y, simulated_x, simulated_y, target_name):
+    """Compare paired samples within the simulation's domain, without extrapolation."""
+    rx, ry, sx, sy = [np.asarray(v, dtype=float) for v in
+                      (reference_x, reference_y, simulated_x, simulated_y)]
+    if (any(v.ndim != 1 or not np.all(np.isfinite(v)) for v in (rx, ry, sx, sy))
+            or rx.size != ry.size or sx.size != sy.size or sx.size < 2
+            or np.any(np.diff(sx) <= 0)):
+        return compute_qw_error_metrics([], [], target_name)
+    overlap = (rx >= sx[0]) & (rx <= sx[-1])
+    return compute_qw_error_metrics(ry[overlap], np.interp(rx[overlap], sx, sy), target_name)
+
+
 @dataclass
 class QWTraceabilityRecord:
     """Structured dataclass storing provenance and experimental metadata for QW benchmarks."""
@@ -148,7 +176,7 @@ class QWTraceabilityRecord:
     barrier_width_nm: float
     temperature_k: float
     electric_field_max_kv_cm: float = 0.0
-    provenance_classification: str = "EXPERIMENTAL"
+    provenance_classification: str = UNVERIFIED_REFERENCE
     notes: str = ""
     parameters_provenance: Optional[dict[str, Any]] = None
 
@@ -167,7 +195,7 @@ class QWTraceabilityRecord:
             "barrier_width_nm": self.barrier_width_nm,
             "temperature_k": self.temperature_k,
             "electric_field_max_kv_cm": self.electric_field_max_kv_cm,
-            "provenance_classification": self.provenance_classification,
+            "provenance_classification": reviewed_status(self.provenance_classification),
             "notes": self.notes,
             "parameters_provenance": self.parameters_provenance,
         }
@@ -182,7 +210,7 @@ def generate_qw_validation_report_markdown(
     Generates a publication-grade Markdown validation report comparing simulation against experimental literature.
     """
     lines = [
-        f"# Quantum-Well Experimental Validation Report: {record.benchmark_name}",
+        f"# Quantum-Well Reference Comparison Report: {record.benchmark_name}",
         "",
         "## 1. Bibliographic Provenance & Device Description",
         f"- **Paper Title**: *{record.paper_title}*",
@@ -193,12 +221,17 @@ def generate_qw_validation_report_markdown(
         f"- **Quantum Well Width**: {record.well_width_nm:.2f} nm (Barrier: {record.barrier_width_nm:.2f} nm)",
         f"- **Temperature**: {record.temperature_k:.1f} K",
         f"- **Max Applied Field**: {record.electric_field_max_kv_cm:.1f} kV/cm",
-        f"- **Provenance Classification**: `{record.provenance_classification}`",
+        f"- **Provenance Classification**: `{reviewed_status(record.provenance_classification)}`",
         "",
         "## 2. Quantitative Statistical Error Metrics",
         "",
-        "| Observable / Metric | Points (N) | RMSE (meV) | NRMSE (%) | MAE (meV) | MAPE (%) | Max Error (meV) | Pearson $R^2$ | Validation Status |",
-        "|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|",
+        "Numerical agreement requires NRMSE ≤ 5% **and** residual-based R² ≥ 0.95.",
+        "These provisional criteria do not establish experimental validation. Pearson r² is diagnostic only.",
+        "MAPE excludes near-zero references and does not decide acceptance. Constant/invalid data are not assessable.",
+        "No fitting history is inferred from a failed comparison.",
+        "",
+        "| Observable / Metric | Points (N) | RMSE (meV) | NRMSE (%) | MAE (meV) | MAPE (%) | Max Error (meV) | Residual R² | Pearson r² | Agreement Status |",
+        "|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|",
     ]
 
     for m in metrics_list:
@@ -209,7 +242,8 @@ def generate_qw_validation_report_markdown(
         mae_val = m.get('mae', float('nan'))
         mape_val = m.get('mape_percent', float('nan'))
         max_err = m.get('max_error', float('nan'))
-        r2_val = m.get('pearson_r2', m.get('r_squared', float('nan')))
+        r2_val = m.get('r_squared', float('nan'))
+        pearson_val = m.get('pearson_r2', float('nan'))
 
         # Check if in meV or eV
         if "mev" in target.lower():
@@ -220,11 +254,14 @@ def generate_qw_validation_report_markdown(
             mult = 1.0
         unit_str = "meV" if mult == 1000.0 or "mev" in target.lower() else ""
 
-        status = "PASSED" if r2_val > 0.95 or (nrmse_val < 5.0 and not np.isnan(nrmse_val)) else "CALIBRATED"
+        status = assess_qw_comparison(m)
 
         lines.append(
-            f"| **{target}** | {n_pts} | {rmse_val*mult:.3f} | {nrmse_val:.2f}% | {mae_val*mult:.3f} | {mape_val:.2f}% | {max_err*mult:.3f} | {r2_val:.4f} | `{status}` |"
+            f"| **{target}** | {n_pts} | {rmse_val*mult:.3f} | {nrmse_val:.2f}% | {mae_val*mult:.3f} | {mape_val:.2f}% | {max_err*mult:.3f} | {r2_val:.4f} | {pearson_val:.4f} | `{status}` |"
         )
+
+    if not metrics_list:
+        lines.append('No paired comparison supplied: `NOT ASSESSED`.')
 
     lines.extend([
         "",
@@ -355,8 +392,10 @@ def plot_standardized_qw_validation_suite(
         if 'exp_e2_hh2' in dingle_data:
             ax2.plot(dingle_data['exp_lw'], dingle_data['exp_e2_hh2'], '^', color=c_sim, mfc=c_exp, mew=1.2, ms=5.5, label='$e_2\\text{--}hh_2$ (Exp)')
 
-    r2_dingle = dingle_data.get('r_squared', 0.998)
-    rmse_dingle = dingle_data.get('rmse_mev', 2.1)
+    m_dingle = curve_comparison_metrics(dingle_data.get('exp_lw', []), dingle_data.get('exp_e1_hh1', []),
+                                         dingle_data.get('sim_lw', []), dingle_data.get('sim_e1_hh1', []), 'energy_ev')
+    r2_dingle = m_dingle['r_squared']
+    rmse_dingle = m_dingle['rmse'] * 1000.0
     ax2.text(0.95, 0.95, f"$R^2 = {r2_dingle:.4f}$\n$\\text{{RMSE}} = {rmse_dingle:.2f}\\text{{ meV}}$",
              transform=ax2.transAxes, ha='right', va='top', fontsize=8.5, weight='bold',
              bbox=dict(boxstyle="round,pad=0.3", fc="#EAFAF1", ec=c_exp, lw=1.2))
@@ -390,8 +429,10 @@ def plot_standardized_qw_validation_suite(
         ax3.plot(miller_data['exp_field'], miller_data['exp_lh_stark_shift_mev'],
                  's', color=c_h, mfc=c_exp, mew=1.2, ms=5.5, label='Light Hole (Exp)')
 
-    r2_miller = miller_data.get('r_squared', 0.994)
-    rmse_miller = miller_data.get('rmse_mev', 1.85)
+    m_miller = curve_comparison_metrics(miller_data.get('exp_field', []), miller_data.get('exp_stark_shift_mev', []),
+                                         miller_data.get('sim_field', []), miller_data.get('sim_stark_shift_mev', []), 'shift_mev')
+    r2_miller = m_miller['r_squared']
+    rmse_miller = m_miller['rmse']
     ax3.text(0.05, 0.08, f"$R^2 = {r2_miller:.4f}$\n$\\text{{RMSE}} = {rmse_miller:.2f}\\text{{ meV}}$",
              transform=ax3.transAxes, ha='left', va='bottom', fontsize=8.5, weight='bold',
              bbox=dict(boxstyle="round,pad=0.3", fc="#EAFAF1", ec=c_exp, lw=1.2))
@@ -448,7 +489,9 @@ def plot_standardized_qw_validation_suite(
         ax5.plot(spec_data['exp_wavelength_nm'], spec_data['exp_intensity'],
                  'o', color='#2C3E50', mfc=c_exp, mew=1.2, ms=5.5, label='Tsang (1981) PL')
 
-    r2_spec = spec_data.get('r_squared', 0.991)
+    m_spec = curve_comparison_metrics(spec_data.get('exp_wavelength_nm', []), spec_data.get('exp_intensity', []),
+                                       spec_data.get('sim_wavelength_nm', []), spec_data.get('sim_intensity', []), 'intensity')
+    r2_spec = m_spec['r_squared']
     peak_wav = spec_data.get('peak_wavelength_nm', 845.0)
     ax5.text(0.05, 0.92, f"$\\lambda_{{\\text{{peak}}}} = {peak_wav:.1f}\\text{{ nm}}$\n$R^2 = {r2_spec:.4f}$",
              transform=ax5.transAxes, ha='left', va='top', fontsize=8.5, weight='bold',

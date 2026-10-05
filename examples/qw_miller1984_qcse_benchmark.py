@@ -256,7 +256,7 @@ def run_benchmark(output_dir=None):
             "sim_wavelength_nm": t_wav,
             "sim_intensity": sim_int,
             "peak_wavelength_nm": peak_w,
-            "r_squared": 0.992
+
         },
         "overlap_matrix": res_zero.overlap_integrals[:3, :3] if res_zero.overlap_integrals.shape[0] >= 3 else np.eye(3)
     }
@@ -276,7 +276,7 @@ def run_benchmark(output_dir=None):
         barrier_width_nm=10.0,
         temperature_k=temp_k,
         electric_field_max_kv_cm=110.0,
-        provenance_classification="EXPERIMENTALLY VALIDATED",
+        provenance_classification="REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
         parameters_provenance={
             "well_thickness_nm": {"val": 9.5, "tier": "EXPERIMENTAL", "src": "Miller 1984 MBE nominal"},
             "barrier_composition_x": {"val": 0.32, "tier": "EXPERIMENTAL", "src": "Miller 1985 photoluminescence"},
@@ -298,11 +298,11 @@ def run_benchmark(output_dir=None):
     print(f"Validation report saved to: {out_report}")
 
     print("\n" + "=" * 76)
-    print("BENCHMARK COMPLETED SUCCESSFULLY (STATUS: EXPERIMENTALLY VALIDATED)")
+    print("BENCHMARK COMPLETED SUCCESSFULLY (STATUS: REFERENCE COMPARISON / PROVENANCE UNVERIFIED)")
     print("=" * 76)
 
     return {
-        "status": "EXPERIMENTALLY VALIDATED",
+        "status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
         "m_hh": m_hh,
         "m_lh": m_lh,
         "figure_path": out_png,

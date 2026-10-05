@@ -4,11 +4,11 @@
     "device_id": "GAAS_TOBIN1990_BENCHMARK",
     "device_name": "Gaas Tobin1990 Benchmark",
     "device_type": "Solar Cell / Photodetector",
-    "validation_status": "EXPERIMENTALLY VALIDATED",
+    "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
     "recommended_usage": "Primary Benchmark / Photovoltaic Validation",
     "layer_count": 4,
     "mat_sys": "Zincblende",
-    "audit_notes": "Intrinsic Mode 10 simulation validated against 1-sun AM1.5G J-V experimental measurements."
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
   },
   {
     "filename": "ingan_solar_cell.json",
@@ -81,66 +81,66 @@
     "device_id": "LASER-NAKAMURA1996-BLUE-MQW",
     "device_name": "Nakamura 1996 InGaN/GaN/AlGaN 405nm MQW Blue-Violet Laser Diode",
     "device_type": "Laser Diode Simulation / Characterization",
-    "validation_status": "EXPERIMENTALLY VALIDATED",
+    "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
     "recommended_usage": "Primary Benchmark / InGaN Blue-Violet Laser Diode (~405nm)",
     "layer_count": 6,
     "mat_sys": "Wurtzite",
-    "audit_notes": "Experimentally validated 405nm InGaN/GaN MQW violet-blue laser diode with optical cavity rate equations and Mode 10 drift-diffusion."
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
   },
   {
     "filename": "laser_tsang1981_gaas_sqw.json",
     "device_id": "LASER-TSANG1981-GAAS-SQW",
     "device_name": "Tsang 1981 GaAs/AlGaAs SQW GRIN-SCH 845nm Laser Diode",
     "device_type": "Laser Diode Simulation / Characterization",
-    "validation_status": "EXPERIMENTALLY VALIDATED",
+    "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
     "recommended_usage": "Primary Benchmark / GaAs GRIN-SCH SQW Laser Diode (~845nm)",
     "layer_count": 7,
     "mat_sys": "Zincblende",
-    "audit_notes": "Mode 10 drift-diffusion carrier injection coupled with optical cavity rate equations validated against measured L-I, I-V, and emission spectrum."
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
   },
   {
     "filename": "laser_zah1994_1550nm_mqw.json",
     "device_id": "LASER-ZAH1994-1550NM-MQW",
     "device_name": "Zah 1994 InGaAsP/InP 1550nm Strained MQW Telecommunication Laser",
     "device_type": "Laser Diode Simulation / Characterization",
-    "validation_status": "EXPERIMENTALLY VALIDATED",
+    "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
     "recommended_usage": "Primary Benchmark / InGaAsP Strained 1550nm MQW Ridge Laser",
     "layer_count": 7,
     "mat_sys": "Zincblende",
-    "audit_notes": "Validated against multi-temperature (25\u00b0C, 50\u00b0C, 85\u00b0C) L-I characteristics, forward I-V, and 1.55um Fabry-Perot mode spectrum."
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
   },
   {
     "filename": "led_meyaard2013_blue_mqw.json",
     "device_id": "LED-INGAN-MQW-BLUE-445NM",
     "device_name": "Meyaard 2013 5-QW InGaN/GaN Efficiency Droop LED",
     "device_type": "LED Simulation / Characterization",
-    "validation_status": "EXPERIMENTALLY VALIDATED",
+    "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
     "recommended_usage": "Primary Benchmark / Efficiency Droop Verification",
     "layer_count": 14,
     "mat_sys": "Wurtzite",
-    "audit_notes": "Full experimental validation across I-V forward bias and normalized IQE efficiency droop."
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
   },
   {
     "filename": "led_nakamura1995_blue_sqw.json",
     "device_id": "LED-INGAN-SQW-BLUE-450NM",
     "device_name": "Nichia 1995 High-Power Blue InGaN SQW LED",
     "device_type": "LED Simulation / Characterization",
-    "validation_status": "EXPERIMENTALLY VALIDATED",
+    "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
     "recommended_usage": "Primary Benchmark / Experimental Verification",
     "layer_count": 4,
     "mat_sys": "Wurtzite",
-    "audit_notes": "Full experimental validation across I-V, EL spectrum, L-I optical power, and emission peak."
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
   },
   {
     "filename": "led_schubert2006_algaas_dh.json",
     "device_id": "LED-ALGAAS-DH-IR-870NM",
     "device_name": "Schubert 2006 AlGaAs/GaAs Double-Heterostructure 870nm Infrared LED",
     "device_type": "LED Simulation / Characterization",
-    "validation_status": "EXPERIMENTALLY VALIDATED",
+    "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
     "recommended_usage": "Primary Benchmark / Double Heterostructure IR LED",
     "layer_count": 4,
     "mat_sys": "Zincblende",
-    "audit_notes": "Full experimental validation of 870nm AlGaAs/GaAs DH LED I-V and spectral line shape."
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
   },
   {
     "filename": "optimal_mqw_solar_cell.json",
@@ -158,33 +158,55 @@
     "device_id": "PN_WITH_EXPERIMENTAL_VALIDATION",
     "device_name": "Pn With Experimental Validation",
     "device_type": "Diode Simulation",
-    "validation_status": "EXPERIMENTALLY VALIDATED",
+    "validation_status": "SYNTHETIC REFERENCE / NOT EXPERIMENTAL",
     "recommended_usage": "Diode Benchmark / Educational",
     "layer_count": 2,
     "mat_sys": "Zincblende",
-    "audit_notes": "Mode 10 Shockley minority diffusion calibrated to real Silicon diode contact parasitics."
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
   },
   {
     "filename": "pn_with_experimental_validation_ingaas.json",
     "device_id": "PN_WITH_EXPERIMENTAL_VALIDATION_INGAAS",
     "device_name": "Pn With Experimental Validation Ingaas",
     "device_type": "Diode Simulation",
-    "validation_status": "EXPERIMENTALLY VALIDATED",
+    "validation_status": "SYNTHETIC REFERENCE / NOT EXPERIMENTAL",
     "recommended_usage": "Diode Benchmark / Narrow-Gap Semiconductor",
     "layer_count": 2,
     "mat_sys": "Zincblende",
-    "audit_notes": "Mode 10 validated against InGaAs/InP experimental I-V curve."
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
   },
   {
     "filename": "pn_with_experimental_validation_ingan.json",
     "device_id": "PN_WITH_EXPERIMENTAL_VALIDATION_INGAN",
     "device_name": "Pn With Experimental Validation Ingan",
     "device_type": "Diode Simulation",
-    "validation_status": "EXPERIMENTALLY VALIDATED",
+    "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
     "recommended_usage": "Diode Benchmark / Nitride Semiconductor",
     "layer_count": 2,
     "mat_sys": "Wurtzite",
-    "audit_notes": "Mode 10 validated with deep Mg acceptor compensation and polarization physics."
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
+  },
+  {
+    "filename": "qw_dingle1975_confinement.json",
+    "device_id": "QW_DINGLE1975_CONFINEMENT",
+    "device_name": "Dingle 1975 GaAs/AlGaAs Confinement Energy vs Well Width",
+    "device_type": "Quantum Well (QW) Characterization & Validation",
+    "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "recommended_usage": "Educational / Theoretical Exploration / Numerical Testing",
+    "layer_count": 3,
+    "mat_sys": "Zincblende",
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
+  },
+  {
+    "filename": "qw_miller1984_qcse.json",
+    "device_id": "QW_MILLER1984_QCSE",
+    "device_name": "Miller 1984 GaAs/AlGaAs 9.5nm Quantum-Confined Stark Effect (QCSE)",
+    "device_type": "Quantum Well (QW) Characterization & Validation",
+    "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "recommended_usage": "Educational / Theoretical Exploration / Numerical Testing",
+    "layer_count": 3,
+    "mat_sys": "Zincblende",
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
   },
   {
     "filename": "sample_1qw_barrierdope_ingaas.json",
@@ -213,11 +235,11 @@
     "device_id": "SAMPLE_2QW_INGAN_GAN_VS_1DDCC",
     "device_name": "Sample 2Qw Ingan Gan Vs 1Ddcc",
     "device_type": "Generic Diode / LED",
-    "validation_status": "PARTIALLY VALIDATED",
+    "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
     "recommended_usage": "Cross-Code Solver Benchmark",
     "layer_count": 5,
     "mat_sys": "Wurtzite",
-    "audit_notes": "Verified against 1D-DDCC reference numerical solver outputs; lacks physical wafer measurement."
+    "audit_notes": "Named benchmark reference; independent validation evidence has not been reviewed."
   },
   {
     "filename": "sample_2qw_barrierdope_ingaas.json",
@@ -323,44 +345,44 @@
     "device_id": "SAMPLE_PN",
     "device_name": "Sample Pn",
     "device_type": "Diode Simulation",
-    "validation_status": "MODEL-BASED / NOT EXPERIMENTALLY VALIDATED",
+    "validation_status": "SYNTHETIC REFERENCE / NOT EXPERIMENTAL",
     "recommended_usage": "Educational / Theoretical Exploration / Numerical Testing",
     "layer_count": 2,
     "mat_sys": "Zincblende",
-    "audit_notes": "Theoretical/idealized semiconductor model without calibration to experimental device data. Suitable for qualitative physical exploration and numerical solver testing."
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
   },
   {
     "filename": "sample_pn2.json",
     "device_id": "SAMPLE_PN2",
     "device_name": "Sample Pn2",
     "device_type": "Diode Simulation",
-    "validation_status": "MODEL-BASED / NOT EXPERIMENTALLY VALIDATED",
+    "validation_status": "SYNTHETIC REFERENCE / NOT EXPERIMENTAL",
     "recommended_usage": "Educational / Theoretical Exploration / Numerical Testing",
     "layer_count": 2,
     "mat_sys": "Zincblende",
-    "audit_notes": "Theoretical/idealized semiconductor model without calibration to experimental device data. Suitable for qualitative physical exploration and numerical solver testing."
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
   },
   {
     "filename": "sample_pn3.json",
     "device_id": "SAMPLE_PN3",
     "device_name": "Sample Pn3",
     "device_type": "Diode Simulation",
-    "validation_status": "MODEL-BASED / NOT EXPERIMENTALLY VALIDATED",
+    "validation_status": "SYNTHETIC REFERENCE / NOT EXPERIMENTAL",
     "recommended_usage": "Educational / Theoretical Exploration / Numerical Testing",
     "layer_count": 2,
     "mat_sys": "Zincblende",
-    "audit_notes": "Theoretical/idealized semiconductor model without calibration to experimental device data. Suitable for qualitative physical exploration and numerical solver testing."
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
   },
   {
     "filename": "sample_qw_HarrisonCh3_3.json",
     "device_id": "SAMPLE_QW_HARRISONCH3_3",
     "device_name": "Sample Qw Harrisonch3 3",
     "device_type": "Generic Diode / LED",
-    "validation_status": "PARTIALLY VALIDATED",
+    "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
     "recommended_usage": "Analytical Benchmark / Textbook Verification",
     "layer_count": 3,
     "mat_sys": "Zincblende",
-    "audit_notes": "Verified against exact analytical Schr\u00f6dinger eigenstates in infinite/finite quantum wells."
+    "audit_notes": "Named benchmark reference; independent validation evidence has not been reviewed."
   },
   {
     "filename": "sample_qw_barrierdope.json",
@@ -554,10 +576,10 @@
     "device_id": "UNTITLED_PROJECT",
     "device_name": "Untitled Project",
     "device_type": "Solar Cell / Photodetector",
-    "validation_status": "MODEL-BASED / NOT EXPERIMENTALLY VALIDATED",
+    "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
     "recommended_usage": "Educational / Theoretical Exploration / Numerical Testing",
     "layer_count": 2,
     "mat_sys": "Wurtzite",
-    "audit_notes": "Theoretical/idealized semiconductor model without calibration to experimental device data. Suitable for qualitative physical exploration and numerical solver testing."
+    "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
   }
 ]

@@ -88,9 +88,13 @@ class TestQWValidation(unittest.TestCase):
         """Test full execution of Miller 1984 QCSE benchmark script."""
         import examples.qw_miller1984_qcse_benchmark as miller_bench
         res = miller_bench.run_benchmark(output_dir=self.output_dir)
-        self.assertEqual(res["status"], "EXPERIMENTALLY VALIDATED")
+        self.assertEqual(res["status"], "REFERENCE COMPARISON / PROVENANCE UNVERIFIED")
         self.assertGreater(res["m_hh"]["pearson_r2"], 0.98)
         self.assertGreater(res["m_lh"]["pearson_r2"], 0.98)
+        self.assertEqual(qw_val.assess_qw_comparison(res["m_hh"]), "METRICS FAILED")
+        self.assertEqual(qw_val.assess_qw_comparison(res["m_lh"]), "METRICS FAILED")
+        with open(res["report_path"], encoding="utf-8") as stream:
+            self.assertEqual(stream.read().count("`METRICS FAILED`"), 2)
         self.assertTrue(os.path.exists(res["figure_path"]), "Validation PNG must be generated")
         self.assertTrue(os.path.exists(res["report_path"]), "Validation report MD must be generated")
 
@@ -98,7 +102,7 @@ class TestQWValidation(unittest.TestCase):
         """Test full execution of Dingle 1975 confinement benchmark script."""
         import examples.qw_dingle1975_confinement_benchmark as dingle_bench
         res = dingle_bench.run_benchmark(output_dir=self.output_dir)
-        self.assertEqual(res["status"], "EXPERIMENTALLY VALIDATED")
+        self.assertEqual(res["status"], "REFERENCE COMPARISON / PROVENANCE UNVERIFIED")
         self.assertGreater(res["m_hh1"]["pearson_r2"], 0.98)
         self.assertGreater(res["m_lh1"]["pearson_r2"], 0.97)
         self.assertGreater(res["m_hh2"]["pearson_r2"], 0.98)

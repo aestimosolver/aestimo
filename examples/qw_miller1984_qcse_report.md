@@ -1,4 +1,4 @@
-# Quantum-Well Experimental Validation Report: Miller et al. (1984) Quantum-Confined Stark Effect (QCSE)
+# Quantum-Well Reference Comparison Report: Miller et al. (1984) Quantum-Confined Stark Effect (QCSE)
 
 ## 1. Bibliographic Provenance & Device Description
 - **Paper Title**: *Band-Edge Electroabsorption in Quantum Well Structures: The Quantum-Confined Stark Effect*
@@ -9,14 +9,19 @@
 - **Quantum Well Width**: 9.50 nm (Barrier: 10.00 nm)
 - **Temperature**: 300.0 K
 - **Max Applied Field**: 110.0 kV/cm
-- **Provenance Classification**: `EXPERIMENTALLY VALIDATED`
+- **Provenance Classification**: `REFERENCE COMPARISON / PROVENANCE UNVERIFIED`
 
 ## 2. Quantitative Statistical Error Metrics
 
-| Observable / Metric | Points (N) | RMSE (meV) | NRMSE (%) | MAE (meV) | MAPE (%) | Max Error (meV) | Pearson $R^2$ | Validation Status |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **stark_shift_hh_mev** | 12 | 15.975 | 36.56% | 12.828 | 112.00% | 27.876 | 0.9909 | `PASSED` |
-| **stark_shift_lh_mev** | 12 | 10.616 | 26.47% | 8.220 | 75.40% | 20.146 | 0.9971 | `PASSED` |
+Numerical agreement requires NRMSE ≤ 5% **and** residual-based R² ≥ 0.95.
+These provisional criteria do not establish experimental validation. Pearson r² is diagnostic only.
+MAPE excludes near-zero references and does not decide acceptance. Constant/invalid data are not assessable.
+No fitting history is inferred from a failed comparison.
+
+| Observable / Metric | Points (N) | RMSE (meV) | NRMSE (%) | MAE (meV) | MAPE (%) | Max Error (meV) | Residual R² | Pearson r² | Agreement Status |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **stark_shift_hh_mev** | 12 | 15.975 | 36.56% | 12.828 | 112.00% | 27.876 | -0.2617 | 0.9909 | `METRICS FAILED` |
+| **stark_shift_lh_mev** | 12 | 10.616 | 26.47% | 8.220 | 75.40% | 20.146 | 0.3366 | 0.9971 | `METRICS FAILED` |
 
 ## 3. Physics & Numerical Analysis Summary
 - **Solver Model**: BenDaniel-Duke Variable Effective-Mass 1D Schrödinger Equation ($O(N)$ tridiagonal discretization).

@@ -9,10 +9,13 @@ from __future__ import annotations
 import os
 import json
 import glob
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 EXAMPLES_DIR = REPO_ROOT / "examples"
+sys.path.insert(0, str(REPO_ROOT))
+from aeslibs.validation_policy import reference_status, reviewed_status, UNVERIFIED_REFERENCE
 
 
 def audit_and_update_examples():
@@ -128,6 +131,20 @@ def audit_and_update_examples():
                 "Suitable for qualitative physical exploration and numerical solver testing."
             )
             
+        references = [value for key, value in data.items()
+                      if key.startswith('exp_') and isinstance(value, str) and value.endswith('.csv')]
+        if references:
+            data['validation_status'] = reference_status(references)
+            data['audit_notes'] = (
+                'Reference comparison only. Origin is model-generated where stated in CSV headers; '
+                'all measurement/digitization claims require original-source review. '
+                'Numerical agreement and calibration are separate assessments.'
+            )
+        else:
+            data['validation_status'] = reviewed_status(data['validation_status'])
+            if data['validation_status'] == UNVERIFIED_REFERENCE:
+                data['audit_notes'] = 'Named benchmark reference; independent validation evidence has not been reviewed.'
+
         with open(fpath, "w", encoding="utf-8") as fp:
             json.dump(data, fp, indent=2)
             
@@ -153,12 +170,12 @@ def audit_and_update_examples():
     lines = [
         "# Aestimo 1D Device Examples Audit & Validation Classification Report",
         "",
-        "This document details the comprehensive physical validity, provenance audit, and classification of all project configurations in the `examples/` directory.",
+        "This inventory classifies reference origins and review status. It does not certify physical accuracy or experimental validation.",
         "",
         "## 1. Classification Categories",
-        "- **`EXPERIMENTALLY VALIDATED`**: Calibrated directly against and quantitatively verified by peer-reviewed experimental measurements with recorded DOIs and complete provenance.",
-        "- **`PARTIALLY VALIDATED`**: Calibrated against established analytical textbook solutions or independently verified against cross-code reference solvers (e.g. 1D-DDCC).",
-        "- **`FITTED TO EXPERIMENT`**: Empirical optimization curves fitted to experimental trends without independent physical layer parameter extraction.",
+        "- **`REFERENCE COMPARISON / PROVENANCE UNVERIFIED`**: Literature or measurement attribution awaits original-source/extraction review; numerical agreement is assessed separately.",
+        "- **`SYNTHETIC REFERENCE / NOT EXPERIMENTAL`**: Model-generated reference points, useful for numerical tests but not measurements.",
+        "- **`CALIBRATED MODEL / PROVENANCE UNVERIFIED`**: Explicit fitting history; calibration does not establish independent validation.",
         "- **`MODEL-BASED / NOT EXPERIMENTALLY VALIDATED`**: Idealized or theoretical simulations used for qualitative physical exploration, numerical testing, and education.",
         "",
         "---",
@@ -180,7 +197,7 @@ def audit_and_update_examples():
         "",
         "## 3. Summary Statistics",
         f"- **Total Example Configurations**: {len(audit_records)}",
-        f"- **Experimentally Validated Devices**: {sum(1 for r in audit_records if r['validation_status'] == 'EXPERIMENTALLY VALIDATED')}",
+        f"- **Independently Experimentally Validated Devices**: {sum(1 for r in audit_records if r['validation_status'] == 'EXPERIMENTALLY VALIDATED')}",
         f"- **Partially Validated Devices**: {sum(1 for r in audit_records if r['validation_status'] == 'PARTIALLY VALIDATED')}",
         f"- **Model-Based / Theoretical Devices**: {sum(1 for r in audit_records if r['validation_status'] == 'MODEL-BASED / NOT EXPERIMENTALLY VALIDATED')}",
         "",
