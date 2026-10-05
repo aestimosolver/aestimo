@@ -207,6 +207,29 @@ Verification on Python 3.12:
 No solver equations, acceptance settings, material parameters or CLI behavior
 are changed in this packaging increment. No PyPI release is published.
 
+## Clean installation and owner-approved GUI scope
+
+The owner confirmed that the GUI was working and requested skipping detailed
+GUI checks on 2026-10-05. Live Tk interaction and thread/shutdown testing are
+therefore **out of scope for this integration review**, not a gate that keeps
+this task open. No additional solver development is introduced in this increment.
+
+A new Python 3.12 virtual environment installed the wheel and all declared
+runtime dependencies from scratch, without system-site packages or PYTHONPATH.
+`pip check` found no broken requirements. Installed GUI imports and preset
+resource initialization succeeded outside the source checkout. The source's
+**81 unittest tests also passed using this clean environment**. Resolved
+versions were NumPy 2.5.3, SciPy 1.18.1, Matplotlib 3.11.2, CustomTkinter 6.0.0,
+Pillow 12.3.0, darkdetect 0.8.0 and packaging 26.3. These are observations of
+this test environment, not a claim that every supported platform/version is tested.
+
+The declared build minimum setuptools 61.0.0 fails before metadata generation
+on Python 3.12 (`pkgutil.ImpImporter` is absent). Building with setuptools
+77.0.3 and wheel 0.43.0 succeeds with the current license metadata and package
+mapping. The build requirement now specifies `setuptools>=77.0.3`, matching
+the tested build backend. Runtime dependencies and supported-Python metadata
+are unchanged. No new version or PyPI release is published.
+
 ## Remaining work before release
 
 1. Extend the Mode 10 audit to mesh convergence, heterogeneous devices and
@@ -224,10 +247,10 @@ are changed in this packaging increment. No PyPI release is published.
 4. Review calibration of physical material parameters, including the Si
    bandgap adjustment described in `VALIDATION_RESULTS.md`.
 5. Compare representative legacy Schrödinger-Poisson outputs with master.
-6. Verify other supported Python versions and live GUI thread/shutdown behavior
-   on target desktop systems. Wheel/sdist resource inclusion, installed reference
-   lookup and entry-point wiring have been checked on Python 3.12; live windows
-   and fresh dependency installation remain untested.
+6. Other supported Python/platform combinations remain unverified. Wheel/sdist
+   resources, installed lookup, entry-point wiring and clean dependency installation
+   have been checked on Python 3.12. Detailed GUI testing is waived by the owner
+   for this PR and is not a remaining integration task.
 
 Keep this contribution in a draft integration PR until these scientific and
 installation checks have been completed. Do not infer release readiness from
