@@ -230,7 +230,7 @@ mapping. The build requirement now specifies `setuptools>=77.0.3`, matching
 the tested build backend. Runtime dependencies and supported-Python metadata
 are unchanged. No new version or PyPI release is published.
 
-## Remaining work before release
+## Separate follow-up work before a formal release
 
 1. Extend the Mode 10 audit to mesh convergence, heterogeneous devices and
    illumination/recombination regimes. The residual acceptance and failure
@@ -252,6 +252,10 @@ are unchanged. No new version or PyPI release is published.
    have been checked on Python 3.12. Detailed GUI testing is waived by the owner
    for this PR and is not a remaining integration task.
 
-Keep this contribution in a draft integration PR until these scientific and
-installation checks have been completed. Do not infer release readiness from
-the version number or validation strings inherited from the contribution.
+The agreed GUI integration and installation review is complete: 81 tests pass,
+clean Python 3.12 installation is checked, and detailed GUI testing is waived
+by the owner. This PR can move to ready for review; merging remains pending
+collaborator feedback. The items above are separate follow-up work, not an
+invitation to expand this GUI PR. Issues are disabled on this fork, so this
+numbered list is the current follow-up tracker. Do not infer formal release
+readiness from the inherited version number or validation labels.
