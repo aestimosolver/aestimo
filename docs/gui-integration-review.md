@@ -49,12 +49,49 @@ This command covers the example unittest suite. It does not exercise a live
 desktop session, an installed wheel, every legacy calculation mode or a full
 Mode 10 device solve.
 
+## Mode 10 acceptance and failure handling
+
+The next increment replaces the potential-correction shortcut with a requirement
+that the complete residual infinity norm is below tolerance. The default
+normalized tolerance remains `0.02`; this change does not establish that this
+threshold is adequate for every device. Equilibrium is checked before any
+factorization, and the state after the last permitted update is checked too.
+
+- Non-finite states, residuals, Jacobians and Newton corrections, and singular
+  linear systems fail the voltage step. Current arrays from a previous accepted
+  step are cleared; failed states are not used to calculate/export currents.
+- `last_diagnostics` records voltage, iteration count, residual norm, component
+  norms for Poisson/electron/hole equations when available, and the stop reason.
+- The core raises `NewtonConvergenceError` before storing a failed voltage step.
+  The error includes voltage and diagnostics. Existing GUI workers catch it and
+  take their error path. Output from an earlier run in an existing directory is
+  not deleted by this change; a failed run must not be treated as a fresh result.
+- `dd_max_iterations` is now read from the input into the model and honored by
+  the Newton solver (default 25, non-negative integer). A zero budget checks
+  only the initial residual and cannot bypass the core failure guard.
+- A single-bias Mode 10 calculation now executes the solver, instead of skipping
+  it as an equilibrium-only legacy branch. Modes 7–9 retain their existing
+  routing; their convergence behavior has not been audited in this increment.
+
+The full example unittest suite now has **61 passing tests**, including 14 new
+Mode 10 tests. Central differences check the analytic Jacobian on a small
+nonequilibrium system. Equilibrium and a small-bias solve check zero current and
+total-current conservation. Failure tests cover stalled continuity, iteration
+limits, singular/non-finite systems, invalid controls, stale currents, and core
+routing that refuses to export a partially failed sweep.
+
+A real 20-node Si p-n calculation completes a two-point low-bias sweep. As an
+additional smoke check, the unmodified `examples/sample_pn.py` preset completes
+41 steps from 0 to 0.8 V. The final residual infinity norm is approximately
+`8.95e-6` (default acceptance tolerance `0.02`). This smoke result verifies
+execution and numerical acceptance, not agreement with experiment or device
+accuracy under grid refinement. A live GUI session was not exercised.
+
 ## Remaining work before release
 
-1. Audit Mode 10: finite-difference verification of the analytic Jacobian,
-   equilibrium, current conservation, mesh convergence and failure propagation.
-   A small potential correction currently permits success even when residuals
-   remain large; callers can retain unconverged voltage-step results.
+1. Extend the Mode 10 audit to mesh convergence, heterogeneous devices and
+   illumination/recombination regimes. The residual acceptance and failure
+   propagation fixes below have been completed, with limited physical tests.
 2. Replace misleading acceptance rules and validation labels. The Miller QCSE
    report currently passes a heavy-hole comparison with NRMSE 36.56% and MAPE
    112% because Pearson correlation is high. Correlation alone is insufficient.

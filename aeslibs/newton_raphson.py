@@ -4,8 +4,23 @@ import numpy as np
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 import logging
+import warnings
 
 logger = logging.getLogger(__name__)
+
+
+class NewtonConvergenceError(RuntimeError):
+    """A failed voltage step cannot be exported as a converged device result."""
+
+    def __init__(self, voltage, diagnostics):
+        self.voltage = float(voltage)
+        self.diagnostics = dict(diagnostics)
+        super().__init__(
+            "Mode 10 failed at Va={:.6g} V: {} (iterations={}, residual={:.6g}).".format(
+                self.voltage, diagnostics.get('reason', 'not converged'),
+                diagnostics.get('iterations', 0), diagnostics.get('residual_norm', float('inf'))
+            )
+        )
 
 def Ber(x):
     """Numerically stable Scharfetter-Gummel Bernoulli function: B(x) = x / (exp(x) - 1)."""
@@ -96,6 +111,16 @@ class CoupledNewtonSolver:
         self.TAUN0 = None
         self.TAUP0 = None
         self.G_norm = None
+        self.last_diagnostics = {}
+
+    def require_convergence(self, ok, fi, n, p, Va):
+        """Stop the caller before failed/non-finite states enter output arrays."""
+        valid = all(np.all(np.isfinite(values)) for values in (fi, n, p))
+        if not ok or not valid:
+            diagnostics = dict(self.last_diagnostics)
+            if not valid:
+                diagnostics['reason'] = 'non-finite state'
+            raise NewtonConvergenceError(Va, diagnostics)
 
     def _init_equilibrium_state(self, n_init, p_init):
         if self.n_eq is None:
@@ -238,20 +263,62 @@ class CoupledNewtonSolver:
         return F, J_mat
 
     def solve_step(self, fi, n, p, Va=0.0, max_iter=25, tol=0.02):
-        for it in range(max_iter):
+        if not isinstance(max_iter, (int, np.integer)) or max_iter < 0:
+            raise ValueError('max_iter must be a non-negative integer')
+        if not np.isfinite(tol) or tol <= 0:
+            raise ValueError('tol must be finite and positive')
+        # A previous voltage step's currents must not survive a failed solve.
+        self.Jn = self.Jp = self.Jtot = None
+        self.last_Jtot = float('nan')
+        self.last_diagnostics = {'iterations': 0, 'residual_norm': float('inf'),
+                                 'reason': 'iteration limit', 'voltage': float(Va)}
+        for it in range(max_iter + 1):
+            self.last_diagnostics['iterations'] = it
+            if not all(np.all(np.isfinite(values)) for values in (fi, n, p)):
+                self.last_diagnostics['reason'] = 'non-finite state'
+                break
+            if np.any(n <= 0) or np.any(p <= 0):
+                self.last_diagnostics['reason'] = 'non-positive carrier density'
+                break
             F, J = self.compute_residual_and_jacobian(fi, n, p, Va=Va)
-            res_norm = np.max(np.abs(F))
-            
-            dX = spla.spsolve(J, -F)
+            if not np.all(np.isfinite(F)):
+                self.last_diagnostics['reason'] = 'non-finite residual'
+                break
+            res_norm = float(np.max(np.abs(F)))
+            self.last_diagnostics['residual_norm'] = res_norm
+            self.last_diagnostics['poisson_residual'] = float(np.max(np.abs(F[0::3])))
+            self.last_diagnostics['electron_residual'] = float(np.max(np.abs(F[1::3])))
+            self.last_diagnostics['hole_residual'] = float(np.max(np.abs(F[2::3])))
+            # Small potential corrections alone do not imply continuity convergence.
+            if res_norm < tol:
+                self.compute_currents(fi, n, p)
+                if np.all(np.isfinite(self.Jtot)) and np.isfinite(self.last_Jtot):
+                    self.last_diagnostics['reason'] = 'converged'
+                    return fi, n, p, True
+                self.Jn = self.Jp = self.Jtot = None
+                self.last_Jtot = float('nan')
+                self.last_diagnostics['reason'] = 'non-finite current'
+                break
+            if it == max_iter:
+                break
+            if not np.all(np.isfinite(J.data)):
+                self.last_diagnostics['reason'] = 'non-finite Jacobian'
+                break
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter('error', spla.MatrixRankWarning)
+                    dX = spla.spsolve(J, -F)
+            except (spla.MatrixRankWarning, RuntimeError, ValueError, np.linalg.LinAlgError):
+                self.last_diagnostics['reason'] = 'linear solve failed'
+                break
+            if not np.all(np.isfinite(dX)):
+                self.last_diagnostics['reason'] = 'non-finite Newton correction'
+                break
             d_fi = dX[0::3]
             d_n = dX[1::3]
             d_p = dX[2::3]
             
             max_dfi = np.max(np.abs(d_fi))
-            if it > 0 and (res_norm < tol or max_dfi < 0.01):
-                self.compute_currents(fi, n, p)
-                return fi, n, p, True
-                
             alpha = 1.0
             # Damping on significant majority/minority carriers to prevent inversion
             sig_n = (d_n < 0) & (n > 10.0)
@@ -268,7 +335,6 @@ class CoupledNewtonSolver:
             n = np.maximum(1e-30, n + alpha * d_n)
             p = np.maximum(1e-30, p + alpha * d_p)
             
-        self.compute_currents(fi, n, p)
         return fi, n, p, False
 
     def compute_currents(self, fi, n, p):
@@ -316,6 +382,9 @@ class CoupledNewtonSolver:
             G_opt_arr = G_opt
         self.G_norm = G_opt_arr / self.ni_ref
         
-        fi, n, p, ok = self.solve_step(fi_init, n_init, p_init, Va=Va, max_iter=25, tol=0.02)
+        fi, n, p, ok = self.solve_step(
+            fi_init, n_init, p_init, Va=Va,
+            max_iter=getattr(self.model, 'dd_max_iterations', 25), tol=0.02
+        )
         return fi, n, p, ok
 
