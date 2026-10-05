@@ -384,7 +384,8 @@ class CoupledNewtonSolver:
         
         fi, n, p, ok = self.solve_step(
             fi_init, n_init, p_init, Va=Va,
-            max_iter=getattr(self.model, 'dd_max_iterations', 25), tol=0.02
+            max_iter=getattr(self.model, 'dd_max_iterations', 25),
+            tol=getattr(self.model, 'dd_residual_tolerance', 0.02)
         )
         return fi, n, p, ok
 

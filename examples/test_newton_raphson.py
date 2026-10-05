@@ -155,6 +155,20 @@ class TestNewtonSolver(unittest.TestCase):
         with self.assertRaises(NewtonConvergenceError):
             solver.require_convergence(True, fi, n, p, 0.1)
 
+    def test_solve_honors_model_residual_tolerance(self):
+        solver, fi, n, p = device_solver()
+        solver.model.dd_residual_tolerance = 1e-9
+        with patch.object(solver, 'solve_step', return_value=(fi, n, p, True)) as step:
+            solver.solve(fi, n, p, np.full(len(fi), 0.1),
+                         np.full(len(fi), 0.05), solver.TAUN0,
+                         solver.TAUP0, 0., 0., 0.)
+        self.assertEqual(step.call_args.kwargs['tol'], 1e-9)
+        solver.model.dd_residual_tolerance = float('nan')
+        with self.assertRaises(ValueError):
+            solver.solve(fi, n, p, np.full(len(fi), 0.1),
+                         np.full(len(fi), 0.05), solver.TAUN0,
+                         solver.TAUP0, 0., 0., 0.)
+
     def test_invalid_iteration_budget_and_tolerance_are_rejected(self):
         solver, fi, n, p = device_solver()
         for budget in (-1, 0.5, None):

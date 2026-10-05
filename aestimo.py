@@ -1339,6 +1339,7 @@ class StructureFrom(Structure):
             'maxgridpoints': 200000,
             'max_iterations': 120,
             'dd_max_iterations': 25,
+            'dd_residual_tolerance': 0.02,
             'mat_type': 'Zincblende',
             'dop_profile': np.zeros(1),
             'Quantum_Regions_boundary': np.zeros((1, 2)),

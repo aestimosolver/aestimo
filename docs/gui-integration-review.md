@@ -131,11 +131,33 @@ no-overlap comparisons, plot-score recomputation and source-status distinctions.
 The actual Miller benchmark tests require both inaccurate comparisons to fail.
 The generated reports retain RMSE/MAPE and both types of R² for review.
 
+## Mode 10 mesh and tolerance investigation
+
+`examples/mode10_mesh_audit.py` runs nine dark Si pn cases (three meshes,
+three tolerances) with isolated output. See `docs/mode10-mesh-audit.md` and
+its JSON diagnostics. Eight cases complete 21 biases; the finest mesh at
+1e-8 fails at 0.02 V and is retained as a failure.
+
+The inherited 0.02 tolerance accepts a spatial total-current span of about
+277 mA/cm² at 0.4 V on the 5 nm mesh, despite a median current of only
+0.303 mA/cm². A small difference between median currents across meshes would
+hide this conservation defect. At 1e-7 the span falls to about 8.90e-6 mA/cm²,
+but low-bias currents remain comparable to or below numerical variations.
+This investigation does not certify grid convergence or physical accuracy.
+
+Mode 10 accepts the positive finite input `dd_residual_tolerance` (default
+0.02 retained during review). It enables explicit tolerance studies without
+patching solver code. The suite now has **72 passing tests**, including input
+control and comparisons that cannot substitute a failed finest reference.
+Current conservation, near-equilibrium cancellation and equation scaling are
+release blockers, alongside the existing scientific and installation checks.
+
 ## Remaining work before release
 
 1. Extend the Mode 10 audit to mesh convergence, heterogeneous devices and
    illumination/recombination regimes. The residual acceptance and failure
-   propagation fixes below have been completed, with limited physical tests.
+   propagation fixes have been completed, but the new Si mesh audit exposes
+   inadequate current conservation at the inherited default tolerance.
 2. Establish observable-specific acceptance criteria using measurement uncertainty
    and grid/model convergence. The previous correlation-only rule has been
    replaced; the provisional QW thresholds still require scientific review.
