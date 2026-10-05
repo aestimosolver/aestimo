@@ -20,8 +20,9 @@ T = 300.0 #Kelvin
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 # 7: Schrodinger-Poisson-Drift_Diffusion
 # 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel map
-# 9: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel & Newton map
-computation_scheme = 2
+# 10: Fully-Coupled Newton-Raphson drift-diffusion solver
+computation_scheme = 10
+comp_scheme = 10
 
 # Non-parabolic effective mass function
 # 0: no energy dependence
@@ -38,30 +39,20 @@ subnumber_e = 1
 subnumber_h = 1
 # APPLIED ELECTRIC FIELD
 Fapplied =  0.0# (V/m)2.5e7/50e-9
-vmax= 1.2
+vmax= 0.8
 vmin= 0.0
-Each_Step=0.05
+Each_Step=0.02
 # --------------------------------
 # REGIONAL SETTINGS FOR SIMULATION
 # --------------------------------
 T     = 300              # [K]
 # For 1D, z-axis is choosen
-gridfactor = 1
+gridfactor = 5.0
 maxgridpoints = 200000 #for controlling the size
 mat_type='Zincblende'
 # REGIONS
-# Region input is a two-dimensional list input.
-# An example:
-# Si p-n diode. Firstly lets picturize the regional input.
-#         | Thickness (nm) | Material | Alloy fraction | Doping(cm^-3) | n or p type |
-# Layer 0 |      250.0     |   Si     |      0         |     1e16      |     n       |
-# Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
-#
-# To input this list in Gallium, we use lists as:
-material1 =[[3140.5, 'Si', 0.0, 0.0, 0.7e+17, 'p','b'],          
-            [3140.5, 'Si', 0.0, 0.0, 0.7e+16, 'n','b']]
-material =[[500, 'Si', 0.0, 0.0, 1e+19, 'p','b'],          
-            [500, 'Si', 0.0, 0.0,1e+19, 'n','b']]
+material = [[1000.0, 'Si', 0.0, 0.0, 1.0e+17, 'p', 'b'],
+            [1000.0, 'Si', 0.0, 0.0, 1.0e+17, 'n', 'b']]
 #---------------------------------------- 
 inputfilename = "sample_pn"
 import numpy as np
@@ -80,7 +71,9 @@ surface=np.zeros(2)
 from os import path
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
-    import sys
-    sys.path.append(path.join(path.dirname(__file__), '..'))
+    import sys, os
+    repo_root = path.abspath(path.join(path.dirname(__file__), '..'))
+    if repo_root not in sys.path:
+        sys.path.insert(0, repo_root)
     import aestimo
     aestimo.run_aestimo(input_obj)

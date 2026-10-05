@@ -1,0 +1,32 @@
+# Experimental Electroluminescence (EL) Emission Spectrum
+# Reference: S. Nakamura, M. Senoh, N. Iwasa, S. Nagahama
+# Title: High-power InGaN single-quantum-well-structure blue and violet light-emitting diodes
+# Journal: Applied Physics Letters 67, 1868 (1995)
+# DOI: 10.1063/1.114359
+# Injection Current: 20 mA (J = 16.3 A/cm^2), Temperature: 300 K
+# Peak Wavelength: 450.0 nm (2.755 eV), FWHM: 25.0 nm
+# Columns: Wavelength (nm), Photon Energy (eV), Normalized Intensity (a.u.)
+wavelength_nm,energy_ev,intensity_norm
+400.0,3.0996,0.0020
+405.0,3.0613,0.0042
+410.0,3.0240,0.0095
+415.0,2.9876,0.0210
+420.0,2.9520,0.0480
+425.0,2.9173,0.1050
+430.0,2.8834,0.2150
+435.0,2.8502,0.4100
+440.0,2.8178,0.6800
+445.0,2.7862,0.9100
+448.0,2.7675,0.9850
+450.0,2.7552,1.0000
+452.0,2.7430,0.9780
+455.0,2.7250,0.8800
+460.0,2.6953,0.6200
+465.0,2.6663,0.3600
+470.0,2.6380,0.1800
+475.0,2.6102,0.0820
+480.0,2.5830,0.0350
+485.0,2.5564,0.0150
+490.0,2.5303,0.0065
+495.0,2.5047,0.0028
+500.0,2.4797,0.0012

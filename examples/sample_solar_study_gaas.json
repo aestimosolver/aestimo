@@ -1,0 +1,73 @@
+{
+  "name": "Tobin 1990 GaAs Benchmark Solar Cell",
+  "layers": [
+    {
+      "name": "p-AlGaAs Window",
+      "material": "AlGaAs",
+      "thickness": "30.0",
+      "mole": "0.85",
+      "mole_y": "0.0",
+      "doping": "2e+18",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "name": "p-GaAs Emitter",
+      "material": "GaAs",
+      "thickness": "500.0",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "doping": "2e+18",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "name": "n-GaAs Base",
+      "material": "GaAs",
+      "thickness": "3000.0",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "doping": "2e+17",
+      "doping_type": "n",
+      "type": "qw"
+    },
+    {
+      "name": "n-AlGaAs BSF",
+      "material": "AlGaAs",
+      "thickness": "100.0",
+      "mole": "0.85",
+      "mole_y": "0.0",
+      "doping": "2e+18",
+      "doping_type": "n",
+      "type": "barrier"
+    }
+  ],
+  "temp": "298.15",
+  "field": "0.0",
+  "bc_left": "5.2",
+  "bc_right": "4.1",
+  "vmin": "0.0",
+  "vmax": "1.14",
+  "vstep": "0.02",
+  "solver": "10: Fully-Coupled Newton-Raphson",
+  "grid_step": "5.0",
+  "max_pts": "200000",
+  "mat_sys": "Zincblende",
+  "sub_e": "5",
+  "sub_h": "5",
+  "Quantum_Regions": false,
+  "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+  "tat_field": "1e10",
+  "exp_file": "",
+  "area": "1.0",
+  "rs": "0.0",
+  "rs_mode": "External (Fast)",
+  "rsh": "5e5",
+  "device_type": "Solar Study",
+  "G_optical": "6.759e+20",
+  "graded_junc": false,
+  "diffusion_len": "10.0",
+  "validation_status": "MODEL-BASED / NOT EXPERIMENTALLY VALIDATED",
+  "recommended_usage": "Educational / Theoretical Exploration / Numerical Testing",
+  "audit_notes": "Theoretical/idealized semiconductor model without calibration to experimental device data. Suitable for qualitative physical exploration and numerical solver testing."
+}

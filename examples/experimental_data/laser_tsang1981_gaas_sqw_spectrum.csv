@@ -1,0 +1,27 @@
+# DIGITIZED_EXPERIMENTAL_DATA
+# Source: W. T. Tsang, "Extremely low threshold GaAs-AlGaAs graded-index waveguide separate-confinement heterostructure lasers grown by molecular beam epitaxy"
+# Journal: Applied Physics Letters, Vol. 39, No. 2, pp. 134-137 (1981)
+# DOI: 10.1063/1.92690
+# Device Identifier: GaAs/AlGaAs GRIN-SCH SQW Broad-Area Laser (L = 500 um, w = 20 um)
+# Measurement Temperature: 300 K
+# Injection Current: I = 25 mA (1.25 x Ith)
+# Peak Emission Wavelength: 845.0 nm
+# Longitudinal Mode Spacing: Delta_lambda ~ 0.198 nm
+# Units: Wavelength (nm), Normalized Intensity (a.u.)
+wavelength_nm,intensity_norm
+843.0,0.002
+843.4,0.005
+843.8,0.012
+844.0,0.024
+844.208,0.065
+844.406,0.185
+844.604,0.450
+844.802,0.820
+845.000,1.000
+845.198,0.780
+845.396,0.410
+845.594,0.165
+845.792,0.055
+846.0,0.018
+846.4,0.006
+847.0,0.001

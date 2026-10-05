@@ -1,57 +1,78 @@
 {
-    "layers": [
-        {
-            "material": "GaN",
-            "mole": "0.0",
-            "thickness": "200.0",
-            "doping": "2.0e+19",
-            "doping_type": "p",
-            "type": "barrier"
-        },
-        {
-            "material": "InGaN",
-            "mole": "0.2",
-            "thickness": "3.0",
-            "doping": "0.0e+00",
-            "doping_type": "n",
-            "type": "well"
-        },
-        {
-            "material": "GaN",
-            "mole": "0.0",
-            "thickness": "15.0",
-            "doping": "0.0e+00",
-            "doping_type": "n",
-            "type": "barrier"
-        },
-        {
-            "material": "InGaN",
-            "mole": "0.2",
-            "thickness": "3.0",
-            "doping": "0.0e+00",
-            "doping_type": "n",
-            "type": "well"
-        },
-        {
-            "material": "GaN",
-            "mole": "0.0",
-            "thickness": "300.0",
-            "doping": "5.0e+18",
-            "doping_type": "n",
-            "type": "barrier"
-        }
-    ],
-    "temp": "300.0",
-    "field": "0.0",
-    "bc_left": "0.0",
-    "bc_right": "0.0",
-    "vmin": "3.0",
-    "vmax": "3.3",
-    "vstep": "0.15",
-    "solver": "2: Schrodinger-Poisson",
-    "grid_step": "0.25",
-    "max_pts": "200000",
-    "mat_sys": "Wurtzite",
-    "sub_e": "1",
-    "sub_h": "1"
+  "layers": [
+    {
+      "material": "GaN",
+      "mole": "0.0",
+      "thickness": "200.0",
+      "doping": "2.0e+19",
+      "doping_type": "p",
+      "type": "barrier",
+      "mole_y": "0.0"
+    },
+    {
+      "material": "InGaN",
+      "mole": "0.2",
+      "thickness": "3.0",
+      "doping": "0.0e+00",
+      "doping_type": "n",
+      "type": "well",
+      "mole_y": "0.0"
+    },
+    {
+      "material": "GaN",
+      "mole": "0.0",
+      "thickness": "15.0",
+      "doping": "0.0e+00",
+      "doping_type": "n",
+      "type": "barrier",
+      "mole_y": "0.0"
+    },
+    {
+      "material": "InGaN",
+      "mole": "0.2",
+      "thickness": "3.0",
+      "doping": "0.0e+00",
+      "doping_type": "n",
+      "type": "well",
+      "mole_y": "0.0"
+    },
+    {
+      "material": "GaN",
+      "mole": "0.0",
+      "thickness": "300.0",
+      "doping": "5.0e+18",
+      "doping_type": "n",
+      "type": "barrier",
+      "mole_y": "0.0"
+    }
+  ],
+  "temp": "300.0",
+  "field": "0.0",
+  "bc_left": "0.0",
+  "bc_right": "0.0",
+  "vmin": "3.0",
+  "vmax": "3.3",
+  "vstep": "0.15",
+  "solver": "2: Schrodinger-Poisson",
+  "grid_step": "0.25",
+  "max_pts": "200000",
+  "mat_sys": "Wurtzite",
+  "sub_e": "1",
+  "sub_h": "1",
+  "device_type": "Generic Diode / LED",
+  "Quantum_Regions": false,
+  "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+  "tat_field": "1e10",
+  "exp_file": "",
+  "area": "1e-4",
+  "rs": "0.0",
+  "rs_mode": "External (Fast)",
+  "rsh": "1e12",
+  "G_optical": "0.0",
+  "graded_junc": false,
+  "diffusion_len": "10.0",
+  "validation_status": "PARTIALLY VALIDATED",
+  "recommended_usage": "Cross-Code Solver Benchmark",
+  "bibliographic_reference_note": "1D-DDCC Poisson-Drift-Diffusion solver comparison suite",
+  "audit_notes": "Verified against 1D-DDCC reference numerical solver outputs; lacks physical wafer measurement."
 }
