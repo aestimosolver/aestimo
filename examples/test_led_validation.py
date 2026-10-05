@@ -29,6 +29,7 @@ from aeslibs.led_validation import (
     LEDTraceabilityRecord,
 )
 from aestimo_gui import AestimoGUI
+from examples.gui_test_support import DeviceFigureFixtures
 
 
 class TestLEDCharacterization(unittest.TestCase):
@@ -157,56 +158,65 @@ class TestTraceabilityAndReports(unittest.TestCase):
         self.assertIn("HRTEM calibration", md)
 
 
-class TestGUIIntegration(unittest.TestCase):
-    """Integration tests verifying GUI figure building for all 3 validated LED models."""
+class TestGUIIntegration(DeviceFigureFixtures, unittest.TestCase):
+    """Integration tests verifying GUI figure building for all 3 LED presets with synthetic current fixtures."""
 
     def test_build_led_figures_nakamura(self):
-        out_dir = REPO_ROOT / "examples" / "led_nakamura1995_blue_sqw_output"
-        cfg_path = REPO_ROOT / "examples" / "led_nakamura1995_blue_sqw.json"
-        with open(cfg_path, "r", encoding="utf-8") as f:
-            cfg = json.load(f)
+        out_dir, cfg = self.current_fixture("led_nakamura1995_blue_sqw")
 
-        class MockGUI:
-            examples_dir = str(REPO_ROOT / "examples")
-
-        figs, titles, metrics, val_fig, val_report = AestimoGUI.build_led_figures(MockGUI(), str(out_dir), cfg)
+        figs, titles, metrics, val_fig, val_report = AestimoGUI.build_led_figures(self.gui, str(out_dir), cfg)
         self.assertEqual(len(figs), 4)
+        line = figs[0].axes[0].lines[1]
+        np.testing.assert_allclose(line.get_ydata(), np.maximum(self.current_ma, 1e-7))
+        np.testing.assert_allclose(
+            line.get_xdata(), self.voltage_v + self.current_ma * 1e-3 * float(cfg.get("rs", 0.0))
+        )
         self.assertIsNotNone(val_fig)
         self.assertIsNotNone(val_report)
-        self.assertEqual(metrics["validation_status"], "EXPERIMENTALLY VALIDATED")
+        self.assertEqual(metrics["validation_status"], cfg["validation_status"])
         self.assertAlmostEqual(metrics["peak_wavelength_nm"], 450.0, delta=1.0)
 
     def test_build_led_figures_meyaard(self):
-        out_dir = REPO_ROOT / "examples" / "led_meyaard2013_blue_mqw_output"
-        cfg_path = REPO_ROOT / "examples" / "led_meyaard2013_blue_mqw.json"
-        with open(cfg_path, "r", encoding="utf-8") as f:
-            cfg = json.load(f)
+        out_dir, cfg = self.current_fixture("led_meyaard2013_blue_mqw")
 
-        class MockGUI:
-            examples_dir = str(REPO_ROOT / "examples")
-
-        figs, titles, metrics, val_fig, val_report = AestimoGUI.build_led_figures(MockGUI(), str(out_dir), cfg)
+        figs, titles, metrics, val_fig, val_report = AestimoGUI.build_led_figures(self.gui, str(out_dir), cfg)
         self.assertEqual(len(figs), 4)
+        line = figs[0].axes[0].lines[1]
+        np.testing.assert_allclose(line.get_ydata(), np.maximum(self.current_ma, 1e-7))
+        np.testing.assert_allclose(
+            line.get_xdata(), self.voltage_v + self.current_ma * 1e-3 * float(cfg.get("rs", 0.0))
+        )
         self.assertIsNotNone(val_fig)
         self.assertIsNotNone(val_report)
-        self.assertEqual(metrics["validation_status"], "EXPERIMENTALLY VALIDATED")
+        self.assertEqual(metrics["validation_status"], cfg["validation_status"])
         self.assertAlmostEqual(metrics["peak_wavelength_nm"], 445.0, delta=2.0)
 
     def test_build_led_figures_schubert(self):
-        out_dir = REPO_ROOT / "examples" / "led_schubert2006_algaas_dh_output"
-        cfg_path = REPO_ROOT / "examples" / "led_schubert2006_algaas_dh.json"
-        with open(cfg_path, "r", encoding="utf-8") as f:
-            cfg = json.load(f)
+        out_dir, cfg = self.current_fixture("led_schubert2006_algaas_dh")
 
-        class MockGUI:
-            examples_dir = str(REPO_ROOT / "examples")
-
-        figs, titles, metrics, val_fig, val_report = AestimoGUI.build_led_figures(MockGUI(), str(out_dir), cfg)
+        figs, titles, metrics, val_fig, val_report = AestimoGUI.build_led_figures(self.gui, str(out_dir), cfg)
         self.assertEqual(len(figs), 4)
+        line = figs[0].axes[0].lines[1]
+        np.testing.assert_allclose(line.get_ydata(), np.maximum(self.current_ma, 1e-7))
+        np.testing.assert_allclose(
+            line.get_xdata(), self.voltage_v + self.current_ma * 1e-3 * float(cfg.get("rs", 0.0))
+        )
         self.assertIsNotNone(val_fig)
         self.assertIsNotNone(val_report)
-        self.assertEqual(metrics["validation_status"], "EXPERIMENTALLY VALIDATED")
+        self.assertEqual(metrics["validation_status"], cfg["validation_status"])
         self.assertAlmostEqual(metrics["peak_wavelength_nm"], 870.0, delta=2.0)
+
+
+    def test_missing_output_does_not_read_unrelated_working_directory(self):
+        """An unrelated CWD result must never be shown as this device's result."""
+        from unittest.mock import patch
+        unrelated = self.fixture_root / "output"
+        unrelated.mkdir()
+        np.savetxt(unrelated / "av_curr.dat", [[0.0, 0.0], [1.0, 100.0]])
+        missing = self.fixture_root / "missing_device"
+        with patch("os.getcwd", return_value=str(self.fixture_root)):
+            result = AestimoGUI.build_led_figures(self.gui, str(missing), {})
+        self.assertEqual(result, ([], [], None, None, None))
 
 
 class TestRepositoryAudit(unittest.TestCase):

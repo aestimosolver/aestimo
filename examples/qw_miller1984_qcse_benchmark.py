@@ -21,7 +21,6 @@ This benchmark:
 import os
 import sys
 import json
-import shutil
 import numpy as np
 
 # Ensure repository root is on sys.path
@@ -38,7 +37,10 @@ import aeslibs.quantum_well as qw
 import aeslibs.qw_validation as qw_val
 
 
-def run_benchmark():
+def run_benchmark(output_dir=None):
+    """Run the benchmark; optionally place generated artifacts outside the source tree."""
+    output_dir = os.fspath(output_dir) if output_dir is not None else os.path.join(REPO_ROOT, "examples")
+    os.makedirs(output_dir, exist_ok=True)
     print("=" * 76)
     print("AESTIMO 1D: QW VALIDATION BENCHMARK — MILLER ET AL. (1984) QCSE")
     print("=" * 76)
@@ -285,19 +287,13 @@ def run_benchmark():
     )
 
     # 9. Plot Publication Validation Suite
-    out_png = os.path.join(REPO_ROOT, "examples", "qw_miller1984_qcse_validation.png")
+    out_png = os.path.join(output_dir, "qw_miller1984_qcse_validation.png")
     fig = qw_val.plot_standardized_qw_validation_suite(suite_data, record, output_png=out_png, dpi=300)
+    plt.close(fig)
     print(f"Validation plot saved to: {out_png}")
 
-    # Copy to Artifact directory for Antigravity viewer
-    artifact_dir = r"C:\Users\User\.gemini\antigravity\brain\b93d5945-3d95-4065-a321-5dc3a090b5da"
-    if os.path.exists(artifact_dir):
-        artifact_png = os.path.join(artifact_dir, "miller1984_qcse_validation.png")
-        shutil.copy2(out_png, artifact_png)
-        print(f"Artifact plot copied to: {artifact_png}")
-
     # 10. Generate Markdown Validation Report
-    out_report = os.path.join(REPO_ROOT, "examples", "qw_miller1984_qcse_report.md")
+    out_report = os.path.join(output_dir, "qw_miller1984_qcse_report.md")
     qw_val.generate_qw_validation_report_markdown(record, [m_hh, m_lh], output_path=out_report)
     print(f"Validation report saved to: {out_report}")
 

@@ -9,6 +9,7 @@ examples/test_structure_diagram.py
 import os
 import sys
 import unittest
+from tempfile import TemporaryDirectory
 import json
 import numpy as np
 import matplotlib
@@ -205,7 +206,9 @@ class TestStructureDiagram(unittest.TestCase):
         fig = plt.figure(figsize=(8, 5))
         sd.render_device_diagram(fig, self.sample_layers, view_mode="Structure + Bands", theme="Publication (Light)")
 
-        export_dir = os.path.join(base_dir, "examples")
+        temporary = TemporaryDirectory(prefix="aestimo-export-test-")
+        self.addCleanup(temporary.cleanup)
+        export_dir = temporary.name
         png_path = os.path.join(export_dir, "test_pub_export.png")
         svg_path = os.path.join(export_dir, "test_pub_export.svg")
         pdf_path = os.path.join(export_dir, "test_pub_export.pdf")

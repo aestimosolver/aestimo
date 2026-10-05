@@ -32,6 +32,7 @@ from aeslibs.laser_validation import (
     LaserTraceabilityRecord,
 )
 from aestimo_gui import AestimoGUI
+from examples.gui_test_support import DeviceFigureFixtures
 
 
 class TestLaserCharacterization(unittest.TestCase):
@@ -224,59 +225,74 @@ class TestLaserTraceabilityAndReports(unittest.TestCase):
         self.assertIn("W. T. Tsang", md)
 
 
-class TestLaserGUIIntegration(unittest.TestCase):
-    """Integration tests verifying GUI figure building for all 3 validated Laser models."""
+class TestLaserGUIIntegration(DeviceFigureFixtures, unittest.TestCase):
+    """Integration tests verifying GUI figure building for all 3 laser presets with synthetic current fixtures."""
 
     def test_build_laser_figures_tsang1981(self):
-        out_dir = REPO_ROOT / "examples" / "laser_tsang1981_gaas_sqw_output"
-        cfg_path = REPO_ROOT / "examples" / "laser_tsang1981_gaas_sqw.json"
-        with open(cfg_path, "r", encoding="utf-8") as f:
-            cfg = json.load(f)
+        out_dir, cfg = self.current_fixture("laser_tsang1981_gaas_sqw")
 
-        class MockGUI:
-            examples_dir = str(REPO_ROOT / "examples")
-
-        figs, titles, metrics, val_fig, val_report = AestimoGUI.build_laser_figures(MockGUI(), str(out_dir), cfg)
+        figs, titles, metrics, val_fig, val_report = AestimoGUI.build_laser_figures(self.gui, str(out_dir), cfg)
         self.assertEqual(len(figs), 4)
+        line = figs[1].axes[0].lines[0]
+        np.testing.assert_allclose(line.get_ydata(), self.current_ma)
+        np.testing.assert_allclose(
+            line.get_xdata(), self.voltage_v + self.current_ma * 1e-3 * float(cfg.get("rs", 0.0))
+        )
         self.assertIsNotNone(val_fig)
         self.assertIsNotNone(val_report)
-        self.assertEqual(metrics["validation_status"], "EXPERIMENTALLY VALIDATED")
-        self.assertAlmostEqual(metrics["threshold_current_ma"], 20.21, delta=0.5)
+        self.assertEqual(metrics["validation_status"], cfg["validation_status"])
+        self.assertGreater(metrics["threshold_current_ma"], 0.0)
+        self.assertLess(metrics["threshold_current_ma"], self.current_ma[-1])
+        self.assertGreater(metrics["max_optical_power_mw"], 0.0)
         self.assertAlmostEqual(metrics["peak_wavelength_nm"], 845.0, delta=1.0)
 
     def test_build_laser_figures_zah1994(self):
-        out_dir = REPO_ROOT / "examples" / "laser_zah1994_1550nm_mqw_output"
-        cfg_path = REPO_ROOT / "examples" / "laser_zah1994_1550nm_mqw.json"
-        with open(cfg_path, "r", encoding="utf-8") as f:
-            cfg = json.load(f)
+        out_dir, cfg = self.current_fixture("laser_zah1994_1550nm_mqw")
 
-        class MockGUI:
-            examples_dir = str(REPO_ROOT / "examples")
-
-        figs, titles, metrics, val_fig, val_report = AestimoGUI.build_laser_figures(MockGUI(), str(out_dir), cfg)
+        figs, titles, metrics, val_fig, val_report = AestimoGUI.build_laser_figures(self.gui, str(out_dir), cfg)
         self.assertEqual(len(figs), 4)
+        line = figs[1].axes[0].lines[0]
+        np.testing.assert_allclose(line.get_ydata(), self.current_ma)
+        np.testing.assert_allclose(
+            line.get_xdata(), self.voltage_v + self.current_ma * 1e-3 * float(cfg.get("rs", 0.0))
+        )
         self.assertIsNotNone(val_fig)
         self.assertIsNotNone(val_report)
-        self.assertEqual(metrics["validation_status"], "EXPERIMENTALLY VALIDATED")
-        self.assertAlmostEqual(metrics["threshold_current_ma"], 12.96, delta=0.5)
+        self.assertEqual(metrics["validation_status"], cfg["validation_status"])
+        self.assertGreater(metrics["threshold_current_ma"], 0.0)
+        self.assertLess(metrics["threshold_current_ma"], self.current_ma[-1])
+        self.assertGreater(metrics["max_optical_power_mw"], 0.0)
         self.assertAlmostEqual(metrics["peak_wavelength_nm"], 1550.0, delta=1.0)
 
     def test_build_laser_figures_nakamura1996(self):
-        out_dir = REPO_ROOT / "examples" / "laser_nakamura1996_blue_mqw_output"
-        cfg_path = REPO_ROOT / "examples" / "laser_nakamura1996_blue_mqw.json"
-        with open(cfg_path, "r", encoding="utf-8") as f:
-            cfg = json.load(f)
+        out_dir, cfg = self.current_fixture("laser_nakamura1996_blue_mqw")
 
-        class MockGUI:
-            examples_dir = str(REPO_ROOT / "examples")
-
-        figs, titles, metrics, val_fig, val_report = AestimoGUI.build_laser_figures(MockGUI(), str(out_dir), cfg)
+        figs, titles, metrics, val_fig, val_report = AestimoGUI.build_laser_figures(self.gui, str(out_dir), cfg)
         self.assertEqual(len(figs), 4)
+        line = figs[1].axes[0].lines[0]
+        np.testing.assert_allclose(line.get_ydata(), self.current_ma)
+        np.testing.assert_allclose(
+            line.get_xdata(), self.voltage_v + self.current_ma * 1e-3 * float(cfg.get("rs", 0.0))
+        )
         self.assertIsNotNone(val_fig)
         self.assertIsNotNone(val_report)
-        self.assertEqual(metrics["validation_status"], "EXPERIMENTALLY VALIDATED")
-        self.assertAlmostEqual(metrics["threshold_current_ma"], 79.21, delta=1.0)
+        self.assertEqual(metrics["validation_status"], cfg["validation_status"])
+        self.assertGreater(metrics["threshold_current_ma"], 0.0)
+        self.assertLess(metrics["threshold_current_ma"], self.current_ma[-1])
+        self.assertGreater(metrics["max_optical_power_mw"], 0.0)
         self.assertAlmostEqual(metrics["peak_wavelength_nm"], 405.0, delta=1.0)
+
+
+    def test_missing_output_does_not_read_unrelated_working_directory(self):
+        """An unrelated CWD result must never be shown as this device's result."""
+        from unittest.mock import patch
+        unrelated = self.fixture_root / "output"
+        unrelated.mkdir()
+        np.savetxt(unrelated / "av_curr.dat", [[0.0, 0.0], [1.0, 100.0]])
+        missing = self.fixture_root / "missing_device"
+        with patch("os.getcwd", return_value=str(self.fixture_root)):
+            result = AestimoGUI.build_laser_figures(self.gui, str(missing), {})
+        self.assertEqual(result, ([], [], None, None, None))
 
 
 class TestLaserRepositoryAudit(unittest.TestCase):

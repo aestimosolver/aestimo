@@ -2276,8 +2276,6 @@ class AestimoGUI(customtkinter.CTk):
         if not os.path.exists(curr_file):
             for cand_f in [
                 os.path.join(output_dir, "sim_output", "av_curr.dat"),
-                os.path.join(os.getcwd(), "sim_output", "av_curr.dat"),
-                os.path.join(os.getcwd(), "output", "av_curr.dat"),
             ]:
                 if os.path.exists(cand_f):
                     curr_file = cand_f
@@ -2695,8 +2693,6 @@ class AestimoGUI(customtkinter.CTk):
         if not os.path.exists(curr_file):
             for cand_f in [
                 os.path.join(output_dir, "sim_output", "av_curr.dat"),
-                os.path.join(os.getcwd(), "sim_output", "av_curr.dat"),
-                os.path.join(os.getcwd(), "output", "av_curr.dat"),
             ]:
                 if os.path.exists(cand_f):
                     curr_file = cand_f
