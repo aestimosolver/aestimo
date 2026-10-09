@@ -606,7 +606,8 @@ def generate_validation_report(metrics, output_path=None):
         Formatted validation report
     """
     report = "="*60 + "\n"
-    report += "EXPERIMENTAL VALIDATION REPORT\n"
+    report += "REFERENCE COMPARISON REPORT\n"
+    report += "Numerical agreement only; source provenance and independent validation are not established.\n"
     report += "="*60 + "\n\n"
     
     report += "Error Metrics:\n"

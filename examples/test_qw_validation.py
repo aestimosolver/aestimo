@@ -14,6 +14,7 @@ Tests:
 import os
 import sys
 import unittest
+from tempfile import TemporaryDirectory
 import numpy as np
 
 # Ensure repository root is on sys.path
@@ -33,6 +34,9 @@ class TestQWValidation(unittest.TestCase):
     """Test suite covering quantum-well experimental validation capabilities."""
 
     def setUp(self):
+        temporary = TemporaryDirectory(prefix="aestimo-qw-tests-")
+        self.addCleanup(temporary.cleanup)
+        self.output_dir = temporary.name
         self.exp_dir = os.path.join(REPO_ROOT, "examples", "experimental_data")
 
     def test_load_qw_experimental_csv(self):
@@ -83,18 +87,22 @@ class TestQWValidation(unittest.TestCase):
     def test_miller1984_qcse_benchmark_execution(self):
         """Test full execution of Miller 1984 QCSE benchmark script."""
         import examples.qw_miller1984_qcse_benchmark as miller_bench
-        res = miller_bench.run_benchmark()
-        self.assertEqual(res["status"], "EXPERIMENTALLY VALIDATED")
+        res = miller_bench.run_benchmark(output_dir=self.output_dir)
+        self.assertEqual(res["status"], "REFERENCE COMPARISON / PROVENANCE UNVERIFIED")
         self.assertGreater(res["m_hh"]["pearson_r2"], 0.98)
         self.assertGreater(res["m_lh"]["pearson_r2"], 0.98)
+        self.assertEqual(qw_val.assess_qw_comparison(res["m_hh"]), "METRICS FAILED")
+        self.assertEqual(qw_val.assess_qw_comparison(res["m_lh"]), "METRICS FAILED")
+        with open(res["report_path"], encoding="utf-8") as stream:
+            self.assertEqual(stream.read().count("`METRICS FAILED`"), 2)
         self.assertTrue(os.path.exists(res["figure_path"]), "Validation PNG must be generated")
         self.assertTrue(os.path.exists(res["report_path"]), "Validation report MD must be generated")
 
     def test_dingle1975_confinement_benchmark_execution(self):
         """Test full execution of Dingle 1975 confinement benchmark script."""
         import examples.qw_dingle1975_confinement_benchmark as dingle_bench
-        res = dingle_bench.run_benchmark()
-        self.assertEqual(res["status"], "EXPERIMENTALLY VALIDATED")
+        res = dingle_bench.run_benchmark(output_dir=self.output_dir)
+        self.assertEqual(res["status"], "REFERENCE COMPARISON / PROVENANCE UNVERIFIED")
         self.assertGreater(res["m_hh1"]["pearson_r2"], 0.98)
         self.assertGreater(res["m_lh1"]["pearson_r2"], 0.97)
         self.assertGreater(res["m_hh2"]["pearson_r2"], 0.98)

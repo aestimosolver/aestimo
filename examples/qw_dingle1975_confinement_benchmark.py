@@ -21,7 +21,6 @@ This benchmark:
 import os
 import sys
 import json
-import shutil
 import numpy as np
 
 # Ensure repository root is on sys.path
@@ -38,7 +37,10 @@ import aeslibs.quantum_well as qw
 import aeslibs.qw_validation as qw_val
 
 
-def run_benchmark():
+def run_benchmark(output_dir=None):
+    """Run the benchmark; optionally place generated artifacts outside the source tree."""
+    output_dir = os.fspath(output_dir) if output_dir is not None else os.path.join(REPO_ROOT, "examples")
+    os.makedirs(output_dir, exist_ok=True)
     print("=" * 76)
     print("AESTIMO 1D: QW VALIDATION BENCHMARK — DINGLE (1975) CONFINEMENT")
     print("=" * 76)
@@ -181,7 +183,7 @@ def run_benchmark():
             "exp_stark_shift_mev": m_exp_shift,
             "sim_field": m_fields,
             "sim_stark_shift_mev": -0.0035 * (m_fields ** 2),
-            "r_squared": 0.995,
+
             "rmse_mev": 2.5
         },
         "spectrum_data": {
@@ -190,7 +192,7 @@ def run_benchmark():
             "sim_wavelength_nm": t_wav,
             "sim_intensity": sim_int,
             "peak_wavelength_nm": peak_w,
-            "r_squared": 0.992
+
         },
         "overlap_matrix": rep_res.overlap_integrals[:3, :3] if rep_res.overlap_integrals.shape[0] >= 3 else np.eye(3)
     }
@@ -210,7 +212,7 @@ def run_benchmark():
         barrier_width_nm=20.0,
         temperature_k=temp_k,
         electric_field_max_kv_cm=0.0,
-        provenance_classification="EXPERIMENTALLY VALIDATED",
+        provenance_classification="REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
         parameters_provenance={
             "well_thickness_range_nm": {"val": "2.5 - 25.0", "tier": "EXPERIMENTAL", "src": "MBE grown nominal thickness"},
             "barrier_composition_x": {"val": 0.30, "tier": "EXPERIMENTAL", "src": "Dingle 1975 nominal alloy fraction"},
@@ -221,28 +223,22 @@ def run_benchmark():
     )
 
     # 9. Plot Publication Validation Suite
-    out_png = os.path.join(REPO_ROOT, "examples", "qw_dingle1975_confinement_validation.png")
+    out_png = os.path.join(output_dir, "qw_dingle1975_confinement_validation.png")
     fig = qw_val.plot_standardized_qw_validation_suite(suite_data, record, output_png=out_png, dpi=300)
+    plt.close(fig)
     print(f"Validation plot saved to: {out_png}")
 
-    # Copy to Artifact directory
-    artifact_dir = r"C:\Users\User\.gemini\antigravity\brain\b93d5945-3d95-4065-a321-5dc3a090b5da"
-    if os.path.exists(artifact_dir):
-        artifact_png = os.path.join(artifact_dir, "dingle1975_confinement_validation.png")
-        shutil.copy2(out_png, artifact_png)
-        print(f"Artifact plot copied to: {artifact_png}")
-
     # 10. Generate Markdown Validation Report
-    out_report = os.path.join(REPO_ROOT, "examples", "qw_dingle1975_confinement_report.md")
+    out_report = os.path.join(output_dir, "qw_dingle1975_confinement_report.md")
     qw_val.generate_qw_validation_report_markdown(record, [m_hh1, m_lh1, m_hh2], output_path=out_report)
     print(f"Validation report saved to: {out_report}")
 
     print("\n" + "=" * 76)
-    print("BENCHMARK COMPLETED SUCCESSFULLY (STATUS: EXPERIMENTALLY VALIDATED)")
+    print("BENCHMARK COMPLETED SUCCESSFULLY (STATUS: REFERENCE COMPARISON / PROVENANCE UNVERIFIED)")
     print("=" * 76)
 
     return {
-        "status": "EXPERIMENTALLY VALIDATED",
+        "status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
         "m_hh1": m_hh1,
         "m_lh1": m_lh1,
         "m_hh2": m_hh2,

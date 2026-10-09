@@ -7,7 +7,7 @@
       "material": "AlGaAs",
       "thickness": 50.0,
       "type": "barrier",
-      "mole": 0.30,
+      "mole": 0.3,
       "mole_y": 0.0,
       "doping": 0.0,
       "doping_type": "i"
@@ -25,7 +25,7 @@
       "material": "AlGaAs",
       "thickness": 50.0,
       "type": "barrier",
-      "mole": 0.30,
+      "mole": 0.3,
       "mole_y": 0.0,
       "doping": 0.0,
       "doping_type": "i"
@@ -69,16 +69,19 @@
       "notes": "Epitaxial MBE active well"
     },
     "barrier_composition_x": {
-      "value": 0.30,
+      "value": 0.3,
       "tier": "EXPERIMENTAL",
-      "source": "Dingle, Festkörperprobleme 15, 21 (1975)",
+      "source": "Dingle, Festk\u00f6rperprobleme 15, 21 (1975)",
       "notes": "AlGaAs barrier mole fraction"
     },
     "subband_transition_measurement": {
       "value": "Optical absorption and photoluminescence at 300 K",
       "tier": "EXPERIMENTAL",
-      "source": "Dingle, Festkörperprobleme 15, 21 (1975)",
+      "source": "Dingle, Festk\u00f6rperprobleme 15, 21 (1975)",
       "notes": "e1-hh1, e1-lh1, e2-hh2 peaks"
     }
-  }
+  },
+  "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+  "recommended_usage": "Educational / Theoretical Exploration / Numerical Testing",
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
 }

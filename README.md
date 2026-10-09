@@ -48,6 +48,16 @@ The program's latest version is available in zipped form from the website: https
 
 Alternatively, aestimo can now be installed from PyPI via the command `pip install aestimo.`
 
+For this GUI integration branch, install the checkout with `python -m pip install .`
+and launch `aestimo-gui`. The installed package includes the GUI project presets
+and reference CSVs. On first launch, missing resources are copied into
+`~/Aestimo/examples`; set `AESTIMO_WORKSPACE` to choose another parent directory.
+The copy step preserves existing user files and does not modify installed package
+resources. A source checkout retains its existing `examples/` directory behavior.
+The GUI requires Tk and a desktop display. This draft branch has not been
+published as a new PyPI release.
+
+
 Prerequisites
 -------------
 

@@ -43,6 +43,8 @@ for _attr, _val in _config_defaults.items():
 import tkinter
 import tkinter.messagebox
 import tkinter.filedialog
+from aeslibs.validation_policy import reviewed_status, reference_status, UNVERIFIED_REFERENCE
+from aeslibs.gui_resources import prepare_gui_examples, resolve_gui_reference
 import customtkinter
 import json
 import types
@@ -130,7 +132,7 @@ class AestimoGUI(customtkinter.CTk):
         self.log_queue = queue.Queue()
         self.sim_queue = queue.Queue() # Thread-safe queue for async worker results
         self.project_name = "untitled_project"
-        self.examples_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "examples"))
+        self.examples_dir = str(prepare_gui_examples())
 
         # UI Performance & Throttling State
         self._suppress_diagram_updates = False
@@ -1086,10 +1088,9 @@ class AestimoGUI(customtkinter.CTk):
         exp_file = self.exp_file_entry.get()
         if not os.path.exists(exp_file):
             # Try relative path
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            rel_path = os.path.join(script_dir, exp_file)
-            if os.path.exists(rel_path):
-                exp_file = rel_path
+            resolved = resolve_gui_reference(exp_file, self.examples_dir)
+            if os.path.exists(resolved):
+                exp_file = resolved
             else:
                 tkinter.messagebox.showerror("Error", f"Experimental file not found: {exp_file}")
                 return
@@ -2163,7 +2164,7 @@ class AestimoGUI(customtkinter.CTk):
                 record = LEDTraceabilityRecord(
                     device_id=trace_data.get("device_id", "LED-DEVICE"),
                     device_name=trace_data.get("device_name", "LED Device"),
-                    validation_status=trace_data.get("validation_status", "EXPERIMENTALLY VALIDATED"),
+                    validation_status=reviewed_status(trace_data.get("validation_status")),
                 )
                 record.set_bibliographic_reference(trace_data.get("bibliographic_reference", {}))
                 record.set_experimental_structure(trace_data.get("experimental_structure", {}))
@@ -2276,8 +2277,6 @@ class AestimoGUI(customtkinter.CTk):
         if not os.path.exists(curr_file):
             for cand_f in [
                 os.path.join(output_dir, "sim_output", "av_curr.dat"),
-                os.path.join(os.getcwd(), "sim_output", "av_curr.dat"),
-                os.path.join(os.getcwd(), "output", "av_curr.dat"),
             ]:
                 if os.path.exists(cand_f):
                     curr_file = cand_f
@@ -2464,7 +2463,7 @@ class AestimoGUI(customtkinter.CTk):
         record = LEDTraceabilityRecord(
             device_id=cfg.get("device_id", "LED-BENCHMARK"),
             device_name=cfg.get("device_name", "LED Device"),
-            validation_status=cfg.get("validation_status", "EXPERIMENTALLY VALIDATED"),
+            validation_status=reviewed_status(cfg.get("validation_status")),
         )
         record.set_bibliographic_reference(cfg.get("bibliographic_reference", {}))
         record.set_experimental_structure({
@@ -2526,7 +2525,7 @@ class AestimoGUI(customtkinter.CTk):
             "p_opt_20ma_mw": float(np.interp(20.0, sim_i_ma, sim_p_opt_mw)),
             "j_peak_a_cm2": float(droop_model['j_peak_a_cm2']),
             "rs_ohm": rs,
-            "validation_status": cfg.get("validation_status", "EXPERIMENTALLY VALIDATED"),
+            "validation_status": reviewed_status(cfg.get("validation_status")),
         }
         return figures, figure_titles, metrics, val_fig, val_report
 
@@ -2567,7 +2566,7 @@ class AestimoGUI(customtkinter.CTk):
                     device_name=trace_data.get("device_name", "Laser Diode"),
                     laser_architecture=trace_data.get("laser_architecture", "Semiconductor Laser Diode"),
                     material_system=trace_data.get("material_system", "Zincblende"),
-                    validation_status=trace_data.get("validation_status", "EXPERIMENTALLY VALIDATED"),
+                    validation_status=reviewed_status(trace_data.get("validation_status")),
                 )
                 record.set_bibliographic_reference(trace_data.get("bibliographic_reference", {}))
                 record.set_cavity_parameters(trace_data.get("cavity_parameters", {}))
@@ -2695,8 +2694,6 @@ class AestimoGUI(customtkinter.CTk):
         if not os.path.exists(curr_file):
             for cand_f in [
                 os.path.join(output_dir, "sim_output", "av_curr.dat"),
-                os.path.join(os.getcwd(), "sim_output", "av_curr.dat"),
-                os.path.join(os.getcwd(), "output", "av_curr.dat"),
             ]:
                 if os.path.exists(cand_f):
                     curr_file = cand_f
@@ -2867,7 +2864,7 @@ class AestimoGUI(customtkinter.CTk):
             device_name=cfg.get("device_name", "Laser Diode"),
             laser_architecture=cfg.get("laser_architecture", "Semiconductor Laser Diode"),
             material_system=cfg.get("mat_sys", "Zincblende"),
-            validation_status=cfg.get("validation_status", "EXPERIMENTALLY VALIDATED"),
+            validation_status=reviewed_status(cfg.get("validation_status")),
         )
         record.set_bibliographic_reference(cfg.get("bibliographic_reference", {}))
         record.set_cavity_parameters({
@@ -2922,7 +2919,7 @@ class AestimoGUI(customtkinter.CTk):
             "max_optical_power_mw": float(laser_metrics['max_optical_power_mw']),
             "max_wall_plug_efficiency_pct": float(laser_metrics['max_wall_plug_efficiency_pct']),
             "peak_wavelength_nm": peak_wl,
-            "validation_status": cfg.get("validation_status", "EXPERIMENTALLY VALIDATED"),
+            "validation_status": reviewed_status(cfg.get("validation_status")),
         }
         return figures, figure_titles, metrics, val_fig, val_report
 
@@ -3210,7 +3207,7 @@ class AestimoGUI(customtkinter.CTk):
             barrier_width_nm=layers[0]["thickness_nm"] if len(layers) > 0 else 10.0,
             temperature_k=temp_k,
             electric_field_max_kv_cm=field_v_cm / 1000.0,
-            provenance_classification="EXPERIMENTALLY VALIDATED" if (is_miller or is_dingle) else "NUMERICALLY CONVERGED"
+            provenance_classification=UNVERIFIED_REFERENCE if (is_miller or is_dingle) else "NUMERICALLY CONVERGED"
         )
 
         suite_data = {
@@ -3232,8 +3229,7 @@ class AestimoGUI(customtkinter.CTk):
                 'sim_field': np.array(sim_fields),
                 'sim_stark_shift_mev': np.array(sim_hh_shifts),
                 'sim_lh_stark_shift_mev': np.array(sim_lh_shifts),
-                'r_squared': 0.9909,
-                'rmse_mev': 15.98
+
             }
         elif is_dingle:
             suite_data['dingle_data'] = {
@@ -3243,8 +3239,7 @@ class AestimoGUI(customtkinter.CTk):
                 'sim_lw': np.array(sim_lw),
                 'sim_e1_hh1': np.array(sim_e1_list),
                 'sim_e1_lh1': np.array(sim_lh_list),
-                'r_squared': 0.9871,
-                'rmse_mev': 14.52
+
             }
 
         val_fig = qw_val.plot_standardized_qw_validation_suite(suite_data, record, dpi=100)
@@ -3282,7 +3277,7 @@ class AestimoGUI(customtkinter.CTk):
             "e1_confinement_mev": e1_conf,
             "hh1_confinement_mev": hh1_conf,
             "subband_spacing_mev": sub_sep,
-            "validation_status": "EXPERIMENTALLY VALIDATED" if (is_miller or is_dingle) else "QUANTUM CONFINED",
+            "validation_status": UNVERIFIED_REFERENCE if (is_miller or is_dingle) else "QUANTUM CONFINED",
         }
 
         return figures, figure_titles, metrics, val_fig, val_report
@@ -3463,7 +3458,7 @@ class AestimoGUI(customtkinter.CTk):
                         "avg_n": float(np.mean(n_sim)) if len(n_sim) > 0 else 1.0,
                         "rs": float(cfg.get("rs", 0.0)),
                         "rsh": float(cfg.get("rsh", 1e12)),
-                        "validation_status": "EXPERIMENTALLY VALIDATED" if err_metrics.get("r2", 0.0) >= 0.90 else "NUMERICALLY CONVERGED"
+                        "validation_status": reference_status([exp_file])
                     }
                     val_report = generate_validation_report(err_metrics)
 
@@ -4023,11 +4018,8 @@ class AestimoGUI(customtkinter.CTk):
             
             # 2. Validation & Diode Analysis
             exp_file = config_dict.get("exp_file", "")
-            script_dir = os.path.dirname(os.path.abspath(__file__))
             if exp_file and not os.path.exists(exp_file):
-                rel_path = os.path.join(script_dir, exp_file)
-                if os.path.exists(rel_path):
-                    exp_file = rel_path
+                exp_file = resolve_gui_reference(exp_file, self.examples_dir)
                     
             area_cm2 = float(config_dict.get("area", 1e-4))
             output_dir = getattr(aestimo, 'output_directory', os.path.join(os.getcwd(), "PRO_GUI_SIM_ASYNC_output"))
@@ -5253,7 +5245,7 @@ STATUS: VERIFIED PRODUCTION GRADE
                 val_str = f"{val:.3f}" if abs(val) < 100 else f"{val:.1f}"
             else:
                 val_str = str(val)
-            color = "#2ECC71" if key == "validation_status" and "VALIDATED" in val_str else "#1F6AA5"
+            color = "#2ECC71" if key == "validation_status" and val_str == "EXPERIMENTALLY VALIDATED" else "#1F6AA5"
             customtkinter.CTkLabel(
                 row,
                 text=f"{val_str} {unit}".strip(),
@@ -5299,7 +5291,7 @@ STATUS: VERIFIED PRODUCTION GRADE
                 val_str = f"{val:.3f}" if abs(val) < 100 else f"{val:.1f}"
             else:
                 val_str = str(val)
-            color = "#2ECC71" if key == "validation_status" and "VALIDATED" in val_str else "#1F6AA5"
+            color = "#2ECC71" if key == "validation_status" and val_str == "EXPERIMENTALLY VALIDATED" else "#1F6AA5"
             customtkinter.CTkLabel(
                 row,
                 text=f"{val_str} {unit}".strip(),
@@ -5344,7 +5336,7 @@ STATUS: VERIFIED PRODUCTION GRADE
                 val_str = f"{val:.4f}" if abs(val) < 10 else f"{val:.2f}"
             else:
                 val_str = str(val)
-            color = "#2ECC71" if key == "validation_status" and "VALIDATED" in val_str else "#1F6AA5"
+            color = "#2ECC71" if key == "validation_status" and val_str == "EXPERIMENTALLY VALIDATED" else "#1F6AA5"
             customtkinter.CTkLabel(
                 row,
                 text=f"{val_str} {unit}".strip(),
@@ -5400,7 +5392,7 @@ STATUS: VERIFIED PRODUCTION GRADE
                     val_str = f"{val:.4f}"
             else:
                 val_str = str(val)
-            color = "#2ECC71" if key == "validation_status" and "VALIDATED" in val_str else "#1F6AA5"
+            color = "#2ECC71" if key == "validation_status" and val_str == "EXPERIMENTALLY VALIDATED" else "#1F6AA5"
             customtkinter.CTkLabel(
                 row,
                 text=f"{val_str} {unit}".strip(),

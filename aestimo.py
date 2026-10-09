@@ -1338,6 +1338,10 @@ class StructureFrom(Structure):
             'gridfactor': 0.1,
             'maxgridpoints': 200000,
             'max_iterations': 120,
+            'dd_max_iterations': 25,
+            'dd_residual_tolerance': 0.02,
+            'dd_current_atol': 1e-8,  # mA/cm^2, total-current spatial span
+            'dd_current_rtol': 1e-3,
             'mat_type': 'Zincblende',
             'dop_profile': np.zeros(1),
             'Quantum_Regions_boundary': np.zeros((1, 2)),
@@ -3540,7 +3544,7 @@ def Poisson_Schrodinger_DD(result, model):
     Ev_result_ = np.zeros((Total_Steps, n_max))
     fi_stat = fi.copy()
     fi[0] -= vmin / Vt
-    if Total_Steps < 2:
+    if Total_Steps < 2 and not getattr(model, 'use_newton_solver', False):
         print("Equilibrium only (Total_Steps < 2)")
     else:
         print("Convergence of the Gummel cycles")
@@ -3568,7 +3572,7 @@ def Poisson_Schrodinger_DD(result, model):
                 max_iter_val = getattr(model, 'dd_max_iterations', 25)
                 curr_p_damp = getattr(model, 'poisson_damping', 0.4)
                 curr_c_damp = getattr(model, 'continuity_damping', 0.7)                
-                if iteration > max_iter_val:
+                if not getattr(model, 'use_newton_solver', False) and iteration > max_iter_val:
                     flag_conv_2 = False
                     break
                     
@@ -3589,8 +3593,7 @@ def Poisson_Schrodinger_DD(result, model):
                     )
                     flag_conv_2 = False
                     
-                    if not newton_ok or not np.all(np.isfinite(n)) or not np.all(np.isfinite(p)):
-                        logger.warning("  Coupled Newton solver incomplete convergence at Va = %g V.", Va_t[vindex])
+                    model.newton_solver.require_convergence(newton_ok, fi, n, p, Va_t[vindex])
 
                 if not getattr(model, 'use_newton_solver', False):
                     fi, flag_conv_2 = Poisson_non_equi2(

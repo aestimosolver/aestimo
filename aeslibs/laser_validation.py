@@ -9,6 +9,7 @@ a 6-panel standardized plotting suite conforming to repository publication stand
 from __future__ import annotations
 import os
 import json
+from aeslibs.validation_policy import reviewed_status
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -151,7 +152,7 @@ class LaserTraceabilityRecord:
         self.experimental_structure = experimental_structure or {}
         self.cavity_parameters = cavity_parameters or {}
         self.parameter_provenance = parameter_provenance or {}
-        self.validation_status = validation_status
+        self.validation_status = reviewed_status(validation_status)
         
         self.simulation_results = {}
         self.experimental_results = {}

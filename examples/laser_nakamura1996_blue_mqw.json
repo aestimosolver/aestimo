@@ -4,7 +4,7 @@
   "device_type": "Laser Diode Simulation / Characterization",
   "laser_architecture": "Ridge Waveguide InGaN MQW SCH Laser Diode",
   "material_system": "Wurtzite",
-  "validation_status": "EXPERIMENTALLY VALIDATED",
+  "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
   "bibliographic_reference": {
     "title": "InGaN-based multi-quantum-well-structure laser diodes",
     "authors": "S. Nakamura, M. Senoh, S. Nagahama, N. Iwasa, T. Yamada, T. Matsushita, H. Kiyoku, and Y. Sugimoto",
@@ -202,5 +202,5 @@
   "target_fwhm_nm": 18.0,
   "recommended_usage": "Primary Benchmark / InGaN Blue-Violet Laser Diode (~405nm)",
   "bibliographic_reference_note": "S. Nakamura et al., Appl. Phys. Lett. 68, 2105 (1996), DOI: 10.1063/1.116084",
-  "audit_notes": "Experimentally validated 405nm InGaN/GaN MQW violet-blue laser diode with optical cavity rate equations and Mode 10 drift-diffusion."
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
 }

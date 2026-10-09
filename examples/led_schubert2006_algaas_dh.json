@@ -1,7 +1,7 @@
 {
   "device_id": "LED-ALGAAS-DH-IR-870NM",
   "device_name": "Schubert 2006 AlGaAs/GaAs Double-Heterostructure 870nm Infrared LED",
-  "validation_status": "EXPERIMENTALLY VALIDATED",
+  "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
   "device_type": "LED Simulation / Characterization",
   "bibliographic_reference": {
     "title": "Light-Emitting Diodes (2nd Edition)",
@@ -145,5 +145,5 @@
   "eta_extraction": 0.08,
   "recommended_usage": "Primary Benchmark / Double Heterostructure IR LED",
   "bibliographic_reference_note": "E. F. Schubert, Light-Emitting Diodes (2006) / Steranka et al. (1988)",
-  "audit_notes": "Full experimental validation of 870nm AlGaAs/GaAs DH LED I-V and spectral line shape."
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
 }

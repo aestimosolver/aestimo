@@ -44,7 +44,7 @@
   "G_optical": "0.0",
   "graded_junc": false,
   "diffusion_len": "10.0",
-  "validation_status": "MODEL-BASED / NOT EXPERIMENTALLY VALIDATED",
+  "validation_status": "SYNTHETIC REFERENCE / NOT EXPERIMENTAL",
   "recommended_usage": "Educational / Theoretical Exploration / Numerical Testing",
-  "audit_notes": "Theoretical/idealized semiconductor model without calibration to experimental device data. Suitable for qualitative physical exploration and numerical solver testing."
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
 }

@@ -53,8 +53,8 @@
   "G_optical": "0.0",
   "graded_junc": false,
   "diffusion_len": "10.0",
-  "validation_status": "PARTIALLY VALIDATED",
+  "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
   "recommended_usage": "Analytical Benchmark / Textbook Verification",
   "bibliographic_reference_note": "P. Harrison, Quantum Wells, Wires and Dots (3rd Ed.), Chapter 3, Problem 3.3",
-  "audit_notes": "Verified against exact analytical Schr\u00f6dinger eigenstates in infinite/finite quantum wells."
+  "audit_notes": "Named benchmark reference; independent validation evidence has not been reviewed."
 }

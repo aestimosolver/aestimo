@@ -98,5 +98,8 @@
       "source": "Miller et al., Phys. Rev. Lett. 53, 2173 (1984)",
       "notes": "Measured electroabsorption red-shift"
     }
-  }
+  },
+  "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+  "recommended_usage": "Educational / Theoretical Exploration / Numerical Testing",
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
 }
