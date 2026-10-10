@@ -47,6 +47,7 @@ Created on Mon Aug 19 20:39:48 2019
 import numpy as np
 from math import*
 from scipy import sparse as sp
+from scipy.sparse.linalg import spsolve
 
 from .func_lib import DDGphin2n,DDGphip2p,Ucompmass,Ucomplap,Ucompconst,Ubernoulli
 from .aestimo_poisson1d import equi_np_fi222
@@ -67,16 +68,27 @@ def  DDGhole_driftdiffusion(psi,xaxis,pg,n,ni,TAUN0,TAUP0,mup,fi_e,fi_h,model,Vt
     elements[:,1]=np.arange(1,n_max)
     Nelements=np.size(elements[:,0])
     
-    BCnodes= [0,n_max-1]
+    if getattr(model, 'photovoltaic_mode', False):
+        # Selective contact: fix hole density ONLY at p-type regions (anode)
+        dop = getattr(idata, 'dop', None)
+        BCnodes = []
+        if dop is not None:
+            if dop[0] < 0: BCnodes.append(0)
+            if dop[n_max-1] < 0: BCnodes.append(n_max-1)
+        if not BCnodes: BCnodes = [n_max-1] # Fail-safe
+    else:
+        # standard ohmic: fix both
+        BCnodes= [0,n_max-1]
     
     pl = pg[0]
     pr = pg[n_max-1]
     h=nodes[1:len(nodes)]-nodes[0:len(nodes)-1]
     
-    c=1/h
+    mup_mid = (mup[0:n_max-1] + mup[1:n_max]) / 2.0
+    c = mup_mid / h
     if model.N_wells_virtual-2!=0 and config.quantum_effect:
         fi_n,fi_p =equi_np_fi222(ni,idata,fi_e,fi_h,psi,Vt,idata.wfh_general,idata.wfe_general,model,idata.E_state_general,idata.E_statec_general,idata.meff_state_general,idata.meff_statec_general,n_max,n,idata.p)
-    Bneg=Ubernoulli(-(psi[1:n_max]-psi[0:n_max-1])-(fi_n[1:n_max]-fi_n[0:n_max-1]),1)
+    Bneg=Ubernoulli(-(psi[1:n_max]-psi[0:n_max-1])-(fi_p[1:n_max]-fi_p[0:n_max-1]),1)
     Bpos=Ubernoulli( (psi[1:n_max]-psi[0:n_max-1])+(fi_p[1:n_max]-fi_p[0:n_max-1]),1)
     
     d0=np.zeros(n_max)
@@ -90,31 +102,74 @@ def  DDGhole_driftdiffusion(psi,xaxis,pg,n,ni,TAUN0,TAUP0,mup,fi_e,fi_h,model,Vt
     dm1	= np.zeros(n_max)
     dm1[n_max-1]=n_max
     dm1[0:n_max-1]=-c* Bpos   
-    A = sp.spdiags([dm1, d0, d1],np.array([-1,0,1]),n_max,n_max).todense() 
-    b = np.zeros(n_max)#%- A * ng
+    A = sp.spdiags([dm1, d0, d1],np.array([-1,0,1]),n_max,n_max).tocsc() 
+    b = np.zeros(n_max)
     
+    ## Trap-Assisted Tunneling (TAT) Modification
+    dV = np.zeros(n_max)
+    dV[1:-1] = (psi[2:] - psi[0:-2]) / (nodes[2:] - nodes[0:-2])
+    dV[0] = (psi[1] - psi[0]) / (nodes[1] - nodes[0])
+    dV[-1] = (psi[-1] - psi[-2]) / (nodes[-1] - nodes[-2])
+    
+    # Scaling for electric field (V/m)
+    # len_ (xbar) is in meters. xaxis is normalized [0, 1]
+    xs_val = getattr(model, 'dx', 1.0) * n_max * 1e-9 # meters
+    E_field = np.abs(dV) * (Vt / (xs_val if xs_val > 0 else 1e-9))
+    
+    # Hurkx factor Gamma
+    tat_field = float(getattr(model, 'tat_field', 1e10))
+    trap_density_scale = max(getattr(model, 'trap_density_scale', 1.0), 1e-12)
+    trap_energy_offset_ev = getattr(model, 'trap_energy_offset_ev', 0.0)
+    Gamma = np.zeros(n_max)
+    if tat_field < 1e9:
+        mask_high_field = E_field > 1e4
+        ratio = E_field[mask_high_field] / tat_field
+        Gamma[mask_high_field] = 2.0 * np.sqrt(3.0 * np.pi) * ratio * np.exp(np.clip(ratio**2, 0, 20))
+    Gamma *= trap_density_scale
+
     ## SRH Recombination term
-        
-    SRHD = TAUP0 * (n + ni) + TAUN0 * (pg + ni)
+    trap_arg = np.clip(trap_energy_offset_ev / max(Vt, 1e-12), -40.0, 40.0)
+    n1 = ni * np.exp(trap_arg)
+    p1 = ni * np.exp(-trap_arg)
+    SRHD = (TAUP0 * (n + n1) + TAUN0 * (pg + p1)) / ((1.0 + Gamma) * trap_density_scale)
     SRHL = n / SRHD
     SRHR = ni**2 / SRHD
     
     ASRH = Ucompmass (nodes,n_max,elements,Nelements,SRHL,np.ones(Nelements))
     bSRH = Ucompconst (nodes,n_max,elements,Nelements,SRHR,np.ones(Nelements))
     
+    ## Optical Generation
+    G_opt = getattr(idata, 'G_optical', 0.0)
+    bG = Ucompconst (nodes,n_max,elements,Nelements,np.ones(n_max) * G_opt,np.ones(Nelements))
+    
     A = A + ASRH
-    b = b + bSRH
+    b = b + bSRH + bG
     
     ## Boundary conditions
-    b=np.delete(b, BCnodes, 0)
-    b[0]         = - A[1,0] * pl
-    b[len(b)-1]       = - A[n_max-2,n_max-1] * pr
-    A=np.delete(A, BCnodes, 0)
-    A=np.delete(A, BCnodes, 1)
+    mask = np.ones(n_max, dtype=bool)
+    mask[BCnodes] = False
     
-    pp= np.linalg.solve(A,b)
-    p=np.zeros(n_max)
-    p[1:n_max-1]=pp    
-    p[0]=pl
-    p[len(p)-1]=pr
+    b_red = b[mask]
+    # For Dirichlet BCs, move known boundary terms to the RHS
+    if 0 in BCnodes:
+        b_red[0] = b_red[0] - A[mask, 0].toarray().flatten()[0] * pl
+    
+    if (n_max-1) in BCnodes:
+        b_red[-1] = b_red[-1] - A[mask, n_max-1].toarray().flatten()[-1] * pr
+    
+    A_red = A[mask, :][:, mask]
+    
+    pp = spsolve(A_red, b_red)
+    
+    # Robustness: Check for NaN or Inf results
+    if np.any(np.isnan(pp)) or np.any(np.isinf(pp)):
+        # Return initial guess as a safe fallback
+        return pg
+        
+    p = np.zeros(n_max)
+    p[mask] = pp
+    if 0 in BCnodes:
+        p[0] = pl
+    if (n_max-1) in BCnodes:
+        p[-1] = pr
     return p

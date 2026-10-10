@@ -1,0 +1,270 @@
+[
+  {
+    "filename": "gaas_tobin1990_experimental_iv.csv",
+    "sha256": "f739b46c1c7a6c70c88827c30e0871936dd0a0e03c407a88f3273db06cffad12",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Reference: S. P. Tobin et al., IEEE Trans. Electron Devices 37(2), 469-477 (1990)"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "ingaas_pn_experimental_iv.csv",
+    "sha256": "25aee458dfed557cf71adc794cc66cb8dd8b4601c90118565d5d395c66d86a98",
+    "reference_kind": "SYNTHETIC_OR_MODEL_REFERENCE",
+    "comparison_status": "SYNTHETIC REFERENCE / NOT EXPERIMENTAL",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [],
+    "review_required": "Document the model/generator and its parameters."
+  },
+  {
+    "filename": "ingan_pn_experimental_iv.csv",
+    "sha256": "c487abe1ebe83d1501ca4a85d6538a00e49105dc552321bdf9dfb9dcb99f1be5",
+    "reference_kind": "LITERATURE_BASED_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "laser_nakamura1996_blue_mqw_iv.csv",
+    "sha256": "9419d1d2851bcee5a13323e5dfbc0efe822e952eeb35e212d6c27761f39aceee",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Source: S. Nakamura, M. Senoh, S. Nagahama, et al., \"InGaN-based multi-quantum-well-structure laser diodes\"",
+      "DOI: 10.1063/1.116084",
+      "Digitization Method: High-resolution plot digitization of forward I-V characteristic"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "laser_nakamura1996_blue_mqw_li.csv",
+    "sha256": "a986ae82a0ab2da418eb69803883da2de4d5a6e45e2615b0cc5e0a853450afba",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Source: S. Nakamura, M. Senoh, S. Nagahama, et al., \"InGaN-based multi-quantum-well-structure laser diodes\"",
+      "DOI: 10.1063/1.116084",
+      "Digitization Method: High-resolution plot digitization of Fig. 2 L-I characteristics"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "laser_nakamura1996_blue_mqw_spectrum.csv",
+    "sha256": "eaed68fde361d999ee50db9ddb2a18115b261a1dc1c000680db580c05939140a",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Source: S. Nakamura, M. Senoh, S. Nagahama, et al., \"InGaN-based multi-quantum-well-structure laser diodes\"",
+      "DOI: 10.1063/1.116084"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "laser_tsang1981_gaas_sqw_iv.csv",
+    "sha256": "70ef9f52c491ea39c1d75c18b9af7f7206681f4c949c4e7baa72b914d5d04ba2",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Source: W. T. Tsang, \"Extremely low threshold GaAs-AlGaAs graded-index waveguide separate-confinement heterostructure lasers grown by molecular beam epitaxy\"",
+      "DOI: 10.1063/1.92690",
+      "Digitization Method: High-resolution plot digitization of forward I-V characteristic"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "laser_tsang1981_gaas_sqw_li.csv",
+    "sha256": "41679736c4d56742b50dc330be7cbdd540f8dc10f28f51c910d16e6622753b39",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Source: W. T. Tsang, \"Extremely low threshold GaAs-AlGaAs graded-index waveguide separate-confinement heterostructure lasers grown by molecular beam epitaxy\"",
+      "DOI: 10.1063/1.92690",
+      "Cross-Reference: L. A. Coldren et al., \"Diode Lasers and Photonic Integrated Circuits\" (2012), Table 2.1",
+      "Digitization Method: High-resolution plot digitization of Fig. 2 L-I curve"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "laser_tsang1981_gaas_sqw_spectrum.csv",
+    "sha256": "f255a44b823b93dff7ad34e7010cf751b63b0d70a7cbd65bcb65a6d364896605",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Source: W. T. Tsang, \"Extremely low threshold GaAs-AlGaAs graded-index waveguide separate-confinement heterostructure lasers grown by molecular beam epitaxy\"",
+      "DOI: 10.1063/1.92690"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "laser_zah1994_1550nm_mqw_iv.csv",
+    "sha256": "575ac911c87c9bfb847d81cdef4ced9dc8fcbc3bd3f8abc3ebb4a64e803c524a",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Source: C.-E. Zah, R. Bhat, B. N. Pathak, et al., \"High-performance uncooled 1.3-um and 1.55-um strained-layer quantum-well lasers\"",
+      "DOI: 10.1109/3.283799",
+      "Digitization Method: High-resolution plot digitization of forward I-V characteristic"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "laser_zah1994_1550nm_mqw_li.csv",
+    "sha256": "529a2e9cc7bba43ba1844fd3c95750f472e120fd32d2e1bbdae73cb0e5b254ea",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Source: C.-E. Zah, R. Bhat, B. N. Pathak, et al., \"High-performance uncooled 1.3-um and 1.55-um strained-layer quantum-well lasers\"",
+      "DOI: 10.1109/3.283799",
+      "Digitization Method: High-resolution plot digitization of Fig. 8 L-I characteristics"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "laser_zah1994_1550nm_mqw_spectrum.csv",
+    "sha256": "1cdc4f93ffe3bb28d94558dd291a55d3614fbe352d81fc74130a2ff7cf44251f",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Source: C.-E. Zah, R. Bhat, B. N. Pathak, et al., \"High-performance uncooled 1.3-um and 1.55-um strained-layer quantum-well lasers\"",
+      "DOI: 10.1109/3.283799"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "led_meyaard2013_mqw_droop_iqe.csv",
+    "sha256": "bfab84af0b48044c43961bac86fd97b1d9f54aa231239a69dc391175b978a7f4",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Reference: D. S. Meyaard, G.-B. Lin, J. Cho, E. F. Schubert, H. Shim, S.-H. Han, M.-H. Kim, C. Sone, Y. S. Kim",
+      "DOI: 10.1063/1.4811558"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "led_meyaard2013_mqw_iv.csv",
+    "sha256": "1882d8fa90d26cc85f727129102ec02819ea663ff43a285506549e9a580770a1",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Reference: D. S. Meyaard et al., Applied Physics Letters 102, 251114 (2013)",
+      "DOI: 10.1063/1.4811558"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "led_nakamura1995_blue_sqw_el_spectrum.csv",
+    "sha256": "330df954536b06383a6dc3f7baad2e6752da8d32b529af1fe8951e94bb7aea12",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Reference: S. Nakamura, M. Senoh, N. Iwasa, S. Nagahama",
+      "DOI: 10.1063/1.114359"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "led_nakamura1995_blue_sqw_iv.csv",
+    "sha256": "76e34f67999aaeeb1c12ece9cdbc387ee7ddac82e1048d257cfe98c4c7529c14",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Reference: S. Nakamura, M. Senoh, N. Iwasa, S. Nagahama",
+      "DOI: 10.1063/1.114359"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "led_schubert2006_algaas_dh_el_spectrum.csv",
+    "sha256": "b18a50bcb0e6627ad0d78da8dc10908cb1a8d53ff4713d7121989f06bea063b3",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Reference: E. F. Schubert, Light-Emitting Diodes (Cambridge Univ. Press, 2006), Ch. 5-6"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "led_schubert2006_algaas_dh_iv.csv",
+    "sha256": "23e8a617b9202ac50fc9c0df6f8e7db38998c2e701fab06e320e524a6f619fd8",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Reference: E. F. Schubert, Light-Emitting Diodes (Cambridge Univ. Press, 2006), Ch. 5-6",
+      "Co-Reference: G. E. Steranka et al., Hewlett-Packard Journal 39, 84-88 (1988)"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "qw_dingle1975_energy_vs_width.csv",
+    "sha256": "7716eb72f60c0ecca51ceef9551569f53d4d003c51412bea6016005b3cbdc93f",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Reference: R. Dingle, Confined Carrier Quantum States in Ultrathin Semiconductor Heterostructures"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "qw_miller1984_qcse_stark_shift.csv",
+    "sha256": "63a4878ffc71cb7ccb44554bf68dcba3808cf0a102983f8c2e893d888f927c83",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Reference: D. A. B. Miller, D. S. Chemla, T. C. Damen, A. C. Gossard, W. Wiegmann, T. H. Wood, and C. A. Burrus",
+      "DOI: 10.1103/PhysRevLett.53.2173"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "qw_tsang1981_sqw_photoluminescence.csv",
+    "sha256": "be7a7d4976333836c63d17b690503be74a9398e54ca27e9f83e7fee917a4b32c",
+    "reference_kind": "CLAIMED_MEASUREMENT_OR_DIGITIZATION_UNVERIFIED",
+    "comparison_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [
+      "Reference: W. T. Tsang, Extremely low threshold GaAs/AlGaAs graded-index waveguide separate-confinement heterostructure lasers grown by MBE",
+      "DOI: 10.1063/1.92697"
+    ],
+    "review_required": "Match these numeric points to the original figure/table/page; retain extraction project, method, uncertainty and reviewer evidence."
+  },
+  {
+    "filename": "si_pn_experimental_cv.csv",
+    "sha256": "5d5631547f013916ce01096a15936feadd96ad3878a0fddccb12a7a1f1ea6b0f",
+    "reference_kind": "SYNTHETIC_OR_MODEL_REFERENCE",
+    "comparison_status": "SYNTHETIC REFERENCE / NOT EXPERIMENTAL",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [],
+    "review_required": "Document the model/generator and its parameters."
+  },
+  {
+    "filename": "si_pn_experimental_iv.csv",
+    "sha256": "f6a61072510b10b40b21a80b4cef8faa28289c6482524df5fd6b4fbdb34d58da",
+    "reference_kind": "SYNTHETIC_OR_MODEL_REFERENCE",
+    "comparison_status": "SYNTHETIC REFERENCE / NOT EXPERIMENTAL",
+    "original_source_review": "NOT PERFORMED",
+    "claimed_sources": [],
+    "review_required": "Document the model/generator and its parameters."
+  }
+]

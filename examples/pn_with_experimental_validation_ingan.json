@@ -1,0 +1,52 @@
+{
+  "name": "InGaN PN Diode with Experimental Validation",
+  "layers": [
+    {
+      "material": "InGaN",
+      "mole": "0.57",
+      "mole_y": "0.0",
+      "thickness": "200.0",
+      "doping": "1.0e+16",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "material": "InGaN",
+      "mole": "0.57",
+      "mole_y": "0.0",
+      "thickness": "400.0",
+      "doping": "5.0e+17",
+      "doping_type": "n",
+      "type": "barrier"
+    }
+  ],
+  "temp": "300.0",
+  "field": "0.0",
+  "bc_left": "0.0",
+  "bc_right": "0.0",
+  "vmin": "0.0",
+  "vmax": "0.80",
+  "vstep": "0.02",
+  "solver": "10: Fully-Coupled Newton-Raphson",
+  "grid_step": "2.0",
+  "max_pts": "200000",
+  "mat_sys": "Wurtzite",
+  "sub_e": "5",
+  "sub_h": "5",
+  "exp_file": "examples/experimental_data/ingan_pn_experimental_iv.csv",
+  "area": "5.0e-4",
+  "rs": "50.0",
+  "rs_mode": "External (Fast)",
+  "rsh": "1.5e5",
+  "graded_junc": false,
+  "diffusion_len": "10.0",
+  "device_type": "Diode Simulation",
+  "Quantum_Regions": false,
+  "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+  "tat_field": "5e6",
+  "G_optical": "0.0",
+  "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+  "recommended_usage": "Diode Benchmark / Nitride Semiconductor",
+  "bibliographic_reference_note": "Wurtzite InGaN homojunction experimental reference dataset",
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
+}

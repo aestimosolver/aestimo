@@ -1,7 +1,46 @@
 import os
+import sys
 import numpy as np
 import matplotlib.pyplot as pl
-import config
+
+# Ensure project root is in sys.path
+root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
+try:
+    import config
+except ImportError:
+    import types
+    config = types.ModuleType("config")
+
+# Robust fallback defaults for all config attributes
+_config_defaults = {
+    'damping': 0.2,
+    'Stern_damping': True,
+    'max_iterations': 80,
+    'convergence_test': 1e-4,
+    'predic_correc': True,
+    'anti_crossing_length': 0.0001,
+    'amort_wave_0': 1.5,
+    'amort_wave_1': 1.5,
+    'strain': True,
+    'piezo': False,
+    'piezo1': True,
+    'quantum_effect': True,
+    'parameters': True,
+    'electricfield_out': True,
+    'potential_out': True,
+    'sigma_out': True,
+    'probability_out': True,
+    'states_out': True,
+    'Drift_Diffusion_out': True,
+    'wavefunction_scalefactor': 400.0
+}
+for _attr, _val in _config_defaults.items():
+    if not hasattr(config, _attr):
+        setattr(config, _attr, _val)
+
 from aeslibs.aestimo_poisson1d import amort_wave
 
 # Defining constants and material parameters
@@ -13,7 +52,7 @@ Vt = kb * T / q  # [eV]
 J2meV = 1e3 / q  # Joules to meV
 
 
-def save_and_plot2(result, model, output_directory, drawFigures=False):
+def save_and_plot2(result, model, output_directory='output', drawFigures=False, show=True):
     xaxis = result.xaxis
 
     if not os.path.isdir(output_directory):
@@ -26,36 +65,40 @@ def save_and_plot2(result, model, output_directory, drawFigures=False):
         )
 
     # Plotting results
-    # if config.Drift_Diffusion_out:
-    # saveoutput("av_curr.dat",(result.Va_t*Vt,result.av_curr*1e-4))
-    for jjj in range(result.Total_Steps - 1, result.Total_Steps):
-        vtt = result.Va_t[jjj]
-        vt = vtt
-        if config.Drift_Diffusion_out:
-            if config.sigma_out:
-                saveoutput("sigma_eh_%.2f.dat" % vt, (xaxis, result.ro_result))
+    if getattr(config, 'Drift_Diffusion_out', True):
+         saveoutput("av_curr.dat",(result.Va_t, result.av_curr))
+    
+    for k in range(0, result.Total_Steps):
+        vt = result.Va_t[k]
+        if getattr(config, 'Drift_Diffusion_out', True):
+            if getattr(config, 'sigma_out', True):
+                # Use 2D array if available, else fallback to 1D (for backward compatibility or non-sweep)
+                ro_data = result.ro_result_[k,:] if hasattr(result, 'ro_result_') else result.ro_result
+                saveoutput("sigma_eh_%.2f.dat" % vt, (xaxis, ro_data))
+                
             if config.electricfield_out:
+                e1_data = result.el_field1_result_[k,:] if hasattr(result, 'el_field1_result_') else result.el_field1_result
+                e2_data = result.el_field2_result_[k,:] if hasattr(result, 'el_field2_result_') else result.el_field2_result
                 saveoutput(
                     "efield_eh_%.2f.dat" % vt,
-                    (xaxis, result.el_field1_result, result.el_field2_result),
+                    (xaxis, e1_data, e2_data),
                 )
+                
             if config.potential_out:
+                ec_data = result.Ec_result_[k,:] if hasattr(result, 'Ec_result_') else result.Ec_result
+                ev_data = result.Ev_result_[k,:] if hasattr(result, 'Ev_result_') else result.Ev_result
+                nf_data = result.nf_result_[k,:] if hasattr(result, 'nf_result_') else result.nf_result
+                pf_data = result.pf_result_[k,:] if hasattr(result, 'pf_result_') else result.pf_result
+                
                 saveoutput(
                     "potn_eh_%.2f.dat" % vt,
-                    (xaxis, result.Ec_result, result.Ev_result),
+                    (xaxis, ec_data, ev_data),
                 )
                 saveoutput(
                     "np_data0_%.2f.dat" % vt,
-                    (xaxis, result.nf_result * 1e-6, result.pf_result * 1e-6),
+                    (xaxis, nf_data * 1e-6, pf_data * 1e-6),
                 )
             
-    for k in range(0, result.Total_Steps):
-        if config.Drift_Diffusion_out:            
-            if config.potential_out:
-                saveoutput(
-                    "potn_eh_%.2f.dat" % result.Va_t[k],
-                    (xaxis, result.Ec_result_[k,:], result.Ev_result_[k,:]),
-                )
             if config.states_out:
                 for j in range(1, result.N_wells_virtual - 1):
                     I1, I2, I11, I22 = amort_wave(j, result.Well_boundary, model.n_max)
@@ -157,7 +200,7 @@ def save_and_plot2(result, model, output_directory, drawFigures=False):
                     )
         pl.xlabel("x [um]")
         pl.ylabel("Energy [eV]")
-        pl.title("Quasi Fermi Levels (Efn (red) & Efp (bleu)) vs Position", fontsize=12)
+        pl.title("Quasi Fermi Levels (Efn (red) & Efp (blue)) vs Position", fontsize=12)
         pl.legend(("Ec", "Ev", "Ei", "Efn", "Efp"), loc="best", fontsize=12)
         pl.grid(True)
 
@@ -188,7 +231,7 @@ def save_and_plot2(result, model, output_directory, drawFigures=False):
             "b",
         )
         pl.xlabel("x [um]")
-        pl.ylabel("Electric Field 1(red) & 2 (bleu) [MV/cm]")
+        pl.ylabel("Electric Field 1(red) & 2 (blue) [MV/cm]")
         pl.title("Field Profile vs Position ", fontsize=12)
         pl.legend(("Electric Field 1", "Electric Field 2"), loc="best", fontsize=12)
         pl.grid(True)
@@ -204,35 +247,41 @@ def save_and_plot2(result, model, output_directory, drawFigures=False):
         # Plotting State(s)
         # figure(3)
         pl.subplot(2, 2, 4)
-        pl.plot(result.Va_t , result.av_curr * 1e-4)
-        pl.xlabel("Va [V]")
-        pl.ylabel("Total Current Density [Amp/cm^2]")
-        pl.title("Current vs voltage", fontsize=12)
-        pl.legend(("Total Current"), loc="best", fontsize=12)
-        pl.grid(True)
-        pl.show()
+        pl.plot(result.Va_t, result.av_curr, 'b-', linewidth=2.0)
+        pl.xlabel("Applied Bias (V)", fontsize=11)
+        pl.ylabel("Total Current Density (mA/cm²)", fontsize=11)
+        pl.title("J-V Characteristic", fontsize=12, fontweight='bold')
+        pl.grid(True, which='both', linestyle='--', alpha=0.4)
+        if show:
+            pl.show()
 
         fig3 = pl.figure(figsize=(10, 8))
         pl.suptitle(
-            "1D Drift Diffusion Model Results - at Applied Bias (%.2f)"
+            "1D Drift Diffusion Model Results - at Applied Bias (%.2f V)"
             % vt,
             fontsize=12,
         )
         pl.subplots_adjust(hspace=0.4, wspace=0.4)
         pl.subplot(2, 2, 1)
-        pl.plot(
+        pl.semilogy(
             xaxis * 1e6,
-            result.nf_result * 1e-6,
-            "r",
-            xaxis * 1e6,
-            result.pf_result * 1e-6,
-            "b",
+            np.maximum(result.nf_result * 1e-6, 1.0),
+            "r-",
+            label="Electron (n)",
+            linewidth=1.8,
         )
-        pl.xlabel("x [um]")
-        pl.ylabel("Electron  & Hole  Densities [1/cm^3]")
-        pl.title("Electron (red) & Hole (bleu) Densities vs Position ", fontsize=12)
-        pl.legend(("Electron", "Hole"), loc="best", fontsize=12)
-        pl.grid(True)
+        pl.semilogy(
+            xaxis * 1e6,
+            np.maximum(result.pf_result * 1e-6, 1.0),
+            "b-",
+            label="Hole (p)",
+            linewidth=1.8,
+        )
+        pl.xlabel("Position (µm)", fontsize=11)
+        pl.ylabel("Carrier Density (cm⁻³)", fontsize=11)
+        pl.title("Carrier Concentrations (Semi-log)", fontsize=12, fontweight='bold')
+        pl.legend(loc="best", fontsize=10)
+        pl.grid(True, which='both', linestyle='--', alpha=0.4)
 
         pl.subplot(2, 2, 2)
         pl.plot(
@@ -251,7 +300,7 @@ def save_and_plot2(result, model, output_directory, drawFigures=False):
         )
         pl.xlabel("x [um]")
         pl.ylabel("Energy [eV]")
-        pl.title("Quasi Fermi Levels (Efn (red) & Efp (bleu)) vs Position", fontsize=12)
+        pl.title("Quasi Fermi Levels (Efn (red) & Efp (blue)) vs Position", fontsize=12)
         pl.legend(("Ec", "Ev", "Ei", "Efn", "Efp"), loc="best", fontsize=12)
         pl.grid(True)
 
@@ -269,18 +318,19 @@ def save_and_plot2(result, model, output_directory, drawFigures=False):
         )
         pl.xlabel("x [um]")
         pl.ylabel("Energy [eV]")
-        pl.title("Quasi Fermi Levels (Efn (red) & Efp (bleu)) vs Position", fontsize=12)
+        pl.title("Quasi Fermi Levels (Efn (red) & Efp (blue)) vs Position", fontsize=12)
         pl.legend(("Efn", "Efp"), loc="best", fontsize=12)
         pl.grid(True)
-        pl.show()
+        if show:
+            pl.show()
     
     if drawFigures:
         return [fig1, fig2, fig3]
     else:
-        return
+        return [None, None, None]
 
 
-def save_and_plot(result, model, output_directory, drawFigures=False):
+def save_and_plot(result, model, output_directory='output', drawFigures=False, show=True):
 
     xaxis = result.xaxis
     
@@ -416,7 +466,7 @@ def save_and_plot(result, model, output_directory, drawFigures=False):
         )
         pl.xlabel("x [um]")
         pl.ylabel("Electric Field  [MV/cm]")
-        pl.title("Field Profile 1(red) & 2 (bleu) vs Position ", fontsize=10)
+        pl.title("Field Profile 1(red) & 2 (blue) vs Position ", fontsize=10)
         pl.grid(True)
 
         # Plotting Potential
@@ -440,10 +490,11 @@ def save_and_plot(result, model, output_directory, drawFigures=False):
         )
         pl.xlabel("x [um]")
         pl.ylabel("Electron  & Hole  Densities [1/cm^3]")
-        pl.title("Electron (red)& Hole (bleu) Densities vs Position ", fontsize=10)
+        pl.title("Electron (red)& Hole (blue) Densities vs Position ", fontsize=10)
         pl.grid(True)
-        pl.show()
+        if show:
+            pl.show()
     if drawFigures:
-        return [fig1, fig2]
+        return [fig1, fig2, None]
     else:
-        return
+        return [None, None, None]

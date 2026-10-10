@@ -1,0 +1,105 @@
+{
+  "project_name": "qw_miller1984_qcse",
+  "device_name": "Miller 1984 GaAs/AlGaAs 9.5nm Quantum-Confined Stark Effect (QCSE)",
+  "device_type": "Quantum Well (QW) Characterization & Validation",
+  "layers": [
+    {
+      "material": "AlGaAs",
+      "thickness": 10.0,
+      "type": "barrier",
+      "mole": 0.32,
+      "mole_y": 0.0,
+      "doping": 0.0,
+      "doping_type": "i"
+    },
+    {
+      "material": "GaAs",
+      "thickness": 9.5,
+      "type": "well",
+      "mole": 0.0,
+      "mole_y": 0.0,
+      "doping": 0.0,
+      "doping_type": "i"
+    },
+    {
+      "material": "AlGaAs",
+      "thickness": 10.0,
+      "type": "barrier",
+      "mole": 0.32,
+      "mole_y": 0.0,
+      "doping": 0.0,
+      "doping_type": "i"
+    }
+  ],
+  "temp": 300.0,
+  "field": 0.0,
+  "bc_left": 0.0,
+  "bc_right": 0.0,
+  "vmin": 0.0,
+  "vmax": 1.5,
+  "vstep": 0.05,
+  "solver": "0: Schrodinger",
+  "grid_step": 0.1,
+  "max_pts": 200000,
+  "mat_sys": "Zincblende",
+  "sub_e": 3,
+  "sub_h": 3,
+  "enable_qw_solver": true,
+  "qw_num_e": 3,
+  "qw_num_h": 3,
+  "qw_coupling_mode": "Coupled MQW",
+  "qw_self_consistent": false,
+  "qw_max_iter": 20,
+  "qw_damping": 0.2,
+  "Quantum_Regions": false,
+  "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+  "tat_field": "1e10",
+  "exp_file": "examples/experimental_data/qw_miller1984_qcse_stark_shift.csv",
+  "area": "1e-4",
+  "rs": "0.0",
+  "rs_mode": "External (Fast)",
+  "rsh": "1e12",
+  "graded_junc": false,
+  "diffusion_len": "10.0",
+  "parameter_provenance": {
+    "well_thickness_nm": {
+      "value": 9.5,
+      "tier": "EXPERIMENTAL",
+      "source": "Miller et al., Phys. Rev. Lett. 53, 2173 (1984)",
+      "notes": "MBE nominal quantum well layer thickness"
+    },
+    "barrier_composition_x": {
+      "value": 0.32,
+      "tier": "EXPERIMENTAL",
+      "source": "Miller et al., Phys. Rev. B 32, 1043 (1985)",
+      "notes": "Al fraction determined by photoluminescence"
+    },
+    "effective_mass_electron": {
+      "value": 0.067,
+      "tier": "EXPERIMENTAL",
+      "source": "Vurgaftman et al., J. Appl. Phys. 89, 5815 (2001)",
+      "notes": "Standard GaAs gamma valley electron effective mass"
+    },
+    "effective_mass_heavy_hole": {
+      "value": 0.45,
+      "tier": "EXPERIMENTAL",
+      "source": "Vurgaftman et al., J. Appl. Phys. 89, 5815 (2001)",
+      "notes": "Standard GaAs heavy hole effective mass along [001]"
+    },
+    "conduction_band_offset_ratio": {
+      "value": 0.65,
+      "tier": "EXPERIMENTAL",
+      "source": "Miller et al., Phys. Rev. B 32, 1043 (1985)",
+      "notes": "65:35 DeltaEc:DeltaEv band offset distribution"
+    },
+    "stark_shift_range": {
+      "value": "-43.7 meV at 110 kV/cm",
+      "tier": "EXPERIMENTAL",
+      "source": "Miller et al., Phys. Rev. Lett. 53, 2173 (1984)",
+      "notes": "Measured electroabsorption red-shift"
+    }
+  },
+  "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+  "recommended_usage": "Educational / Theoretical Exploration / Numerical Testing",
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
+}

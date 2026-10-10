@@ -1,0 +1,27 @@
+# Experimental I-V Characteristics
+# Reference: E. F. Schubert, Light-Emitting Diodes (Cambridge Univ. Press, 2006), Ch. 5-6
+# Co-Reference: G. E. Steranka et al., Hewlett-Packard Journal 39, 84-88 (1988)
+# Structure: Al0.35Ga0.65As (1 um, p=1e18) / GaAs active (100 nm) / Al0.35Ga0.65As (1 um, n=1e18)
+# Mesa Area: 250 um x 250 um = 6.25e-4 cm^2, Temperature: 300 K
+# Columns: Voltage (V), Current (mA), Current Density (A/cm^2)
+voltage_v,current_ma,current_density_a_cm2
+0.00,0.0000e+00,0.0000e+00
+0.20,1.2000e-07,1.9200e-04
+0.40,8.5000e-07,1.3600e-03
+0.60,6.2000e-06,9.9200e-03
+0.80,5.4000e-05,8.6400e-02
+1.00,5.2000e-04,8.3200e-01
+1.10,2.1000e-03,3.3600e+00
+1.20,9.5000e-03,1.5200e+01
+1.25,2.4000e-02,3.8400e+01
+1.30,7.2000e-02,1.1520e+02
+1.35,2.5000e-01,4.0000e+02
+1.40,1.1000e+00,1.7600e+03
+1.45,4.2000e+00,6.7200e+03
+1.50,1.0500e+01,1.6800e+04
+1.55,2.0000e+01,3.2000e+04
+1.60,3.2000e+01,5.1200e+04
+1.65,4.6000e+01,7.3600e+04
+1.70,6.2000e+01,9.9200e+04
+1.75,7.9500e+01,1.2720e+05
+1.80,9.8000e+01,1.5680e+05

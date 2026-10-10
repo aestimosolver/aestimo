@@ -9,34 +9,70 @@ from setuptools import setup
 import os, sys
 
 def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+    filepath = os.path.join(os.path.dirname(__file__), fname)
+    if os.path.exists(filepath):
+        return open(filepath, encoding='utf-8').read()
+    return ''
 
 
-setup(  name='aestimo',
-        version='3.0.0',
-        description='A bandstructure simulator of semiconductor nanostructures called quantum wells.',
-        long_description= read('README.md'),
-        classifiers=[
-          "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-          "Programming Language :: Python :: 3",
-          "Development Status :: 5 - Production/Stable",
-          "Intended Audience :: Science/Research",
-          "Natural Language :: English",
-          "Operating System :: OS Independent",
-          "Topic :: Scientific/Engineering :: Physics",
-          "Topic :: Scientific/Engineering"
-           ],
-        author='sblisesivdin',
-        author_email='sblisesivdin@gmail.com',
-        url='http://www.aestimosolver.org',
-        license='GPLv3',
-        keywords='quantum well semiconductor nanostructure optical transitions',
-        package_dir = {'aestimo': ''},
-        packages=['aestimo'],
-        package_data={'aestimo':['CODE_OF_CONDUCT.md','README.md','COPYING.md',
-                                 'aeslibs/*.py',
-                                 'tutorials/*','examples/*.py']},
-        install_requires=['numpy>1.7.0','matplotlib','scipy', 'customtkinter'],
-        zip_safe=False, #we want users to be able to easily see and edit the scripts
-        #setup_requires=['numpy'], #causes problems with pip?
-        )
+setup(
+    name='aestimo',
+    version='4.0.0',
+    description='1D Schrödinger-Poisson, Drift-Diffusion and Quantum-Well Heterostructure Simulator with Modern GUI.',
+    long_description=read('README.md'),
+    long_description_content_type='text/markdown',
+    classifiers=[
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Science/Research",
+        "Natural Language :: English",
+        "Operating System :: OS Independent",
+        "Topic :: Scientific/Engineering :: Physics",
+        "Topic :: Scientific/Engineering",
+    ],
+    author='sblisesivdin and Aestimo Contributors',
+    author_email='sblisesivdin@gmail.com',
+    url='https://github.com/aestimosolver/aestimo',
+    license='GPLv3',
+    keywords='quantum well semiconductor nanostructure optical transitions drift-diffusion solar laser led',
+    packages=['aeslibs', 'aestimo_examples'],
+    package_dir={'aestimo_examples': 'examples'},
+    py_modules=[
+        'aestimo',
+        'aestimo_gui',
+        'database',
+        'config',
+        'characterize_solar',
+    ],
+    package_data={
+        'aeslibs': ['*.py'],
+        'aestimo_examples': ['*.json', 'experimental_data/*.csv', 'experimental_data/README.md'],
+    },
+    include_package_data=True,
+    install_requires=[
+        'numpy>=1.20.0',
+        'scipy>=1.7.0',
+        'matplotlib>=3.4.0',
+        'customtkinter>=5.0.0',
+        'darkdetect>=0.8.0',
+        'packaging>=20.0',
+        'pillow>=8.0.0',
+    ],
+    entry_points={
+        'console_scripts': [
+            'aestimo = aestimo:main',
+            'aestimo-gui = aestimo_gui:main',
+        ],
+        'gui_scripts': [
+            'aestimo-gui-win = aestimo_gui:main',
+        ],
+    },
+    python_requires='>=3.9',
+    zip_safe=False,
+)

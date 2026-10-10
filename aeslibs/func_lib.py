@@ -140,8 +140,8 @@ def Ucompmass (nodes,n_max,elements,Nelements,Bvect,Cvect):
     d0[0]=Bvect[0]*h[0]/2
     d0[n_max-1]=Bvect[n_max-1]*h[len(h)-1]/2
     d0[1:n_max-1]=Bvect[1:n_max-1]*(h[0:len(h)-1]+h[1:len(h)])/2
-    Bmat  = sp.spdiags(d0, [0], n_max,n_max).todense()      
-    return Bmat
+    Bmat  = sp.spdiags(d0, [0], n_max,n_max) # Sparse by default
+    return Bmat.tocsc()
 
 def Ucomplap (nodes,n_max,elements,Nelements,coeff):
     """
@@ -175,8 +175,8 @@ def Ucomplap (nodes,n_max,elements,Nelements,coeff):
     dm1	= np.zeros(n_max)
     dm1[n_max-1]=n_max
     dm1[0:n_max-1]=-coeff/h
-    L	= sp.spdiags([dm1, d0, d1],np.array([-1,0,1]),n_max,n_max).todense()      
-    return L
+    L	= sp.spdiags([dm1, d0, d1],np.array([-1,0,1]),n_max,n_max) # Sparse by default
+    return L.tocsc()
 
 def Ucompconst (nodes,n_max,elements,Nelements,D,C):
     """
@@ -320,7 +320,7 @@ def Ubern(x):
        fn=1.
        df=1.
        segno=1.
-       while (abs(df) >np.finfo(np.float).eps):#eps on octave 2.220446049250313e-16
+       while (abs(df) >np.finfo(np.float64).eps):#eps on octave 2.220446049250313e-16
          ii=ii+1
          segno=-segno
          df=df*x/ii
@@ -394,8 +394,8 @@ def Uscharfettergummel(nodes,n_max,elements,Nelements,acoeff,bcoeff,v):
     dm1	= np.zeros(n_max)
     dm1[n_max-1]=n_max
     dm1[0:n_max-1]=-c* Bneg 
-    A = sp.spdiags([dm1, d0, d1],np.array([-1,0,1]),n_max,n_max).todense()
-    return A
+    A = sp.spdiags([dm1, d0, d1],np.array([-1,0,1]),n_max,n_max) # Sparse by default
+    return A.tocsc()
 
 
 def Umediaarmonica(w):
@@ -431,3 +431,34 @@ def Umediaarmonica(w):
     dw = (1/w[0:len(w)-1])+(1/w[1:len(w)])
     m  = 2 / dw
     return m
+
+def CaugheyThomasMobility(n, p, material_type='Si'):
+    """
+    Computes the mobility using the Caughey-Thomas model.
+    Default parameters are for Silicon at 300K.
+    n, p: local carrier concentrations (m^-3)
+    """
+    if material_type == 'Si':
+        # Parameters for Silicon at 300K
+        # Electrons
+        mu_min_n = 65e-4    # m^2/Vs
+        mu_max_n = 1333e-4  # m^2/Vs
+        N_ref_n = 8.5e22    # m^-3
+        alpha_n = 0.72
+        
+        # Holes
+        mu_min_p = 47.7e-4   # m^2/Vs
+        mu_max_p = 495e-4    # m^2/Vs
+        N_ref_p = 6.3e22     # m^-3
+        alpha_p = 0.76
+        
+        # Prevent negative or zero carriers which cause NaNs in power law
+        total_carriers = np.maximum(n + p, 1e-20)
+        
+        mun = mu_min_n + (mu_max_n - mu_min_n) / (1 + (total_carriers / N_ref_n)**alpha_n)
+        mup = mu_min_p + (mu_max_p - mu_min_p) / (1 + (total_carriers / N_ref_p)**alpha_p)
+        
+        return mun, mup
+    else:
+        # Fallback or error indication
+        return None, None

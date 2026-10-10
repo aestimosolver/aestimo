@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=77.0.3", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aestimo"
+version = "4.0.0"
+description = "1D Schrödinger-Poisson, Drift-Diffusion and Quantum-Well Heterostructure Simulator with Modern GUI"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "GPL-3.0-or-later"
+authors = [
+    {name = "sblisesivdin and Aestimo Contributors", email = "sblisesivdin@gmail.com"}
+]
+keywords = [
+    "quantum-well",
+    "semiconductor",
+    "drift-diffusion",
+    "schrodinger-poisson",
+    "solar-cell",
+    "laser-diode",
+    "led",
+    "physics-simulation",
+    "customtkinter"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "numpy>=1.20.0",
+    "scipy>=1.7.0",
+    "matplotlib>=3.4.0",
+    "customtkinter>=5.0.0",
+    "darkdetect>=0.8.0",
+    "packaging>=20.0",
+    "pillow>=8.0.0",
+]
+
+[project.scripts]
+aestimo = "aestimo:main"
+aestimo-gui = "aestimo_gui:main"
+
+[project.gui-scripts]
+aestimo-gui-win = "aestimo_gui:main"
+
+[tool.setuptools]
+packages = ["aeslibs", "aestimo_examples"]
+package-dir = {aestimo_examples = "examples"}
+py-modules = [
+    "aestimo",
+    "aestimo_gui",
+    "database",
+    "config",
+    "characterize_solar"
+]
+
+[tool.setuptools.package-data]
+aeslibs = ["*.py"]
+aestimo_examples = ["*.json", "experimental_data/*.csv", "experimental_data/README.md"]

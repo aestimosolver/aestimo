@@ -1,73 +1,95 @@
 {
-    "layers": [
-        {
-            "material": "AlGaN",
-            "mole": "0.1",
-            "thickness": "200.0",
-            "doping": "1.0e+17",
-            "doping_type": "p",
-            "type": "barrier"
-        },
-        {
-            "material": "AlGaInN",
-            "mole": "0.48",
-            "thickness": "2.0",
-            "doping": "1.0e+17",
-            "doping_type": "p",
-            "type": "barrier"
-        },
-        {
-            "material": "InGaN",
-            "mole": "0.25",
-            "thickness": "2.0",
-            "doping": "0.0e+00",
-            "doping_type": "i",
-            "type": "well"
-        },
-        {
-            "material": "AlGaInN",
-            "mole": "0.48",
-            "thickness": "3.0",
-            "doping": "0.0e+00",
-            "doping_type": "i",
-            "type": "barrier"
-        },
-        {
-            "material": "InGaN",
-            "mole": "0.25",
-            "thickness": "2.0",
-            "doping": "0.0e+00",
-            "doping_type": "i",
-            "type": "well"
-        },
-        {
-            "material": "AlGaInN",
-            "mole": "0.48",
-            "thickness": "2.0",
-            "doping": "1.0e+17",
-            "doping_type": "n",
-            "type": "barrier"
-        },
-        {
-            "material": "AlGaN",
-            "mole": "0.1",
-            "thickness": "200.0",
-            "doping": "1.0e+17",
-            "doping_type": "n",
-            "type": "barrier"
-        }
-    ],
-    "temp": "300.0",
-    "field": "0.0",
-    "bc_left": "0.0",
-    "bc_right": "0.0",
-    "vmin": "0.0",
-    "vmax": "2.9",
-    "vstep": "0.05",
-    "solver": "2: Schrodinger-Poisson",
-    "grid_step": "0.5",
-    "max_pts": "200000",
-    "mat_sys": "Wurtzite",
-    "sub_e": "1",
-    "sub_h": "1"
+  "layers": [
+    {
+      "material": "AlGaN",
+      "mole": "0.1",
+      "thickness": "200.0",
+      "doping": "1.0e+17",
+      "doping_type": "p",
+      "type": "barrier",
+      "mole_y": "0.0"
+    },
+    {
+      "material": "AlGaInN",
+      "mole": "0.48",
+      "mole_y": "0.23",
+      "thickness": "2.0",
+      "doping": "1.0e+17",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "material": "InGaN",
+      "mole": "0.25",
+      "thickness": "2.0",
+      "doping": "0.0e+00",
+      "doping_type": "i",
+      "type": "well",
+      "mole_y": "0.0"
+    },
+    {
+      "material": "AlGaInN",
+      "mole": "0.48",
+      "mole_y": "0.23",
+      "thickness": "3.0",
+      "doping": "0.0e+00",
+      "doping_type": "i",
+      "type": "barrier"
+    },
+    {
+      "material": "InGaN",
+      "mole": "0.25",
+      "thickness": "2.0",
+      "doping": "0.0e+00",
+      "doping_type": "i",
+      "type": "well",
+      "mole_y": "0.0"
+    },
+    {
+      "material": "AlGaInN",
+      "mole": "0.48",
+      "mole_y": "0.23",
+      "thickness": "2.0",
+      "doping": "1.0e+17",
+      "doping_type": "n",
+      "type": "barrier"
+    },
+    {
+      "material": "AlGaN",
+      "mole": "0.1",
+      "thickness": "200.0",
+      "doping": "1.0e+17",
+      "doping_type": "n",
+      "type": "barrier",
+      "mole_y": "0.0"
+    }
+  ],
+  "temp": "300.0",
+  "field": "0.0",
+  "bc_left": "0.0",
+  "bc_right": "0.0",
+  "vmin": "0.0",
+  "vmax": "2.9",
+  "vstep": "0.05",
+  "solver": "2: Schrodinger-Poisson",
+  "grid_step": "0.5",
+  "max_pts": "200000",
+  "mat_sys": "Wurtzite",
+  "sub_e": "1",
+  "sub_h": "1",
+  "device_type": "Generic Diode / LED",
+  "Quantum_Regions": false,
+  "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+  "tat_field": "1e10",
+  "exp_file": "",
+  "area": "1e-4",
+  "rs": "0.0",
+  "rs_mode": "External (Fast)",
+  "rsh": "1e12",
+  "G_optical": "0.0",
+  "graded_junc": false,
+  "diffusion_len": "10.0",
+  "validation_status": "MODEL-BASED / NOT EXPERIMENTALLY VALIDATED",
+  "recommended_usage": "Educational / Theoretical Exploration / Numerical Testing",
+  "audit_notes": "Theoretical/idealized semiconductor model without calibration to experimental device data. Suitable for qualitative physical exploration and numerical solver testing."
 }

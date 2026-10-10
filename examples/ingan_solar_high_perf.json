@@ -1,0 +1,51 @@
+{
+  "name": "InGaN High Performance Solar Cell",
+  "layers": [
+    {
+      "material": "InGaN",
+      "mole": "0.57",
+      "mole_y": "0.0",
+      "thickness": "40.0",
+      "doping": "3.0e+18",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "material": "InGaN",
+      "mole": "0.57",
+      "mole_y": "0.0",
+      "thickness": "400.0",
+      "doping": "1.0e+18",
+      "doping_type": "n",
+      "type": "barrier"
+    }
+  ],
+  "temp": "300.0",
+  "field": "0.0",
+  "bc_left": "7.0",
+  "bc_right": "4.0",
+  "vmin": "0.0",
+  "vmax": "1.6",
+  "vstep": "0.05",
+  "solver": "10: Fully-Coupled Newton-Raphson",
+  "grid_step": "1.0",
+  "max_pts": "200000",
+  "mat_sys": "Wurtzite",
+  "sub_e": "5",
+  "sub_h": "5",
+  "Quantum_Regions": false,
+  "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+  "tat_field": "5e6",
+  "exp_file": "",
+  "area": "5e-4",
+  "rs": "11.7",
+  "rs_mode": "External (Fast)",
+  "rsh": "5000.0",
+  "device_type": "Solar Cell / Photodetector",
+  "G_optical": "1e22",
+  "graded_junc": false,
+  "diffusion_len": "10.0",
+  "validation_status": "MODEL-BASED / NOT EXPERIMENTALLY VALIDATED",
+  "recommended_usage": "Educational / Theoretical Exploration / Numerical Testing",
+  "audit_notes": "Theoretical/idealized semiconductor model without calibration to experimental device data. Suitable for qualitative physical exploration and numerical solver testing."
+}

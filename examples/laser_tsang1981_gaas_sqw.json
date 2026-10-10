@@ -1,0 +1,209 @@
+{
+  "device_id": "LASER-TSANG1981-GAAS-SQW",
+  "device_name": "Tsang 1981 GaAs/AlGaAs SQW GRIN-SCH 845nm Laser Diode",
+  "device_type": "Laser Diode Simulation / Characterization",
+  "laser_architecture": "GRIN-SCH Fabry-Perot Edge-Emitting Laser",
+  "material_system": "Zincblende",
+  "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+  "bibliographic_reference": {
+    "title": "Extremely low threshold GaAs-AlGaAs graded-index waveguide separate-confinement heterostructure lasers grown by molecular beam epitaxy",
+    "authors": "W. T. Tsang",
+    "journal": "Applied Physics Letters",
+    "volume": "39",
+    "issue": "2",
+    "pages": "134-137",
+    "year": 1981,
+    "doi": "10.1063/1.92690",
+    "co_reference": "L. A. Coldren et al., Diode Lasers and Photonic Integrated Circuits (2012), Table 2.1"
+  },
+  "cavity_parameters": {
+    "cavity_length_um": 500.0,
+    "stripe_width_um": 20.0,
+    "r1": 0.32,
+    "r2": 0.32,
+    "alpha_i_cm1": 5.5,
+    "alpha_m_cm1": 22.8,
+    "alpha_tot_cm1": 28.3,
+    "confinement_factor": 0.032,
+    "group_index": 3.6,
+    "g0_cm1": 1600.0,
+    "n_tr_cm3": 1.68e+18,
+    "beta_sp": 0.00015,
+    "eta_i": 0.71,
+    "mode_spacing_nm": 0.198,
+    "t0_k": 160.0
+  },
+  "parameter_provenance": {
+    "layer_stack": {
+      "classification": "EXPERIMENTAL",
+      "source": "Tsang (1981) MBE-grown GRIN-SCH SQW laser structure"
+    },
+    "cavity_length_um": {
+      "classification": "EXPERIMENTAL",
+      "value": 500.0,
+      "unit": "um",
+      "source": "Cleaved Fabry-Perot cavity length reported in paper"
+    },
+    "stripe_width_um": {
+      "classification": "EXPERIMENTAL",
+      "value": 20.0,
+      "unit": "um",
+      "source": "Oxide stripe width defining injection aperture"
+    },
+    "quantum_well_thickness_nm": {
+      "classification": "EXPERIMENTAL",
+      "value": 8.0,
+      "unit": "nm",
+      "source": "Single quantum well active thickness"
+    },
+    "temperature_k": {
+      "classification": "EXPERIMENTAL",
+      "value": 300.0,
+      "unit": "K",
+      "source": "Room-temperature operation"
+    },
+    "facet_reflectivities": {
+      "classification": "EXPERIMENTAL",
+      "value": 0.32,
+      "source": "Fresnel reflectivity of as-cleaved GaAs/air interface ((3.6-1)/(3.6+1))^2"
+    },
+    "radiative_coefficient_B": {
+      "classification": "EXPERIMENTAL",
+      "value": 1.25e-10,
+      "unit": "cm^3/s",
+      "source": "Casey & Stern (1976) for direct gap GaAs"
+    },
+    "mirror_loss_alpha_m": {
+      "classification": "DERIVED",
+      "value": 22.8,
+      "unit": "cm^-1",
+      "source": "(1 / 2L) * ln(1 / (R1 * R2))"
+    },
+    "photon_lifetime_ps": {
+      "classification": "DERIVED",
+      "value": 1.27,
+      "unit": "ps",
+      "source": "tau_p = 1 / (v_g * (alpha_i + alpha_m))"
+    },
+    "internal_loss_alpha_i": {
+      "classification": "FITTED",
+      "value": 5.5,
+      "unit": "cm^-1",
+      "source": "Fitted from inverse differential quantum efficiency vs cavity length (Coldren 2012)"
+    },
+    "series_resistance_rs": {
+      "classification": "FITTED",
+      "value": 1.0,
+      "unit": "Ohm",
+      "source": "Fitted to forward I-V differential slope above threshold"
+    },
+    "optical_confinement_factor": {
+      "classification": "ASSUMED",
+      "value": 0.032,
+      "source": "1D slab optical waveguide mode solver for 8 nm SQW in GRIN-SCH"
+    },
+    "spontaneous_emission_factor_beta": {
+      "classification": "ASSUMED",
+      "value": 0.00015,
+      "source": "Typical spontaneous emission coupling into fundamental FP mode"
+    }
+  },
+  "layers": [
+    {
+      "material": "GaAs",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "50.0",
+      "doping": "5.0e+18",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "material": "AlGaAs",
+      "mole": "0.35",
+      "mole_y": "0.0",
+      "thickness": "800.0",
+      "doping": "1.0e+18",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "material": "AlGaAs",
+      "mole": "0.18",
+      "mole_y": "0.0",
+      "thickness": "150.0",
+      "doping": "1.0e+16",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "material": "GaAs",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "8.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "well"
+    },
+    {
+      "material": "AlGaAs",
+      "mole": "0.18",
+      "mole_y": "0.0",
+      "thickness": "150.0",
+      "doping": "1.0e+16",
+      "doping_type": "n",
+      "type": "barrier"
+    },
+    {
+      "material": "AlGaAs",
+      "mole": "0.35",
+      "mole_y": "0.0",
+      "thickness": "800.0",
+      "doping": "1.0e+18",
+      "doping_type": "n",
+      "type": "barrier"
+    },
+    {
+      "material": "GaAs",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "50.0",
+      "doping": "2.0e+18",
+      "doping_type": "n",
+      "type": "barrier"
+    }
+  ],
+  "temp": "300.0",
+  "field": "0.0",
+  "bc_left": "0.0",
+  "bc_right": "0.0",
+  "vmin": "0.0",
+  "vmax": "1.70",
+  "vstep": "0.05",
+  "solver": "10: Fully-Coupled Newton-Raphson",
+  "grid_step": "0.5",
+  "max_pts": "200000",
+  "mat_sys": "Zincblende",
+  "sub_e": "3",
+  "sub_h": "3",
+  "Quantum_Regions": false,
+  "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+  "tat_field": "1e10",
+  "exp_file": "examples/experimental_data/laser_tsang1981_gaas_sqw_li.csv",
+  "exp_iv_file": "examples/experimental_data/laser_tsang1981_gaas_sqw_iv.csv",
+  "exp_spectrum_file": "examples/experimental_data/laser_tsang1981_gaas_sqw_spectrum.csv",
+  "area": "1.0e-4",
+  "rs": "1.0",
+  "rs_mode": "External (Fast)",
+  "rsh": "1.0e7",
+  "G_optical": "0.0",
+  "graded_junc": false,
+  "diffusion_len": "10.0",
+  "enable_polarization": false,
+  "target_peak_wavelength_nm": 845.0,
+  "target_fwhm_nm": 22.0,
+  "target_fwhm_lasing_nm": 0.75,
+  "recommended_usage": "Primary Benchmark / GaAs GRIN-SCH SQW Laser Diode (~845nm)",
+  "bibliographic_reference_note": "W. T. Tsang, Appl. Phys. Lett. 39, 134 (1981), DOI: 10.1063/1.92690",
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
+}

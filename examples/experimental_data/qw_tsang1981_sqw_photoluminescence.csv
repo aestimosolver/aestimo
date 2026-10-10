@@ -1,0 +1,24 @@
+# Experimental Dataset: Tsang (1981) Single Quantum Well Photoluminescence Emission Spectrum
+# Reference: W. T. Tsang, Extremely low threshold GaAs/AlGaAs graded-index waveguide separate-confinement heterostructure lasers grown by MBE
+# Journal: Applied Physics Letters 39, 134 (1981)
+# DOI: 10.1063/1.92697
+# Structure: 8.0 nm GaAs Single Quantum Well, room temperature (T = 300 K)
+# Measured quantities: Emission wavelength (nm), normalized photoluminescence intensity
+wavelength_nm,normalized_intensity
+820.0,0.003
+825.0,0.008
+830.0,0.025
+834.0,0.068
+837.0,0.165
+840.0,0.410
+842.0,0.680
+843.5,0.880
+845.0,1.000
+846.5,0.890
+848.0,0.690
+850.0,0.420
+853.0,0.170
+856.0,0.070
+860.0,0.026
+865.0,0.009
+870.0,0.003

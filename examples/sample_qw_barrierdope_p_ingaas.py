@@ -48,13 +48,13 @@ mat_type='Zincblende'
 # Layer 0 |      250.0     |   Si     |      0         |     1e16      |     n       |
 # Layer 1 |      250.0     |   Si     |      0         |     1e16      |     p       |
 # To input this list in Gallium, we use lists N:
-material =[[ 150.0, 'AlGaAs', 0.3, 0.0, 1e17, 'p','b'],
-           [ 10.0, 'AlGaAs', 0.3, 0.0, 1e17, 'p','b'],
-           [ 15.0, 'GaAs', 0.3, 0.0, 0.0,'n','w'],
-           [ 50.0, 'AlGaAs', 0.3, 0.0, 0.0, 'n','b'],
-           [ 15.0, 'GaAs', 0.3, 0.0, 0.0,'n','w'],           
-           [ 20.0, 'AlGaAs', 0.3, 0.0, 1e18, 'n','b'],
-           [ 30.0, 'GaAs', 0.3, 0.0, 1e18, 'n','b']]
+material =[[ 150.0, 'InGaAs', 0.53, 0.0, 1e17, 'p','b'],
+           [ 10.0, 'InGaAs', 0.53, 0.0, 1e17, 'p','b'],
+           [ 15.0, 'InGaAs', 0.53, 0.0, 0.0,'n','w'],
+           [ 50.0, 'InGaAs', 0.53, 0.0, 0.0, 'n','b'],
+           [ 15.0, 'InGaAs', 0.53, 0.0, 0.0,'n','w'],           
+           [ 20.0, 'InGaAs', 0.53, 0.0, 1e18, 'n','b'],
+           [ 30.0, 'InGaAs', 0.53, 0.0, 1e18, 'n','b']]
 #----------------------------------------
 import numpy as np
 x_max = sum([layer[0] for layer in material])

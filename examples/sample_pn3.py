@@ -27,8 +27,9 @@ T = 300.0 #Kelvin
 # 6: Schrodinger-Poisson + Exchange interaction with nonparabolicity
 # 7: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson then  poisson and DD)
 # 8: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD)
-# 9: Schrodinger-Poisson-Drift_Diffusion (Schrodinger solved with poisson and DD) using Gummel & Newton map
-computation_scheme = 9
+# 10: Fully-Coupled Newton-Raphson drift-diffusion solver
+computation_scheme = 10
+comp_scheme = 10
 
 # QUANTUM
 # Total subband number to be calculated for electrons
@@ -77,7 +78,9 @@ inputfilename = "sample_pn3"
 from os import path
 if __name__ == "__main__": #this code allows you to run the input file directly
     input_obj = vars()
-    import sys
-    sys.path.append(path.join(path.dirname(__file__), '..'))
+    import sys, os
+    repo_root = path.abspath(path.join(path.dirname(__file__), '..'))
+    if repo_root not in sys.path:
+        sys.path.insert(0, repo_root)
     import aestimo
     aestimo.run_aestimo(input_obj)

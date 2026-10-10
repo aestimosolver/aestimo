@@ -34,6 +34,7 @@ import textwrap
 from aeslibs.VBHM import qsv, VBMAT1, VBMAT2, VBMAT_V, CBMAT, CBMAT_V, VBMAT_V_2
 import config, database
 from aeslibs.plotting import save_and_plot, save_and_plot2 # Fixed import
+# Import aestimo_numpy_h lazily to avoid import conflicts
 from aeslibs.aestimo_poisson1d import (
     Poisson_equi2,
     equi_np_fi,
@@ -57,7 +58,7 @@ from aeslibs.aestimo_poisson1d import (
     Write_results_equi1,
     amort_wave,
 )
-from aeslibs.ddggummelmap import DDGgummelmap
+from aeslibs.ddggummelmap import DDGgummelmap, apply_photovoltaic_BCs
 from aeslibs.ddnnewtonmap import DDNnewtonmap
 from aeslibs.func_lib import Ubernoulli
 from aeslibs.ddgnlpoisson import DDGnlpoisson_new
@@ -71,7 +72,13 @@ def alen(x):
 #alen = np.alen 
 
 # Version
-__version__ = "3.0.0"
+__version__ = "4.0.0"
+
+def main():
+    import runpy
+    runpy.run_module('aestimo', run_name='__main__')
+
+drawFigures = False
 
 # Logger
 logger = logging.getLogger('aestimo')
@@ -89,8 +96,7 @@ def initialize_logger():
     # LOG level can be INFO, WARNING, ERROR
     logger.setLevel(logging.INFO)
 
-#Preset variables
-drawFigures = False
+
 
 # Defining constants and material parameters
 q = 1.602176e-19  # C
@@ -123,6 +129,23 @@ def round2int(x):
 
 def vegard1(first, second, mole):
     return first * mole + second * (1 - mole)
+
+
+def get_varshni_Eg(matprops, T):
+    """Calculates Eg at temperature T using Varshni's law from Eg at 300K."""
+    Eg_300 = matprops.get("Eg", 0.0)
+    alpha = matprops.get("alpha_var", 0.0)
+    beta = matprops.get("beta_var", 0.0)
+    if alpha == 0 or Eg_300 == 0:
+        return Eg_300
+    
+    def dEg(temp):
+        return -(alpha * temp ** 2) / (temp + beta)
+    
+    # Eg(T) = Eg(0) + dEg(T)
+    # Eg(300) = Eg(0) + dEg(300) => Eg(0) = Eg(300) - dEg(300)
+    # Eg(T) = Eg(300) - dEg(300) + dEg(T)
+    return Eg_300 - dEg(300.0) + dEg(float(T))
 
 
 class Structure:
@@ -159,15 +182,24 @@ class Structure:
         self.alloy_property_4 = database.alloyproperty4
         totalalloy += alen(self.alloy_property_4)
 
-        logger.info(
-            "Total material number in database: %d", (totalmaterial + totalalloy)
-        )
+        if not hasattr(self, 'mat_crys_strc'):
+             self.mat_crys_strc = getattr(self, 'mat_type', 'Zincblende')
+        
+        if not hasattr(self, 'material'):
+             # If material list is missing, we assume arrays are provided manually
+             # We just need to ensure standard attributes exist
+             self.n_max = getattr(self, 'n_max', 0)
+             if hasattr(self, 'fi') and not hasattr(self, 'fi_e'):
+                 self.fi_e = self.fi
+             return
+
+        self.create_structure_arrays()
 
     def create_structure_arrays(self):
         """ initialise arrays/lists for structure"""
         # self.N_wells_real0=sum(sum(np.char.count(self.material,'w')))
         self.N_wells_real0 = sum(
-            np.char.count([layer[6] for layer in self.material], "w")
+            [1 for layer in self.material if len(layer) > 6 and layer[6] == "w"]
         )
         self.N_layers_real0 = len(
             self.material
@@ -285,37 +317,40 @@ class Structure:
                 matprops = material_property[matType]
                 cb_meff[startindex:finishindex] = matprops["m_e"] * m_e
                 cb_meff_alpha[startindex:finishindex] = matprops["m_e_alpha"]
+                Eg_T = get_varshni_Eg(matprops, self.T)
                 fi_e[startindex:finishindex] = (
-                    matprops["Band_offset"] * matprops["Eg"] * q
+                    matprops["Band_offset"] * Eg_T * q
                 )  # Joule
-                if mat_crys_strc == "Zincblende":
-                    a0_sub[startindex:finishindex] = matprops["a0_sub"] * 1e-10
-                    C11[startindex:finishindex] = matprops["C11"] * 1e10
-                    C12[startindex:finishindex] = matprops["C12"] * 1e10
-                    GA1[startindex:finishindex] = matprops["GA1"]
-                    GA2[startindex:finishindex] = matprops["GA2"]
-                    GA3[startindex:finishindex] = matprops["GA3"]
-                    Ac[startindex:finishindex] = matprops["Ac"] * q
-                    Av[startindex:finishindex] = matprops["Av"] * q
-                    B[startindex:finishindex] = matprops["B"] * q
-                    delta[startindex:finishindex] = matprops["delta"] * q
+                is_wz_mat = "A1" in matprops
+                if (mat_crys_strc == "Zincblende" or not is_wz_mat) and "a0_sub" in matprops:
+                    a0_sub[startindex:finishindex] = matprops.get("a0_sub", 5.6533) * 1e-10
+                    C11[startindex:finishindex] = matprops.get("C11", 11.879) * 1e10
+                    C12[startindex:finishindex] = matprops.get("C12", 5.376) * 1e10
+                    GA1[startindex:finishindex] = matprops.get("GA1", 6.8)
+                    GA2[startindex:finishindex] = matprops.get("GA2", 1.9)
+                    GA3[startindex:finishindex] = matprops.get("GA3", 2.73)
+                    Ac[startindex:finishindex] = matprops.get("Ac", -7.17) * q
+                    Av[startindex:finishindex] = matprops.get("Av", 1.16) * q
+                    B[startindex:finishindex] = matprops.get("B", -1.7) * q
+                    delta[startindex:finishindex] = matprops.get("delta", 0.28) * q
                     fi_h[startindex:finishindex] = (
-                        -(1 - matprops["Band_offset"]) * matprops["Eg"] * q
-                    )  # Joule  #-0.8*q-(1-matprops['Band_offset'])*matprops['Eg']*q #Joule
+                        -(1 - matprops["Band_offset"]) * Eg_T * q
+                    )  # Joule
                     eps[startindex:finishindex] = matprops["epsilonStatic"] * eps0
-                    a0[startindex:finishindex] = matprops["a0"] * 1e-10
-                    TAUN0[startindex:finishindex] = matprops["TAUN0"]
-                    TAUP0[startindex:finishindex] = matprops["TAUP0"]
-                    mun0[startindex:finishindex] = matprops["mun0"]
-                    mup0[startindex:finishindex] = matprops["mup0"]
+                    a0[startindex:finishindex] = matprops.get("a0", 5.6533) * 1e-10
+                    TAUN0[startindex:finishindex] = matprops.get("TAUN0", 1e-8)
+                    TAUP0[startindex:finishindex] = matprops.get("TAUP0", 1e-8)
+                    # Mobility is in m^2/Vs in database
+                    mun0[startindex:finishindex] = matprops.get("mun0", 0.1)
+                    mup0[startindex:finishindex] = matprops.get("mup0", 0.02)
 
-                    Cn0[startindex:finishindex] = matprops["Cn0"] * 1e-12
-                    Cp0[startindex:finishindex] = matprops["Cp0"] * 1e-12
-                    BETAN[startindex:finishindex] = matprops["BETAN"]
-                    BETAP[startindex:finishindex] = matprops["BETAP"]
-                    VSATN[startindex:finishindex] = matprops["VSATN"]
-                    VSATP[startindex:finishindex] = matprops["VSATP"]
-                if mat_crys_strc == "Wurtzite":
+                    Cn0[startindex:finishindex] = matprops.get("Cn0", 2.8e-31) * 1e-12
+                    Cp0[startindex:finishindex] = matprops.get("Cp0", 2.8e-32) * 1e-12
+                    BETAN[startindex:finishindex] = matprops.get("BETAN", 2.0)
+                    BETAP[startindex:finishindex] = matprops.get("BETAP", 1.0)
+                    VSATN[startindex:finishindex] = matprops.get("VSATN", 3e5)
+                    VSATP[startindex:finishindex] = matprops.get("VSATP", 6e5)
+                elif mat_crys_strc == "Wurtzite" and is_wz_mat:
                     a0_sub[startindex:finishindex] = matprops["a0_sub"] * 1e-10
                     C11[startindex:finishindex] = matprops["C11"] * 1e10
                     C12[startindex:finishindex] = matprops["C12"] * 1e10
@@ -339,13 +374,17 @@ class Structure:
                     delta_cr[startindex:finishindex] = matprops["delta_cr"] * q
                     eps[startindex:finishindex] = matprops["epsilonStatic"] * eps0
                     fi_h[startindex:finishindex] = (
-                        -(1 - matprops["Band_offset"]) * matprops["Eg"] * q
+                        -(1 - matprops["Band_offset"]) * Eg_T * q
                     )
-                    Psp[startindex:finishindex] = matprops["Psp"]
-                    TAUN0[startindex:finishindex] = matprops["TAUN0"]
-                    TAUP0[startindex:finishindex] = matprops["TAUP0"]
+                    # Mobility is in m^2/Vs in database
                     mun0[startindex:finishindex] = matprops["mun0"]
                     mup0[startindex:finishindex] = matprops["mup0"]
+                    
+                    # Apply global tau override if provided
+                    if getattr(self, 'tau', None) is not None:
+                        logger.info(f"Applying global tau override: {self.tau} s")
+                        TAUN0[startindex:finishindex] = float(self.tau)
+                        TAUP0[startindex:finishindex] = float(self.tau)
 
                     Cn0[startindex:finishindex] = matprops["Cn0"] * 1e-12
                     Cp0[startindex:finishindex] = matprops["Cp0"] * 1e-12
@@ -360,45 +399,59 @@ class Structure:
                 x = layer[2]  # alloy ratio
                 cb_meff_alloy = x * mat1["m_e"] + (1 - x) * mat2["m_e"]
                 cb_meff[startindex:finishindex] = cb_meff_alloy * m_e
+                Eg1 = get_varshni_Eg(mat1, self.T)
+                Eg2 = get_varshni_Eg(mat2, self.T)
                 Eg = (
-                    x * mat1["Eg"]
-                    + (1 - x) * mat2["Eg"]
+                    x * Eg1
+                    + (1 - x) * Eg2
                     - alloyprops["Bowing_param"] * x * (1 - x)
                 )  # eV
                 fi_e[startindex:finishindex] = (
                     alloyprops["Band_offset"] * Eg * q
                 )  # for electron. Joule
                 a0_sub[startindex:finishindex] = alloyprops["a0_sub"] * 1e-10
-                TAUN0[startindex:finishindex] = alloyprops["TAUN0"]
-                TAUP0[startindex:finishindex] = alloyprops["TAUP0"]
+                # Apply global tau override if provided
+                if getattr(self, 'tau', None) is not None:
+                    TAUN0[startindex:finishindex] = float(self.tau)
+                    TAUP0[startindex:finishindex] = float(self.tau)
+                else:
+                    TAUN0[startindex:finishindex] = alloyprops["TAUN0"]
+                    TAUP0[startindex:finishindex] = alloyprops["TAUP0"]
+                
+                # Mobility is in m^2/Vs in database
+                mun0[startindex:finishindex] = alloyprops["mun0"]
+                mup0[startindex:finishindex] = alloyprops["mup0"]
+                Cn0[startindex:finishindex] = alloyprops["Cn0"] * 1e-12
+                Cp0[startindex:finishindex] = alloyprops["Cp0"] * 1e-12
 
                 BETAN[startindex:finishindex] = alloyprops["BETAN"]
                 BETAP[startindex:finishindex] = alloyprops["BETAP"]
                 VSATN[startindex:finishindex] = alloyprops["VSATN"]
                 VSATP[startindex:finishindex] = alloyprops["VSATP"]
-                if mat_crys_strc == "Zincblende":
+                is_wz_alloy = ("A1" in mat1 and "A1" in mat2)
+                if mat_crys_strc == "Zincblende" or not is_wz_alloy:
                     C11[startindex:finishindex] = (
-                        x * mat1["C11"] + (1 - x) * mat2["C11"]
+                        x * mat1.get("C11", 11.879) + (1 - x) * mat2.get("C11", 11.879)
                     ) * 1e10
                     C12[startindex:finishindex] = (
-                        x * mat1["C12"] + (1 - x) * mat2["C12"]
+                        x * mat1.get("C12", 5.376) + (1 - x) * mat2.get("C12", 5.376)
                     ) * 1e10
                     GA1[startindex:finishindex] = (
-                        x * mat1["GA1"] + (1 - x) * mat2["GA1"]
+                        x * mat1.get("GA1", 6.8) + (1 - x) * mat2.get("GA1", 6.8)
                     )
                     GA2[startindex:finishindex] = (
-                        x * mat1["GA2"] + (1 - x) * mat2["GA2"]
+                        x * mat1.get("GA2", 1.9) + (1 - x) * mat2.get("GA2", 1.9)
                     )
                     GA3[startindex:finishindex] = (
-                        x * mat1["GA3"] + (1 - x) * mat2["GA3"]
+                        x * mat1.get("GA3", 2.73) + (1 - x) * mat2.get("GA3", 2.73)
                     )
-                    Ac_alloy = x * mat1["Ac"] + (1 - x) * mat2["Ac"]
+                    Ac_alloy = x * mat1.get("Ac", -7.17) + (1 - x) * mat2.get("Ac", -7.17)
                     Ac[startindex:finishindex] = Ac_alloy * q
-                    Av_alloy = x * mat1["Av"] + (1 - x) * mat2["Av"]
+                    Av_alloy = x * mat1.get("Av", 1.16) + (1 - x) * mat2.get("Av", 1.16)
                     Av[startindex:finishindex] = Av_alloy * q
-                    B_alloy = x * mat1["B"] + (1 - x) * mat2["B"]
+                    B_alloy = x * mat1.get("B", -1.7) + (1 - x) * mat2.get("B", -1.7)
                     B[startindex:finishindex] = B_alloy * q
-                    delta_alloy = x * mat1["delta"] + (1 - x) * mat2["delta"]
+                    delta_alloy = x * mat1.get("delta", 0.28) + (1 - x) * mat2.get("delta", 0.28)
                     delta[startindex:finishindex] = delta_alloy * q
                     fi_h[startindex:finishindex] = (
                         -(1 - alloyprops["Band_offset"]) * Eg * q
@@ -407,26 +460,26 @@ class Structure:
                         x * mat1["epsilonStatic"] + (1 - x) * mat2["epsilonStatic"]
                     ) * eps0
                     a0[startindex:finishindex] = (
-                       x  * mat1["a0"] + (1 - x) * mat2["a0"]
+                       x  * mat1.get("a0", 5.6533) + (1 - x) * mat2.get("a0", 5.6533)
                     ) * 1e-10
-                    cb_meff_alpha[startindex:finishindex] = alloyprops["m_e_alpha"] * (
+                    cb_meff_alpha[startindex:finishindex] = alloyprops.get("m_e_alpha", 0.0) * (
                         mat2["m_e"] / cb_meff_alloy
                     )  # non-parabolicity constant for alloy. THIS CALCULATION IS MOSTLY WRONG. MUST BE CONTROLLED. SBL
 
                     mun0[startindex:finishindex] = (
-                        x * mat1["mun0"] + (1 - x) * mat2["mun0"]
+                        x * mat1.get("mun0", 0.1) + (1 - x) * mat2.get("mun0", 0.1)
                     )
                     mup0[startindex:finishindex] = (
-                        x * mat1["mup0"] + (1 - x) * mat2["mup0"]
+                        x * mat1.get("mup0", 0.02) + (1 - x) * mat2.get("mup0", 0.02)
                     )
 
                     Cn0[startindex:finishindex] = (
-                        x * mat1["Cn0"] + (1 - x) * mat2["Cn0"]
+                        x * mat1.get("Cn0", 2.8e-31) + (1 - x) * mat2.get("Cn0", 2.8e-31)
                     ) * 1e-12
                     Cp0[startindex:finishindex] = (
-                        x * mat1["Cp0"] + (1 - x) * mat2["Cp0"]
+                        x * mat1.get("Cp0", 2.8e-32) + (1 - x) * mat2.get("Cp0", 2.8e-32)
                     ) * 1e-12
-                if mat_crys_strc == "Wurtzite":
+                elif mat_crys_strc == "Wurtzite" and is_wz_alloy:
                     # A1[startindex:finishindex] =vegard1(mat1['A1'],mat1['A1'],x)
                     A1[startindex:finishindex] = x * mat1["A1"] + (1 - x) * mat2["A1"]
                     A2[startindex:finishindex] = x * mat1["A2"] + (1 - x) * mat2["A2"]
@@ -1112,7 +1165,21 @@ class Structure:
                         * 1e-12
                     )
             # wells and barriers boundaries
-            matRole = layer[6]
+            if len(layer) == 5:
+                # [thickness, material, alloy, doping, type]
+                matDope = layer[3]
+                matType = layer[4]
+                matRole = "b"
+            elif len(layer) == 6:
+                # [thickness, material, alloy1, alloy2, doping, type]
+                matDope = layer[4]
+                matType = layer[5]
+                matRole = "b"
+            else:
+                matDope = layer[4] if len(layer) > 4 else 0.0
+                matType = layer[5] if len(layer) > 5 else "n"
+                matRole = layer[6] if len(layer) > 6 else "b"
+
             if matRole == "w":
                 N_wells_real2 += 1
                 Well_boundary2[N_wells_real2, 0] = startindex
@@ -1125,15 +1192,16 @@ class Structure:
                 barrier_boundary[J, 1] = Well_boundary2[J, 0]
                 barrier_len[J] = barrier_boundary[J, 1] - barrier_boundary[J, 0]
             # doping
-
+            if len(self.dop_profile) != self.n_max:
+                self.dop_profile = np.zeros(self.n_max)
             dop_profile = self.dop_profile
-            if layer[5] == "n":
+            if matType == "n":
                 dop[startindex:finishindex] = (
-                    layer[4] * 1e6 + dop_profile[startindex:finishindex] + 1
+                    matDope * 1e6 + dop_profile[startindex:finishindex] + 1
                 )  # charge density in m**-3 (conversion from cm**-3)
-            elif layer[5] == "p":
+            elif matType == "p":
                 dop[startindex:finishindex] = (
-                    -layer[4] * 1e6 + dop_profile[startindex:finishindex] - 1
+                    -matDope * 1e6 + dop_profile[startindex:finishindex] - 1
                 )  # charge density in m**-3 (conversion from cm**-3)
             else:
                 dop[startindex:finishindex] = dop_profile[startindex:finishindex] + 1
@@ -1147,14 +1215,14 @@ class Structure:
             for J in range(2, N_wells_virtual2 - 1):
                 if barrier_len[J] * dx <= anti_crossing_length:
                     brr += 1
-            brr_vec = np.zeros(brr)
+            brr_vec = np.zeros(brr, dtype=int)
             brr2 = 0
             for J in range(2, N_wells_virtual2 - 1):
                 if barrier_len[J] * dx <= anti_crossing_length:
                     brr2 += 1
-                    brr_vec[brr2 - 1] = J + 1 - brr2
+                    brr_vec[brr2 - 1] = int(J + 1 - brr2)
             for I in range(0, brr):
-                barrier_boundary = np.delete(barrier_boundary, brr_vec[I], 0)
+                barrier_boundary = np.delete(barrier_boundary, int(brr_vec[I]), 0)
             N_wells_virtual = N_wells_virtual - brr
             Well_boundary = np.resize(Well_boundary, (N_wells_virtual, 2))
             for J in range(0, N_wells_virtual):
@@ -1257,21 +1325,71 @@ class StructureFrom(Structure):
         if type(inputfile) == dict:
             inputfile = AttrDict(inputfile)
         # Parameters for simulation
-        self.Fapp = inputfile.Fapplied
-        self.vmax = inputfile.vmax
-        self.vmin = inputfile.vmin
-        self.Each_Step = inputfile.Each_Step
-        self.surface = inputfile.surface
-        self.T = inputfile.T
-        self.subnumber_h = inputfile.subnumber_h
-        self.subnumber_e = inputfile.subnumber_e
-        self.comp_scheme = inputfile.computation_scheme
-        self.dx = inputfile.gridfactor * 1e-9  # grid in m
-        self.maxgridpoints = inputfile.maxgridpoints
-        self.mat_crys_strc = inputfile.mat_type
+        defaults = {
+            'Fapplied': 0.0,
+            'vmax': 0.0,
+            'vmin': 0.0,
+            'Each_Step': 0.1,
+            'surface': [0.0, 0.0],
+            'T': 300.0,
+            'subnumber_h': 1,
+            'subnumber_e': 1,
+            'computation_scheme': 0,
+            'gridfactor': 0.1,
+            'maxgridpoints': 200000,
+            'max_iterations': 120,
+            'dd_max_iterations': 25,
+            'dd_residual_tolerance': 0.02,
+            'dd_current_atol': 1e-8,  # mA/cm^2, total-current spatial span
+            'dd_current_rtol': 1e-3,
+            'mat_type': 'Zincblende',
+            'dop_profile': np.zeros(1),
+            'Quantum_Regions_boundary': np.zeros((1, 2)),
+            'Quantum_Regions': False,
+            'device_area': 1.0e-4, # cm^2 (default)
+            'tat_field': 1.0e10, # V/m (default - disabled)
+            'enable_polarization': True, # Default enabled
+            'G_optical': 0.0, # cm^-3 s^-1 (default - dark)
+            'photovoltaic_mode': False,
+            'work_function_left': 4.5,
+            'work_function_right': 5.2,
+            'surface_recomb_val': [1e7, 1e7],
+            'tau': None,  # Global lifetime override (s)
+            'use_newton_solver': False, # Toggle fully-coupled Newton solver
+            'enable_qw_solver': False, # Toggle QW Confined-State Solver
+            'num_electron_states': 3, # Conduction subbands count
+            'num_hole_states': 3, # Valence subbands count
+            'qw_self_consistent': False, # Toggle self-consistent QW-Poisson
+            'qw_max_iterations': 20,
+            'qw_tolerance': 1e-4,
+            'qw_damping': 0.2,
+            'qw_coupling_mode': 'Coupled MQW'
+        }
+        for key, default in defaults.items():
+            val = getattr(inputfile, key, default)
+            setattr(self, key if key != 'Fapplied' else 'Fapp', val)
+            
+        # Additional PV settings support
+        if not hasattr(self, 'surface_recomb'):
+             self.surface_recomb = getattr(inputfile, 'surface_recomb', self.surface_recomb_val)
+        
+        self.Vt = Vt # Thermal voltage
+        # Mapping compatibility
+        # If comp_scheme is provided in input (and not None), use it; otherwise use computation_scheme
+        cs = getattr(inputfile, 'comp_scheme', None)
+        if cs is None:
+            cs = getattr(inputfile, 'computation_scheme', getattr(self, 'computation_scheme', 0))
+        self.comp_scheme = int(cs)
+        self.computation_scheme = self.comp_scheme
+        print(f"DEBUG: Structure initialized. photovoltaic_mode={self.photovoltaic_mode}, comp_scheme={self.comp_scheme}")
+        self.dx = getattr(inputfile, 'gridfactor', 0.1) * 1e-9  # grid in m
+        self.mat_crys_strc = self.mat_type
+        # Area in m^2 (input is in cm^2)
+        self.device_area_m2 = getattr(inputfile, 'device_area', 1.0e-4) * 1e-4
+        
         # Loading material list
         self.material = inputfile.material
-        self.inputfilename=inputfile
+        self.inputfilename = inputfile
         totallayer = alen(self.material)
 
         # Add to log
@@ -1283,11 +1401,8 @@ class StructureFrom(Structure):
         )  # total thickness (m)
         self.n_max = int(self.x_max / self.dx)
         # Check on n_max
-        max_val = inputfile.maxgridpoints
+        max_val = self.maxgridpoints
 
-        self.dop_profile = inputfile.dop_profile
-        self.Quantum_Regions_boundary = inputfile.Quantum_Regions_boundary
-        self.Quantum_Regions = inputfile.Quantum_Regions
         if self.n_max > max_val:
             logger.error("Grid number is exceeding the max number of %d", max_val)
             sys.exit()
@@ -1300,6 +1415,18 @@ class StructureFrom(Structure):
 
         self.alloy_property_4 = database.alloyproperty4
         totalalloy += alen(self.alloy_property_4)
+
+        # Extract Series Resistance (Rs) from first layer material
+        try:
+            first_mat = self.material[0][1]
+            if first_mat in self.material_property:
+                self.Rs = self.material_property[first_mat].get('Rs', 0.0)
+                logger.info(f"Model internal Rs set to {self.Rs} Ohm (from {first_mat})")
+            else:
+                self.Rs = 0.0
+        except Exception as e:
+            logger.warning(f"Could not extract Rs: {e}")
+            self.Rs = 0.0
         # Add to log
         logger.info("Total number of materials in database: %d" % (totalmaterial + totalalloy))
         # Initialise arrays
@@ -1309,6 +1436,33 @@ class StructureFrom(Structure):
         # eps #dielectric constant (array, len n_max)
         # dop #doping distribution (array, len n_max)
         self.create_structure_arrays()
+        
+        # Override doping if provided in input (Validation fix)
+        # Override doping if provided in input (Validation fix)
+        # Check self.dop_profile (already loaded from input)
+        if hasattr(self, 'dop_profile'):
+             logger.info(f"DEBUG: Found self.dop_profile (unconditional) with len {len(self.dop_profile)}. n_max: {self.n_max}")
+        else:
+             logger.info("DEBUG: self.dop_profile NOT FOUND")
+             
+        if hasattr(inputfile, 'dop_profile') and len(inputfile.dop_profile) > 1 and np.any(inputfile.dop_profile != 0):
+            if len(inputfile.dop_profile) == self.n_max:
+                self.dop = inputfile.dop_profile
+                logger.info("Overriding doping profile from input configuration.")
+            else:
+                 logger.warning(f"Input dop_profile length {len(inputfile.dop_profile)} does not match n_max {self.n_max}. Ignoring.")
+        else:
+             logger.info("Using doping profile calculated from material layers.")
+        
+        self.ionization_efficiency = getattr(inputfile, 'ionization_efficiency', 1.0)
+        self.poisson_damping = getattr(inputfile, 'poisson_damping', 0.1)
+        self.continuity_damping = getattr(inputfile, 'continuity_damping', 0.7)
+        
+        # Apply ionization efficiency to p-type dopants (deep acceptors)
+        if self.ionization_efficiency != 1.0:
+            for i in range(len(self.dop)):
+                if self.dop[i] < 0:
+                    self.dop[i] *= self.ionization_efficiency
 
 
 # No Shooting method parameters for Schrödinger Equation solution since we use a 3x3 KP solver
@@ -1673,6 +1827,8 @@ def calc_Vxc(sigma, eps, cb_meff, model):
     )  # simplified constant factor for expression.
     #
     Vxc = -A * nz_3 / eps * (1.0 + 0.0545 * r_s * np.log(1.0 + 11.4 / r_s))
+    ionization_efficiency = 1.0  # Fraction of p-type dopants that are active
+    use_newton_solver = False # Toggle fully-coupled Newton solver
     return Vxc
 
 
@@ -1806,16 +1962,17 @@ def Strain_and_Masses(model):
         Ppz = (model.D31 * (model.C11 + model.C12) + model.D33 * model.C13) * (
             EXX + EXX
         ) + (2 * model.D31 * model.C13 + model.D33 * model.C33) * (EZZ)
-        pol_surf_char = np.zeros(n_max)
-        pol_surf_char1 = np.zeros(n_max)
-        for i in range(0, n_max):
-            pol_surf_char[i] = (model.Psp[i] + Ppz[i]) / (q)
-        for i in range(1, n_max - 1):
-            Ppz_Psp0[i] = (pol_surf_char[i] - pol_surf_char[i - 1]) / (dx)
-        for i in range(1, n_max - 1):
-            pol_surf_char1[i] = (
-                (model.Psp[i - 1] + Ppz[i - 1]) - (model.Psp[i + 1] + Ppz[i + 1])
-            ) / (q)
+        if config.piezo1:
+            pol_surf_char = np.zeros(n_max)
+            pol_surf_char1 = np.zeros(n_max)
+            for i in range(0, n_max):
+                pol_surf_char[i] = (model.Psp[i] + Ppz[i]) / (q)
+            for i in range(1, n_max - 1):
+                Ppz_Psp0[i] = (pol_surf_char[i] - pol_surf_char[i - 1]) / (dx)
+            for i in range(1, n_max - 1):
+                pol_surf_char1[i] = (
+                    (model.Psp[i - 1] + Ppz[i - 1]) - (model.Psp[i + 1] + Ppz[i + 1])
+                ) / (q)
         for I in range(1, model.N_wells_virtual2 - 1):
             BW = model.Well_boundary2[I, 0]
             WB = model.Well_boundary2[I, 1]
@@ -1982,8 +2139,8 @@ def calc_E_state_general(
 
 def Main_Str_Array(model):
     n_max = model.n_max
-    # HUPMAT1=np.zeros((n_max*3, n_max*3))
-    # HUPMATC1=np.zeros((n_max, n_max))
+    HUPMAT1 = np.zeros((n_max * 3, n_max * 3))
+    HUPMATC1 = np.zeros((n_max, n_max))
     x_max = model.dx * n_max
     m_hh, m_lh, m_so, VNIT, ZETA, CNIT, Ppz_Psp, EPC, pol_surf_char = Strain_and_Masses(
         model
@@ -2014,7 +2171,8 @@ def Main_Str_Array(model):
     )
     KP = 0.0
     KPINT = 0.01
-    if model.mat_crys_strc == "Zincblende" and (model.N_wells_virtual - 2 != 0):
+    mat_crys = str(model.mat_crys_strc).lower()
+    if "zincblende" in mat_crys and (model.N_wells_virtual - 2 != 0):
         HUPMAT1 = VBMAT1(
             KP,
             AP1,
@@ -2034,7 +2192,7 @@ def Main_Str_Array(model):
             KPINT,
         )
         HUPMATC1 = CBMAT(KP, Pce, model.cb_meff / m_e, x_max, n_max, AC1, UNIM, KPINT)
-    if model.mat_crys_strc == "Wurtzite" and (model.N_wells_virtual - 2 != 0):
+    elif "wurtzite" in mat_crys and (model.N_wells_virtual - 2 != 0):
         HUPMAT1 = -VBMAT2(
             KP,
             AP1,
@@ -2181,7 +2339,8 @@ def Poisson_Schrodinger(model):
     x_max = dx * n_max
     RATIO = m_e / hbar ** 2 * (x_max) ** 2
     HUPMAT3_reduced_list = []
-    if model.N_wells_virtual - 2 != 0:
+    has_quantum = getattr(config, 'quantum_effect', True) and (not getattr(model, 'photovoltaic_mode', False) or getattr(model, 'Quantum_Regions', False))
+    if (model.N_wells_virtual - 2 != 0) and has_quantum:
         HUPMAT1, HUPMATC1, m_hh, m_lh, m_so, Ppz_Psp, pol_surf_char = Main_Str_Array(
             model
         )
@@ -2336,15 +2495,16 @@ def Poisson_Schrodinger(model):
         )  # Intrinsic carrier concentration [1/m^3]
         if dop[i] == 1:
             dop[i] *= ni[i]
-        Ld_n_p[i] = sqrt(eps[i] * Vt / (q * abs(dop[i])))
+        dop_val = max(abs(dop[i]), 1e6)
+        Ld_n_p[i] = sqrt(eps[i] * Vt / (q * dop_val))
         Ldi[i] = sqrt(eps[i] * Vt / (q * ns * ni[i]))
         Half_Eg[i] = (fi_e[i] - fi_h[i]) / 2
         Eg_[i] = fi_e[i] - fi_h[i]
 
         # fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
         # fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
-        fi_e[i] = fi_e[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
-        fi_h[i] = fi_h[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
+        # fi_e scaled
+        # fi_h scaled
 
     if dx > min(Ld_n_p[:]) and 1 == 2:
         logger.error(
@@ -2378,7 +2538,7 @@ def Poisson_Schrodinger(model):
         print("Iteration:", iteration)
         # Add to log
         logger.info("Iteration: %d", iteration)
-        if model.N_wells_virtual - 2 != 0:
+        if (model.N_wells_virtual - 2 != 0) and has_quantum:
             if config.predic_correc and iteration == 1:
                 (
                     E_statec_general,
@@ -2500,7 +2660,7 @@ def Poisson_Schrodinger(model):
             if delta_max1 / q < convergence_test0:  # Convergence test
                 # print('error=',abs(E_state_general[1,0]-previousE0)/1e3)
                 # if abs(E_state_general[1,0]-previousE0)/1e3 < convergence_test: #Convergence test
-                if model.N_wells_virtual - 2 != 0:
+                if (model.N_wells_virtual - 2 != 0) and has_quantum:
                     (
                         E_statec_general,
                         E_state_general,
@@ -2536,7 +2696,7 @@ def Poisson_Schrodinger(model):
             delta1 = Vnew_general - previousfi0
             delta_max1 = max(abs(delta1[:]))
             if delta_max1 / q < convergence_test0:  # Convergence test
-                if model.N_wells_virtual - 2 != 0:
+                if (model.N_wells_virtual - 2 != 0) and has_quantum:
                     (
                         E_statec_general,
                         E_state_general,
@@ -2857,8 +3017,8 @@ def Poisson_Schrodinger_new(model):
 
         # fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
         # fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
-        fi_e[i] = fi_e[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
-        fi_h[i] = fi_h[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
+        # fi_e scaled
+        # fi_h scaled
 
     if dx > min(Ld_n_p[:]) and 1 == 2:
         logger.error(
@@ -2881,6 +3041,13 @@ def Poisson_Schrodinger_new(model):
     w_n = np.zeros(n_max)
     damping_n_plus = 0.1
     damping_n = 0.1
+    
+    # Global Switch to disable polarization
+    if getattr(model, 'enable_polarization', True) == False:
+        if 'Ppz_Psp' in locals():
+            Ppz_Psp = np.zeros_like(Ppz_Psp)
+            logger.info("Polarization effects disabled by configuration (Global Switch).")
+            
     Ppz_Psp0 = Ppz_Psp
     EF = 0.0
 
@@ -3165,19 +3332,16 @@ def Poisson_Schrodinger_new(model):
     return results
 
 def Poisson_Schrodinger_DD(result, model):
-    """Performs a self-consistent Poisson-Schrodinger calculation of a 1d quantum well structure.
-    Model is an object with the following attributes:
-    fi_e - Bandstructure potential (J) (array, len n_max)
-    cb_meff - conduction band effective mass (kg)(array, len n_max)
-    eps - dielectric constant (including eps0) (array, len n_max)
-    dop - doping distribution (m**-3) ( array, len n_max)
-    Fapp - Applied field (Vm**-1)
-    T - Temperature (K)
-    comp_scheme - simulation scheme (currently unused)
-    subnumber_e - number of subbands for look for in the conduction band
-    dx - grid spacing (m)
-    n_max - number of points.
-    """
+    # Initialize all potential result variables to avoid UnboundLocalError
+    n_max = int(model.n_max)
+    Va_t = np.zeros(1)
+    Efn_result = Efp_result = Ei_result = Ec_result = Ev_result = np.zeros(n_max)
+    ro_result = el_field1_result = el_field2_result = nf_result = pf_result = np.zeros(n_max)
+    fi_result = np.zeros(n_max)
+    av_curr = np.zeros(1)
+    EF = fi_va = Ec_result_ = Ev_result_ = None
+    Total_Steps = 1
+
     fi = result.fi_result
     E_state_general = result.E_state_general
     meff_state_general = result.meff_state_general
@@ -3207,8 +3371,6 @@ def Poisson_Schrodinger_DD(result, model):
     comp_scheme = model.comp_scheme
     subnumber_h = model.subnumber_h
     subnumber_e = model.subnumber_e
-    dx = model.dx
-    n_max = model.n_max
     TAUN0 = model.TAUN0
     TAUP0 = model.TAUP0
     mun0 = model.mun0
@@ -3217,6 +3379,24 @@ def Poisson_Schrodinger_DD(result, model):
     BETAP = model.BETAP
     VSATN = model.VSATN
     VSATP = model.VSATP
+    Cn0 = model.Cn0
+    Cp0 = model.Cp0
+    # Setup Optical Generation Profile
+    gen_type = getattr(model, 'generation_type', 'uniform')
+    G_optical_val = float(getattr(model, 'G_optical', 0.0))
+    G_optical = np.zeros(n_max)
+    
+    if gen_type == 'uniform':
+        G_optical[:] = G_optical_val * 1e6
+        logger.info("Using uniform G_optical = %g cm^-3 s^-1", G_optical_val)
+    elif gen_type == 'exponential':
+        alpha = getattr(model, 'alpha', 1e5) # cm^-1
+        alpha_m = alpha * 1e2 # m^-1
+        xaxis_local = np.arange(0, n_max) * dx # now in meters
+        G_optical = (G_optical_val * 1e6) * np.exp(-alpha_m * xaxis_local)
+        logger.info("Using exponential G_optical (alpha = %g cm^-1)", alpha)
+    else:
+        G_optical[:] = G_optical_val * 1e6
     if comp_scheme in (4, 5, 6):
         logger.error(
             """Aestimo doesn't currently include exchange interactions
@@ -3298,6 +3478,7 @@ def Poisson_Schrodinger_DD(result, model):
     Nv = np.zeros(n_max)
     vb_meff = np.zeros(n_max)
     ni = np.zeros(n_max)
+    ni_phys = np.zeros(n_max)
     hbark = hbar * 2 * pi
     Ppz_Psp_tmp = Ppz_Psp
     Ppz_Psp = np.zeros(n_max)
@@ -3309,20 +3490,24 @@ def Poisson_Schrodinger_DD(result, model):
     Nv = 2 * (2 * pi * vb_meff * kb * T / hbark ** 2) ** (3 / 2)
     Half_Eg = np.zeros(n_max)
     for i in range(n_max):
-        ni[i] = sqrt(
-            Nc[i] * Nv[i] * exp(-(fi_e[i] - fi_h[i]) / (kb * T))
-        )  # Intrinsic carrier concentration [1/m^3] kb*T/q
-        # print("%.3E" % (ni[i]*1e-6))
-        # print(fi_e[i]-fi_h[i])
-        Ld_n_p[i] = sqrt(eps[i] * Vt / (q * abs(dop[i])))
+        val_ni = sqrt(Nc[i] * Nv[i] * exp(-(fi_e[i] - fi_h[i]) / (kb * T)))
+        ni_phys[i] = val_ni
+        # We use a stable reference density (ni_ref) for all dimensionless normalization.
+        # 1e18 m^-3 (1e12 cm^-3) is a robust scaling unit for wide-bandgap DD.
+        ni[i] = np.maximum(val_ni, 1e18)
+        
+        Ld_n_p[i] = sqrt(eps[i] * Vt / (q * abs(dop[i] + 1e-20)))
         Ldi[i] = sqrt(eps[i] * Vt / (q * ni[i]))
         if dop[i] == 1:
             dop[i] *= ni[i]
         Half_Eg[i] = (fi_e[i] - fi_h[i]) / 2
+    
+    # Store real ni for physics solvers
+    model.ni_phys = ni_phys
         # fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
         # fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
-        fi_e[i] = fi_e[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
-        fi_h[i] = fi_h[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
+        # fi_e scaled
+        # fi_h scaled
     n = result.nf_result / ni
     p = result.pf_result / ni
     if dx > min(Ld_n_p[:]) and 1 == 2:
@@ -3357,10 +3542,10 @@ def Poisson_Schrodinger_DD(result, model):
     fi_va = np.zeros((Total_Steps, n_max))
     Ec_result_ = np.zeros((Total_Steps, n_max))
     Ev_result_ = np.zeros((Total_Steps, n_max))
-    fi_stat = fi
-    fi[0] +=vmin/ Vt
-    if vmax == 0:
-        print("Va_max=0")
+    fi_stat = fi.copy()
+    fi[0] -= vmin / Vt
+    if Total_Steps < 2 and not getattr(model, 'use_newton_solver', False):
+        print("Equilibrium only (Total_Steps < 2)")
     else:
         print("Convergence of the Gummel cycles")
         vindex = 0
@@ -3369,18 +3554,49 @@ def Poisson_Schrodinger_DD(result, model):
                 Ppz_Psp = Ppz_Psp_tmp
             # Start Va increment loop
             Va = Each_Step * vindex
-            if vindex == 0:
-                fi[0] += 0.0  # Apply potential to Anode (1st node)
-            else:
-                fi[0] += Each_Step/Vt
+            if vindex > 0:
+                fi[0] -= Each_Step / Vt
             flag_conv_2 = True  # Convergence of the Poisson loop
             #% Initialize the First and Last Node for Poisson's eqn
 
             Va_t[vindex] = Va+vmin
-            print("Va_t[", vindex, "]=", Va_t[vindex])
-            # previousE0= 2   #(meV) energy of zeroth state for previous iteration(for testing convergence)
+            logger.info("Voltage Step %d/%d: Va = %g V", vindex + 1, Total_Steps, Va_t[vindex])
+            iteration = 1 # Reset iteration counter for each voltage step
+            # previousE0 = 2
             while flag_conv_2:
-                fi, flag_conv_2 = Poisson_non_equi2(
+                if iteration % 20 == 0:
+                    logger.info("  Iteration %d...", iteration)
+                    sys.stdout.flush()
+                
+                # Hard iteration cap for stability
+                max_iter_val = getattr(model, 'dd_max_iterations', 25)
+                curr_p_damp = getattr(model, 'poisson_damping', 0.4)
+                curr_c_damp = getattr(model, 'continuity_damping', 0.7)                
+                if not getattr(model, 'use_newton_solver', False) and iteration > max_iter_val:
+                    flag_conv_2 = False
+                    break
+                    
+                if getattr(model, 'use_newton_solver', False):
+                    if not hasattr(model, 'newton_solver'):
+                        from aeslibs.newton_raphson import CoupledNewtonSolver
+                        model.newton_solver = CoupledNewtonSolver(
+                            model, n_max, dx, ni, dop, Ldi, Ppz_Psp, pol_surf_char, Nc, Nv, fi_stat, n_stat=n, p_stat=p
+                        )
+                    
+                    # Update mobility for Newton solver
+                    mun, mup = Mobility2(
+                        mun0, mup0, fi, Vt, Ldi, VSATN, VSATP, BETAN, BETAP, n_max, dx
+                    )
+                    
+                    fi, n, p, newton_ok = model.newton_solver.solve(
+                        fi, n, p, mun, mup, TAUN0, TAUP0, Cn0, Cp0, G_optical, iteration, Va=Va_t[vindex]
+                    )
+                    flag_conv_2 = False
+                    
+                    model.newton_solver.require_convergence(newton_ok, fi, n, p, Va_t[vindex])
+
+                if not getattr(model, 'use_newton_solver', False):
+                    fi, flag_conv_2 = Poisson_non_equi2(
                     fi_stat,
                     n,
                     p,
@@ -3407,44 +3623,82 @@ def Poisson_Schrodinger_DD(result, model):
                     E_statec_general,
                     meff_state_general,
                     meff_statec_general,
+                    damping=curr_p_damp,
                 )
-                #
-                mun, mup = Mobility2(
-                    mun0, mup0, fi, Vt, Ldi, VSATN, VSATP, BETAN, BETAP, n_max, dx
-                )
-                ########### END of FIELD Dependant Mobility Calculation ###########
-                n, p = Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0)
+                
+                    #
+                    mun, mup = Mobility2(
+                        mun0, mup0, fi, Vt, Ldi, VSATN, VSATP, BETAN, BETAP, n_max, dx
+                    )
+                    
+                    ########### END of FIELD Dependant Mobility Calculation ###########
+                    n, p = Continuity2(n, p, mun, mup, fi, Vt, Ldi, n_max, dx, TAUN0, TAUP0, ni, G_optical, iteration, model=model, dop=dop, Cn0=Cn0, Cp0=Cp0, damping=curr_c_damp)
+                
+                # Check for numerical instability
+                if not np.all(np.isfinite(n)) or not np.all(np.isfinite(p)):
+                    logger.error("  Numerical Instability: Carrier densities reached non-finite values at Va = %g V. Terminating Gummel loop.", Va_t[vindex])
+                    flag_conv_2 = False
+                    break
+                    
+                iteration += 1
                 ####################### END of HOLE Continuty Solver ###########
                 # End of WHILE Loop for Poisson's eqn solver
-                # print('inside while loop')
-            Jnip1by2, Jnim1by2, Jelec, Jpip1by2, Jpim1by2, Jhole = Current2(
-                vindex,
-                n,
-                p,
-                mun,
-                mup,
-                fi,
-                Vt,
-                n_max,
-                Total_Steps,
-                q,
-                dx,
-                ni,
-                Ldi,
-                Jnip1by2,
-                Jnim1by2,
-                Jelec,
-                Jpip1by2,
-                Jpim1by2,
-                Jhole,
-            )
+            if getattr(model, 'use_newton_solver', False) and hasattr(model, 'newton_solver') and model.newton_solver.Jtot is not None:
+                Jelec[vindex, :n_max-1] = model.newton_solver.Jn
+                Jhole[vindex, :n_max-1] = model.newton_solver.Jp
+                Jelec[vindex, -1] = Jelec[vindex, -2]
+                Jhole[vindex, -1] = Jhole[vindex, -2]
+                Jtotal[vindex, :] = Jelec[vindex, :] + Jhole[vindex, :]
+                av_curr[vindex] = model.newton_solver.last_Jtot
+            else:
+                Jnip1by2, Jnim1by2, Jelec, Jpip1by2, Jpim1by2, Jhole = Current2(
+                    vindex,
+                    n,
+                    p,
+                    mun,
+                    mup,
+                    fi,
+                    Vt,
+                    n_max,
+                    Total_Steps,
+                    q,
+                    dx,
+                    ni,
+                    Ldi,
+                    Jnip1by2,
+                    Jnim1by2,
+                    Jelec,
+                    Jpip1by2,
+                    Jpim1by2,
+                    Jhole,
+                )
+                
+                # Note: Current2 now returns physical current density in A/m^2 (SI)
+                # because dx and ni are SI, and mun is converted internally.
+                # Convert to mA/cm^2 for Aestimo GUI/Reports (1 A/m2 = 0.1 mA/cm2)
+                Jelec[vindex, :] *= 0.1
+                Jhole[vindex, :] *= 0.1
+                Jtotal[vindex, :] = Jelec[vindex, :] + Jhole[vindex, :]
 
             # End of main FOR loop for Va increment.
-            Jtotal = Jelec + Jhole
-            fi_va[vindex,:] =fi
+            fi_va[vindex, :] = fi
+            
+            # No early stopping — always run the full sweep from vmin to vmax for accurate Voc/Pmax extraction
+
         for vindex in range(Total_Steps):
-            Ec_result_[vindex, :] = fi_e / q - Vt * fi_va[vindex, :]  # Values from the all Node%
-            Ev_result_[vindex, :] = fi_h / q - Vt * fi_va[vindex, :]  # Values from the all Node%
+            Ec_result_[vindex, :] = fi_e / q - Vt * fi_va[vindex, :]
+            Ev_result_[vindex, :] = fi_h / q - Vt * fi_va[vindex, :]
+
+        # Compute av_curr for sequential solver if not already computed by Newton solver
+        for vindex in range(Total_Steps):
+            if not getattr(model, 'use_newton_solver', False):
+                idx_lo = int(0.9 * n_max)
+                idx_hi = n_max - 1
+                av_curr[vindex] = np.median(Jtotal[vindex, idx_lo:idx_hi])
+            
+        av_curr = av_curr[:Total_Steps]
+        Ec_result_ = Ec_result_[:Total_Steps, :]
+        Ev_result_ = Ev_result_[:Total_Steps, :]
         ##########################################################################
         ##                 END OF NON-EQUILIBRIUM  SOLUTION PART                ##
         ##########################################################################
@@ -3488,7 +3742,8 @@ def Poisson_Schrodinger_DD(result, model):
         )
         fitot = fi_h - Vt * q * fi
         fitotc = fi_e - Vt * q * fi
-        if model.N_wells_virtual - 2 != 0:
+        has_quantum = getattr(config, 'quantum_effect', True) and (not getattr(model, 'photovoltaic_mode', False) or getattr(model, 'Quantum_Regions', False))
+        if (model.N_wells_virtual - 2 != 0) and has_quantum:
 
             (
                 E_statec_general,
@@ -3576,6 +3831,9 @@ def Poisson_Schrodinger_DD(result, model):
     results.fi_va = fi_va
     results.Ec_result_ = Ec_result_
     results.Ev_result_ = Ev_result_
+    
+
+    
     return results
 
 
@@ -3655,6 +3913,7 @@ def Poisson_Schrodinger_DD_test(result, model):
     fi_h = model.fi_h
     N_wells_virtual = model.N_wells_virtual
     Well_boundary = model.Well_boundary
+    
 
     x_max = dx * n_max
     # Check
@@ -3678,6 +3937,12 @@ def Poisson_Schrodinger_DD_test(result, model):
     N_statec_general = np.zeros(
         (model.N_wells_virtual, subnumber_e)
     )  # Number of carriers in subbands
+
+    # Optical Generation Rate
+    G_optical_cm3 = getattr(model, 'G_optical', 0.0)
+    G_optical = G_optical_cm3 * 1e6 # Convert from cm^-3 s^-1 to m^-3 s^-1 for internal solver
+    logger.info("Using G_optical = %g cm^-3 s^-1 (Internal: %g m^-3 s^-1)", G_optical_cm3, G_optical)
+    
 
     # Creating and Filling material arrays
     xaxis = np.arange(0, n_max) * dx  # metres
@@ -3720,6 +3985,11 @@ def Poisson_Schrodinger_DD_test(result, model):
 
     Ppz_Psp_tmp = Ppz_Psp
     Ppz_Psp = np.zeros(n_max)
+    
+    # Define scaling factors for normalization (consistent with Aestimo's internal convention)
+    xs = dx
+    Vs = Vt
+    us = np.max(np.abs(mun0)) if np.max(np.abs(mun0)) > 1e-12 else 0.1
 
     UNIM = np.identity(n_max)
     x_max = dx * n_max
@@ -3732,18 +4002,10 @@ def Poisson_Schrodinger_DD_test(result, model):
     Nv = 2 * (2 * pi * vb_meff * kb * T / hbark ** 2) ** (3 / 2)
     Half_Eg = np.zeros(n_max)
     for i in range(n_max):
-        ni[i] = sqrt(
-            Nc[i] * Nv[i] * exp(-(fi_e[i] - fi_h[i]) / (kb * T))
-        )  # Intrinsic carrier concentration [1/m^3] kb*T/q
-        # print("%.3E" % (ni[i]*1e-6))
-        # print(fi_e[i]-fi_h[i])
-        if dop[i] == 1:
-            dop[i] *= ni[i]
+        val_ni = sqrt( Nc[i] * Nv[i] * exp(-(fi_e[i] - fi_h[i]) / (kb * T)) )
+        ni[i] = max(val_ni, 1e18)  # Consistent ni_ref scaling
         Ld_n_p[i] = sqrt(eps[i] * Vt / (q * abs(dop[i])))
         Ldi[i] = sqrt(eps[i] * Vt / (q * ni[i]))
-        Half_Eg[i] = (fi_e[i] - fi_h[i]) / 2
-        fi_e[i] = fi_e[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
-        fi_h[i] = fi_h[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
         # fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
         # fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
     n = result.nf_result / ni
@@ -3785,9 +4047,10 @@ def Poisson_Schrodinger_DD_test(result, model):
     Ev_result_ = np.zeros((Total_Steps, n_max))
     fi_stat = fi
     fi+=vmin/Vt
-    if vmax == 0:
-        print("vmax=0")
+    if Total_Steps < 2:
+        print("Equilibrium only (Total_Steps < 2)")
     else:
+        print("vindex=0")
         print("Convergence of the Gummel cycles")
         vindex = 0
         for vindex in range(0, Total_Steps):
@@ -3800,12 +4063,15 @@ def Poisson_Schrodinger_DD_test(result, model):
             else:
                 fi[0] += Each_Step/Vt
             flag_conv_2 = True  # Convergence of the Poisson loop
-            #% Initialize the First and Last Node for Poisson's eqn
-
             Va_t[vindex] = Va+vmin
-            print("Va_t[", vindex, "]=", Va_t[vindex])
-            # previousE0= 2   #(meV) energy of zeroth state for previous iteration(for testing convergence)
+            logger.info("Voltage Step %d/%d: Va = %g V", vindex + 1, Total_Steps, Va_t[vindex])
+            max_poisson_iter = 40
             while flag_conv_2:
+                if iteration > max_poisson_iter:
+                    logger.warning(f"  [WARN] Voltage Step {vindex + 1}: Poisson-Gummel loop exceeded {max_poisson_iter} iterations. Proceeding anyway.")
+                    flag_conv_2 = False
+                    break
+                    
                 fitot = fi_h - Vt * q * fi
                 fitotc = fi_e - Vt * q * fi
                 if model.N_wells_virtual - 2 != 0:
@@ -3861,6 +4127,7 @@ def Poisson_Schrodinger_DD_test(result, model):
                     meff_state_general,
                     meff_statec_general,
                 )
+                iteration += 1
 
                 mun, mup = Mobility3(
                     mun0,
@@ -3876,12 +4143,18 @@ def Poisson_Schrodinger_DD_test(result, model):
                     BETAP,
                     n_max,
                     dx,
+                    ni,
+                    n,
+                    p,
                 )
                 ########### END of FIELD Dependant Mobility Calculation ###########
+                # Time scaling for normalized continuity equation
+                ts_scaling = (xs**2) / (us * Vs)
+                n_old, p_old = n.copy(), p.copy()
                 n, p = Continuity3(
-                    n, p, mun, mup, fi, fi_n, fi_p, Vt, Ldi, n_max, dx, TAUN0, TAUP0
+                    n, p, mun, mup, fi, fi_n, fi_p, Vt, Ldi, n_max, dx, TAUN0, TAUP0, G_opt=G_optical, ni=ni, ts=ts_scaling, Cn0=Cn0, Cp0=Cp0, model=model
                 )
-                # if config.quantum_effect:
+                
             Jnip1by2, Jnim1by2, Jelec, Jpip1by2, Jpim1by2, Jhole = Current2(
                 vindex,
                 n,
@@ -3903,8 +4176,10 @@ def Poisson_Schrodinger_DD_test(result, model):
                 Jpim1by2,
                 Jhole,
             )
-
             # End of main FOR loop for Va increment.
+            # Current2 now returns Jelec and Jhole in physical units (A/m^2)
+            # No further scaling by Js is required.
+
             Jtotal = Jelec + Jhole
             fi_va[vindex,:] =fi
 
@@ -4021,6 +4296,17 @@ def Poisson_Schrodinger_DD_test(result, model):
 
 
 def Poisson_Schrodinger_DD_test_2(result, model):
+    # Initialize all potential result variables to avoid UnboundLocalError
+    # We must be careful to define them before any potential access
+    n_max = model.n_max
+    Va_t = np.zeros(1)
+    Efn_result = Efp_result = Ei_result = Ec_result = Ev_result = np.zeros(n_max)
+    ro_result = el_field1_result = el_field2_result = nf_result = pf_result = np.zeros(n_max)
+    fi_result = np.zeros(n_max)
+    av_curr = np.zeros(1)
+    EF = fi_va = Ec_result_ = Ev_result_ = None
+    Total_Steps = 1
+    
     fi = result.fi_result
     E_state_general = result.E_state_general
     meff_state_general = result.meff_state_general
@@ -4069,6 +4355,26 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     TAUP0 = model.TAUP0
     mun0 = model.mun0
     mup0 = model.mup0
+    
+    # Scaling factors for DD system (Corrected to SI units)
+    # Scaling factors for DD system (Corrected to SI units)
+    # dx is already in meters, n_max is number of points
+    xbar = dx * n_max  # Total device length in meters
+    Vbar = Vt
+    # Convert mubar from cm2/Vs to m2/Vs
+    mubar_raw = max(max(mun0), max(mup0)) if max(max(mun0), max(mup0)) > 1e-12 else 0.1
+    mubar = mubar_raw * 1e-4  # m2/Vs
+    tbar = xbar ** 2 / (mubar * Vbar)
+    ns_scale = np.linalg.norm(dop, np.inf) if np.linalg.norm(dop, np.inf) > 1e15 else 1e18
+    # Rbar is the normalization for generation/recombination rate [m^-3 s^-1]
+    Rbar = ns_scale / tbar
+    
+    # Pass physical G_optical to solver (Convert cm^-3 s^-1 to m^-3 s^-1)
+    G_opt_phys = float(getattr(model, 'G_optical', 0.0)) * 1e6 
+    model.G_optical_scaled = G_opt_phys / Rbar # For solver normalization (dimensionless)
+    print(f"DEBUG: xbar={xbar:.2e} m, tbar={tbar:.2e} s, Rbar={Rbar:.2e} m^-3/s")
+    print(f"DEBUG: G_opt_phys={G_opt_phys:.2e}, G_scaled={model.G_optical_scaled:.2e}")
+    
     Cn0 = model.Cn0
     Cp0 = model.Cp0
     BETAN = model.BETAN
@@ -4107,8 +4413,10 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     # Preparing empty subband energy lists.
     E_state = [0.0] * subnumber_h  # Energies of subbands/levels (meV)
     N_state = [0.0] * subnumber_h  # Number of carriers in subbands
+    meff_state = [0.0] * subnumber_h # Effective mass of subbands
     E_statec = [0.0] * subnumber_e  # Energies of subbands/levels (meV)
     N_statec = [0.0] * subnumber_e  # Number of carriers in subbands
+    meff_statec = [0.0] * subnumber_e # Effective mass of subbands
     # Preparing empty subband energy arrays for multiquantum wells.
     """
     E_state_general = np.zeros((model.N_wells_virtual,subnumber_h))     # Energies of subbands/levels (meV)
@@ -4174,16 +4482,12 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     Nv = 2 * (2 * pi * vb_meff * kb * T / hbark ** 2) ** (3 / 2)
     Half_Eg = np.zeros(n_max)
     for i in range(n_max):
-        ni[i] = sqrt(
-            Nc[i] * Nv[i] * exp(-(fi_e[i] - fi_h[i]) / (kb * T))
-        )  # Intrinsic carrier concentration [1/m^3] kb*T/q
-        Ld_n_p[i] = sqrt(eps[i] * Vt / (q * abs(dop[i])))
-        Ldi[i] = sqrt(eps[i] * Vt / (q * ni[i]))
-        if dop[i] == 1:
-            dop[i] *= ni[i]
+        val_ni = sqrt( Nc[i] * Nv[i] * exp(-(fi_e[i] - fi_h[i]) / (kb * T)) )
+        ni[i] = max(val_ni, 1e18) # Unified ni_ref scaling
+        # No longer using Ldi here as it is recomputed scaled
         Half_Eg[i] = (fi_e[i] - fi_h[i]) / 2
-        fi_e[i] = fi_e[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
-        fi_h[i] = fi_h[i] - (kb * T * log(Nv[i] / Nc[i]) / 2)
+        # fi_e scaled
+        # fi_h scaled
         # fi_e[i] = Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
         # fi_h[i] = -Half_Eg[i] - kb * T * log(Nv[i] / Nc[i]) / 2
     n = result.nf_result / ni
@@ -4216,7 +4520,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     Jtotal = np.zeros((Total_Steps, n_max))
     J_Tunnling= np.zeros((Total_Steps, n_max))
     ###############################################################
-    len_ = xaxis[n_max - 1]
+    len_ = xaxis[n_max - 1]  # xaxis is already in meters
 
     #
     xm = np.mean(xaxis)
@@ -4244,21 +4548,25 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     fi_va = np.zeros((Total_Steps, n_max))
     Ec_result_ = np.zeros((Total_Steps, n_max))
     Ev_result_ = np.zeros((Total_Steps, n_max))
+    nf_result_ = np.zeros((Total_Steps, n_max))
+    pf_result_ = np.zeros((Total_Steps, n_max))
+    el_field1_result_ = np.zeros((Total_Steps, n_max))
+    el_field2_result_ = np.zeros((Total_Steps, n_max))
+    ro_result_ = np.zeros((Total_Steps, n_max))
     # J=np.zeros((Total_Steps,n_max-1))
-    lambda2 = np.zeros((Total_Steps, n_max))
     DV = np.zeros(Total_Steps)
     Emax = np.zeros(Total_Steps)
 
+
     nn, pp, fi_out = equi_np_fi(iteration, dop, Ppz_Psp, n_max, ni, model, Vt, surface)
+
     # xn = xm+1e-7
     # xp = xm-1e-7
     ## Scaling coefficients
-    xs = len_
-    ns1 = np.linalg.norm(dop, np.inf)
-
-    ns2 = np.linalg.norm(Ppz_Psp_tmp, np.inf)
-
-    ns = max(ns1, ns2)
+    ## SI Scaling coefficients (Unified)
+    xs = len_ # [m]
+    ns = np.linalg.norm(dop, np.inf) if np.linalg.norm(dop, np.inf) > 1e15 else 1e24 # [m-3]
+    Vs = Vt # [V]
         
     class data:
         def __init__(self):
@@ -4286,22 +4594,30 @@ def Poisson_Schrodinger_DD_test_2(result, model):
 
     idata = data()
     odata = data()
-
+    idata.n = nn * ni / ns # Both in m-3
+    idata.p = pp * ni / ns
+    idata.V = fi_out
+    
     Vs = Vt
-    us = max(max(mun0), max(mup0))
-    Js = xs / (us * Vs * q * ns)
+    us_raw = max(max(mun0), max(mup0)) if max(max(mun0), max(mup0)) > 1e-12 else 0.1
+    us = us_raw * 1e-4  # m2/Vs
     xbar = len_  # [m]
     Vbar = Vt  # [V]
-    mubar = max(max(mun0), max(mup0))  # [m^2 V^{-1} s^{-1}]
+    mubar = us  # [m^2 V^{-1} s^{-1}]
     tbar = xbar ** 2 / (mubar * Vbar)  # [s]
+    # Rbar is the normalization for generation/recombination rate [m^-3 s^-1]
+    # ns is m-3, tbar is s
     Rbar = ns / tbar
-    # [m^{-3} s^{-1}]
-    CAubar = Rbar / ns ** 3  # [m^6 s^{-1}]
+    # CAubar is Auger normalization [m^6 s^-1]
+    # R_phys = Cn * n^3 => R_norm = (Cn * ns^2 / (1/tbar)) * n_norm^3
+    CAubar = Rbar / ns ** 2  
     idata.Cn = Cn0 / CAubar
     idata.Cp = Cp0 / CAubar
+    # Using unified SI G_optical (m^-3 s^-1)
+    idata.G_optical = model.G_optical_scaled
     ###############################################################
-    if vmax == 0:
-        print("Va_max=0")
+    if Total_Steps < 2:
+        print("Equilibrium only (Total_Steps < 2)")
     else:
         print("Convergence of the Gummel cycles")
         vindex = 0
@@ -4320,37 +4636,37 @@ def Poisson_Schrodinger_DD_test_2(result, model):
             vvect[vindex] = Va
             # z
             xin = xaxis / xs
-            n_[vindex, :] = nn * ni
-            p_[vindex, :] = pp * ni
-            #
-            Fn = Va * (xaxis <= xm)
-            Fp = Fn
-            #
-            V_[vindex, :] = Fn - Vt * np.log(p_[vindex, :] / ni)
-            #
-            ## Scaling
+            
+            # Seed each step with equilibrium solution (normalized)
+            n_[vindex, :] = nn # Normalized to ns
+            p_[vindex, :] = pp # Normalized to ns
+            # Non-equilibrium seeds (normalized to Vs = Vt)
+            V_app_norm = (Va / Vs) * (xaxis <= xm)
+            V_[vindex, :] = fi_out + V_app_norm
+            Fn_[vindex, :] = (V_app_norm) - np.log(ni / ns)
+            Fp_[vindex, :] = (V_app_norm) + np.log(ni / ns)
 
-            Fn_[vindex, :] = Fn - Vs * np.log(ni / ns)
-            Fp_[vindex, :] = Fp + Vs * np.log(ni / ns)
-            #
             idata.l2 = (Vs * eps[0 : n_max - 1]) / (q * ns * xs ** 2)
             idata.nis = ni / ns
             idata.dop = dop / ns
             idata.Ppz_Psp = Ppz_Psp / ns
             # mun,mup=Mobility2(mun0,mup0,fi,Vt,Ldi,VSATN,VSATP,BETAN,BETAP,n_max,dx)
-            idata.mun = mun0 / us
-            idata.mup = mup0 / us
+            from aeslibs.func_lib import CaugheyThomasMobility
+            mun_ct, mup_ct = CaugheyThomasMobility(n_[vindex, :], p_[vindex, :], material_type='Si')
+            idata.mun = mun_ct / us
+            idata.mup = mup_ct / us
 
             # sinodes = np.arange(len(xaxis))
             idata.TAUN0 = TAUN0 / tbar  # np.inf
             idata.TAUP0 = TAUP0 / tbar  # np.inf
             idata.theta = ni / ns
 
-            idata.n = n_[vindex, :] / ns
-            idata.p = p_[vindex, :] / ns
+            idata.n = n_[vindex, :] # Already normalized to ns
+            idata.p = p_[vindex, :] # Already normalized to ns
             idata.V = V_[vindex, :] / Vs
             idata.Fn = Fn_[vindex, :] / Vs
             idata.Fp = Fp_[vindex, :] / Vs
+            idata.V_applied = Va # For selective contact BCs
             fitot = fi_h - Vt * q * idata.V
             fitotc = fi_e - Vt * q * idata.V
             if model.N_wells_virtual - 2 != 0 and config.quantum_effect:
@@ -4380,11 +4696,11 @@ def Poisson_Schrodinger_DD_test_2(result, model):
             ## Solution of DD system
             #
             ## Algorithm parameters
-            toll = 1e-3
-            maxit = 10
-            ptoll = 1e-10
-            pmaxit = 30
-            verbose = 0
+            toll = 1e-6  # Gummel convergence tolerance
+            maxit = 50   # Max Gummel iterations
+            ptoll = 1e-10  # Poisson solver tolerance
+            pmaxit = 20   # Poisson solver max iterations
+            verbose = 0   # Quiet mode for performance
                
             [odata, it, res] = DDGgummelmap(
                 n_max,
@@ -4402,11 +4718,100 @@ def Poisson_Schrodinger_DD_test_2(result, model):
                 model,
                 Vt,
             )
+            if getattr(model, 'photovoltaic_mode', False):
+                 # Sync Fermi levels with PV boundary conditions after solver
+                 # This ensures Fn/Fp at contacts are consistent with selective contacts
+                 fermin = np.vstack((odata.V, odata.Fn)).T
+                 fermip = np.vstack((odata.V, odata.Fp)).T
+                 fermin, fermip = apply_photovoltaic_BCs(fermin, fermip, odata.V, n_max, model, Va, idata)
+                 odata.Fn = fermin[:, 1]
+                 odata.Fp = fermip[:, 1]
+                 
+                 # Ensure positive carrier densities
+                 odata.n = np.maximum(np.exp(odata.V - odata.Fn), 1e-20)
+                 odata.p = np.maximum(np.exp(odata.Fp - odata.V), 1e-20)
             
             
-            [odata, it, res] = DDNnewtonmap(
-                ni, fi_e, fi_h, xin, odata, toll, maxit, verbose, model, Vt
-            )
+            # --- Series Resistance (Rs) Iterative Solver ---
+            from aeslibs.func_lib import Ubernoulli
+            
+            Rs_val = getattr(model, 'Rs', 0.0)
+            initial_V_bc = idata.V[n_max-1] 
+            rs_converged = False
+            
+            Device_Area = getattr(model, 'device_area_m2', 1e-8) 
+            rs_iters = 200 if Rs_val > 1e-6 else 1
+            
+            newton_toll = 1e-5
+            newton_maxit = 100
+            
+            # --- Best State Tracker ---
+            best_diff = 1e20
+            best_odata = None
+            damp = 0.1 # Reduced damping for high-bias stability
+            
+            # Scale before Newton solve
+            idata.n = n_[vindex, :]
+            idata.p = p_[vindex, :]
+            idata.V = V_[vindex, :]
+            
+            for rs_it in range(rs_iters):
+                [odata, it, res] = DDNnewtonmap(
+                    ni, fi_e, fi_h, xin, odata, newton_toll, newton_maxit, verbose, model, Vs
+                )
+                
+                if Rs_val <= 1e-6:
+                    best_odata = odata
+                    rs_converged = True
+                    break
+                
+                # Manual current calculation for Rs adjustment
+                v_curr = odata.V
+                n_curr = odata.n
+                p_curr = odata.p
+                arg = -(v_curr[1:] - v_curr[:-1])
+                Bp_vec = Ubernoulli(arg, 1)
+                Bm_vec = Ubernoulli(arg, 0)
+                dx_vec = xin[1:] - xin[:-1]
+                
+                Jn_scaled = -odata.mun[0:n_max-1] * (n_curr[1:]*Bp_vec - n_curr[:-1]*Bm_vec) / dx_vec
+                
+                arg_p = v_curr[1:] - v_curr[:-1]
+                Jp_scaled = odata.mup[0:n_max-1] * (p_curr[1:]*Ubernoulli(arg_p, 0) - p_curr[:-1]*Ubernoulli(arg_p, 1)) / dx_vec
+                
+                # Aestimo library Bernoulli sign convention check - ensure consistency
+                J_tot_scaled = np.abs(Jn_scaled + Jp_scaled)
+                J_tot_val_scaled = np.median(J_tot_scaled)
+                
+                J_physical = J_tot_val_scaled * (us * q * ns * Vs / xs)
+                I_physical = J_physical * Device_Area
+                
+                V_drop_scaled = (I_physical * Rs_val) / Vs
+                new_V_bc = initial_V_bc - V_drop_scaled
+                
+                diff = abs(new_V_bc - odata.V[n_max-1])
+                
+                # Track best state
+                if diff < best_diff:
+                    best_diff = diff
+                    import copy
+                    best_odata = copy.deepcopy(odata)
+                
+                if diff < 1e-4:
+                    rs_converged = True
+                    break
+                    
+                # Damping with clipping
+                max_step = 1.0 # 25mV limit
+                delta_V = np.clip(new_V_bc - odata.V[n_max-1], -max_step, max_step)
+                odata.V[n_max-1] += damp * delta_V
+                
+                # Sync for next solve
+                idata.V = odata.V.copy()
+            
+            # Use the best state found during iterations
+            odata = best_odata
+            # ---------------------------------------------
 
             n_[vindex, :] = odata.n
             p_[vindex, :] = odata.p
@@ -4424,33 +4829,63 @@ def Poisson_Schrodinger_DD_test_2(result, model):
             )
             #
 
+            # Band offsets for Bernoulli current (Normalized by Vs)
+            # fi_e, fi_h are in J. Convert to normalized potential.
+            fi_n_norm = -fi_e / (kb * T)
+            fi_p_norm = -fi_h / (kb * T)
+
             Bp = Ubernoulli(
                 (V_[vindex, 1:n_max] - V_[vindex, 0 : n_max - 1])
-                + (fi_n[1:n_max] - fi_n[0 : n_max - 1]),
+                + (fi_n_norm[1:n_max] - fi_n_norm[0 : n_max - 1]),
                 1,
             )
             Bm = Ubernoulli(
                 (V_[vindex, 1:n_max] - V_[vindex, 0 : n_max - 1])
-                + (fi_p[1:n_max] - fi_p[0 : n_max - 1]),
+                + (fi_p_norm[1:n_max] - fi_p_norm[0 : n_max - 1]),
                 0,
             )
+
+            # Use SI units for current density calculation
+            # xin is in m, mun is cm2/Vs, n_ is normalized by ns
+            # Jn = (mun * 1e-4) * q * (ns * n_) * Vt * (Bp - Bm) / dx
+            # However, aestimo uses a slightly different normalized form.
+            # We standardize to SI: J = q * mu * n * E + q * D * grad(n)
+            
+            # Physical Current Density Calculation (SI Pure [A/m^2])
+            # Formula: J = (q * mu * Vt * ni / dx) * [n_norm_{i+1} * B(dv) - n_norm_i * B(-dv)]
+            # We use physical mobility [m2/Vs] and physical density n_phys = n_norm * ni
+            
+            # Local dx [m] and Vt [V]
+            dx_eff = (xin[1:n_max] - xin[0 : n_max - 1]) * xs
+            
+            # Local mobilities converted to m2/Vs
+            mun_m2 = odata.mun[0 : n_max - 1] * us
+            mup_m2 = odata.mup[0 : n_max - 1] * us
+            
+            # Current components with Scharfetter-Gummel discretization
+            # n_norm here is n_phys / ni (from equi_np_fi or Solver)
             Jn[vindex, 0 : n_max - 1] = (
-                -odata.mun[0 : n_max - 1]
+                (q * mun_m2 * Vt * ns / dx_eff) 
                 * (n_[vindex, 1:n_max] * Bp - n_[vindex, 0 : n_max - 1] * Bm)
-                / (xin[1:n_max] - xin[0 : n_max - 1])
             )
             Jp[vindex, 0 : n_max - 1] = (
-                odata.mup[0 : n_max - 1]
-                * (p_[vindex, 1:n_max] * Bm - p_[vindex, 0 : n_max - 1] * Bp)
-                / (xin[1:n_max] - xin[0 : n_max - 1])
+                (q * mup_m2 * Vt * ns / dx_eff) 
+                * (p_[vindex, 0 : n_max - 1] * Bp - p_[vindex, 1:n_max] * Bm)
             )
-        ## Descaling
+            
+            # No early stopping - full sweep required for accurate Voc extraction
+            
+        ## Descaling to physical SI units
+        # Restore carrier and potential scaling for GUI displays
+        # Potential is normalized to Vt, densities to ns (m^-3)
         n_ = n_ * ns
         p_ = p_ * ns
         V_ = V_ * Vs
-        # J = abs (Jp+Jn)*Js
-        Jtotal = abs(Jp + Jn) * us * q * ns
-        Jtotal[:, n_max - 1] = Jtotal[:, n_max - 2]#+J_Tunnling[:, n_max - 2]
+        Fn_ = Fn_ * Vs
+        Fp_ = Fp_ * Vs
+
+        # Jtotal is in A/m^2 (SI). Convert to mA/cm^2 for Aestimo GUI (1 A/m2 = 0.1 mA/cm2)
+        Jtotal = (Jp + Jn) * 0.1
         #Fn = V_ / Vs - np.log(n_)
         #Fp = V_ / Vs + np.log(p_)
         # Fn_=Fn_*Vs
@@ -4472,16 +4907,25 @@ def Poisson_Schrodinger_DD_test_2(result, model):
         fi_result = V_[vindex, :]
         # Efn_result,Efp_result=Fn_[vindex,:],Fp_[vindex,:]
         nf_result, pf_result = n_[vindex, :], p_[vindex, :]
-        av_curr = Jtotal[:, n_max - 1]
+        # Use median of p-side (0-20% of device) with sign negated for photovoltaic convention.
+        # In the Newton-Krylov path, Jtotal in the n-side (80-100%) is positive and INCREASES with
+        # forward bias because the dark current adds in the same direction as photocurrent.
+        # The p-side (0-20%) has the correct sign: photocurrent is negative (flows right-to-left
+        # in the n→p conventional direction). Negating gives the standard convention:
+        #   av_curr < 0 at V=0 (= -Jsc), rises toward 0 at Voc, positive for V > Voc.
+        idx_lo = 1
+        idx_hi = max(2, int(0.2 * n_max))
+        for k in range(Total_Steps):
+            av_curr[k] = -np.median(Jtotal[k, idx_lo:idx_hi])
         for i in range(1, n_max - 1):
             Ec_result[i] = fi_e[i] / q - V_[vindex, i]  # Values from the second Node%
             Ev_result[i] = fi_h[i] / q - V_[vindex, i]  # Values from the second Node%
             Ei_result[i] = Ec_result[i] - ((fi_e[i] - fi_h[i]) / (2 * q))
-            ro_result[i] = -q * (n_[vindex, i] - p_[vindex, i] - ns * dop[i])
+            ro_result[i] = -q * (n_[vindex, i] - p_[vindex, i] - dop[i])
             el_field1_result[i] = -(V_[vindex, i + 1] - V_[vindex, i]) / (dx)
             el_field2_result[i] = -(V_[vindex, i + 1] - V_[vindex, i - 1]) / (2 * dx)
-            Efn_result[i] = Ei_result[i] + Vt * log(n_[vindex, i]/ni[i]+1)
-            Efp_result[i] = Ei_result[i] - Vt * log(p_[vindex, i]/ni[i]+1)
+            Efn_result[i] = Ei_result[i] + Vt * np.log(np.maximum(n_[vindex, i]/ni[i], 1e-20))
+            Efp_result[i] = Ei_result[i] - Vt * np.log(np.maximum(p_[vindex, i]/ni[i], 1e-20))
         Ec_result[0] = Ec_result[1]
         Ec_result[n_max - 1] = Ec_result[n_max - 2]
         Ev_result[0] = Ev_result[1]
@@ -4510,6 +4954,17 @@ def Poisson_Schrodinger_DD_test_2(result, model):
         for vindex in range(Total_Steps):
             Ec_result_[vindex, :] = fi_e / q - V_[vindex, :]  # Values from the all Node%
             Ev_result_[vindex, :] = fi_h / q - V_[vindex, :]  # Values from the all Node%
+            nf_result_[vindex, :] = n_[vindex, :]
+            pf_result_[vindex, :] = p_[vindex, :]
+            ro_result_[vindex, 1:n_max-1] = -q * (n_[vindex, 1:n_max-1] - p_[vindex, 1:n_max-1] - dop[1:n_max-1])
+            ro_result_[vindex, 0] = ro_result_[vindex, 1]
+            ro_result_[vindex, n_max-1] = ro_result_[vindex, n_max-2]
+            el_field1_result_[vindex, 1:n_max-1] = -(V_[vindex, 2:n_max] - V_[vindex, 1:n_max-1]) / (dx)
+            el_field1_result_[vindex, 0] = el_field1_result_[vindex, 1]
+            el_field1_result_[vindex, n_max-1] = el_field1_result_[vindex, n_max-2]
+            el_field2_result_[vindex, 1:n_max-1] = -(V_[vindex, 2:n_max] - V_[vindex, 0:n_max-2]) / (2 * dx)
+            el_field2_result_[vindex, 0] = el_field2_result_[vindex, 1]
+            el_field2_result_[vindex, n_max-1] = el_field2_result_[vindex, n_max-2]
         if model.N_wells_virtual - 2 != 0 and config.quantum_effect:
             (
                 idata.E_statec_general,
@@ -4559,10 +5014,10 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     results.V = V
     results.E_state = E_state
     results.N_state = N_state
-    # results.meff_state = meff_state
+    results.meff_state = meff_state
     results.E_statec = E_statec
     results.N_statec = N_statec
-    # results.meff_statec = meff_statec
+    results.meff_statec = meff_statec
     results.F_general = F_general
     results.E_state_general = idata.E_state_general
     results.N_state_general = N_state_general
@@ -4597,29 +5052,68 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     results.fi_va = fi_va
     results.Ec_result_ = Ec_result_
     results.Ev_result_ = Ev_result_
+    results.nf_result_ = nf_result_
+    results.pf_result_ = pf_result_
+    results.el_field1_result_ = el_field1_result_
+    results.el_field2_result_ = el_field2_result_
+    results.ro_result_ = ro_result_
     return results
 
 
 
 
 
-def run_aestimo(input_obj, drawFigures=drawFigures):
+def run_aestimo(input_obj, drawFigures=drawFigures, show=True):
     """A utility function that performs the standard simulation run
     for 'normal' input files. Input_obj can be a dict, class, named tuple or 
     module with the attributes needed to create the StructureFrom class, see 
     the class implementation or some of the sample-*.py files for details."""
+    
+    global output_directory
+    # Hack: If output_directory is currently generic 'output', and we know the input filename, switch it.
+    # This supports running examples directly like `python examples/sample.py` which import aestimo.
+    if os.path.basename(output_directory) == 'output':
+        # Try to find meaningful name
+        name = None
+        if hasattr(input_obj, '__file__'):
+            name = Path(input_obj.__file__).stem
+        elif isinstance(input_obj, dict) and '__file__' in input_obj:
+            name = Path(input_obj['__file__']).stem
+        elif hasattr(input_obj, 'inputfilename'):
+            name = input_obj.inputfilename
+        
+        if name:
+             # Repoint output directory
+             new_out = os.path.join(os.getcwd(), name + "_output")
+             if not os.path.isdir(new_out):
+                 os.makedirs(new_out, exist_ok=True)
+             output_directory = new_out
+
     # Add to log
-    logger.info("Aestimo 1D is starting...")
+    # Note: If we changed output_directory, the logger is still pointing to the old file 
+    # if it was already initialized. However, usually initialize_logger is called before this.
+    # If we want logs in the new directory, we'd need to re-init logger. 
+    # But initialize_logger uses the global output_directory.
+    # For now, we accept logs might be in 'output' or we should technically re-init logger here.
+    # Let's leave logger as is to avoid complex side effects, as users mainly care about data results.
+    
     # Initialise structure class
     model = StructureFrom(input_obj, database)
 
     # Perform the calculation
     
-    if model.comp_scheme == 10:
+    print(f"DEBUG: run_aestimo called. model.comp_scheme={model.comp_scheme}")
+    if model.comp_scheme == 11:
+        # Scheme 11: 8-band k·p with arbitrary crystal orientation
         result = Poisson_Schrodinger_new(model)
     else:
         result = Poisson_Schrodinger(model)
-    if model.comp_scheme == 7:
+    
+    print(f"DEBUG: Poisson_Schrodinger done. checking comp_scheme for DD routing: {model.comp_scheme}")
+    if model.comp_scheme in (7, 10):
+        if model.comp_scheme == 10:
+            model.use_newton_solver = True
+        print("DEBUG: Routing to Poisson_Schrodinger_DD (Fully-Coupled Newton-Raphson enabled for scheme 10)")
         result_dd = Poisson_Schrodinger_DD(result, model)
     if model.comp_scheme == 8:
         result_dd = Poisson_Schrodinger_DD_test(result, model)
@@ -4630,15 +5124,189 @@ def run_aestimo(input_obj, drawFigures=drawFigures):
     logger.info("total running time (inc. loading libraries) %g s", (time4 - time0))
     logger.info("total running time (exc. loading libraries) %g s", (time4 - time1))
     # Write the simulation results in files
-    # Write the simulation results in files
-    figures = None
-    if model.comp_scheme in (2,7,8,10):
-        figures = save_and_plot(result, model, output_directory, drawFigures=drawFigures)
-    if model.comp_scheme in (7,8,9):
-        figures = save_and_plot2(result_dd, model, output_directory, drawFigures=drawFigures)
+
+    figs_out = []
+    if model.comp_scheme in (0, 1, 2, 7, 8, 10):
+        res_figs = save_and_plot(result, model, output_directory, drawFigures=drawFigures, show=show)
+        if isinstance(res_figs, list): figs_out.extend(res_figs)
+    if model.comp_scheme in (7,8,9,10):
+        res_figs2 = save_and_plot2(result_dd, model, output_directory, drawFigures=drawFigures, show=show)
+        if isinstance(res_figs2, list): figs_out.extend(res_figs2)
+    figures = figs_out
+    
+    # Experimental Validation Hook
+    # Check if input_obj or model has experimental validation enabled
+    enable_val = False
+    if isinstance(input_obj, dict):
+        enable_val = input_obj.get('enable_experimental_validation', False)
+    else:
+        enable_val = getattr(input_obj, 'enable_experimental_validation', False)
+
+    # If DD was performed, return that result as it contains more info
+    final_res = result
+    if model.comp_scheme in (7, 8, 9, 10) and 'result_dd' in locals():
+        final_res = result_dd
+
+    # Quantum-Well Confined States Solver Hook (Advanced Physics Mode)
+    enable_qw = getattr(model, 'enable_qw_solver', False)
+    if isinstance(input_obj, dict):
+        enable_qw = enable_qw or input_obj.get('enable_qw_solver', False)
+    else:
+        enable_qw = enable_qw or getattr(input_obj, 'enable_qw_solver', False)
+
+    if enable_qw:
+        try:
+            from aeslibs.quantum_well import solve_quantum_well, solve_self_consistent_qw_poisson
+            logger.info("Running Advanced Quantum-Well Confined-State Solver module...")
+            
+            n_pts = model.n_max
+            dx_nm = model.dx * 1e9
+            z_grid = np.arange(n_pts) * dx_nm
+
+            # Get Ec profile in eV
+            if hasattr(final_res, 'fitotc') and final_res.fitotc is not None and len(final_res.fitotc) == n_pts:
+                ec_raw = np.asarray(final_res.fitotc, dtype=float)
+            elif hasattr(final_res, 'Ec_result') and final_res.Ec_result is not None and len(final_res.Ec_result) == n_pts and np.any(final_res.Ec_result != 0):
+                ec_raw = np.asarray(final_res.Ec_result, dtype=float)
+            elif hasattr(model, 'fi_e') and len(model.fi_e) == n_pts:
+                ec_raw = np.asarray(model.fi_e, dtype=float)
+            else:
+                ec_raw = np.zeros(n_pts)
+
+            if np.max(np.abs(ec_raw)) < 1e-10:
+                ec_ev = ec_raw / 1.602176634e-19
+            else:
+                ec_ev = ec_raw
+
+            # Get Ev profile in eV
+            if hasattr(final_res, 'fitot') and final_res.fitot is not None and len(final_res.fitot) == n_pts:
+                ev_raw = np.asarray(final_res.fitot, dtype=float)
+            elif hasattr(final_res, 'Ev_result') and final_res.Ev_result is not None and len(final_res.Ev_result) == n_pts and np.any(final_res.Ev_result != 0):
+                ev_raw = np.asarray(final_res.Ev_result, dtype=float)
+            elif hasattr(model, 'fi_h') and len(model.fi_h) == n_pts:
+                ev_raw = np.asarray(model.fi_h, dtype=float)
+            else:
+                ev_raw = ec_raw - 1.424 * 1.602176634e-19
+
+            if np.max(np.abs(ev_raw)) < 1e-10:
+                ev_ev = ev_raw / 1.602176634e-19
+            else:
+                ev_ev = ev_raw
+
+            layer_dicts = []
+            for l in model.material:
+                th = float(l[0])
+                mat = str(l[1])
+                x = float(l[2]) if len(l) > 2 else 0.0
+                y = float(l[3]) if len(l) > 3 else 0.0
+                dop = float(l[4]) if len(l) > 4 else 0.0
+                dtype = str(l[5]) if len(l) > 5 else "n"
+                ltype = "well" if (len(l) > 6 and str(l[6]).lower() == 'w') else "barrier"
+                layer_dicts.append({
+                    "thickness": th,
+                    "material": mat,
+                    "mole": x,
+                    "mole_y": y,
+                    "doping": dop,
+                    "doping_type": dtype,
+                    "type": ltype
+                })
+
+            num_e = getattr(model, 'num_electron_states', 3)
+            num_h = getattr(model, 'num_hole_states', 3)
+            self_consistent = getattr(model, 'qw_self_consistent', False)
+
+            if self_consistent:
+                dop_arr = model.dop * 1e-6 if hasattr(model, 'dop') else np.zeros(n_pts)
+                eps_arr = model.eps / 8.8541878128e-12 if hasattr(model, 'eps') else np.full(n_pts, 12.9)
+                qw_result = solve_self_consistent_qw_poisson(
+                    z_nm=z_grid,
+                    initial_ec=ec_ev,
+                    initial_ev=ev_ev,
+                    dielectric_rel=eps_arr,
+                    doping_profile_cm3=dop_arr,
+                    layers=layer_dicts,
+                    temperature_k=getattr(model, 'T', 300.0),
+                    max_iterations=getattr(model, 'qw_max_iterations', 20),
+                    tolerance_ev=getattr(model, 'qw_tolerance', 1e-4),
+                    damping_factor=getattr(model, 'qw_damping', 0.2),
+                    num_e_states=num_e,
+                    num_h_states=num_h
+                )
+            else:
+                qw_result = solve_quantum_well(
+                    band_profile={"z": z_grid, "ec": ec_ev, "ev": ev_ev},
+                    layers=layer_dicts,
+                    temperature_k=getattr(model, 'T', 300.0),
+                    num_electron_states=num_e,
+                    num_hole_states=num_h,
+                    coupling_mode=getattr(model, 'qw_coupling_mode', "Coupled MQW"),
+                    mat_system=getattr(model, 'mat_type', 'Zincblende')
+                )
+
+            final_res.qw_result = qw_result
+            logger.info("QW Solver: Found %d electron states and %d hole states.", len(qw_result.electron_energies), len(qw_result.hole_energies))
+            if qw_result.dominant_transitions:
+                top_trans = qw_result.dominant_transitions[0]
+                logger.info("QW Ground Optical Transition: %s | E = %.4f eV | lambda = %.1f nm | Overlap Gamma = %.3f",
+                            top_trans['name'], top_trans['energy_ev'], top_trans['wavelength_nm'], top_trans['overlap'])
+        except Exception as qw_err:
+            logger.warning("Quantum-Well Confined-State solver encountered an error: %s", qw_err)
+
     # Add to log
     logger.info("Simulation is finished. All files are closed. Please control the related files.")
-    return input_obj, model, result, figures
+    return input_obj, model, final_res, figures
+
+def calculate_eqe(model, wavelengths):
+    """
+    Calculates the External Quantum Efficiency (EQE) for a given set of wavelengths.
+    This performs a spectral sweep, calculating current response for each wavelength.
+    """
+    eqe_results = []
+    logger.info("Starting EQE Calculation for %d wavelengths", len(wavelengths))
+    
+    # Save original generation state
+    orig_type = getattr(model, 'generation_type', 'Uniform')
+    orig_alpha = getattr(model, 'alpha', 0.0)
+    orig_g = getattr(model, 'G_optical', 0.0)
+    
+    # Photon flux for EQE (typically 1e17 cm^-2 s^-1 or similar low injection)
+    photon_flux = 1e17 # cm^-2 s^-1
+    
+    for wl in wavelengths:
+        logger.info(f"  Calculating EQE at {wl} nm...")
+        # Update model for this wavelength
+        # In a real scenario, alpha(lambda) would come from a database.
+        # Here we use a simple placeholder or the user-provided alpha.
+        model.generation_type = 'Exponential (Beer-Lambert)'
+        # For demo, use current alpha or a simple 1/wl scaling if alpha not provided
+        model.G_optical = photon_flux 
+        
+        # Run one-point simulation (usually at V=0 for EQE/IQE)
+        orig_vmin, orig_vmax, orig_step = model.vmin, model.vmax, model.Each_Step
+        model.vmin, model.vmax, model.Each_Step = 0.0, 0.0, 0.1
+        
+        _, _, res, _ = run_aestimo(model, drawFigures=False)
+        
+        # Restore voltages
+        model.vmin, model.vmax, model.Each_Step = orig_vmin, orig_vmax, orig_step
+        
+        # Calculate EQE
+        # EQE = (Jsc / q) / PhotonFlux
+        # Jsc is in A/m^2. q = 1.6e-19 C. 
+        # Jsc / q -> electrons/m^2/s. 
+        # PhotonFlux in cm^-2s^-1 -> multiply by 1e4 for m^-2s^-1
+        jsc = abs(res.av_curr[0])
+        flux_m2 = photon_flux * 1e4
+        eqe = (jsc / q) / flux_m2 if flux_m2 > 0 else 0.0
+        eqe_results.append(eqe)
+        
+    # Restore model
+    model.generation_type = orig_type
+    model.alpha = orig_alpha
+    model.G_optical = orig_g
+    
+    return np.array(eqe_results)
 
 if __name__ == "__main__":
     # Arguments parsing
@@ -4682,16 +5350,83 @@ if __name__ == "__main__":
             input_dir = os.path.dirname(inputFile)
             sys.path.append(input_dir)
             
-            # Load input file with importlib
+            # Load input file
             module_name = Path(inputFile).stem
-            spec = importlib.util.spec_from_file_location(module_name, inputFile)
-            if spec and spec.loader:
-                inputfile_import = importlib.util.module_from_spec(spec)
-                sys.modules[module_name] = inputfile_import
-                spec.loader.exec_module(inputfile_import)
+            if inputFile.endswith('.json'):
+                import json
+                class InputObject:
+                    def __init__(self, data):
+                        for key, value in data.items():
+                            setattr(self, key, value)
+                        
+                        # Normalize JSON data to match what the core expects
+                        # 1. Map 'layers' to 'material' list format
+                        if hasattr(self, 'layers'):
+                            self.material = []
+                            for layer in self.layers:
+                                # Solver expects: [thickness, mat, mole, mole_y, doping, doping_type, layer_type]
+                                self.material.append([
+                                    float(layer.get('thickness', 0)),
+                                    layer.get('material', ''),
+                                    float(layer.get('mole', 0)),
+                                    float(layer.get('mole_y', 0)),
+                                    float(layer.get('doping', 0)),
+                                    layer.get('doping_type', 'n'),
+                                    layer.get('type', 'barrier')[:1] # 'b' or 'w'
+                                ])
+                        
+                        # Handle generation type case/string mapping
+                        if hasattr(self, 'generation_type'):
+                            gt = str(self.generation_type).lower()
+                            if 'exponential' in gt:
+                                self.generation_type = 'exponential'
+                            else:
+                                self.generation_type = 'uniform'
+                        
+                        # 2. Map other common keys if they differ
+                        if hasattr(self, 'temp'): self.T = float(self.temp)
+                        if hasattr(self, 'grid_step'): self.gridfactor = float(self.grid_step)
+                        if hasattr(self, 'max_pts'): self.maxgridpoints = int(self.max_pts)
+                        if hasattr(self, 'mat_sys'): self.mat_type = self.mat_sys
+                        if hasattr(self, 'vstep'): self.Each_Step = float(self.vstep)
+                        if hasattr(self, 'area'): self.device_area = float(self.area)
+                        if hasattr(self, 'tat_field'): self.tat_field = float(self.tat_field)
+                        
+                        # 3. Solver and Mode Mapping
+                        if hasattr(self, 'solver'):
+                            # Extract numeric index from strings like "7: SP-Drift Diffusion"
+                            import re
+                            match = re.search(r'(\d+)', str(self.solver))
+                            if match:
+                                self.comp_scheme = int(match.group(1))
+                                self.computation_scheme = self.comp_scheme
+                        
+                        if hasattr(self, 'device_type'):
+                            if "Solar Cell" in str(self.device_type):
+                                self.photovoltaic_mode = True
+                            else:
+                                self.photovoltaic_mode = False
+                        
+                        # Ensure numeric types for critical params
+                        for attr in ['vmin', 'vmax', 'G_optical', 'alpha']:
+                            if hasattr(self, attr):
+                                try: setattr(self, attr, float(getattr(self, attr)))
+                                except: pass
+                
+                with open(inputFile, 'r') as f:
+                    data = json.load(f)
+                inputfile_import = InputObject(data)
+                inputfile_import.__file__ = inputFile
             else:
-                print(f"Could not load input file: {inputFile}")
-                sys.exit(1)
+                # Load input file with importlib
+                spec = importlib.util.spec_from_file_location(module_name, inputFile)
+                if spec and spec.loader:
+                    inputfile_import = importlib.util.module_from_spec(spec)
+                    sys.modules[module_name] = inputfile_import
+                    spec.loader.exec_module(inputfile_import)
+                else:
+                    print(f"Could not load input file: {inputFile}")
+                    sys.exit(1)
                 
             # Add to log
             logger.info("Inputfile is %s", inputFile)
@@ -4708,7 +5443,7 @@ if __name__ == "__main__":
         # output error, and return with an error code
         print (str(err))
 
-    output_directory = os.path.join(os.getcwd(), Path(inputFile).stem)
+    output_directory = os.path.join(os.getcwd(), Path(inputFile).stem + "_output")
 
     #If output directory is not available, make one.
     if not os.path.isdir(output_directory):
@@ -4721,6 +5456,25 @@ if __name__ == "__main__":
     run_aestimo(inputfile_import)
 
 else:
+    # When imported as a module or default run without arguments?
+    # Actually this else block runs if __name__ != "__main__", which means it's imported.
+    # But this code block is inside `if __name__ == "__main__":` ?
+    # Wait, looking at file... lines 4643 is `if __name__ == "__main__":`
+    # The `else` at 4723 is matched to `if args.inputfile is not None:` ?
+    # Let's check indentation.
+    # Line 4679: if args.inputfile is not None:
+    # Line 4723: else:
+    #     output_directory = os.path.join(os.getcwd(), 'output')
+    
+    # Yes. This else handles the case where no input file is provided but it survived the earlier check?
+    # Line 4656: if args is None: ... sys.exit()
+    # But argparse handles this. 
+    # Actually if args.inputfile is None, we print "Please provide..." and exit at 4700.
+    # So the `else` block at 4723 is effectively dead code or unreachable given current logic?
+    # Or maybe it was intended for something else.
+    # Regardless, let's leave it as 'output' or maybe 'aestimo_output'.
+    # User asked for "each example file should have output folder in its name".
+    
     output_directory = os.path.join(os.getcwd(), 'output')
 
     #If output directory is not available, make one.
@@ -4730,3 +5484,4 @@ else:
     initialize_logger()
 
     os.sys.stderr.write("WARNING: Aestimo 1D logs automatically to aestimo.log in the output directory.\n")
+

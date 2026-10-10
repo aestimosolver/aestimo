@@ -1,0 +1,149 @@
+{
+  "device_id": "LED-ALGAAS-DH-IR-870NM",
+  "device_name": "Schubert 2006 AlGaAs/GaAs Double-Heterostructure 870nm Infrared LED",
+  "validation_status": "REFERENCE COMPARISON / PROVENANCE UNVERIFIED",
+  "device_type": "LED Simulation / Characterization",
+  "bibliographic_reference": {
+    "title": "Light-Emitting Diodes (2nd Edition)",
+    "authors": "E. F. Schubert",
+    "journal": "Cambridge University Press",
+    "volume": "2nd Edition",
+    "pages": "Chapters 5 and 6",
+    "year": 2006,
+    "doi": "10.1017/CBO9780511790546",
+    "co_reference": "G. E. Steranka et al., High-efficiency AlGaAs light-emitting diodes, HP Journal 39, 84-88 (1988)"
+  },
+  "parameter_provenance": {
+    "layer_stack": {
+      "classification": "EXPERIMENTAL",
+      "source": "Schubert (2006) Fig. 6.2 & Steranka et al. (1988): 100 nm GaAs active region confined by Al0.35Ga0.65As cladding"
+    },
+    "mesa_area_cm2": {
+      "classification": "EXPERIMENTAL",
+      "value": 0.000625,
+      "unit": "cm^2",
+      "source": "250 um x 250 um standard commercial die dimension"
+    },
+    "active_region_material": {
+      "classification": "EXPERIMENTAL",
+      "value": "GaAs",
+      "source": "Binary GaAs active layer with Eg = 1.424 eV emitting at 870 nm"
+    },
+    "active_layer_thickness_nm": {
+      "classification": "EXPERIMENTAL",
+      "value": 100.0,
+      "unit": "nm",
+      "source": "Reported double-heterostructure active thickness"
+    },
+    "cladding_mole_fraction": {
+      "classification": "EXPERIMENTAL",
+      "value": 0.35,
+      "source": "Al0.35Ga0.65As carrier confinement cladding (Delta_Eg ~ 0.44 eV)"
+    },
+    "radiative_coefficient_B": {
+      "classification": "EXPERIMENTAL",
+      "value": 1e-10,
+      "unit": "cm^3/s",
+      "source": "Established GaAs bimolecular recombination coefficient at 300 K (Casey & Stern, 1976)"
+    },
+    "shockley_read_hall_A": {
+      "classification": "DERIVED",
+      "value": 5000000.0,
+      "unit": "s^-1",
+      "source": "Derived from minority carrier lifetime tau_nr ~ 200 ns in high-purity GaAs"
+    },
+    "auger_coefficient_C": {
+      "classification": "EXPERIMENTAL",
+      "value": 1e-30,
+      "unit": "cm^6/s",
+      "source": "Strauss et al. (1993) for bulk GaAs"
+    },
+    "series_resistance_rs": {
+      "classification": "FITTED",
+      "value": 3.85,
+      "unit": "Ohm",
+      "method": "Fitted to experimental high-injection differential slope dV/dI"
+    },
+    "shunt_resistance_rsh": {
+      "classification": "FITTED",
+      "value": 50000000.0,
+      "unit": "Ohm",
+      "method": "Sub-threshold reverse slope"
+    },
+    "light_extraction_efficiency": {
+      "classification": "ASSUMED",
+      "value": 0.08,
+      "rationale": "Clear dome epoxy encapsulation enhancement over bare planar GaAs (1 / (2 n (n+1)) ~ 8%)"
+    }
+  },
+  "layers": [
+    {
+      "material": "GaAs",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "50.0",
+      "doping": "5.0e+18",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "material": "AlGaAs",
+      "mole": "0.35",
+      "mole_y": "0.0",
+      "thickness": "1000.0",
+      "doping": "1.0e+18",
+      "doping_type": "p",
+      "type": "barrier"
+    },
+    {
+      "material": "GaAs",
+      "mole": "0.0",
+      "mole_y": "0.0",
+      "thickness": "100.0",
+      "doping": "1.0e+15",
+      "doping_type": "n",
+      "type": "well"
+    },
+    {
+      "material": "AlGaAs",
+      "mole": "0.35",
+      "mole_y": "0.0",
+      "thickness": "1000.0",
+      "doping": "1.0e+18",
+      "doping_type": "n",
+      "type": "barrier"
+    }
+  ],
+  "temp": "300.0",
+  "field": "0.0",
+  "bc_left": "0.0",
+  "bc_right": "0.0",
+  "vmin": "0.0",
+  "vmax": "1.85",
+  "vstep": "0.025",
+  "solver": "10: Fully-Coupled Newton-Raphson",
+  "grid_step": "0.5",
+  "max_pts": "200000",
+  "mat_sys": "Zincblende",
+  "sub_e": "3",
+  "sub_h": "3",
+  "Quantum_Regions": false,
+  "Quantum_Regions_boundary": "[[0.0, 0.0]]",
+  "tat_field": "1e10",
+  "exp_file": "examples/experimental_data/led_schubert2006_algaas_dh_iv.csv",
+  "exp_spectrum_file": "examples/experimental_data/led_schubert2006_algaas_dh_el_spectrum.csv",
+  "area": "6.25e-4",
+  "rs": "3.85",
+  "rs_mode": "External (Fast)",
+  "rsh": "5.0e7",
+  "G_optical": "0.0",
+  "graded_junc": false,
+  "diffusion_len": "10.0",
+  "enable_polarization": false,
+  "target_peak_wavelength_nm": 870.0,
+  "target_fwhm_nm": 35.0,
+  "eta_extraction": 0.08,
+  "recommended_usage": "Primary Benchmark / Double Heterostructure IR LED",
+  "bibliographic_reference_note": "E. F. Schubert, Light-Emitting Diodes (2006) / Steranka et al. (1988)",
+  "audit_notes": "Reference comparison only. Origin is model-generated where stated in CSV headers; all measurement/digitization claims require original-source review. Numerical agreement and calibration are separate assessments."
+}

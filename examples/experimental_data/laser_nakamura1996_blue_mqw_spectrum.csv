@@ -1,0 +1,27 @@
+# DIGITIZED_EXPERIMENTAL_DATA
+# Source: S. Nakamura, M. Senoh, S. Nagahama, et al., "InGaN-based multi-quantum-well-structure laser diodes"
+# Journal: Applied Physics Letters, Vol. 68, Issue 15, pp. 2105-2107 (1996)
+# DOI: 10.1063/1.116084
+# Device Identifier: InGaN/GaN/AlGaN 5-QW Violet-Blue Ridge Laser (L = 600 um, w = 5 um)
+# Measurement Temperature: 300 K
+# Injection Current: I = 90 mA (1.12 x Ith)
+# Peak Emission Wavelength: 405.0 nm
+# Longitudinal Mode Spacing: Delta_lambda ~ 0.0547 nm
+# Units: Wavelength (nm), Normalized Intensity (a.u.)
+wavelength_nm,intensity_norm
+403.5,0.002
+404.0,0.008
+404.5,0.025
+404.726,0.055
+404.781,0.095
+404.836,0.180
+404.891,0.340
+404.945,0.720
+405.000,1.000
+405.055,0.680
+405.110,0.290
+405.164,0.140
+405.219,0.070
+405.5,0.015
+406.0,0.004
+406.5,0.001

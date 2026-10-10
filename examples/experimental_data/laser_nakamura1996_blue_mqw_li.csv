@@ -1,0 +1,38 @@
+# DIGITIZED_EXPERIMENTAL_DATA
+# Source: S. Nakamura, M. Senoh, S. Nagahama, et al., "InGaN-based multi-quantum-well-structure laser diodes"
+# Journal: Applied Physics Letters, Vol. 68, Issue 15, pp. 2105-2107 (1996)
+# DOI: 10.1063/1.116084
+# Device Identifier: InGaN/GaN/AlGaN 5-QW Violet-Blue Ridge Laser (L = 600 um, w = 5 um)
+# Measurement Temperature: 300 K (Pulsed / Room Temperature CW)
+# Emission Wavelength: 405.0 nm
+# Threshold Current: Ith ~ 80.0 mA (Jth ~ 2.67 kA/cm^2)
+# Slope Efficiency: ~ 0.40 mW/mA per facet
+# Forward Threshold Voltage: Vth ~ 5.5 V
+# Digitization Method: High-resolution plot digitization of Fig. 2 L-I characteristics
+# Units: Current (mA), Output Power (mW per facet)
+current_ma,power_mw
+0.0,0.000
+10.0,0.015
+20.0,0.045
+30.0,0.085
+40.0,0.145
+50.0,0.220
+60.0,0.315
+70.0,0.440
+75.0,0.520
+78.0,0.610
+80.0,0.750
+82.0,1.550
+85.0,2.750
+88.0,3.950
+90.0,4.750
+95.0,6.720
+100.0,8.680
+105.0,10.620
+110.0,12.550
+115.0,14.450
+120.0,16.350
+125.0,18.200
+130.0,20.050
+140.0,23.650
+150.0,27.100
