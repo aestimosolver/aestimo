@@ -22,11 +22,13 @@ On Windows PowerShell:
 .venv\Scripts\Activate.ps1
 ```
 
-Install the current upstream development version:
+Install the source currently used for 4.0.0 preparation. This documentation
+tracks the development fork; the final release will be coordinated with the
+upstream project:
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install "git+https://github.com/aestimosolver/aestimo.git@master"
+python -m pip install "git+https://github.com/sblisesivdin/aestimo.git@master"
 ```
 
 This command requires Git. Alternatively, download and extract the repository,
@@ -43,8 +45,7 @@ python -m pip install aestimo
 ```
 
 This installs the version currently published on PyPI. It may differ from
-`master` and may not contain the GUI documented here. This documentation change
-does not publish a new release. Inspect the installed distribution with:
+`master` and may not contain the GUI documented here. The 4.0.0 source described here is still being prepared for publication. Inspect the installed distribution with:
 
 ```bash
 python -m pip show aestimo
@@ -53,8 +54,7 @@ python -m pip check
 
 ## Using an existing conda installation
 
-The old website used a conda environment. That remains an alternative to
-`venv`; conda itself is not required by Aestimo. With conda already installed:
+You can use conda instead of `venv`. With conda already installed:
 
 ```bash
 conda create --name aes python=3.12 pip

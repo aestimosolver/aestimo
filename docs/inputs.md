@@ -16,8 +16,7 @@ Quantum_Regions = False         # boolean: optional region selection
 
 A shebang is useful when executing a script directly on Unix-like systems, but
 is not required when loading it with `aestimo -i`. Python 3 reads UTF-8 source
-by default. The old manual's claim that assignments are sequence insensitive
-should not be applied to Python input programs.
+by default. Define variables before expressions that use them.
 
 
 A Python input defines attributes consumed by `StructureFrom`. The source
@@ -74,6 +73,19 @@ maps `layers` to `material` and translates these common fields:
 
 Other device-specific options should follow a preset for the corresponding
 workflow. These tables describe common fields, not an exhaustive schema.
+
+## Using a GUI project from the CLI
+
+The CLI accepts JSON, but its loader does not reproduce every GUI worker or
+post-processing study. The table above describes the mappings actually made
+by the CLI. For example, GUI fields `field`, `sub_e`, `sub_h`, `bc_left` and
+`bc_right` are not automatically the Python fields `Fapplied`, `subnumber_e`,
+`subnumber_h` and `surface`.
+
+Use the GUI for its device-specific characterization and study workflows.
+For a controlled CLI calculation, start from a Python example or review the
+JSON-to-solver mapping and the model settings explicitly. Loading the same
+JSON is not a guarantee that both interfaces run the same calculation.
 
 ## Numerical controls
 

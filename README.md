@@ -5,12 +5,12 @@ Schrödinger–Poisson and drift–diffusion solvers, a command-line interface a
 desktop GUI. Aestimo supports educational and scientific calculations of
 quantum wells and semiconductor devices.
 
-## Install the current source
+## Install the 4.0.0 preparation source
 
 In an activated Python virtual environment:
 
 ```bash
-python -m pip install "git+https://github.com/aestimosolver/aestimo.git@master"
+python -m pip install "git+https://github.com/sblisesivdin/aestimo.git@master"
 aestimo --help
 aestimo-gui
 ```
@@ -49,6 +49,7 @@ with installation and usage instructions updated against the current source.
 - [About and citation](docs/about.md)
 - [Models and materials](docs/models.md)
 - [Installation](docs/installation.md)
+- [Your first calculation](docs/first-calculation.md)
 - [CLI quick start](docs/quickstart.md)
 - [GUI workflow](docs/gui.md)
 - [Inputs and units](docs/inputs.md)

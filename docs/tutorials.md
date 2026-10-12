@@ -1,6 +1,7 @@
 # Tutorials
 
-Start with the [CLI quick start](quickstart.md) or the [desktop workflow](gui.md).
+Start with [Your first calculation](first-calculation.md), then use the
+[CLI command reference](quickstart.md) or the [desktop guide](gui.md).
 Use [Inputs and units](inputs.md) when adapting an example to a new structure.
 
 ## Historical notebooks by Robert J. Steed

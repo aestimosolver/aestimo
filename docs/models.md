@@ -16,8 +16,9 @@ or small currents.
 
 ## Solver selection in the current source
 
-The older input templates list schemes 0–9. The current dispatcher in
-`aestimo.run_aestimo` also includes schemes 10 and 11.
+The table below describes the standard core dispatcher in
+`aestimo.run_aestimo`. GUI device workers can add their own characterization
+and studies; [GUI workflow selection](gui.md) explains that distinction.
 
 | Scheme | Current route |
 | --- | --- |

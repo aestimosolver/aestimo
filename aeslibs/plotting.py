@@ -114,7 +114,7 @@ def save_and_plot2(result, model, output_directory='output', drawFigures=False, 
                         rel_meff_state,
                     )
                     # header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
-                    header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+                    header = "State No.    Energy (meV) N (m**-2)    Subband m* (m_e)"
                     saveoutput(
                         "states_h_QWR%d_%.2f.dat" % (j, vt), columns, header=header
                     )
@@ -139,7 +139,7 @@ def save_and_plot2(result, model, output_directory='output', drawFigures=False, 
                         rel_meff_statec,
                     )
                     # header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
-                    header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+                    header = "State No.    Energy (meV) N (m**-2)    Subband m* (m_e)"
                     saveoutput(
                         "states_e_QWR%d_%.2f.dat" % (j, vt), columns, header=header
                     )
@@ -370,7 +370,7 @@ def save_and_plot(result, model, output_directory='output', drawFigures=False, s
                 rel_meff_state,
             )
             # header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
-            header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+            header = "State No.    Energy (meV) N (m**-2)    Subband m* (m_e)"
             saveoutput("states_h_QWR%d_equi_cond.dat" % j, columns, header=header)
             if config.probability_out:
                 saveoutput(
@@ -392,7 +392,7 @@ def save_and_plot(result, model, output_directory='output', drawFigures=False, s
                 rel_meff_statec,
             )
             # header = " ".join([col.ljust(12) for col in ("State No.","Energy (meV)","N (m**-2)","Subband m* (m_e)")])
-            header = "State No.    Energy (meV) N (m**-2)    Subband m* (kg)"
+            header = "State No.    Energy (meV) N (m**-2)    Subband m* (m_e)"
             saveoutput("states_e_QWR%d_equi_cond.dat" % j, columns, header=header)
             if config.probability_out:
                 saveoutput(

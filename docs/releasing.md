@@ -58,8 +58,8 @@ preset/reference bytes and confirms preservation of edited presets.
 After the agreed source is upstream, create the `v4.0.0` tag and GitHub release
 from that exact commit, publish the wheel and sdist to PyPI, and select the
 matching documentation version. Verify `python -m pip install aestimo==4.0.0`
-from PyPI in a fresh environment. Update installation text that currently says
-the GUI source is not yet published, using the actual publication status.
+from PyPI in a fresh environment. Update the preparation-only source URL to the agreed upstream source and
+revise installation text using the actual publication status.
 
 Do not create a new tag or upload under a version that already exists. If final
 verification fails after publication, prepare a new patch version rather than

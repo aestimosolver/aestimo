@@ -1,25 +1,45 @@
 # Validation and reference data
 
-The GUI integration review checked 81 example tests and a clean Python 3.12
-package installation. Those checks do not independently establish experimental
-accuracy for all devices or observables.
+A simulation result, a reference comparison and experimental validation are
+separate kinds of evidence. A device preset provides a starting configuration;
+its filename or the word "Validation" in a menu is not an acceptance result.
 
-The repository distinguishes numerical regression, comparisons with analytical
-models, calibration and comparisons against claimed measurement/digitization
-sources. Correlation alone is insufficient to demonstrate agreement: an offset
-or wrong amplitude can retain high correlation.
+## Read the status as well as the score
 
-## Reading the reference material
+| Status used by the current reporting code | Meaning |
+| --- | --- |
+| `MODEL-BASED / NOT EXPERIMENTALLY VALIDATED` | A model result without an independently established experimental comparison. |
+| `SYNTHETIC REFERENCE / NOT EXPERIMENTAL` | Comparison against an analytical or generated reference rather than measurements. |
+| `REFERENCE COMPARISON / PROVENANCE UNVERIFIED` | A reference is supplied, but its claimed measurement/digitization origin still needs source matching. |
+| `CALIBRATED MODEL / PROVENANCE UNVERIFIED` | A fitting claim exists; it does not independently establish the reference's origin or predictive accuracy. |
 
-- [Current-conservation audit](mode10-current-conservation.md): Mode 10 numerical
-  acceptance and limitations near equilibrium.
-- [Mesh audit](mode10-mesh-audit.md): the earlier mesh/tolerance investigation;
+For curve agreement, review errors, offsets, amplitude, sign and overlap of the
+comparison domain. A large correlation score can coexist with a wrong curve.
+A metric marked not assessable should not be treated as a passing comparison.
+
+## What to check for your calculation
+
+- Identify the reference's actual origin from its CSV header and audit record.
+- Confirm the observable, units, temperature, geometry and comparison domain.
+- Check numerical convergence for the observable you want to report.
+- Record any fitted material or contact parameters and separate fitted data from
+  independent comparisons.
+
+Synthetic diode baselines are useful for numerical regression. Agreement with
+them does not turn them into wafer measurements. Likewise, a literature citation
+in a traceability record is a source claim until the original figure/table and
+extraction details are matched.
+
+## Scientific and numerical reports
+
+- [Current-conservation audit](mode10-current-conservation.md): Mode 10 residual
+  and spatial total-current acceptance, with limitations near equilibrium.
+- [Earlier mesh audit](mode10-mesh-audit.md): a historical tolerance investigation;
   read it alongside the subsequent conservation work.
-- [Provenance dossier](reference-data-provenance.md): contributor-supplied citations,
-  claimed figure/table origins and extraction details. These claims still require
-  independent source matching; inclusion here does not certify them.
-- [GUI integration review](gui-integration-review.md): historical review steps,
-  installation evidence and separately tracked scientific follow-up work.
+- [Reference provenance dossier](reference-data-provenance.md): contributor-supplied
+  source and extraction claims.
+- [GUI integration review](gui-integration-review.md): historical integration and
+  installation evidence, plus separately tracked scientific follow-up work.
 
-Synthetic references support numerical checks, not experimental validation.
-Check the reference CSV headers and audit records before citing a comparison.
+Automated regression and package-installation checks assess software behavior.
+They do not certify every device model or physical observable.

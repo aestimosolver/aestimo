@@ -19,6 +19,9 @@ published by this preparation commit.
 - Base the user guide on the original website, retaining project citation,
   historical contributor/publication/release records and correcting obsolete
   installation, input and convergence instructions.
+- Expand the GUI guide and first-calculation walkthrough, documenting saved
+  result history, workspace paths and GUI/CLI input differences. Correct state
+  export mass headers to identify the existing relative-mass values.
 - Distinguish numerical comparisons, synthetic baselines and unverified source
   claims in reference-data reporting.
 - Reject unconverged Mode 10 transport states and require spatial total-current
