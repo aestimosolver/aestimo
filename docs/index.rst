@@ -57,14 +57,6 @@ Aestimo 1D”, *Computational Materials Science* **186**, 110015 (2021).
 See :ref:`citing-aestimo` for reproducibility details and :doc:`publications`
 for the publication list collected by the project.
 
-News and releases
------------------
-
-* **4.0.0, in preparation:** desktop GUI, device projects, updated packaging
-  and documentation. See :doc:`release-notes` for changes and release status.
-* **July 2022:** version 3.0.0 simplified the solver and command-line workflow.
-  Earlier releases, dating back to 2012, are recorded in :doc:`history`.
-
 Explore Aestimo
 ---------------
 
