@@ -27,6 +27,9 @@ published by this preparation commit.
 - Report unavailable solver selections and grid-limit failures as catchable
   errors. CLI calculation failures return nonzero status, and malformed inputs
   receive concise usage errors instead of reporting success or stopping a worker.
+- Add automated installed-package checks on Linux/Python 3.9, 3.12 and 3.13
+  and Windows/Python 3.12. Correct a solar plot label that prevented GUI imports
+  on Python versions before 3.12.
 - Distinguish numerical comparisons, synthetic baselines and unverified source
   claims in reference-data reporting.
 - Reject unconverged Mode 10 transport states and require spatial total-current
@@ -38,10 +41,12 @@ Python inputs, GUI JSON projects and the existing solver interfaces remain in
 use. Output filenames differ from the older five-file documentation; consult
 `docs/outputs.md`. Tk and a graphical desktop are required for the GUI.
 
-Clean installation and automated regression checks have been performed on
-Python 3.12/Linux. Detailed live GUI testing was waived for the integration;
-this is not a claim of complete cross-platform testing. Source metadata declares
-Python 3.9 or newer, but every declared version/platform has not been checked.
+Clean installation and CLI/plotting checks cover Linux/Python 3.9, 3.12 and 3.13
+and Windows/Python 3.12. All 94 example regression tests passed in each tested
+Linux environment; the Windows job runs the installed-package smoke check.
+Detailed live GUI testing was waived for the integration. Source metadata
+declares Python 3.9 or newer, but every declared version/platform has not been
+checked.
 
 Reference provenance and physical accuracy still require independent review.
 Low-current mesh accuracy and platform-dependent floating-point precision remain

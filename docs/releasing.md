@@ -79,6 +79,14 @@ replacing release artifacts.
   eight exported data files before and after the startup changes.
 - A real installed CLI run of `sample_1qw_barrierdope_ingaas.py` completed on
   Python 3.12/Linux during release preparation.
+- The `Runtime compatibility` workflow builds the wheel from the sdist, installs
+  it with dependencies and runs `pip check` and the installed-package smoke
+  check on Linux/Python 3.9, 3.12 and 3.13 and Windows/Python 3.12. Each Linux
+  job also runs all 94 example regressions. Windows coverage is limited to the
+  smoke check; no job opens a live GUI window.
+- The [compatibility run for commit e8c65f0](https://github.com/sblisesivdin/aestimo/actions/runs/38251470347)
+  records these release-preparation results. The workflow publishes no artifacts
+  to PyPI and creates no release or tag.
 
 Hosted Read the Docs publication, the final release source, final artifact
 checks and PyPI publication are still pending. This document records preparation,

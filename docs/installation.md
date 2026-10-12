@@ -2,8 +2,10 @@
 
 ## Install the current source
 
-Use Python 3.9 or newer. The integration was checked with a clean Python 3.12
-installation; other declared Python versions are not all verified.
+Use Python 3.9 or newer. Automated installation and CLI checks cover Python
+3.9, 3.12 and 3.13 on Linux, and Python 3.12 on Windows. The Linux jobs also
+run the example regression suite. These checks import the GUI without opening
+a window; other Python/platform combinations have not all been verified.
 Create a virtual environment before installing:
 
 ```bash
