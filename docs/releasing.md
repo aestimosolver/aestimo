@@ -22,9 +22,9 @@ upstream source, with the fork synchronized to it.
 4. Run the example regression suite. Retain the tested Python/platform and
    commands in the release record; do not equate passing tests with experimental
    validation.
-5. Finalize the changelog and record known numerical and platform limitations.
-6. Connect the documentation project to Read the Docs, confirm a successful
-   hosted build, and add its actual URL to the README and package metadata.
+5. Finalize `RELEASE_NOTES.md` and record known numerical and platform limitations.
+6. Verify the latest hosted build at https://aestimo.readthedocs.io/ matches the
+   final release source, including the banner, navigation and release notes.
 7. Confirm access to the existing PyPI `aestimo` project and the chosen upload
    route. The GitHub app connection does not establish PyPI publishing access.
 
@@ -60,8 +60,7 @@ confirms preservation of edited presets.
 After the agreed source is upstream, create the `v4.0.0` tag and GitHub release
 from that exact commit, publish the wheel and sdist to PyPI, and select the
 matching documentation version. Verify `python -m pip install aestimo==4.0.0`
-from PyPI in a fresh environment. Update the preparation-only source URL to the agreed upstream source and
-revise installation text using the actual publication status.
+from PyPI in a fresh environment. Revise installation text using the actual publication status.
 
 Do not create a new tag or upload under a version that already exists. If final
 verification fails after publication, prepare a new patch version rather than
@@ -88,6 +87,13 @@ replacing release artifacts.
   records these release-preparation results. The workflow publishes no artifacts
   to PyPI and creates no release or tag.
 
-Hosted Read the Docs publication, the final release source, final artifact
-checks and PyPI publication are still pending. This document records preparation,
+- PRs #63 and #64 were merged upstream. Documentation/packaging and all four
+  runtime compatibility jobs passed on merge commit
+  `6c58c73d8bfec09e296793ffbc68fa2df2c1c8bf`.
+- The project owner confirmed https://aestimo.readthedocs.io/ as the documentation
+  address. README and package metadata link to it; the source-installation
+  instructions now use the upstream repository.
+
+Verification of the latest hosted Read the Docs build, the final release source,
+final artifact checks and PyPI publication are still pending. This document records preparation,
 not a declaration that the release has shipped.

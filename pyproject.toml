@@ -46,6 +46,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://www.aestimosolver.org"
+Documentation = "https://aestimo.readthedocs.io/"
 Repository = "https://github.com/aestimosolver/aestimo"
 Issues = "https://github.com/aestimosolver/aestimo/issues"
 
