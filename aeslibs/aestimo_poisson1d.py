@@ -586,9 +586,10 @@ def equi_np_fi2(
         # print('Ef_Ec[%d]='%i1,Ef_Ec[i1]*J2meV*(kb*T),'meV')
         # print('Eg[%d]='%i1,abs(Ef_Ec[i1]*J2meV*(kb*T)+Ev_Ef[i1]*J2meV*(kb*T)),'meV')
         if Ef_Ec[i1] * J2meV * (kb * T) > 1000000000000:
-            print("Ef_Ec[%d]=" % i1, Ef_Ec[i1] * J2meV * (kb * T), "meV")
-            print("fi_old=", fi_old[i1] * J2meV, "meV")
-            exit()
+            raise ValueError(
+                f"Carrier energy offset at grid point {i1} exceeds the 1e12 meV limit: "
+                f"{Ef_Ec[i1] * J2meV * (kb * T):g} meV."
+            )
         if EF * meV2J - (fi_e[i1] - Vt * q * fi_old[i1]) > -3 * kb * T:  # -3*kb*T
             n_cl[i1] = (
                 Nc[i1]

@@ -35,6 +35,16 @@ interchangeable text representations. See [Inputs](inputs.md).
 | `-d`, `--drawfigures` | Display figures at the end of the calculation. |
 | `-v`, `--version` | Print the local Aestimo version and exit. |
 
+Help/version reporting and module imports do not create calculation output
+files. Exit status 0 indicates normal CLI completion, 1 indicates a rejected
+calculation (such as an unsupported solver or exceeded grid limit), and 2
+indicates a usage/input-loading error. Missing paths, malformed Python/JSON and
+a JSON root that is not a project object are input-loading errors.
+
+For a rejected calculation, inspect `aestimo.log` in its output directory.
+The error message states the rejected option or limit; no successful-completion
+message or numerical results should be inferred from that log's existence.
+
 Results are written below the current working directory as
 `<input-stem>_output/`. For example, `project.json` produces `project_output/`.
 Use separate working directories for inputs with the same filename stem.

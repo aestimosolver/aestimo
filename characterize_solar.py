@@ -227,7 +227,7 @@ def main():
     # Subplot 2: Power-Voltage Curve (Generation Quadrant)
     plt.subplot(2, 2, 2)
     plt.plot(light_metrics['v'], light_metrics['p'], 'g-', label='Power (Light)')
-    plt.axvline(light_metrics['vmpp'], color='orange', ls=':', label=f'MPP: {light_metrics['pmpp']:.2f} mW/cm²')
+    plt.axvline(light_metrics['vmpp'], color='orange', ls=':', label=f"MPP: {light_metrics['pmpp']:.2f} mW/cm²")
     plt.xlabel('Voltage (V)')
     plt.ylabel('Power Density (mW/cm²)')
     plt.title('P-V Characteristic')

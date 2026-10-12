@@ -1,0 +1,53 @@
+name: Runtime compatibility
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  installed-package:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: '3.9'
+            regression: true
+          - os: ubuntu-latest
+            python: '3.12'
+            regression: true
+          - os: ubuntu-latest
+            python: '3.13'
+            regression: true
+          - os: windows-latest
+            python: '3.12'
+            regression: false
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Build wheel and source distribution
+        run: |
+          python -m pip install build
+          python -m build
+      - name: Install wheel and check dependencies
+        run: |
+          python -c "import glob, subprocess, sys; subprocess.check_call([sys.executable, '-m', 'pip', 'install', glob.glob('dist/*.whl')[0]])"
+          python -m pip check
+      - name: Check installed CLI, plotting and bundled resources
+        run: python tools/check_release_install.py --source .
+      - name: Run example regressions
+        if: matrix.regression
+        run: python -m unittest discover -s examples -p 'test_*.py'

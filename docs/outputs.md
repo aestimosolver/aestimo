@@ -1,32 +1,65 @@
-# Outputs
+# Outputs and interpretation
 
-The CLI writes to `<input-stem>_output/` under the current working directory.
-GUI workflows may select their own directories; check the console and log.
-The number and naming of files depend on the solver and output controls.
+## Where results are written
 
-## Common files in the current exporter
-
-| File | Content |
+| Interface / workflow | Location |
 | --- | --- |
-| `aestimo.log` | Calculation messages and diagnostics. |
-| `potn_eh_equi_cond.dat` | Position in m; conduction and valence energy profiles in eV. |
-| `np_data0_equi_cond.dat` | Position in m; electron and hole densities in cm⁻³. |
-| `efield_eh_equi_cond.dat` | Position and electric-field arrays. |
-| `sigma_eh_equi_cond.dat` | Position and charge-profile array. |
-| `states_e_QWR*_equi_cond.dat` | Electron states for a quantum region; columns described by the file header. |
-| `states_h_QWR*_equi_cond.dat` | Hole states for a quantum region; columns described by the file header. |
-| `av_curr.dat` | Bias sweep and average current values for drift–diffusion routes. |
+| CLI | `<input-stem>_output/` under the current working directory. |
+| Main GUI workers | `<project-name>_output/` beneath the GUI examples directory. |
+| GUI Solar Study | Separate dark, illuminated and temperature output directories under the working directory. |
 
-Bias-dependent exports also use names such as `potn_eh_0.40.dat` and
-`states_e_QWR1_0.40.dat`. Available files depend on the calculation route and
-`config.py` flags including `potential_out`, `states_out` and
-`Drift_Diffusion_out`.
+Saving a GUI JSON to another directory does not relocate all calculation outputs.
+Check **Console** and `aestimo.log` for the selected workflow. Reusing a filename
+stem can reuse its output directory.
 
-The old documentation's five-file list (`efield.dat`, `potn.dat`, `sigma.dat`,
-`states.dat`, `wavefunctions.dat`) describes earlier output conventions.
-Use the current exporter and each file's header when analysing a new result.
-Current units and normalization must be checked for the selected device route;
-do not infer a unit solely from a filename or a GUI axis label.
+## Schrödinger–Poisson files
 
-When reporting results, retain the input project, material changes, package
-version or commit, solver/grid controls and relevant convergence logs.
+The standard exporter writes whitespace-separated numerical columns:
+
+| File | Columns / meaning |
+| --- | --- |
+| `aestimo.log` | Calculation messages, iterations and diagnostics. |
+| `potn_eh_equi_cond.dat` | Position (m), conduction-band profile (eV), valence-band profile (eV). |
+| `np_data0_equi_cond.dat` | Position (m), electron density (cm⁻³), hole density (cm⁻³). |
+| `efield_eh_equi_cond.dat` | Position and the two exported electric-field arrays. |
+| `sigma_eh_equi_cond.dat` | Position and the exported charge-profile array. |
+| `states_e_QWR*_equi_cond.dat` | State index, energy (meV), subband population (m⁻²), effective-mass ratio `m*/m_e`. |
+| `states_h_QWR*_equi_cond.dat` | State index, energy (meV), subband population (m⁻²), effective-mass ratio `m*/m_e`. |
+| `wavefunctions_e_QWR*_equi_cond.dat` | Position and electron wavefunction amplitudes for the region's states. |
+| `wavefunctions_h_QWR*_equi_cond.dat` | Position and hole wavefunction amplitudes for the region's states. |
+
+`QWR` identifies a quantum region. The wavefunction exports contain amplitudes,
+not precomputed `psi²`. Normalization and grid spacing matter when deriving a
+probability density from those amplitudes.
+
+Band bending describes the spatial energy profile; confined-state energies and
+carrier populations answer different questions. Keep their units and reference
+energy distinct when comparing a band plot with a state table.
+
+## Transport and device workflows
+
+Drift–diffusion routes produce `av_curr.dat` and bias-specific files, such as
+`potn_eh_0.40.dat`, `np_data0_0.40.dat`, and `states_e_QWR1_0.40.dat`.
+The state columns use the same energy, population and relative-mass conventions
+as the equilibrium state files.
+
+`av_curr.dat` pairs bias with the route's average-current values. Conversion
+between current density and total device current requires the device area and
+the route's unit convention; do not apply an area factor twice or infer units
+solely from an axis label.
+
+QW/LED/laser characterization can also write `traceability_record.json` and
+`validation_report.md`. These record the workflow's comparison information;
+their presence alone is not proof of experimental validation. Some figures are
+held in the GUI until saved through the plot toolbar.
+
+## Which files should be present?
+
+Availability depends on the solver, the quantum regions and `config.py` flags
+including `potential_out`, `states_out`, `probability_out`, `sigma_out`,
+`electricfield_out` and `Drift_Diffusion_out`. There is no universal fixed number
+of output files. A failed transport sweep can intentionally stop before export.
+
+For a reproducible record, retain the input, material database changes,
+Aestimo version or commit, solver/grid controls, relevant logs and numerical
+outputs together with the exported figures.
