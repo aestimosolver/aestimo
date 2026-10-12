@@ -5,9 +5,17 @@ Schrödinger–Poisson and drift–diffusion solvers, a command-line interface a
 desktop GUI. Aestimo supports educational and scientific calculations of
 quantum wells and semiconductor devices.
 
-## Install the 4.0.0 preparation source
+## Install
 
-In an activated Python virtual environment:
+Install the published package in an activated Python environment:
+
+```bash
+python -m pip install aestimo
+```
+
+The desktop GUI described below is part of the upcoming 4.0.0 release.
+Until it is published on PyPI, install the preparation source:
+
 
 ```bash
 python -m pip install "git+https://github.com/sblisesivdin/aestimo.git@master"
@@ -18,10 +26,6 @@ aestimo-gui
 Python 3.9 or newer is required. The GUI also needs Tk and a graphical desktop.
 From a downloaded or cloned checkout, use `python -m pip install .` instead.
 Installed launch commands require no manual source-directory `PATH` changes.
-
-`python -m pip install aestimo` installs the release available on PyPI, which
-may differ from the current source. The merged GUI work has not been published
-as a new PyPI release by this change.
 
 ## Run a calculation
 
@@ -56,8 +60,10 @@ with installation and usage instructions updated against the current source.
 - [Outputs](docs/outputs.md)
 - [Tutorials](docs/tutorials.md)
 - [Troubleshooting](docs/troubleshooting.md)
-- [Original website migration](docs/website-migration.md)
-- [Development and documentation builds](docs/development.md)
+- [Authors and contributors](docs/authors.md)
+- [Release notes](docs/release-notes.md)
+- [Publications](docs/publications.md)
+- [Development](docs/development.md)
 - [Validation and reference-data status](docs/validation.md)
 
 The source version is recorded in `pyproject.toml`. Preset names, plot labels

@@ -15,7 +15,7 @@ The old site remains unchanged by this migration.
 | `documentation.md` | [Installation](installation.md), [quick start](quickstart.md), [inputs](inputs.md), [outputs](outputs.md) and [troubleshooting](troubleshooting.md). |
 | `tutorials.md` | Four original notebooks and author credit in [Tutorials](tutorials.md). |
 | `development.md` | Contribution guidance, project aims and historical reading list in [Development](development.md). |
-| `releasenotes.md` | [Historical release notes](history.md), separate from current 4.0.0 preparation notes. |
+| `releasenotes.md` | [Release notes](release-notes.md), with [earlier releases](history.md) retained as a nested page. |
 
 ## Corrections against the current code
 
@@ -47,3 +47,21 @@ The simulator code remains GNU GPL v3 or later, as stated in its
 Project and contributor attribution is retained. Historical bibliography and
 release records describe their original periods; current instructions have been
 rewritten for the present package and checked against its source.
+
+## Public site structure
+
+The home page follows the original site's project overview, visible pip
+installation, citation and release news. Authors, release notes, publications
+and development are direct project navigation entries; the calculation guides
+have a separate documentation menu. The live original site was also checked at
+https://aestimosolver.github.io/ during this navigation revision.
+
+Integration reviews, release checklists and this migration record are retained
+in the source repository and excluded from the public Sphinx build. Numerical
+reports remain accessible from the validation page. Current release notes reuse
+`CHANGELOG.md` during the build so the site and repository share the same changes.
+
+The original `files/aestimobanner.png` is preserved byte-for-byte as
+`docs/_static/aestimobanner.png` (Git blob
+`ba65dc409d5b879b7300275f757cde542c354409`). The site uses local red CSS accents
+and a responsive banner; both assets are included in the source distribution.

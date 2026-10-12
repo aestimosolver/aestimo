@@ -1,0 +1,64 @@
+/* Aestimo's traditional red accent on the Read the Docs layout. */
+:root {
+  --aestimo-red: #a51d24;
+  --aestimo-red-dark: #80151b;
+}
+
+.wy-side-nav-search,
+.wy-nav-top {
+  background-color: var(--aestimo-red);
+}
+
+.wy-side-nav-search input[type="text"] {
+  border-color: var(--aestimo-red-dark);
+}
+
+.rst-content a,
+.wy-breadcrumbs a,
+.wy-menu-vertical li.current > a {
+  color: var(--aestimo-red);
+}
+
+.wy-menu-vertical p.caption {
+  color: #f3a7ab;
+}
+
+.rst-content a:visited {
+  color: var(--aestimo-red-dark);
+}
+
+.rst-content a:hover,
+.wy-breadcrumbs a:hover {
+  color: var(--aestimo-red-dark);
+  text-decoration: underline;
+}
+
+.rst-content a:focus-visible,
+.wy-side-nav-search a:focus-visible {
+  outline: 2px solid var(--aestimo-red);
+  outline-offset: 3px;
+}
+
+.wy-menu-vertical a:focus-visible {
+  outline: 2px solid #f3a7ab;
+  outline-offset: -2px;
+}
+
+.wy-side-nav-search a:focus-visible {
+  outline-color: #fff;
+}
+
+.rst-content .aestimo-banner {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 0 1.25rem;
+}
+
+.rst-content .admonition.note .admonition-title {
+  background-color: var(--aestimo-red);
+}
+
+.rst-content .admonition.note {
+  background-color: #f9eeee;
+}

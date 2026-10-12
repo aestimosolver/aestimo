@@ -1,13 +1,82 @@
-# Development and documentation
+# Development
 
-## Editable installation
+## Project aims
+
+Aestimo is developed as an educational and research tool. Its source should be
+readable enough to follow a calculation, while numerical methods should be
+checked for accuracy and convergence. Python input files let users describe
+layers, material parameters and numerical controls with ordinary Python
+statements; the desktop interface offers JSON projects for the same broader
+simulation work.
+
+Contributions to the solver, material database, examples, tutorials and
+interface are welcome. The [source and issue tracker](https://github.com/aestimosolver/aestimo)
+are hosted on GitHub. Development discussion takes place on the
+[Aestimo development group](https://groups.google.com/g/aestimo-devel).
+
+## Contribute a change
+
+1. Open an issue to discuss a substantial feature or scientific-model change.
+   For a bug, include the input, Aestimo version, full error and relevant output.
+2. Fork the repository and make a focused change. Explain the resulting behavior
+   and update examples or documentation where needed.
+3. Run the relevant checks. For solver changes, compare representative numerical
+   outputs and include the physical assumptions, units and convergence evidence.
+4. Submit a pull request to `aestimosolver/aestimo`, including the commands used
+   to verify it. Documentation corrections can be small standalone contributions.
+
+## Set up a checkout
+
+Clone your fork or the upstream repository, then install it in an activated
+virtual environment:
 
 ```bash
+git clone https://github.com/aestimosolver/aestimo.git
+cd aestimo
 python -m pip install -e .
 ```
 
-Package metadata, dependencies, data-file declarations and launch commands live
-in `pyproject.toml`. `setup.py` is only a compatibility entry point.
+See [Installation](installation.md) for Python and desktop requirements.
+Editable installation uses the checkout's code. Package metadata, dependencies,
+data-file declarations and launch commands are defined in `pyproject.toml`.
+
+## Run software checks
+
+From the checkout root on Linux/macOS:
+
+```bash
+MPLBACKEND=Agg python -m unittest discover -s examples -p 'test_*.py'
+```
+
+On Windows PowerShell:
+
+```powershell
+$env:MPLBACKEND = "Agg"
+python -m unittest discover -s examples -p 'test_*.py'
+```
+
+The runtime workflow checks installed packages on Linux/Python 3.9, 3.12 and
+3.13 and Windows/Python 3.12. Linux jobs also run the example regression suite.
+The installed-package checker verifies launch commands, a representative CLI
+calculation, plotting and bundled resources without opening a GUI window.
+See [Validation and reference data](validation.md) for interpreting numerical
+and reference comparisons.
+
+## Build the documentation
+
+```bash
+python -m pip install -r docs/requirements.txt
+python -m sphinx -n -W --keep-going -b html docs docs/_build/html
+```
+
+Open `docs/_build/html/index.html`. The build uses Python 3.12 and renders
+Markdown with MyST. It does not import the solver or run simulations.
+Read the Docs uses the configuration in `.readthedocs.yaml` at the repository
+root and the pinned dependencies in `docs/requirements.txt`.
+
+The public guide covers installation, calculations and project information.
+Release checklists and historical integration records are maintained separately
+in the repository for contributors.
 
 ## Build distributions
 
@@ -17,58 +86,11 @@ python -m build
 python -m twine check dist/*
 ```
 
-Check a wheel outside the source checkout in a fresh virtual environment. Verify
-`pip check`, CLI help, GUI imports and bundled preset/reference resources.
-A successful local build does not publish anything on PyPI.
-
-## Build the documentation
-
-From the repository root:
-
-```bash
-python -m pip install -r docs/requirements.txt
-python -m sphinx -n -W --keep-going -b html docs docs/_build/html
-```
-
-Open `docs/_build/html/index.html` to read the result. Sphinx does not import
-the solver, start Tk or execute simulations. Existing Markdown review documents
-are rendered through MyST rather than copied into separate manuals.
-
-Read the Docs uses `.readthedocs.yaml`, Python 3.12 and the pinned documentation
-requirements. In the Read the Docs dashboard, import or connect
-`aestimosolver/aestimo`, choose `master` for the development version and enable
-builds. The configuration is ready for that service, but merging this PR alone
-does not create or activate a hosted project. Set the public documentation link
-in the README and package metadata after the actual project URL is confirmed.
-
-## Example regressions
-
-```bash
-MPLBACKEND=Agg python -m unittest discover -s examples -p 'test_*.py'
-```
-
-Detailed live GUI testing is outside this documentation/packaging increment.
-Solver refactoring should be a separate change, with representative numerical
-outputs compared before and after changes.
-
-## Project aims and contribution workflow
-
-The original website describes Aestimo as an educational and research tool
-whose source should remain readable. Preserve that aim when adding features:
-keep interfaces understandable and distinguish numerical correctness from
-agreement with an experimental device. Python input scripts remain supported
-alongside the GUI's JSON projects.
-
-Develop in a fork, document the changed behavior and run checks appropriate to
-the change. Submit a focused pull request to the upstream repository when the
-work is ready. Include enough input and numerical detail to reproduce a solver
-fix. Scientific-model changes need their own evidence; passing an installation
-check is not a substitute for a physical validation argument.
-
-Development discussion also takes place on the
-[Aestimo development group](https://groups.google.com/g/aestimo-devel).
-For bugs and reproducible support requests, use
-[GitHub issues](https://github.com/aestimosolver/aestimo/issues).
+Install the resulting wheel in a fresh environment outside the checkout and
+run `python tools/check_release_install.py --source .` with that environment's
+interpreter. A local build does not upload the package or create a release.
+The [release preparation checklist](https://github.com/sblisesivdin/aestimo/blob/master/docs/releasing.md)
+records the remaining publication steps.
 
 ## Reading list retained from the original site
 
@@ -86,6 +108,3 @@ in these works.
   Semiconductor Materials and Devices*, thesis (2005).
 - Jeffery Wayne Allen, *A Simulation Tool Suite for the Modelling and Optimization
   of Multiple Quantum Well Structures*, dissertation (2005).
-
-The old site's empty contribution placeholders have been replaced by the
-workflow above. See the [migration record](website-migration.md) for sources.

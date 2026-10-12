@@ -1,12 +1,11 @@
-# Historical release notes
+# Earlier releases (2012–2022)
 
 These notes are migrated from the original website. They describe earlier
 releases, not the installation commands or supported options of the current
 source. Follow the current [installation](installation.md),
 [input](inputs.md) and [output](outputs.md) guides when using 4.0.0.
 
-The 4.0.0 preparation notes are in the repository
-[CHANGELOG.md](https://github.com/aestimosolver/aestimo/blob/master/CHANGELOG.md).
+See [Release notes](release-notes.md) for the current 4.0.0 changes.
 
 ## v.3.0.0 (July 13, 2022)
 This release simplified and cleaned up the code and its usage, following the 2.0 release by approximately two years. 

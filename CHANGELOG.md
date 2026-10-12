@@ -19,6 +19,9 @@ published by this preparation commit.
 - Base the user guide on the original website, retaining project citation,
   historical contributor/publication/release records and correcting obsolete
   installation, input and convergence instructions.
+- Restore the project's red styling and original banner. Put pip installation
+  on the home page and expose authors, release notes and development directly
+  in the navigation; keep internal integration records in the repository.
 - Expand the GUI guide and first-calculation walkthrough, documenting saved
   result history, workspace paths and GUI/CLI input differences. Correct state
   export mass headers to identify the existing relative-mass values.

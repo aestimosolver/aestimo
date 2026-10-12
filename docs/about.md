@@ -51,4 +51,14 @@ parameters and numerical controls used in the calculation. The project paper
 predates the current GUI and does not describe every later device workflow.
 
 See the [historical publication list](publications.md) for examples collected
-on the old site and [the migration record](website-migration.md) for attribution.
+on the old site.
+
+## License and documentation credits
+
+Aestimo's source code is licensed under the GNU GPL v3 or later; see
+[COPYING.md](https://github.com/aestimosolver/aestimo/blob/master/COPYING.md).
+The guide incorporates the original project website's manual and historical
+records. The original manual notice is **Copyright (C) 2013–2020 Aestimo group**,
+with reuse declared under the [GNU Free Documentation License 1.3](https://www.gnu.org/licenses/fdl-1.3.html).
+Source attribution and migration details are retained in the repository's
+[migration record](https://github.com/sblisesivdin/aestimo/blob/master/docs/website-migration.md).

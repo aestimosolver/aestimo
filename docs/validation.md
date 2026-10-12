@@ -38,8 +38,15 @@ extraction details are matched.
   read it alongside the subsequent conservation work.
 - [Reference provenance dossier](reference-data-provenance.md): contributor-supplied
   source and extraction claims.
-- [GUI integration review](gui-integration-review.md): historical integration and
-  installation evidence, plus separately tracked scientific follow-up work.
+
+```{toctree}
+:hidden:
+:maxdepth: 1
+
+mode10-current-conservation
+mode10-mesh-audit
+reference-data-provenance
+```
 
 Automated regression and package-installation checks assess software behavior.
 They do not certify every device model or physical observable.
