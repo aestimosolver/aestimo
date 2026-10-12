@@ -47,9 +47,6 @@ Read the [Aestimo documentation](https://aestimo.readthedocs.io/)
 for installation, calculations and project information. The guide source is
 maintained in `docs/`.
 
-The guide is based on the [original project website](https://github.com/aestimosolver/aestimosolver.github.io),
-with installation and usage instructions updated against the current source.
-
 - [About and citation](docs/about.md)
 - [Models and materials](docs/models.md)
 - [Installation](docs/installation.md)

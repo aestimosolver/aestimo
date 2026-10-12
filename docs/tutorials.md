@@ -4,11 +4,11 @@ Start with [Your first calculation](first-calculation.md), then use the
 [CLI command reference](quickstart.md) or the [desktop guide](gui.md).
 Use [Inputs and units](inputs.md) when adapting an example to a new structure.
 
-## Historical notebooks by Robert J. Steed
+## Notebook tutorials by Robert J. Steed
 
-The four original notebooks are preserved in `tutorials/`. Their APIs and input
-formats predate the current GUI integration; use them for the physical workflow
-and adapt code to the current source as needed. They are not executed during
+The four notebooks in `tutorials/` explain the physical and numerical workflow.
+Their APIs and input formats predate the current GUI; adapt the notebook code
+to the current source where needed. They are not executed during
 documentation builds.
 
 | Notebook | Topic | Download |
