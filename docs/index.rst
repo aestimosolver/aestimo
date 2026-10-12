@@ -24,6 +24,7 @@ metadata does not by itself establish that a matching PyPI release is available.
    :caption: Development and scientific reference
 
    development
+   releasing
    validation
    mode10-current-conservation
    mode10-mesh-audit

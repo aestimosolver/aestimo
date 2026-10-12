@@ -2,3 +2,5 @@ include .readthedocs.yaml
 recursive-include docs *.rst *.md *.py *.txt *.json Makefile make.bat
 recursive-include tutorials *.md *.ipynb
 prune docs/_build
+include CHANGELOG.md
+include tools/check_release_install.py
