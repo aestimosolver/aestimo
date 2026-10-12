@@ -48,13 +48,11 @@ On Windows PowerShell:
 (install-source)=
 ## Install the 4.0.0 source
 
-Install the source currently used for 4.0.0 preparation. This documentation
-tracks the development fork; the final release will be coordinated with the
-upstream project:
+Install the integrated source from the main Aestimo repository:
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install "git+https://github.com/sblisesivdin/aestimo.git@master"
+python -m pip install "git+https://github.com/aestimosolver/aestimo.git@master"
 ```
 
 This command requires Git. Alternatively, download and extract the repository,

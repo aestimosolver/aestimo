@@ -16,9 +16,8 @@ python -m pip install aestimo
 The desktop GUI described below is part of the upcoming 4.0.0 release.
 Until it is published on PyPI, install the preparation source:
 
-
 ```bash
-python -m pip install "git+https://github.com/sblisesivdin/aestimo.git@master"
+python -m pip install "git+https://github.com/aestimosolver/aestimo.git@master"
 aestimo --help
 aestimo-gui
 ```
@@ -44,8 +43,9 @@ to choose a different workspace root. A checkout uses its own `examples/`.
 
 ## Documentation
 
-The [user guide](docs/index.rst) is maintained in `docs/` and configured for
-Read the Docs. A hosted URL will be linked here after the project is connected.
+Read the [Aestimo documentation](https://aestimo.readthedocs.io/)
+for installation, calculations and project information. The guide source is
+maintained in `docs/`.
 
 The guide is based on the [original project website](https://github.com/aestimosolver/aestimosolver.github.io),
 with installation and usage instructions updated against the current source.
