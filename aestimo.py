@@ -22,7 +22,7 @@ This is the effective mass calculator for conduction band and
 Usage:
 $ ./aestimo.py  <args>
 '''
-import os, sys, getopt, time, logging
+import os, sys, time, logging
 import importlib.util # Fixed import
 import matplotlib.pyplot as pl
 import numpy as np
@@ -79,6 +79,26 @@ output_directory = os.path.join(os.getcwd(), "output")
 
 # Logger
 logger = logging.getLogger('aestimo')
+
+SUPPORTED_COMPUTATION_SCHEMES = (0, 2, 7, 8, 9, 10, 11)
+
+
+def validate_computation_scheme(scheme):
+    """Reject unavailable routes with exceptions that callers can handle."""
+    if scheme in (4, 5, 6):
+        raise NotImplementedError(
+            f"Computation scheme {scheme}: exchange interactions are not supported "
+            "by the combined electron/hole solver."
+        )
+    if scheme in (1, 3):
+        raise NotImplementedError(
+            f"Computation scheme {scheme}: nonparabolicity is not supported "
+            "by the combined electron/hole solver."
+        )
+    if scheme not in SUPPORTED_COMPUTATION_SCHEMES:
+        choices = ', '.join(map(str, SUPPORTED_COMPUTATION_SCHEMES))
+        raise ValueError(f"Unknown computation scheme {scheme}. Available schemes: {choices}.")
+
 
 def initialize_logger():
     """Log a calculation in its output directory without accumulating handlers.
@@ -221,8 +241,9 @@ class Structure:
         maxgridpoints = self.maxgridpoints
         mat_crys_strc = self.mat_crys_strc
         if n_max > maxgridpoints:
-            logger.error("Grid number is exceeding the max number of %d", maxgridpoints)
-            sys.exit()
+            raise ValueError(
+                f"Grid requires {n_max} points, exceeding maxgridpoints={maxgridpoints}."
+            )
         #
         self.n_max = n_max
         dx = self.dx
@@ -1387,6 +1408,7 @@ class StructureFrom(Structure):
         if cs is None:
             cs = getattr(inputfile, 'computation_scheme', getattr(self, 'computation_scheme', 0))
         self.comp_scheme = int(cs)
+        validate_computation_scheme(self.comp_scheme)
         self.computation_scheme = self.comp_scheme
         print(f"DEBUG: Structure initialized. photovoltaic_mode={self.photovoltaic_mode}, comp_scheme={self.comp_scheme}")
         self.dx = getattr(inputfile, 'gridfactor', 0.1) * 1e-9  # grid in m
@@ -1411,8 +1433,9 @@ class StructureFrom(Structure):
         max_val = self.maxgridpoints
 
         if self.n_max > max_val:
-            logger.error("Grid number is exceeding the max number of %d", max_val)
-            sys.exit()
+            raise ValueError(
+                f"Grid requires {self.n_max} points, exceeding maxgridpoints={max_val}."
+            )
         # Loading materials database #
         self.material_property = database.materialproperty
         totalmaterial = alen(self.material_property)
@@ -2321,18 +2344,7 @@ def Poisson_Schrodinger(model):
     subnumber_e = model.subnumber_e
     dx = model.dx
     n_max = model.n_max
-    if comp_scheme in (4, 5, 6):
-        logger.error(
-            """Aestimo doesn't currently include exchange interactions
-        in its valence band calculations."""
-        )
-        sys.exit()
-    if comp_scheme in (1, 3, 6):
-        logger.error(
-            """Aestimo doesn't currently include nonparabolicity effects in 
-        its valence band calculations."""
-        )
-        sys.exit()
+    validate_computation_scheme(comp_scheme)
     fi_h = model.fi_h
     N_wells_virtual = model.N_wells_virtual
     Well_boundary = model.Well_boundary
@@ -2843,18 +2855,7 @@ def Poisson_Schrodinger_new(model):
     subnumber_e = model.subnumber_e
     dx = model.dx
     n_max = model.n_max
-    if comp_scheme in (4, 5, 6):
-        logger.error(
-            """Aestimo doesn't currently include exchange interactions
-        in its valence band calculations."""
-        )
-        sys.exit()
-    if comp_scheme in (1, 3, 6):
-        logger.error(
-            """Aestimo doesn't currently include nonparabolicity effects in 
-        its valence band calculations."""
-        )
-        sys.exit()
+    validate_computation_scheme(comp_scheme)
     fi_h = model.fi_h
     N_wells_virtual = model.N_wells_virtual
     Well_boundary = model.Well_boundary
@@ -3404,18 +3405,7 @@ def Poisson_Schrodinger_DD(result, model):
         logger.info("Using exponential G_optical (alpha = %g cm^-1)", alpha)
     else:
         G_optical[:] = G_optical_val * 1e6
-    if comp_scheme in (4, 5, 6):
-        logger.error(
-            """Aestimo doesn't currently include exchange interactions
-        in its valence band calculations."""
-        )
-        sys.exit()
-    if comp_scheme in (1, 3, 6):
-        logger.error(
-            """Aestimo doesn't currently include nonparabolicity effects in 
-        its valence band calculations."""
-        )
-        sys.exit()
+    validate_computation_scheme(comp_scheme)
     fi_h = model.fi_h
     N_wells_virtual = model.N_wells_virtual
     Well_boundary = model.Well_boundary
@@ -3905,18 +3895,7 @@ def Poisson_Schrodinger_DD_test(result, model):
     BETAP = model.BETAP
     VSATN = model.VSATN
     VSATP = model.VSATP
-    if comp_scheme in (4, 5, 6):
-        logger.error(
-            """Aestimo doesn't currently include exchange interactions
-        in its valence band calculations."""
-        )
-        sys.exit()
-    if comp_scheme in (1, 3, 6):
-        logger.error(
-            """Aestimo doesn't currently include nonparabolicity effects in 
-        its valence band calculations."""
-        )
-        sys.exit()
+    validate_computation_scheme(comp_scheme)
     fi_h = model.fi_h
     N_wells_virtual = model.N_wells_virtual
     Well_boundary = model.Well_boundary
@@ -4018,12 +3997,10 @@ def Poisson_Schrodinger_DD_test(result, model):
     n = result.nf_result / ni
     p = result.pf_result / ni
     if dx > min(Ld_n_p[:]) and 1 == 2:
-        logger.error(
-            """You are setting the grid size %g nm greater than the extrinsic Debye lengths %g nm""",
-            dx * 1e9,
-            min(Ld_n_p[:]) * 1e9,
+        raise ValueError(
+            f"Grid spacing {dx * 1e9:g} nm exceeds the extrinsic Debye length "
+            f"{min(Ld_n_p[:]) * 1e9:g} nm."
         )
-        sys.exit()
     # STARTING SELF CONSISTENT LOOP
     time2 = time.time()  # timing audit
     iteration = 1  # iteration counter
@@ -4389,18 +4366,7 @@ def Poisson_Schrodinger_DD_test_2(result, model):
     VSATN = model.VSATN
     VSATP = model.VSATP
 
-    if comp_scheme in (4, 5, 6):
-        logger.error(
-            """Aestimo doesn't currently include exchange interactions
-        in its valence band calculations."""
-        )
-        sys.exit()
-    if comp_scheme in (1, 3, 6):
-        logger.error(
-            """Aestimo doesn't currently include nonparabolicity effects in 
-        its valence band calculations."""
-        )
-        sys.exit()
+    validate_computation_scheme(comp_scheme)
     fi_h = model.fi_h
     N_wells_virtual = model.N_wells_virtual
     Well_boundary = model.Well_boundary
@@ -5323,105 +5289,102 @@ def main(argv=None):
     drawFigures = bool(args.drawfigures)
 
     try:
-        if args.inputfile is not None:
-            # Get the folder information and use
-            inputFile = os.path.abspath(args.inputfile)
-            if not Path(inputFile).is_file():
-                parser.error(f"Input file does not exist: {inputFile}")
-            input_dir = os.path.dirname(inputFile)
-            sys.path.append(input_dir)
-            
-            # Load input file
-            module_name = Path(inputFile).stem
-            if inputFile.endswith('.json'):
-                import json
-                class InputObject:
-                    def __init__(self, data):
-                        for key, value in data.items():
-                            setattr(self, key, value)
-                        
-                        # Normalize JSON data to match what the core expects
-                        # 1. Map 'layers' to 'material' list format
-                        if hasattr(self, 'layers'):
-                            self.material = []
-                            for layer in self.layers:
-                                # Solver expects: [thickness, mat, mole, mole_y, doping, doping_type, layer_type]
-                                self.material.append([
-                                    float(layer.get('thickness', 0)),
-                                    layer.get('material', ''),
-                                    float(layer.get('mole', 0)),
-                                    float(layer.get('mole_y', 0)),
-                                    float(layer.get('doping', 0)),
-                                    layer.get('doping_type', 'n'),
-                                    layer.get('type', 'barrier')[:1] # 'b' or 'w'
-                                ])
-                        
-                        # Handle generation type case/string mapping
-                        if hasattr(self, 'generation_type'):
-                            gt = str(self.generation_type).lower()
-                            if 'exponential' in gt:
-                                self.generation_type = 'exponential'
-                            else:
-                                self.generation_type = 'uniform'
-                        
-                        # 2. Map other common keys if they differ
-                        if hasattr(self, 'temp'): self.T = float(self.temp)
-                        if hasattr(self, 'grid_step'): self.gridfactor = float(self.grid_step)
-                        if hasattr(self, 'max_pts'): self.maxgridpoints = int(self.max_pts)
-                        if hasattr(self, 'mat_sys'): self.mat_type = self.mat_sys
-                        if hasattr(self, 'vstep'): self.Each_Step = float(self.vstep)
-                        if hasattr(self, 'area'): self.device_area = float(self.area)
-                        if hasattr(self, 'tat_field'): self.tat_field = float(self.tat_field)
-                        
-                        # 3. Solver and Mode Mapping
-                        if hasattr(self, 'solver'):
-                            # Extract numeric index from strings like "7: SP-Drift Diffusion"
-                            import re
-                            match = re.search(r'(\d+)', str(self.solver))
-                            if match:
-                                self.comp_scheme = int(match.group(1))
-                                self.computation_scheme = self.comp_scheme
-                        
-                        if hasattr(self, 'device_type'):
-                            if "Solar Cell" in str(self.device_type):
-                                self.photovoltaic_mode = True
-                            else:
-                                self.photovoltaic_mode = False
-                        
-                        # Ensure numeric types for critical params
-                        for attr in ['vmin', 'vmax', 'G_optical', 'alpha']:
-                            if hasattr(self, attr):
-                                try: setattr(self, attr, float(getattr(self, attr)))
-                                except: pass
-                
-                with open(inputFile, 'r') as f:
-                    data = json.load(f)
-                inputfile_import = InputObject(data)
-                inputfile_import.__file__ = inputFile
-            else:
-                # Load input file with importlib
-                spec = importlib.util.spec_from_file_location(module_name, inputFile)
-                if spec and spec.loader:
-                    inputfile_import = importlib.util.module_from_spec(spec)
-                    sys.modules[module_name] = inputfile_import
-                    spec.loader.exec_module(inputfile_import)
-                else:
-                    print(f"Could not load input file: {inputFile}")
-                    sys.exit(1)
-                
-            # Add to log
-            logger.info("Inputfile is %s", inputFile)
-        else:
-            print("Please provide input file with -i argument")
-            sys.exit()
+        # Get the folder information and use
+        inputFile = os.path.abspath(args.inputfile)
+        if not Path(inputFile).is_file():
+            parser.error(f"Input file does not exist: {inputFile}")
+        input_dir = os.path.dirname(inputFile)
+        sys.path.append(input_dir)
 
-    except getopt.error as err:
-        # output error, and return with an error code
-        print (str(err))
+        # Load input file
+        module_name = Path(inputFile).stem
+        if inputFile.endswith('.json'):
+            import json
+            class InputObject:
+                def __init__(self, data):
+                    for key, value in data.items():
+                        setattr(self, key, value)
+
+                    # Normalize JSON data to match what the core expects
+                    # 1. Map 'layers' to 'material' list format
+                    if hasattr(self, 'layers'):
+                        self.material = []
+                        for layer in self.layers:
+                            # Solver expects: [thickness, mat, mole, mole_y, doping, doping_type, layer_type]
+                            self.material.append([
+                                float(layer.get('thickness', 0)),
+                                layer.get('material', ''),
+                                float(layer.get('mole', 0)),
+                                float(layer.get('mole_y', 0)),
+                                float(layer.get('doping', 0)),
+                                layer.get('doping_type', 'n'),
+                                layer.get('type', 'barrier')[:1] # 'b' or 'w'
+                            ])
+
+                    # Handle generation type case/string mapping
+                    if hasattr(self, 'generation_type'):
+                        gt = str(self.generation_type).lower()
+                        if 'exponential' in gt:
+                            self.generation_type = 'exponential'
+                        else:
+                            self.generation_type = 'uniform'
+
+                    # 2. Map other common keys if they differ
+                    if hasattr(self, 'temp'): self.T = float(self.temp)
+                    if hasattr(self, 'grid_step'): self.gridfactor = float(self.grid_step)
+                    if hasattr(self, 'max_pts'): self.maxgridpoints = int(self.max_pts)
+                    if hasattr(self, 'mat_sys'): self.mat_type = self.mat_sys
+                    if hasattr(self, 'vstep'): self.Each_Step = float(self.vstep)
+                    if hasattr(self, 'area'): self.device_area = float(self.area)
+                    if hasattr(self, 'tat_field'): self.tat_field = float(self.tat_field)
+
+                    # 3. Solver and Mode Mapping
+                    if hasattr(self, 'solver'):
+                        # Extract numeric index from strings like "7: SP-Drift Diffusion"
+                        import re
+                        match = re.search(r'(\d+)', str(self.solver))
+                        if match:
+                            self.comp_scheme = int(match.group(1))
+                            self.computation_scheme = self.comp_scheme
+
+                    if hasattr(self, 'device_type'):
+                        if "Solar Cell" in str(self.device_type):
+                            self.photovoltaic_mode = True
+                        else:
+                            self.photovoltaic_mode = False
+
+                    # Ensure numeric types for critical params
+                    for attr in ['vmin', 'vmax', 'G_optical', 'alpha']:
+                        if hasattr(self, attr):
+                            try: setattr(self, attr, float(getattr(self, attr)))
+                            except: pass
+
+            with open(inputFile, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            if not isinstance(data, dict):
+                raise ValueError("JSON input must be an object containing project settings.")
+            inputfile_import = InputObject(data)
+            inputfile_import.__file__ = inputFile
+        else:
+            # Load input file with importlib
+            spec = importlib.util.spec_from_file_location(module_name, inputFile)
+            if spec and spec.loader:
+                inputfile_import = importlib.util.module_from_spec(spec)
+                sys.modules[module_name] = inputfile_import
+                spec.loader.exec_module(inputfile_import)
+            else:
+                raise ValueError(f"Could not load Python input file: {inputFile}")
+
+    except (OSError, ValueError, SyntaxError) as error:
+        parser.error(f"Could not load input: {error}")
 
     output_directory = os.path.join(os.getcwd(), Path(inputFile).stem + "_output")
 
-    run_aestimo(inputfile_import, drawFigures=drawFigures)
+    try:
+        run_aestimo(inputfile_import, drawFigures=drawFigures)
+    except (ValueError, NotImplementedError, OSError) as error:
+        logger.error("Calculation failed: %s", error)
+        return 1
     return 0
 
 

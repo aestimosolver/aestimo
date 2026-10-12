@@ -26,6 +26,18 @@ variables. Start from a complete example for the current source.
 For JSON, save a project through the GUI and check its structure rather than
 renaming a Python input to `.json`.
 
+## A solver selection or grid limit is rejected
+
+Some historical solver labels still appear in templates or selectors but are
+not implemented by the combined electron/hole route. Read the available schemes
+in [Models and materials](models.md). An unsupported selection is an error,
+not a successful zero-result calculation.
+
+If the grid exceeds `maxgridpoints`, compare the total layer thickness with the
+chosen grid spacing. Raise the point limit only if the calculation fits your
+resources, or investigate a suitable mesh for the observable of interest.
+The limit check does not silently replace the requested grid.
+
 ## A calculation does not converge
 
 First inspect `aestimo.log` for the solver, failing bias and failure reason.

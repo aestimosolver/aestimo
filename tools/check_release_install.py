@@ -60,6 +60,22 @@ def main():
                 assert result.returncode == 2, result.stderr
             assert not list(work.iterdir()), 'CLI startup created output files'
 
+            rejected = work / 'rejected.py'
+            rejected.write_text("comp_scheme = 1\ngridfactor = 1.0\n"
+                                "material = [[10.0, 'GaAs', 0.0, 0.0, 0.0, 'n', 'w']]\n",
+                                encoding='utf-8')
+            failure = subprocess.run([str(command), '-i', str(rejected)], cwd=work,
+                                     env=env, text=True, capture_output=True)
+            assert failure.returncode == 1, failure.stderr
+            assert 'nonparabolicity' in failure.stderr
+            assert not list((work / 'rejected_output').glob('*.dat'))
+            malformed = work / 'malformed.json'
+            malformed.write_text('[]', encoding='utf-8')
+            failure = subprocess.run([str(command), '-i', str(malformed)], cwd=work,
+                                     env=env, text=True, capture_output=True)
+            assert failure.returncode == 2, failure.stderr
+            assert not (work / 'malformed_output').exists()
+
             examples = prepare_gui_examples(work / 'examples')
             for pattern in ('*.json', 'experimental_data/*.csv'):
                 originals = list((source / 'examples').glob(pattern))
@@ -94,7 +110,7 @@ def main():
                 'Plotting changed exported numerical results'
         finally:
             os.chdir(previous)
-    print(f'Aestimo {distribution.version}: installed CLI calculations with/without plots, entry points, '
+    print(f'Aestimo {distribution.version}: installed CLI calculations, plotting, failure statuses, entry points, '
           'GUI imports and bundled resources passed.')
 
 
