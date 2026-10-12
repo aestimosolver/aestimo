@@ -44,6 +44,11 @@ dependencies = [
     "pillow>=8.0.0",
 ]
 
+[project.urls]
+Homepage = "https://www.aestimosolver.org"
+Repository = "https://github.com/aestimosolver/aestimo"
+Issues = "https://github.com/aestimosolver/aestimo/issues"
+
 [project.scripts]
 aestimo = "aestimo:main"
 aestimo-gui = "aestimo_gui:main"
@@ -52,6 +57,7 @@ aestimo-gui = "aestimo_gui:main"
 aestimo-gui-win = "aestimo_gui:main"
 
 [tool.setuptools]
+include-package-data = false
 packages = ["aeslibs", "aestimo_examples"]
 package-dir = {aestimo_examples = "examples"}
 py-modules = [

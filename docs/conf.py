@@ -1,27 +1,17 @@
-# Configuration file for the Sphinx documentation builder.
-#
-# For the full list of built-in configuration values, see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+"""Sphinx configuration without importing the solver or initializing Tk."""
+from pathlib import Path
+import tomllib
 
-# -- Project information -----------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-
-project = 'Aestimo 1D'
-copyright = '2024, Sefer Bora Lisesivdin'
-author = 'Sefer Bora Lisesivdin'
-
-# -- General configuration ---------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-
-extensions = ['sphinx_rtd_theme']
-
-#templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
-
-
-# -- Options for HTML output -------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
-
-html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
+project = "Aestimo 1D"
+author = "Sefer Bora Lisesivdin and Aestimo contributors"
+copyright = "2026, Aestimo contributors"
+metadata = tomllib.loads(
+    (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8")
+)
+release = metadata["project"]["version"]
+version = release
+extensions = ["myst_parser"]
+myst_enable_extensions = ["dollarmath"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+html_theme = "sphinx_rtd_theme"
+html_title = "Aestimo documentation"

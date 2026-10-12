@@ -5313,7 +5313,7 @@ if __name__ == "__main__":
     parser = ArgumentParser(prog ='aestimo.py', description=Description, formatter_class=RawFormatter)
 
     parser.add_argument("-i", "--input", dest = "inputfile", help="Input filename (will open output directory with same name)")
-    parser.add_argument("-v", "--version", dest="version", action='store_true')
+    parser.add_argument("-v", "--version", action="version", version=f"Aestimo 1D {__version__}")
     parser.add_argument("-d", "--drawfigures", dest="drawfigures", action='store_true', help="Draws all data at the end of calculation.")
 
     args = None
@@ -5326,24 +5326,6 @@ if __name__ == "__main__":
         sys.exit()
 
     try:
-        if args.version == True:
-            import requests
-            try:
-                response = requests.get("https://api.github.com/repos/aestimosolver/aestimo/releases/latest", timeout=5)
-                print('-------------------------------------------------------------------------------------------------------')
-                print('\033[91mAestimo\033[0m 1D Version '+str(__version__))
-                print('-------------------------------------------------------------------------------------------------------')
-                print('The latest STABLE release was '+response.json()["tag_name"]+', which is published at '+response.json()["published_at"])
-                print('Download the latest STABLE tarball release at: '+response.json()["tarball_url"])
-                print('Download the latest STABLE zipball release at: '+response.json()["zipball_url"])
-                print('Download the latest DEV zipball release at: https://github.com/aestimosolver/aestimo/archive/refs/heads/master.zip')
-            except (requests.ConnectionError, requests.Timeout) as exception:
-                print('-------------------------------------------------------------------------------------------------------')
-                print('\033[91Aestimo\033[0m 1D Version '+str(__version__))
-                print('-------------------------------------------------------------------------------------------------------')
-                print('No internet connection available.')
-            sys.exit()
-
         if args.inputfile is not None:
             # Get the folder information and use
             inputFile = os.path.abspath(args.inputfile)

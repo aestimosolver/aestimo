@@ -30,3 +30,6 @@ results/
 STUDY_results/
 AGENTS.md
 
+
+# Sphinx output
+docs/_build/
