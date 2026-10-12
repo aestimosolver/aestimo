@@ -29,7 +29,7 @@ Getting started
 Follow :doc:`first-calculation` for a quantum-well calculation with a short
 physical interpretation. Use :doc:`gui` to build and run a desktop project,
 or :doc:`quickstart` for Python inputs and command-line calculations.
-:doc:`tutorials` includes the original notebook tutorials.
+:doc:`tutorials` includes the notebook tutorials.
 
 About the project
 -----------------
@@ -55,7 +55,7 @@ Aestimo 1D”, *Computational Materials Science* **186**, 110015 (2021).
 `DOI: 10.1016/j.commatsci.2020.110015 <https://doi.org/10.1016/j.commatsci.2020.110015>`_.
 
 See :ref:`citing-aestimo` for reproducibility details and :doc:`publications`
-for the publication list collected by the project.
+for research using or citing Aestimo.
 
 Explore Aestimo
 ---------------

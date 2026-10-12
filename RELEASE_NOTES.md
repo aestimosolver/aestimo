@@ -16,9 +16,9 @@ published by this preparation commit.
   accumulating duplicate handlers, and correctly pass the CLI `-d` plot option.
 - Add a user guide configured for Read the Docs and consolidate package metadata
   in `pyproject.toml`.
-- Base the user guide on the original website, retaining project citation,
-  historical contributor/publication/release records and correcting obsolete
-  installation, input and convergence instructions.
+- Update the user guide, project citation, contributor credits and release
+  history; correct obsolete installation, input and convergence instructions.
+- Expand the publications list with verified 2023–2026 papers citing Aestimo.
 - Restore the project's red styling and original banner. Put pip installation
   on the home page and expose authors, release notes and development directly
   in the navigation; keep internal integration records in the repository.
@@ -58,9 +58,8 @@ See `docs/validation.md` and the linked audit reports.
 
 ## About earlier releases
 
-The entries below retain the release history from the original Aestimo website.
-They describe the features and interfaces of those versions; use the current
-user guide for installation and calculation instructions.
+The entries below describe the features and interfaces of earlier Aestimo
+versions. Use the current user guide for installation and calculation instructions.
 
 ## v.3.0.0 (July 13, 2022)
 This release simplified and cleaned up the code and its usage, following the 2.0 release by approximately two years. 

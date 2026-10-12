@@ -92,11 +92,10 @@ interpreter. A local build does not upload the package or create a release.
 The [release preparation checklist](https://github.com/aestimosolver/aestimo/blob/master/docs/releasing.md)
 records the remaining publication steps.
 
-## Reading list retained from the original site
+## Background reading
 
-These references formed part of the original development guidance. They are
-background reading, not a claim that every current solver follows every method
-in these works.
+Background references on quantum confinement, computational physics and
+semiconductor-device simulation:
 
 - Paul Harrison, *Quantum Wells, Wires and Dots*.
 - Morten Hjorth-Jensen, *Computational Physics*, University of Oslo lecture notes
