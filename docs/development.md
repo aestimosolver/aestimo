@@ -50,3 +50,42 @@ MPLBACKEND=Agg python -m unittest discover -s examples -p 'test_*.py'
 Detailed live GUI testing is outside this documentation/packaging increment.
 Solver refactoring should be a separate change, with representative numerical
 outputs compared before and after changes.
+
+## Project aims and contribution workflow
+
+The original website describes Aestimo as an educational and research tool
+whose source should remain readable. Preserve that aim when adding features:
+keep interfaces understandable and distinguish numerical correctness from
+agreement with an experimental device. Python input scripts remain supported
+alongside the GUI's JSON projects.
+
+Develop in a fork, document the changed behavior and run checks appropriate to
+the change. Submit a focused pull request to the upstream repository when the
+work is ready. Include enough input and numerical detail to reproduce a solver
+fix. Scientific-model changes need their own evidence; passing an installation
+check is not a substitute for a physical validation argument.
+
+Development discussion also takes place on the
+[Aestimo development group](https://groups.google.com/g/aestimo-devel).
+For bugs and reproducible support requests, use
+[GitHub issues](https://github.com/aestimosolver/aestimo/issues).
+
+## Reading list retained from the original site
+
+These references formed part of the original development guidance. They are
+background reading, not a claim that every current solver follows every method
+in these works.
+
+- Paul Harrison, *Quantum Wells, Wires and Dots*.
+- Morten Hjorth-Jensen, *Computational Physics*, University of Oslo lecture notes
+  (2007 and later notes).
+- Jaan Kiusalaas, *Numerical Methods in Engineering with Python*, Cambridge (2010).
+- Jonathan Edward Moussa, *The Schrodinger-Poisson Self Consistency in Layered
+  Quantum Semiconductor Structures*, MSc thesis (2003).
+- Nuno Sucena Almeida, *Development of a Multi-physics Simulation Framework for
+  Semiconductor Materials and Devices*, thesis (2005).
+- Jeffery Wayne Allen, *A Simulation Tool Suite for the Modelling and Optimization
+  of Multiple Quantum Well Structures*, dissertation (2005).
+
+The old site's empty contribution placeholders have been replaced by the
+workflow above. See the [migration record](website-migration.md) for sources.

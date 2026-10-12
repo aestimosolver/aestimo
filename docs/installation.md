@@ -51,6 +51,21 @@ python -m pip show aestimo
 python -m pip check
 ```
 
+## Using an existing conda installation
+
+The old website used a conda environment. That remains an alternative to
+`venv`; conda itself is not required by Aestimo. With conda already installed:
+
+```bash
+conda create --name aes python=3.12 pip
+conda activate aes
+python -m pip install .
+```
+
+Run the last command from a downloaded or cloned source checkout. The active
+Python's pip installs Aestimo's declared dependencies. `pylab` is not a separate
+required package, and no manual `chmod` or `site-packages` path edits are needed.
+
 ## Desktop requirements
 
 The GUI needs Tk and a graphical desktop in addition to its Python dependencies.

@@ -16,6 +16,9 @@ published by this preparation commit.
   accumulating duplicate handlers, and correctly pass the CLI `-d` plot option.
 - Add a user guide configured for Read the Docs and consolidate package metadata
   in `pyproject.toml`.
+- Base the user guide on the original website, retaining project citation,
+  historical contributor/publication/release records and correcting obsolete
+  installation, input and convergence instructions.
 - Distinguish numerical comparisons, synthetic baselines and unverified source
   claims in reference-data reporting.
 - Reject unconverged Mode 10 transport states and require spatial total-current

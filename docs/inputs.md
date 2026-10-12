@@ -2,6 +2,24 @@
 
 ## Python inputs
 
+Input files are executable Python scripts: assignments and expressions run in
+order, so define a value before using it. Comments start with `#`; parameter
+names and string values are case sensitive. Values can be scalars, lists,
+arrays or expressions supported by the selected model. For example:
+
+```python
+T = 300.0                       # float: temperature in K
+subnumber_e = 3                  # integer: electron subband count
+mat_type = "Zincblende"          # string: crystal system
+Quantum_Regions = False         # boolean: optional region selection
+```
+
+A shebang is useful when executing a script directly on Unix-like systems, but
+is not required when loading it with `aestimo -i`. Python 3 reads UTF-8 source
+by default. The old manual's claim that assignments are sequence insensitive
+should not be applied to Python input programs.
+
+
 A Python input defines attributes consumed by `StructureFrom`. The source
 repository's `examples/` directory contains complete inputs, including
 `sample_1qw_barrierdope_ingaas.py`.
@@ -68,3 +86,6 @@ control residual and spatial total-current acceptance. Read the
 [current-conservation audit](mode10-current-conservation.md) before changing
 these settings. Tightening a tolerance can cause a calculation to fail rather
 than establish mesh convergence.
+
+See [Models and materials](models.md) for the current scheme dispatcher and
+its restrictions, and [Troubleshooting](troubleshooting.md) for convergence checks.

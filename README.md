@@ -43,12 +43,19 @@ to choose a different workspace root. A checkout uses its own `examples/`.
 The [user guide](docs/index.rst) is maintained in `docs/` and configured for
 Read the Docs. A hosted URL will be linked here after the project is connected.
 
+The guide is based on the [original project website](https://github.com/aestimosolver/aestimosolver.github.io),
+with installation and usage instructions updated against the current source.
+
+- [About and citation](docs/about.md)
+- [Models and materials](docs/models.md)
 - [Installation](docs/installation.md)
 - [CLI quick start](docs/quickstart.md)
 - [GUI workflow](docs/gui.md)
 - [Inputs and units](docs/inputs.md)
 - [Outputs](docs/outputs.md)
 - [Tutorials](docs/tutorials.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Original website migration](docs/website-migration.md)
 - [Development and documentation builds](docs/development.md)
 - [Validation and reference-data status](docs/validation.md)
 

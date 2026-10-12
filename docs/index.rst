@@ -12,12 +12,15 @@ metadata does not by itself establish that a matching PyPI release is available.
    :maxdepth: 2
    :caption: User guide
 
+   about
+   models
    installation
    quickstart
    gui
    inputs
    outputs
    tutorials
+   troubleshooting
 
 .. toctree::
    :maxdepth: 1
@@ -30,5 +33,14 @@ metadata does not by itself establish that a matching PyPI release is available.
    mode10-mesh-audit
    reference-data-provenance
    gui-integration-review
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Project and history
+
+   authors
+   publications
+   history
+   website-migration
 
 * :ref:`search`
