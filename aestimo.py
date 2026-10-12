@@ -74,28 +74,35 @@ def alen(x):
 # Version
 __version__ = "4.0.0"
 
-def main():
-    import runpy
-    runpy.run_module('aestimo', run_name='__main__')
-
 drawFigures = False
+output_directory = os.path.join(os.getcwd(), "output")
 
 # Logger
 logger = logging.getLogger('aestimo')
 
 def initialize_logger():
-    hdlr = logging.FileHandler(os.path.abspath(os.path.join(output_directory, 'aestimo.log')))
-    hdlr_formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
-    hdlr.setFormatter(hdlr_formatter)
-    logger.addHandler(hdlr)
-    # stderr
-    ch = logging.StreamHandler()
-    ch_formatter = logging.Formatter('%(levelname)s %(message)s')
-    ch.setFormatter(ch_formatter)
-    logger.addHandler(ch)
-    # LOG level can be INFO, WARNING, ERROR
-    logger.setLevel(logging.INFO)
+    """Log a calculation in its output directory without accumulating handlers.
 
+    Only handlers owned by Aestimo are replaced; application-provided handlers
+    remain attached. Importing the module never creates files or directories.
+    """
+    directory = Path(output_directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    for handler in list(logger.handlers):
+        if getattr(handler, '_aestimo_owned', False):
+            logger.removeHandler(handler)
+            handler.close()
+    file_handler = logging.FileHandler(directory / 'aestimo.log', encoding='utf-8')
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s %(name)s %(message)s'
+    ))
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter('%(levelname)s %(message)s'))
+    for handler in (file_handler, console_handler):
+        handler._aestimo_owned = True
+        logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
 
 
 # Defining constants and material parameters
@@ -5089,14 +5096,8 @@ def run_aestimo(input_obj, drawFigures=drawFigures, show=True):
                  os.makedirs(new_out, exist_ok=True)
              output_directory = new_out
 
-    # Add to log
-    # Note: If we changed output_directory, the logger is still pointing to the old file 
-    # if it was already initialized. However, usually initialize_logger is called before this.
-    # If we want logs in the new directory, we'd need to re-init logger. 
-    # But initialize_logger uses the global output_directory.
-    # For now, we accept logs might be in 'output' or we should technically re-init logger here.
-    # Let's leave logger as is to avoid complex side effects, as users mainly care about data results.
-    
+    initialize_logger()
+
     # Initialise structure class
     model = StructureFrom(input_obj, database)
 
@@ -5308,27 +5309,25 @@ def calculate_eqe(model, wavelengths):
     
     return np.array(eqe_results)
 
-if __name__ == "__main__":
+def main(argv=None):
+    """Run the CLI in the already imported solver module."""
+    global output_directory
     # Arguments parsing
-    parser = ArgumentParser(prog ='aestimo.py', description=Description, formatter_class=RawFormatter)
+    parser = ArgumentParser(prog ='aestimo', description=Description, formatter_class=RawFormatter)
 
-    parser.add_argument("-i", "--input", dest = "inputfile", help="Input filename (will open output directory with same name)")
+    parser.add_argument("-i", "--input", dest = "inputfile", required=True, help="Input filename (will open output directory with same name)")
     parser.add_argument("-v", "--version", action="version", version=f"Aestimo 1D {__version__}")
     parser.add_argument("-d", "--drawfigures", dest="drawfigures", action='store_true', help="Draws all data at the end of calculation.")
 
-    args = None
-
-    args = parser.parse_args()
-    
-    #Exit if no argument is provided
-    if args is None:
-        print("Please provide at least -i argument")  
-        sys.exit()
+    args = parser.parse_args(argv)
+    drawFigures = bool(args.drawfigures)
 
     try:
         if args.inputfile is not None:
             # Get the folder information and use
             inputFile = os.path.abspath(args.inputfile)
+            if not Path(inputFile).is_file():
+                parser.error(f"Input file does not exist: {inputFile}")
             input_dir = os.path.dirname(inputFile)
             sys.path.append(input_dir)
             
@@ -5416,54 +5415,15 @@ if __name__ == "__main__":
             print("Please provide input file with -i argument")
             sys.exit()
 
-        if args.drawfigures == True:
-            # Control the drawing data at the end of the calculation
-            drawFigures = True
-        
-
     except getopt.error as err:
         # output error, and return with an error code
         print (str(err))
 
     output_directory = os.path.join(os.getcwd(), Path(inputFile).stem + "_output")
 
-    #If output directory is not available, make one.
-    if not os.path.isdir(output_directory):
-        os.makedirs(output_directory, exist_ok=True)
+    run_aestimo(inputfile_import, drawFigures=drawFigures)
+    return 0
 
-    initialize_logger()
 
-    os.sys.stderr.write("WARNING: Aestimo 1D logs in the output directory.\n")
-
-    run_aestimo(inputfile_import)
-
-else:
-    # When imported as a module or default run without arguments?
-    # Actually this else block runs if __name__ != "__main__", which means it's imported.
-    # But this code block is inside `if __name__ == "__main__":` ?
-    # Wait, looking at file... lines 4643 is `if __name__ == "__main__":`
-    # The `else` at 4723 is matched to `if args.inputfile is not None:` ?
-    # Let's check indentation.
-    # Line 4679: if args.inputfile is not None:
-    # Line 4723: else:
-    #     output_directory = os.path.join(os.getcwd(), 'output')
-    
-    # Yes. This else handles the case where no input file is provided but it survived the earlier check?
-    # Line 4656: if args is None: ... sys.exit()
-    # But argparse handles this. 
-    # Actually if args.inputfile is None, we print "Please provide..." and exit at 4700.
-    # So the `else` block at 4723 is effectively dead code or unreachable given current logic?
-    # Or maybe it was intended for something else.
-    # Regardless, let's leave it as 'output' or maybe 'aestimo_output'.
-    # User asked for "each example file should have output folder in its name".
-    
-    output_directory = os.path.join(os.getcwd(), 'output')
-
-    #If output directory is not available, make one.
-    if not os.path.isdir(output_directory):
-        os.makedirs(output_directory, exist_ok=True)
-
-    initialize_logger()
-
-    os.sys.stderr.write("WARNING: Aestimo 1D logs automatically to aestimo.log in the output directory.\n")
-
+if __name__ == "__main__":
+    raise SystemExit(main())

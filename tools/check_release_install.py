@@ -40,6 +40,7 @@ def main():
             import aestimo_gui
             from aeslibs.gui_resources import prepare_gui_examples, resolve_gui_reference
 
+            assert not list(work.iterdir()), 'Import created working-directory files'
             for module in (aestimo, aestimo_gui):
                 assert not Path(module.__file__).resolve().is_relative_to(source), module.__file__
             assert aestimo.__version__ == distribution.version
@@ -52,6 +53,12 @@ def main():
                                         text=True, capture_output=True, check=True)
                 if option != '--help':
                     assert result.stdout.strip() == f'Aestimo 1D {distribution.version}'
+
+            for arguments in ([], ['-i', 'missing.py']):
+                result = subprocess.run([str(command), *arguments], cwd=work, env=env,
+                                        text=True, capture_output=True)
+                assert result.returncode == 2, result.stderr
+            assert not list(work.iterdir()), 'CLI startup created output files'
 
             examples = prepare_gui_examples(work / 'examples')
             for pattern in ('*.json', 'experimental_data/*.csv'):
@@ -75,7 +82,7 @@ def main():
                 raise RuntimeError(result.stdout + result.stderr)
             output = work / f'{example.stem}_output'
             assert (output / 'aestimo.log').is_file(), output
-            assert 'Simulation is finished' in (output / 'aestimo.log').read_text()
+            assert (output / 'aestimo.log').read_text().count('Simulation is finished') == 1
             assert (output / 'potn_eh_equi_cond.dat').is_file(), output
         finally:
             os.chdir(previous)

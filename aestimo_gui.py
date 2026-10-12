@@ -51,7 +51,6 @@ import types
 import threading
 import time
 import queue
-import logging
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
@@ -72,8 +71,6 @@ import copy
 customtkinter.set_appearance_mode("Dark")
 customtkinter.set_default_color_theme("blue")
 
-# Setup generic logging to capture later
-logging.basicConfig(filename='aestimo.log', level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
 
 class QueueStream:

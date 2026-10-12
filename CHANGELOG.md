@@ -11,6 +11,9 @@ published by this preparation commit.
   a writable installed workspace without replacing user-edited files.
 - Provide `aestimo`, `aestimo-gui` and the Windows GUI launcher. Report the local
   version without a network request.
+- Avoid creating output/log files during module imports, CLI help or version
+  reporting. Route calculation logs to the selected output directory without
+  accumulating duplicate handlers, and correctly pass the CLI `-d` plot option.
 - Add a user guide configured for Read the Docs and consolidate package metadata
   in `pyproject.toml`.
 - Distinguish numerical comparisons, synthetic baselines and unverified source

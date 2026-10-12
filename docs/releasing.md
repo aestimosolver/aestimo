@@ -71,6 +71,10 @@ replacing release artifacts.
 - PR #62's documentation/packaging workflow passed on the merge commit.
 - The documentation increment passed 81 example regressions, strict Sphinx
   builds, clean Python 3.12 installation and wheel/sdist resource checks.
+- Release startup fixes passed 85 regressions, including import/help/version
+  file-creation checks, missing-input errors, plot-flag forwarding and log routing.
+  A representative CLI example retained identical numerical arrays across all
+  eight exported data files before and after the startup changes.
 - A real installed CLI run of `sample_1qw_barrierdope_ingaas.py` completed on
   Python 3.12/Linux during release preparation.
 

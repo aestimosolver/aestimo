@@ -35,6 +35,9 @@ interchangeable text representations. See [Inputs](inputs.md).
 | `-d`, `--drawfigures` | Display figures at the end of the calculation. |
 | `-v`, `--version` | Print the local Aestimo version and exit. |
 
+Help/version reporting and module imports do not create calculation output
+files. A missing `-i` argument or a nonexistent input path exits with status 2.
+
 Results are written below the current working directory as
 `<input-stem>_output/`. For example, `project.json` produces `project_output/`.
 Use separate working directories for inputs with the same filename stem.
