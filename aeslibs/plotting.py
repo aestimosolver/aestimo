@@ -149,7 +149,7 @@ def save_and_plot2(result, model, output_directory='output', drawFigures=False, 
                             (xaxis[I1:I2], result.wfe_general[j,:,i1:i2].transpose()),
                         )
     if drawFigures:
-        span = np.ones(100000000)
+        span = np.ones(model.n_max)
         fig1 = pl.figure(figsize=(10, 8))
         pl.suptitle("Aestimo Results")
         pl.subplot(1, 1, 1)
@@ -401,7 +401,7 @@ def save_and_plot(result, model, output_directory='output', drawFigures=False, s
                 )
     # Resultviewer
     if drawFigures:
-        span = np.ones(100000000)
+        span = np.ones(model.n_max)
         fig1 = pl.figure(figsize=(10, 8))
         pl.suptitle("Aestimo Results - at Equilibrium Condition")
         pl.subplot(1, 1, 1)

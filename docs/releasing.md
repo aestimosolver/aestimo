@@ -49,9 +49,11 @@ MPLBACKEND=Agg /tmp/aestimo-release-env/bin/python -m unittest discover -s examp
 ```
 
 On Windows, use an equivalent temporary environment and its `Scripts/python.exe`.
-The smoke check runs a real installed CLI calculation in a temporary working
-directory, verifies launcher metadata, imports the GUI without opening Tk, checks
-preset/reference bytes and confirms preservation of edited presets.
+The smoke check runs a real installed CLI calculation with and without plots
+using a non-interactive backend and verifies that plotting leaves numerical
+exports unchanged. It uses a temporary working directory, verifies launcher
+metadata, imports the GUI without opening Tk, checks preset/reference bytes and
+confirms preservation of edited presets.
 
 ## Publication and verification
 

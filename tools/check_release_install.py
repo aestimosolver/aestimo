@@ -84,9 +84,17 @@ def main():
             assert (output / 'aestimo.log').is_file(), output
             assert (output / 'aestimo.log').read_text().count('Simulation is finished') == 1
             assert (output / 'potn_eh_equi_cond.dat').is_file(), output
+            baseline = {path.name: path.read_bytes() for path in output.glob('*.dat')}
+            assert baseline, 'No numerical output from CLI calculation'
+            plotted = subprocess.run([str(command), '-d', '-i', str(example)],
+                                     cwd=work, env=env, text=True, capture_output=True)
+            if plotted.returncode:
+                raise RuntimeError(plotted.stdout + plotted.stderr)
+            assert baseline == {path.name: path.read_bytes() for path in output.glob('*.dat')}, \
+                'Plotting changed exported numerical results'
         finally:
             os.chdir(previous)
-    print(f'Aestimo {distribution.version}: installed CLI calculation, entry points, '
+    print(f'Aestimo {distribution.version}: installed CLI calculations with/without plots, entry points, '
           'GUI imports and bundled resources passed.')
 
 

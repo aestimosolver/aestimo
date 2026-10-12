@@ -22,6 +22,8 @@ published by this preparation commit.
 - Expand the GUI guide and first-calculation walkthrough, documenting saved
   result history, workspace paths and GUI/CLI input differences. Correct state
   export mass headers to identify the existing relative-mass values.
+- Size plotting helper arrays to the actual grid instead of allocating
+  100 million float64 entries (about 800 MB) for each plot call.
 - Distinguish numerical comparisons, synthetic baselines and unverified source
   claims in reference-data reporting.
 - Reject unconverged Mode 10 transport states and require spatial total-current
