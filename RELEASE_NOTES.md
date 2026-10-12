@@ -1,11 +1,66 @@
-# Earlier releases (2012–2022)
+# Release notes
 
-These notes are migrated from the original website. They describe earlier
-releases, not the installation commands or supported options of the current
-source. Follow the current [installation](installation.md),
-[input](inputs.md) and [output](outputs.md) guides when using 4.0.0.
+## 4.0.0 — release preparation
 
-See [Release notes](release-notes.md) for the current 4.0.0 changes.
+This entry describes the current source. A 4.0.0 release has not yet been
+published by this preparation commit.
+
+- Add the desktop GUI and device project workflows, including quantum-well,
+  diode, solar-cell, LED and laser presets.
+- Bundle GUI project presets and reference data in pip distributions and provide
+  a writable installed workspace without replacing user-edited files.
+- Provide `aestimo`, `aestimo-gui` and the Windows GUI launcher. Report the local
+  version without a network request.
+- Avoid creating output/log files during module imports, CLI help or version
+  reporting. Route calculation logs to the selected output directory without
+  accumulating duplicate handlers, and correctly pass the CLI `-d` plot option.
+- Add a user guide configured for Read the Docs and consolidate package metadata
+  in `pyproject.toml`.
+- Base the user guide on the original website, retaining project citation,
+  historical contributor/publication/release records and correcting obsolete
+  installation, input and convergence instructions.
+- Restore the project's red styling and original banner. Put pip installation
+  on the home page and expose authors, release notes and development directly
+  in the navigation; keep internal integration records in the repository.
+- Expand the GUI guide and first-calculation walkthrough, documenting saved
+  result history, workspace paths and GUI/CLI input differences. Correct state
+  export mass headers to identify the existing relative-mass values.
+- Size plotting helper arrays to the actual grid instead of allocating
+  100 million float64 entries (about 800 MB) for each plot call.
+- Report unavailable solver selections and grid-limit failures as catchable
+  errors. CLI calculation failures return nonzero status, and malformed inputs
+  receive concise usage errors instead of reporting success or stopping a worker.
+- Add automated installed-package checks on Linux/Python 3.9, 3.12 and 3.13
+  and Windows/Python 3.12. Correct a solar plot label that prevented GUI imports
+  on Python versions before 3.12.
+- Distinguish numerical comparisons, synthetic baselines and unverified source
+  claims in reference-data reporting.
+- Reject unconverged Mode 10 transport states and require spatial total-current
+  conservation; stabilize near-equilibrium edge-flux evaluation.
+
+### Compatibility and limitations
+
+Python inputs, GUI JSON projects and the existing solver interfaces remain in
+use. Output filenames differ from the older five-file documentation; consult
+`docs/outputs.md`. Tk and a graphical desktop are required for the GUI.
+
+Clean installation and CLI/plotting checks cover Linux/Python 3.9, 3.12 and 3.13
+and Windows/Python 3.12. All 94 example regression tests passed in each tested
+Linux environment; the Windows job runs the installed-package smoke check.
+Detailed live GUI testing was waived for the integration. Source metadata
+declares Python 3.9 or newer, but every declared version/platform has not been
+checked.
+
+Reference provenance and physical accuracy still require independent review.
+Low-current mesh accuracy and platform-dependent floating-point precision remain
+limitations; numerical acceptance does not certify experimental agreement.
+See `docs/validation.md` and the linked audit reports.
+
+## About earlier releases
+
+The entries below retain the release history from the original Aestimo website.
+They describe the features and interfaces of those versions; use the current
+user guide for installation and calculation instructions.
 
 ## v.3.0.0 (July 13, 2022)
 This release simplified and cleaned up the code and its usage, following the 2.0 release by approximately two years. 

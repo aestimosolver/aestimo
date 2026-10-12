@@ -15,7 +15,7 @@ The old site remains unchanged by this migration.
 | `documentation.md` | [Installation](installation.md), [quick start](quickstart.md), [inputs](inputs.md), [outputs](outputs.md) and [troubleshooting](troubleshooting.md). |
 | `tutorials.md` | Four original notebooks and author credit in [Tutorials](tutorials.md). |
 | `development.md` | Contribution guidance, project aims and historical reading list in [Development](development.md). |
-| `releasenotes.md` | [Release notes](release-notes.md), with [earlier releases](history.md) retained as a nested page. |
+| `releasenotes.md` | All current and earlier notes in root `RELEASE_NOTES.md`, linked into the guide as [Release notes](release-notes.md). |
 
 ## Corrections against the current code
 
@@ -51,15 +51,16 @@ rewritten for the present package and checked against its source.
 ## Public site structure
 
 The home page follows the original site's project overview, visible pip
-installation, citation and release news. Authors, release notes, publications
+installation, citation and project links. Authors, release notes, publications
 and development are direct project navigation entries; the calculation guides
 have a separate documentation menu. The live original site was also checked at
 https://aestimosolver.github.io/ during this navigation revision.
 
 Integration reviews, release checklists and this migration record are retained
 in the source repository and excluded from the public Sphinx build. Numerical
-reports remain accessible from the validation page. Current release notes reuse
-`CHANGELOG.md` during the build so the site and repository share the same changes.
+reports remain accessible from the validation page. All release notes are maintained in root `RELEASE_NOTES.md`.
+`docs/release-notes.md` is a symbolic link to that file, so the site renders
+the same content without a separate copy. The home page has no news section.
 
 The original `files/aestimobanner.png` is preserved byte-for-byte as
 `docs/_static/aestimobanner.png` (Git blob

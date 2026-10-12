@@ -3,5 +3,5 @@ recursive-include docs *.rst *.md *.py *.txt *.json Makefile make.bat
 recursive-include docs/_static *.css *.png
 recursive-include tutorials *.md *.ipynb
 prune docs/_build
-include CHANGELOG.md
+include RELEASE_NOTES.md
 include tools/check_release_install.py

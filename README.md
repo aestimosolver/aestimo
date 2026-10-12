@@ -61,7 +61,7 @@ with installation and usage instructions updated against the current source.
 - [Tutorials](docs/tutorials.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Authors and contributors](docs/authors.md)
-- [Release notes](docs/release-notes.md)
+- [Release notes](RELEASE_NOTES.md)
 - [Publications](docs/publications.md)
 - [Development](docs/development.md)
 - [Validation and reference-data status](docs/validation.md)
