@@ -15,6 +15,7 @@
 - Report unavailable solver selections and grid-limit failures as catchable errors. CLI calculation failures return nonzero status, and malformed inputs receive concise usage errors instead of reporting success or stopping a worker.
 - Add automated installed-package checks on Linux/Python 3.9, 3.12 and 3.13 and Windows/Python 3.12. Correct a solar plot label that prevented GUI imports on Python versions before 3.12.
 - Distinguish numerical comparisons, synthetic baselines and unverified source claims in reference-data reporting.
+- Preserve existing default GUI projects during automatic setup and use UTF-8 for project and user-database JSON files.
 - Reject unconverged Mode 10 transport states and require spatial total-current conservation; stabilize near-equilibrium edge-flux evaluation.
 
 ## v.3.0.0 (July 13, 2022)

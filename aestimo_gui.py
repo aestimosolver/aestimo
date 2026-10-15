@@ -1803,7 +1803,7 @@ class AestimoGUI(customtkinter.CTk):
         if file_path:
             try:
                 config = self.get_current_configuration()
-                with open(file_path, "w") as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     json.dump(config, f, indent=4)
                 # Extract project name from filename
                 self.project_name = os.path.splitext(os.path.basename(file_path))[0]
@@ -1819,7 +1819,7 @@ class AestimoGUI(customtkinter.CTk):
             )
         if file_path:
             try:
-                with open(file_path, "r") as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     config = json.load(f)
                 self.load_configuration(config)
                 # Extract project name from filename
@@ -3829,7 +3829,7 @@ class AestimoGUI(customtkinter.CTk):
             return None
 
     def auto_save_default_project(self):
-        """Automatically save the default project configuration to examples folder"""
+        """Create the default project without replacing an existing user file."""
         try:
             # Create examples directory if it doesn't exist
             if not os.path.isdir(self.examples_dir):
@@ -3837,9 +3837,14 @@ class AestimoGUI(customtkinter.CTk):
             
             # Save default configuration
             default_project_path = os.path.join(self.examples_dir, "untitled_project.json")
+            if os.path.exists(default_project_path):
+                return
             config = self.get_current_configuration()
-            with open(default_project_path, "w") as f:
+            with open(default_project_path, "x", encoding="utf-8") as f:
                 json.dump(config, f, indent=4)
+        except FileExistsError:
+            # Another launch may have created the file after the existence check.
+            return
         except Exception as e:
             print(f"Warning: Could not auto-save default project: {e}")
 
@@ -5937,7 +5942,7 @@ STATUS: VERIFIED PRODUCTION GRADE
                     "alloyproperty": database.alloyproperty,
                     "alloyproperty4": database.alloyproperty4
                 }
-                with open(file_path, "w") as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     json.dump(full_db, f, indent=4)
                 tkinter.messagebox.showinfo("Success", "Database saved successfully.")
             except Exception as e:
@@ -5951,7 +5956,7 @@ STATUS: VERIFIED PRODUCTION GRADE
         )
         if file_path:
             try:
-                with open(file_path, "r") as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     full_db = json.load(f)
                 
                 if "materialproperty" in full_db:

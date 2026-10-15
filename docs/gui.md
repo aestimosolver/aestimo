@@ -99,6 +99,10 @@ one, and **Reset Defaults** restores the startup values. These are separate from
 **Save Project** and **Load Project**. Retain the database file alongside any
 project that depends on modified material parameters.
 
+Project and user-database JSON files are read and written as UTF-8. Automatic
+creation of `untitled_project.json` preserves an existing file; use **Save
+Project** when you explicitly want to replace a saved project.
+
 ## Installed presets and references
 
 Installed resources are copied to `~/Aestimo/examples`, or to the workspace
