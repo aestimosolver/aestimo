@@ -8,10 +8,16 @@ In an activated Python environment, install the published release with:
 python -m pip install aestimo
 ```
 
-This command installs the package currently available on
-[PyPI](https://pypi.org/project/aestimo/). The GUI and launch commands in this
-guide belong to the upcoming 4.0.0 release. Until 4.0.0 is published, use the
-[source installation](#install-source) below for that workflow.
+[Aestimo 4.0.0 is available on PyPI](https://pypi.org/project/aestimo/4.0.0/)
+and includes the desktop GUI and command-line launchers. To update an existing
+installation:
+
+```bash
+python -m pip install --upgrade aestimo
+```
+
+For a reproducible installation of this release, use `aestimo==4.0.0` instead
+of `aestimo`.
 
 Check the installed package and its dependencies with:
 
@@ -22,7 +28,7 @@ python -m pip check
 
 ## Create a Python environment
 
-The 4.0.0 source requires Python 3.9 or newer. Installation and CLI checks
+Aestimo 4.0.0 requires Python 3.9 or newer. Installation and CLI checks
 cover Python 3.9, 3.12 and 3.13 on Linux, and Python 3.12 on Windows. These
 checks import the GUI without opening a window; other Python/platform
 combinations have not all been verified.
@@ -46,18 +52,18 @@ On Windows PowerShell:
 ```
 
 (install-source)=
-## Install the 4.0.0 source
+## Install from source
 
-Install the integrated source from the main Aestimo repository:
+To install the 4.0.0 release directly from the main Aestimo repository:
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install "git+https://github.com/aestimosolver/aestimo.git@master"
+python -m pip install "git+https://github.com/aestimosolver/aestimo.git@v4.0.0"
 ```
 
-This command requires Git. Alternatively, download and extract the repository,
-then run `python -m pip install .` from its root. Use a commit SHA instead of
-`master` in the Git URL when you need a reproducible installation.
+This command requires Git. Alternatively, download and extract the tagged release,
+then run `python -m pip install .` from its root. To install the development
+version, replace `v4.0.0` with `master` in the Git URL.
 
 Installation creates `aestimo` and `aestimo-gui` commands in the active environment.
 No manual addition of the source directory to `PATH` is needed.

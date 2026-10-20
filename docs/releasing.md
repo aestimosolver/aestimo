@@ -1,4 +1,23 @@
-# Preparing Aestimo 4.0.0
+# Aestimo 4.0.0 release record
+
+## Published release
+
+Aestimo 4.0.0 was published on October 20, 2026:
+
+- Source commit: `62ded8c5308a749dbdb5277f517b51dda10d402f`.
+- [GitHub release and tag](https://github.com/aestimosolver/aestimo/releases/tag/v4.0.0).
+- [PyPI release](https://pypi.org/project/aestimo/4.0.0/), containing
+  `aestimo-4.0.0-py3-none-any.whl` and `aestimo-4.0.0.tar.gz`.
+- All jobs in the [final source compatibility run](https://github.com/aestimosolver/aestimo/actions/runs/39430673632)
+  passed. Linux jobs ran 98 regressions; Windows coverage used the installed-package
+  smoke check. Python 3.9 uses Ubuntu 24.04 because setup-python has no Python 3.9
+  build for Ubuntu 26.04.
+- The project owner built and checked the distributions, verified a clean wheel
+  installation, uploaded both files to PyPI, then repeated the dependency and
+  installed-package checks in a fresh environment using `aestimo==4.0.0` from PyPI.
+  All checks passed.
+
+The sections below retain the preparation scope, checklist and earlier evidence.
 
 ## Scope
 
@@ -94,6 +113,6 @@ replacing release artifacts.
   address. README and package metadata link to it; the source-installation
   instructions now use the upstream repository.
 
-Verification of the latest hosted Read the Docs build, the final release source,
-final artifact checks and PyPI publication are still pending. This document records preparation,
-not a declaration that the release has shipped.
+The final source checks, local artifact checks and PyPI publication are complete
+as recorded above. Verification of the latest hosted Read the Docs build remains
+a separate deployment check.

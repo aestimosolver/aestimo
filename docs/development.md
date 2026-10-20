@@ -89,8 +89,8 @@ python -m twine check dist/*
 Install the resulting wheel in a fresh environment outside the checkout and
 run `python tools/check_release_install.py --source .` with that environment's
 interpreter. A local build does not upload the package or create a release.
-The [release preparation checklist](https://github.com/aestimosolver/aestimo/blob/master/docs/releasing.md)
-records the remaining publication steps.
+The [release checklist and publication record](https://github.com/aestimosolver/aestimo/blob/master/docs/releasing.md)
+describe the publication procedure and the completed 4.0.0 release.
 
 ## Background reading
 

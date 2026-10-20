@@ -1,6 +1,6 @@
 # Release notes
 
-## v.4.0.0
+## v.4.0.0 (October 20, 2026)
 
 - Add the desktop GUI and device project workflows, including quantum-well, diode, solar-cell, LED and laser presets.
 - Bundle GUI project presets and reference data in pip distributions and provide a writable installed workspace without replacing user-edited files.

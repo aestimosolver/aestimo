@@ -13,14 +13,14 @@ Install the published package in an activated Python environment:
 python -m pip install aestimo
 ```
 
-The desktop GUI described below is part of the upcoming 4.0.0 release.
-Until it is published on PyPI, install the preparation source:
+The published 4.0.0 package includes the desktop GUI and command-line launchers:
 
 ```bash
-python -m pip install "git+https://github.com/aestimosolver/aestimo.git@master"
 aestimo --help
 aestimo-gui
 ```
+
+To update an existing installation, run `python -m pip install --upgrade aestimo`.
 
 Python 3.9 or newer is required. The GUI also needs Tk and a graphical desktop.
 From a downloaded or cloned checkout, use `python -m pip install .` instead.
