@@ -19,9 +19,9 @@ Install the published package in an activated Python environment:
 
    python -m pip install aestimo
 
-The desktop GUI described here is part of the upcoming 4.0.0 release. Until
-that release is published on PyPI, use the :ref:`source installation <install-source>`
-to try it. See :doc:`installation` for environment setup and desktop requirements.
+Aestimo 4.0.0 is available on PyPI and includes the desktop GUI. Start it with
+``aestimo-gui``. See :doc:`installation` for environment setup, upgrades and
+desktop requirements.
 
 Getting started
 ---------------
