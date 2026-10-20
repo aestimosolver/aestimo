@@ -19,7 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          # Python 3.9 has no setup-python build for Ubuntu 26.04.
+          - os: ubuntu-24.04
             python: '3.9'
             regression: true
           - os: ubuntu-latest
